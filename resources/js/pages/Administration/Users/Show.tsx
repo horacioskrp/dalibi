@@ -38,6 +38,13 @@ interface ShowProps {
 }
 
 export default function Show({ user }: Readonly<ShowProps>) {
+    const formatGender = (gender: string) => {
+        if (gender === 'M' || gender === 'male') return 'Masculin';
+        if (gender === 'F' || gender === 'female') return 'Féminin';
+        if (gender === 'O' || gender === 'other') return 'Autre';
+        return gender;
+    };
+
     const formatDate = (date: string | null) => {
         if (!date) return 'Non renseigné';
         return new Date(date).toLocaleDateString('fr-FR', {
@@ -106,7 +113,7 @@ export default function Show({ user }: Readonly<ShowProps>) {
                                 <div>
                                     <p className="text-sm text-gray-600">Genre</p>
                                     <p className="font-medium text-gray-900 mt-1">
-                                        {user.gender === 'M' ? 'Masculin' : 'Féminin'}
+                                        {formatGender(user.gender)}
                                     </p>
                                 </div>
                                 <div>

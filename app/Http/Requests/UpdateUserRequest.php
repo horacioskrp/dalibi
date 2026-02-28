@@ -6,6 +6,23 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateUserRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $gender = $this->input('gender');
+
+        if ($gender === 'M') {
+            $this->merge(['gender' => 'male']);
+        }
+
+        if ($gender === 'F') {
+            $this->merge(['gender' => 'female']);
+        }
+
+        if ($gender === 'O') {
+            $this->merge(['gender' => 'other']);
+        }
+    }
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -26,7 +43,7 @@ class UpdateUserRequest extends FormRequest
             'lastname' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $this->user->id],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
-            'gender' => ['required', 'in:M,F'],
+            'gender' => ['required', 'in:male,female,other'],
             'birth_date' => ['nullable', 'date', 'before:today'],
             'telephone' => ['nullable', 'string', 'max:20'],
             'address' => ['nullable', 'string', 'max:500'],
@@ -50,7 +67,7 @@ class UpdateUserRequest extends FormRequest
             'password.min' => 'Le mot de passe doit contenir au moins 8 caractères.',
             'password.confirmed' => 'La confirmation du mot de passe ne correspond pas.',
             'gender.required' => 'Le genre est requis.',
-            'gender.in' => 'Le genre doit être M ou F.',
+            'gender.in' => 'Le genre doit être masculin, féminin ou autre.',
             'birth_date.date' => 'La date de naissance doit être une date valide.',
             'birth_date.before' => 'La date de naissance doit être antérieure à aujourd\'hui.',
             'roles.*.exists' => 'Le rôle sélectionné n\'existe pas.',

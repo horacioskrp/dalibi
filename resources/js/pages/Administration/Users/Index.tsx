@@ -52,16 +52,40 @@ interface PaginatedUsers {
 
 interface IndexProps {
     users: PaginatedUsers;
+    roles: Role[];
     message?: string;
     filters: {
         search?: string;
+        role?: string;
+        gender?: string;
     };
 }
 
-export default function Index({ users, message, filters }: Readonly<IndexProps>) {
+export default function Index({ users, roles, message, filters }: Readonly<IndexProps>) {
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
+    const [selectedRole, setSelectedRole] = useState(filters.role || '');
+    const [selectedGender, setSelectedGender] = useState(filters.gender || '');
+
+    const currentFilters = {
+        search: searchQuery || undefined,
+        role: selectedRole || undefined,
+        gender: selectedGender || undefined,
+    };
+
+    const formatGenderLabel = (gender: string) => {
+        switch (gender) {
+            case 'male':
+                return 'Masculin';
+            case 'female':
+                return 'Féminin';
+            case 'other':
+                return 'Autre';
+            default:
+                return gender;
+        }
+    };
 
     const handleDelete = (userId: string) => {
         setIsDeleting(true);
@@ -77,17 +101,20 @@ export default function Index({ users, message, filters }: Readonly<IndexProps>)
     };
 
     const handleSearch = () => {
-        router.get(route('users.index'), { search: searchQuery }, { 
+        router.get(route('users.index'), currentFilters, {
             preserveScroll: true,
-            replace: true 
+            replace: true
         });
     };
 
-    const handleClearSearch = () => {
+    const handleResetFilters = () => {
         setSearchQuery('');
-        router.get(route('users.index'), {}, { 
+        setSelectedRole('');
+        setSelectedGender('');
+
+        router.get(route('users.index'), {}, {
             preserveScroll: true,
-            replace: true 
+            replace: true
         });
     };
 
@@ -176,8 +203,8 @@ export default function Index({ users, message, filters }: Readonly<IndexProps>)
                 {/* Barre de recherche améliorée */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-100">
                     <div className="p-4">
-                        <div className="flex items-center gap-3">
-                            <div className="flex-1 relative group">
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
+                            <div className="lg:col-span-6 relative group">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-400 group-focus-within:text-blue-600 transition" />
                                 <Input
                                     type="text"
@@ -189,24 +216,69 @@ export default function Index({ users, message, filters }: Readonly<IndexProps>)
                                 />
                                 {searchQuery && (
                                     <button
-                                        onClick={handleClearSearch}
+                                        onClick={() => setSearchQuery('')}
                                         className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
                                     >
                                         <X className="w-4 h-4" />
                                     </button>
                                 )}
                             </div>
+
+                            <div className="lg:col-span-2">
+                                <select
+                                    value={selectedRole}
+                                    onChange={(e) => setSelectedRole(e.target.value)}
+                                    className="w-full h-10 px-3 border border-gray-200 rounded-md bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-300"
+                                >
+                                    <option value="">Tous les rôles</option>
+                                    {roles.map((role) => (
+                                        <option key={role.id} value={role.id}>
+                                            {role.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="lg:col-span-2">
+                                <select
+                                    value={selectedGender}
+                                    onChange={(e) => setSelectedGender(e.target.value)}
+                                    className="w-full h-10 px-3 border border-gray-200 rounded-md bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-300"
+                                >
+                                    <option value="">Tous les genres</option>
+                                    <option value="male">Masculin</option>
+                                    <option value="female">Féminin</option>
+                                    <option value="other">Autre</option>
+                                </select>
+                            </div>
+
                             <Button
                                 onClick={handleSearch}
-                                className="bg-blue-600 hover:bg-blue-700 text-white gap-2 shrink-0 transition"
+                                className="lg:col-span-1 bg-blue-600 hover:bg-blue-700 text-white gap-2 shrink-0 transition"
                             >
                                 <Search className="w-4 h-4" />
-                                Rechercher
+                                Filtrer
+                            </Button>
+
+                            <Button
+                                variant="outline"
+                                onClick={handleResetFilters}
+                                className="lg:col-span-1 border-gray-300 text-gray-700 hover:bg-gray-50"
+                            >
+                                Réinitialiser
                             </Button>
                         </div>
-                        {searchQuery && (
+
+                        {(searchQuery || selectedRole || selectedGender) && (
                             <p className="text-sm text-gray-500 mt-3">
-                                Résultats pour : <span className="font-semibold text-gray-700">« {searchQuery} »</span>
+                                Filtres actifs
+                                {searchQuery && <span className="font-semibold text-gray-700"> • Recherche: « {searchQuery} »</span>}
+                                {selectedRole && <span className="font-semibold text-gray-700"> • Rôle sélectionné</span>}
+                                {selectedGender && (
+                                    <span className="font-semibold text-gray-700">
+                                        {' '}• Genre: {formatGenderLabel(selectedGender)}
+                                    </span>
+                                )}
                             </p>
                         )}
                     </div>
@@ -328,7 +400,9 @@ export default function Index({ users, message, filters }: Readonly<IndexProps>)
                                     disabled={users.current_page === 1}
                                     onClick={() => router.get(route('users.index'), { 
                                         page: users.current_page - 1, 
-                                        search: filters.search 
+                                        search: filters.search,
+                                        role: filters.role,
+                                        gender: filters.gender,
                                     }, { preserveScroll: true })}
                                     className="border-gray-300 text-gray-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
@@ -349,7 +423,9 @@ export default function Index({ users, message, filters }: Readonly<IndexProps>)
                                                 size="sm"
                                                 onClick={() => router.get(route('users.index'), { 
                                                     page, 
-                                                    search: filters.search 
+                                                    search: filters.search,
+                                                    role: filters.role,
+                                                    gender: filters.gender,
                                                 }, { preserveScroll: true })}
                                                 className={page === users.current_page 
                                                     ? 'bg-blue-600 hover:bg-blue-700 text-white' 
@@ -367,7 +443,9 @@ export default function Index({ users, message, filters }: Readonly<IndexProps>)
                                     disabled={users.current_page === users.last_page}
                                     onClick={() => router.get(route('users.index'), { 
                                         page: users.current_page + 1, 
-                                        search: filters.search 
+                                        search: filters.search,
+                                        role: filters.role,
+                                        gender: filters.gender,
                                     }, { preserveScroll: true })}
                                     className="border-gray-300 text-gray-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
