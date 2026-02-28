@@ -23,7 +23,7 @@ export default function Create({ roles }: Readonly<CreateProps>) {
         email: '',
         password: '',
         password_confirmation: '',
-        gender: 'M',
+        gender: 'male',
         birth_date: '',
         telephone: '',
         address: '',
@@ -130,8 +130,9 @@ export default function Create({ roles }: Readonly<CreateProps>) {
                                             onChange={(e) => setFormData(prev => ({ ...prev, gender: e.target.value }))}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         >
-                                            <option value="M">Masculin</option>
-                                            <option value="F">Féminin</option>
+                                            <option value="male">Masculin</option>
+                                            <option value="female">Féminin</option>
+                                            <option value="other">Autre</option>
                                         </select>
                                         {errors.gender && (
                                             <p className="text-red-600 text-sm mt-1">{errors.gender}</p>

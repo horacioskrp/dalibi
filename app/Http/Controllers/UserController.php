@@ -17,10 +17,21 @@ class UserController extends Controller
     public function index()
     {
         $query = User::query()->with('roles');
+        $roles = Role::select('id', 'name')->orderBy('name')->get();
+
+        $search = request('search');
+        $roleId = request('role');
+        $gender = request('gender');
+
+        $normalizedGender = match ($gender) {
+            'M' => 'male',
+            'F' => 'female',
+            'O' => 'other',
+            default => $gender,
+        };
 
         // Recherche par nom, email ou matricule
-        if (request('search')) {
-            $search = request('search');
+        if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('firstname', 'like', "%{$search}%")
                     ->orWhere('lastname', 'like', "%{$search}%")
@@ -29,12 +40,39 @@ class UserController extends Controller
             });
         }
 
+        if ($roleId) {
+            $query->whereHas('roles', function ($q) use ($roleId) {
+                $q->where('roles.id', $roleId);
+            });
+        }
+
+        if ($normalizedGender) {
+            $query->where(function ($q) use ($normalizedGender) {
+                $q->where('gender', $normalizedGender);
+
+                if ($normalizedGender === 'male') {
+                    $q->orWhere('gender', 'M');
+                }
+
+                if ($normalizedGender === 'female') {
+                    $q->orWhere('gender', 'F');
+                }
+
+                if ($normalizedGender === 'other') {
+                    $q->orWhere('gender', 'O');
+                }
+            });
+        }
+
         $users = $query->orderBy('created_at', 'desc')->paginate(10)->appends(request()->query());
 
         return Inertia::render('Administration/Users/Index', [
             'users' => $users,
+            'roles' => $roles,
             'filters' => [
-                'search' => request('search'),
+                'search' => $search,
+                'role' => $roleId,
+                'gender' => $normalizedGender,
             ],
         ]);
     }

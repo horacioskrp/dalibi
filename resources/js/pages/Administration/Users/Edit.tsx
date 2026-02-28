@@ -31,13 +31,20 @@ interface EditProps {
 }
 
 export default function Edit({ user, roles }: Readonly<EditProps>) {
+    const normalizeGender = (value: string) => {
+        if (value === 'M') return 'male';
+        if (value === 'F') return 'female';
+        if (value === 'O') return 'other';
+        return value;
+    };
+
     const [formData, setFormData] = useState({
         firstname: user.firstname,
         lastname: user.lastname,
         email: user.email,
         password: '',
         password_confirmation: '',
-        gender: user.gender,
+        gender: normalizeGender(user.gender),
         birth_date: user.birth_date || '',
         telephone: user.telephone || '',
         address: user.address || '',
@@ -144,8 +151,9 @@ export default function Edit({ user, roles }: Readonly<EditProps>) {
                                             onChange={(e) => setFormData(prev => ({ ...prev, gender: e.target.value }))}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         >
-                                            <option value="M">Masculin</option>
-                                            <option value="F">Féminin</option>
+                                            <option value="male">Masculin</option>
+                                            <option value="female">Féminin</option>
+                                            <option value="other">Autre</option>
                                         </select>
                                         {errors.gender && (
                                             <p className="text-red-600 text-sm mt-1">{errors.gender}</p>
