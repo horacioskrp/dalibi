@@ -69,6 +69,15 @@ export function route(name: string, params?: any): string {
             'users.edit': `/users/${params}/edit`,
             'users.update': `/users/${params}`,
             'users.destroy': `/users/${params}`,
+
+            // Subjects routes
+            'subjects.index': '/subjects',
+            'subjects.create': '/subjects/create',
+            'subjects.store': '/subjects',
+            'subjects.show': `/subjects/${params}`,
+            'subjects.edit': `/subjects/${params}/edit`,
+            'subjects.update': `/subjects/${params}`,
+            'subjects.destroy': `/subjects/${params}`,
             
             // Add more routes as needed
         };
