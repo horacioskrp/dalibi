@@ -1,4 +1,4 @@
-import { BookOpen, LayoutGrid, Layers, Settings, Tag, Users, Shield, Lock } from 'lucide-react';
+import { BookOpen, Calendar, GraduationCap, LayoutGrid, Layers, Settings, Tag, Users, Shield, Lock } from 'lucide-react';
 import { route } from '@/helpers/route';
 import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';
@@ -33,6 +33,16 @@ export const mainNavItems: NavItem[] = [
                 title: 'Matières',
                 href: route('subjects.index'),
                 icon: BookOpen,
+            },
+            {
+                title: 'Années académiques',
+                href: route('academic-years.index'),
+                icon: Calendar,
+            },
+            {
+                title: 'Niveaux',
+                href: route('levels.index'),
+                icon: GraduationCap,
             },
         ],
     },

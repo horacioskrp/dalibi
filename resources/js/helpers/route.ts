@@ -78,6 +78,24 @@ export function route(name: string, params?: any): string {
             'subjects.edit': `/subjects/${params}/edit`,
             'subjects.update': `/subjects/${params}`,
             'subjects.destroy': `/subjects/${params}`,
+
+            // Academic Years routes
+            'academic-years.index': '/academic-years',
+            'academic-years.create': '/academic-years/create',
+            'academic-years.store': '/academic-years',
+            'academic-years.show': `/academic-years/${params}`,
+            'academic-years.edit': `/academic-years/${params}/edit`,
+            'academic-years.update': `/academic-years/${params}`,
+            'academic-years.destroy': `/academic-years/${params}`,
+
+            // Levels routes
+            'levels.index': '/levels',
+            'levels.create': '/levels/create',
+            'levels.store': '/levels',
+            'levels.show': `/levels/${params}`,
+            'levels.edit': `/levels/${params}/edit`,
+            'levels.update': `/levels/${params}`,
+            'levels.destroy': `/levels/${params}`,
             
             // Add more routes as needed
         };

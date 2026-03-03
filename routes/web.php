@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\AcademicYearController;
 use App\Http\Controllers\ClassroomController;
 use App\Http\Controllers\ClassroomTypeController;
+use App\Http\Controllers\LevelController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SchoolController;
@@ -26,7 +28,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('schools', SchoolController::class);
     Route::resource('classrooms', ClassroomController::class);
     Route::resource('classroom-types', ClassroomTypeController::class);
+    Route::resource('levels', LevelController::class);
     Route::resource('subjects', SubjectController::class);
+    Route::resource('academic-years', AcademicYearController::class);
 
     // Administration Routes
     Route::resource('roles', RoleController::class);
