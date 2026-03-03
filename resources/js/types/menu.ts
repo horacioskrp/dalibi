@@ -1,4 +1,4 @@
-import { BookOpen, Calendar, Clock, GraduationCap, LayoutGrid, Layers, Settings, Tag, Users, Shield, Lock } from 'lucide-react';
+import { BookOpen, Calendar, Clock, ClipboardList, GraduationCap, LayoutGrid, Layers, Settings, Tag, Users, Shield, Lock } from 'lucide-react';
 import { route } from '@/helpers/route';
 import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';
@@ -70,6 +70,11 @@ export const mainNavItems: NavItem[] = [
                 title: 'Permissions',
                 href: route('permissions.index'),
                 icon: Lock,
+            },
+            {
+                title: 'Affectations',
+                href: route('subject-assignments.index'),
+                icon: ClipboardList,
             },
         ],
     },
