@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
@@ -60,6 +61,16 @@ class User extends Authenticatable
             'two_factor_confirmed_at' => 'datetime',
             'birth_date' => 'date',
         ];
+    }
+
+    /**
+     * Get the user's full name
+     */
+    protected function name(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => "{$this->firstname} {$this->lastname}",
+        );
     }
 
     /**
