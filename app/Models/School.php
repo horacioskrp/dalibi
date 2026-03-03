@@ -28,14 +28,6 @@ class School extends Model
     ];
 
     /**
-     * Get all academic years for the school.
-     */
-    public function academicYears(): HasMany
-    {
-        return $this->hasMany(AcademicYear::class);
-    }
-
-    /**
      * Get all subjects for the school.
      */
     public function subjects(): HasMany
