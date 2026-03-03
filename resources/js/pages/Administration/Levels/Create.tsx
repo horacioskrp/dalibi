@@ -5,11 +5,9 @@ import { Button } from '@/components/ui/button';
 import { route } from '@/helpers/route';
 import AppLayout from '@/layouts/app-layout';
 
-const LEVEL_OPTIONS = ['maternelle', 'primaire', 'college', 'lycee'];
-
 export default function Create() {
     const [formData, setFormData] = useState({
-        name: 'maternelle',
+        name: '',
         description: '',
     });
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -55,20 +53,16 @@ export default function Create() {
                         <div className="space-y-4">
                             <div>
                                 <label htmlFor="name" className="block text-sm font-medium text-gray-900 mb-2">
-                                    Niveau *
+                                    Nom du niveau *
                                 </label>
-                                <select
+                                <input
+                                    type="text"
                                     id="name"
                                     value={formData.name}
                                     onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                                    placeholder="Ex: maternelle, primaire, collège, lycée..."
                                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.name ? 'border-red-500' : 'border-gray-300'}`}
-                                >
-                                    {LEVEL_OPTIONS.map((option) => (
-                                        <option key={option} value={option}>
-                                            {option.charAt(0).toUpperCase() + option.slice(1)}
-                                        </option>
-                                    ))}
-                                </select>
+                                />
                                 {errors.name && <p className="text-red-600 text-sm mt-1">{errors.name}</p>}
                             </div>
 

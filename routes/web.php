@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AcademicPeriodController;
 use App\Http\Controllers\AcademicYearController;
 use App\Http\Controllers\ClassroomController;
 use App\Http\Controllers\ClassroomTypeController;
@@ -31,6 +32,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('levels', LevelController::class);
     Route::resource('subjects', SubjectController::class);
     Route::resource('academic-years', AcademicYearController::class);
+    Route::resource('academic-periods', AcademicPeriodController::class);
 
     // Administration Routes
     Route::resource('roles', RoleController::class);
