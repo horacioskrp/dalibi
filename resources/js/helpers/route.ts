@@ -107,6 +107,24 @@ export function route(name: string, params?: any): string {
         'subject-assignments.edit': `/subject-assignments/${params}/edit`,
         'subject-assignments.update': `/subject-assignments/${params}`,
         'subject-assignments.destroy': `/subject-assignments/${params}`,
+
+        // Schoolings routes
+        'schoolings.index': '/schoolings',
+        'schoolings.create': '/schoolings/create',
+        'schoolings.store': '/schoolings',
+        'schoolings.show': `/schoolings/${params}`,
+        'schoolings.edit': `/schoolings/${params}/edit`,
+        'schoolings.update': `/schoolings/${params}`,
+        'schoolings.destroy': `/schoolings/${params}`,
+
+        // Students routes
+        'students.index': '/students',
+        'students.create': '/students/create',
+        'students.store': '/students',
+        'students.show': `/students/${params}`,
+        'students.edit': `/students/${params}/edit`,
+        'students.update': `/students/${params}`,
+        'students.destroy': `/students/${params}`,
     };
 
     try {
