@@ -29,8 +29,8 @@ interface Subject {
 }
 
 interface Teacher {
-    firstname: ReactNode;
-    lastname: ReactNode;
+    firstname: string;
+    lastname: string;
     id: string;
     name: string;
 }
