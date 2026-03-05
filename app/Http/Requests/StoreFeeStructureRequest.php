@@ -1,0 +1,54 @@
+<?php
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class StoreFeeStructureRequest extends FormRequest
+{
+    /**
+     * Determine if the user is authorized to make this request.
+     */
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     */
+    public function rules(): array
+    {
+        return [
+            'academic_year_id' => ['required', 'uuid', 'exists:academic_years,id'],
+            'fee_category_id' => ['required', 'uuid', 'exists:fee_categories,id'],
+            'class_id' => ['required', 'uuid', 'exists:classes,id'],
+            'amount' => ['required', 'numeric', 'min:0'],
+        ];
+    }
+
+    /**
+     * Get custom messages for validator errors.
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'academic_year_id.required' => 'L\'année académique est requise.',
+            'academic_year_id.uuid' => 'L\'année académique doit être un UUID valide.',
+            'academic_year_id.exists' => 'L\'année académique sélectionnée n\'existe pas.',
+            'fee_category_id.required' => 'La catégorie de frais est requise.',
+            'fee_category_id.uuid' => 'La catégorie de frais doit être un UUID valide.',
+            'fee_category_id.exists' => 'La catégorie de frais sélectionnée n\'existe pas.',
+            'class_id.required' => 'La classe est requise.',
+            'class_id.uuid' => 'La classe doit être un UUID valide.',
+            'class_id.exists' => 'La classe sélectionnée n\'existe pas.',
+            'amount.required' => 'Le montant est requis.',
+            'amount.numeric' => 'Le montant doit être un nombre.',
+            'amount.min' => 'Le montant doit être supérieur ou égal à 0.',
+        ];
+    }
+}
