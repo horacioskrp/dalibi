@@ -46,16 +46,26 @@ class EnrollmentController extends Controller
             $query->where('status', $request->string('status')->toString());
         }
 
+        if ($request->filled('academic_year_id')) {
+            $query->where('academic_year_id', $request->string('academic_year_id')->toString());
+        }
+
+        if ($request->filled('class_id')) {
+            $query->where('class_id', $request->string('class_id')->toString());
+        }
+
         $enrollments = $query->latest()->paginate(10)->withQueryString();
 
         return Inertia::render('Enrollments/Index', [
             'enrollments' => $enrollments,
-            'filters' => $request->only(['search', 'status']),
+            'filters' => $request->only(['search', 'status', 'academic_year_id', 'class_id']),
             'stats' => [
                 'total' => Enrollment::count(),
                 'paid' => Enrollment::where('status', 'paid')->count(),
                 'unpaid' => Enrollment::where('status', 'unpaid')->count(),
             ],
+            'academicYears' => AcademicYear::orderByDesc('year')->get(['id', 'year']),
+            'classrooms' => Classroom::where('active', true)->orderBy('name')->get(['id', 'name', 'code']),
         ]);
     }
 
