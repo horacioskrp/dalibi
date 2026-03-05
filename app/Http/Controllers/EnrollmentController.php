@@ -86,9 +86,9 @@ class EnrollmentController extends Controller
         $data['enrollment_code'] = $data['enrollment_code'] ?: $this->generateEnrollmentCode();
         $data['enrolled_by'] = auth()->id();
 
-        Enrollment::create($data);
+        $enrollment = Enrollment::create($data);
 
-        return redirect()->route('enrollments.index')
+        return redirect()->route('enrollments.show', $enrollment->id)
             ->with('success', 'Inscription créée avec succès.');
     }
 
@@ -97,6 +97,15 @@ class EnrollmentController extends Controller
         $enrollment->load(['school', 'student', 'classroom', 'academicYear', 'schooling', 'enrolledBy']);
 
         return Inertia::render('Enrollments/Show', [
+            'enrollment' => $enrollment,
+        ]);
+    }
+
+    public function receipt(Enrollment $enrollment): Response
+    {
+        $enrollment->load(['school', 'student', 'classroom', 'academicYear', 'schooling', 'enrolledBy']);
+
+        return Inertia::render('Enrollments/Receipt', [
             'enrollment' => $enrollment,
         ]);
     }

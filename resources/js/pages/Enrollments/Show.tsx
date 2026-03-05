@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { route } from '@/helpers/route';
 import AppLayout from '@/layouts/app-layout';
@@ -88,9 +88,15 @@ export default function Show({ enrollment }: Readonly<ShowProps>) {
                             <h1 className="text-3xl font-bold text-gray-900">Détail de l'inscription</h1>
                         </div>
                     </div>
-                    <Button onClick={() => router.get(route('enrollments.edit', enrollment.id))} className="bg-blue-600 hover:bg-blue-700">
-                        Modifier
-                    </Button>
+                    <div className="flex gap-3">
+                        <Button onClick={() => window.open(route('enrollments.receipt', enrollment.id), '_blank')} className="bg-green-600 hover:bg-green-700 gap-2">
+                            <Printer className="w-4 h-4" />
+                            Imprimer le reçu
+                        </Button>
+                        <Button onClick={() => router.get(route('enrollments.edit', enrollment.id))} className="bg-blue-600 hover:bg-blue-700">
+                            Modifier
+                        </Button>
+                    </div>
                 </div>
 
                 <div className="bg-white rounded-lg p-6 shadow-sm grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -141,15 +147,9 @@ export default function Show({ enrollment }: Readonly<ShowProps>) {
                     </div>
 
                     <div>
-                        <p className="text-sm text-gray-500">Frais d'inscription</p>
-                        <p className="font-medium text-blue-700 mt-1">
+                        <p className="text-sm text-gray-500">Montant d'inscription payé</p>
+                        <p className="font-bold text-blue-700 mt-1 text-lg">
                             {enrollment.schooling ? formatMoney(enrollment.schooling.inscription_fee) : '-'}
-                        </p>
-                    </div>
-                    <div>
-                        <p className="text-sm text-gray-500">Frais de scolarité</p>
-                        <p className="font-medium text-green-700 mt-1">
-                            {enrollment.schooling ? formatMoney(enrollment.schooling.school_fee) : '-'}
                         </p>
                     </div>
 
