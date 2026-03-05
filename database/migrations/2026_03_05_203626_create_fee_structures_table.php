@@ -12,7 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('fee_structures', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
+            $table->foreignUuid('academic_year_id')->constrained('academic_years')->onDelete('cascade');
+            $table->foreignUuid('fee_category_id')->constrained('fee_categories')->onDelete('cascade');
+            $table->foreignUuid('class_id')->constrained('classes')->onDelete('cascade');
+            $table->double('amount')->default(0);
             $table->timestamps();
         });
     }

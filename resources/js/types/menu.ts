@@ -1,4 +1,4 @@
-import { BookOpen, Calendar, Clock, ClipboardList, GraduationCap, LayoutGrid, Layers, Settings, Tag, Users, Shield, Lock, Wallet, Percent } from 'lucide-react';
+import { BookOpen, Calendar, Clock, ClipboardList, GraduationCap, LayoutGrid, Layers, Settings, Tag, Users, Shield, Lock, Wallet, Percent, DollarSign } from 'lucide-react';
 import { route } from '@/helpers/route';
 import type { NavItem } from '@/types';
 
@@ -74,6 +74,11 @@ export const mainNavItems: NavItem[] = [
                 title: 'Catégories de frais',
                 href: route('fee-categories.index'),
                 icon: Percent,
+            },
+            {
+                title: 'Structures de frais',
+                href: route('fee-structures.index'),
+                icon: DollarSign,
             },
         ],
     },
