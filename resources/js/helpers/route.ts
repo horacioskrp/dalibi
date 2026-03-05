@@ -125,6 +125,15 @@ export function route(name: string, params?: any): string {
         'students.edit': `/students/${params}/edit`,
         'students.update': `/students/${params}`,
         'students.destroy': `/students/${params}`,
+
+        // Enrollments routes
+        'enrollments.index': '/enrollments',
+        'enrollments.create': '/enrollments/create',
+        'enrollments.store': '/enrollments',
+        'enrollments.show': `/enrollments/${params}`,
+        'enrollments.edit': `/enrollments/${params}/edit`,
+        'enrollments.update': `/enrollments/${params}`,
+        'enrollments.destroy': `/enrollments/${params}`,
     };
 
     try {
