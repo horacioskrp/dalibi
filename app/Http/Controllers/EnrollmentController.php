@@ -76,7 +76,7 @@ class EnrollmentController extends Controller
             'students' => Student::where('active', true)->orderBy('firstname')->orderBy('lastname')->get(['id', 'firstname', 'lastname', 'matricule']),
             'classrooms' => Classroom::where('active', true)->orderBy('name')->get(['id', 'name', 'code']),
             'academicYears' => AcademicYear::orderByDesc('year')->get(['id', 'year', 'active']),
-            'schoolings' => Schooling::with('classroom:id,name,code')->orderByDesc('created_at')->get(['id', 'class_id', 'inscription_fee', 'school_fee']),
+            'schoolings' => Schooling::with('classroom:id,name,code')->orderByDesc('created_at')->get(['id', 'class_id', 'inscription_fee', 'school_fee', 'created_at']),
         ]);
     }
 
@@ -130,7 +130,7 @@ class EnrollmentController extends Controller
             'students' => Student::where('active', true)->orderBy('firstname')->orderBy('lastname')->get(['id', 'firstname', 'lastname', 'matricule']),
             'classrooms' => Classroom::where('active', true)->orderBy('name')->get(['id', 'name', 'code']),
             'academicYears' => AcademicYear::orderByDesc('year')->get(['id', 'year', 'active']),
-            'schoolings' => Schooling::with('classroom:id,name,code')->orderByDesc('created_at')->get(['id', 'class_id', 'inscription_fee', 'school_fee']),
+            'schoolings' => Schooling::with('classroom:id,name,code')->orderByDesc('created_at')->get(['id', 'class_id', 'inscription_fee', 'school_fee', 'created_at']),
         ]);
     }
 
