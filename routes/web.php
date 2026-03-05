@@ -40,6 +40,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('schoolings', SchoolingController::class);
     Route::resource('students', StudentController::class);
     Route::resource('enrollments', EnrollmentController::class);
+    Route::get('enrollments/{enrollment}/receipt', [EnrollmentController::class, 'receipt'])->name('enrollments.receipt');
     Route::resource('subject-assignments', SubjectAssignmentController::class);
 
     // Administration Routes

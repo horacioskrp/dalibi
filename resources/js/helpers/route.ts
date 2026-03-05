@@ -131,6 +131,7 @@ export function route(name: string, params?: any): string {
         'enrollments.create': '/enrollments/create',
         'enrollments.store': '/enrollments',
         'enrollments.show': `/enrollments/${params}`,
+        'enrollments.receipt': `/enrollments/${params}/receipt`,
         'enrollments.edit': `/enrollments/${params}/edit`,
         'enrollments.update': `/enrollments/${params}`,
         'enrollments.destroy': `/enrollments/${params}`,

@@ -9,19 +9,18 @@ import {
 import { UserInfo } from '@/components/user-info';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
 import type { User } from '@/types';
-import { logout } from '@/routes';
 import { edit } from '@/routes/profile';
 
 type Props = {
     user: User;
 };
 
-export function UserMenuContent({ user }: Props) {
+export function UserMenuContent({ user }: Readonly<Props>) {
     const cleanup = useMobileNavigation();
 
     const handleLogout = () => {
         cleanup();
-        router.flushAll();
+        router.post('/logout');
     };
 
     return (
@@ -47,16 +46,14 @@ export function UserMenuContent({ user }: Props) {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-                <Link
-                    className="block w-full cursor-pointer"
-                    href={logout()}
-                    as="button"
+                <button
+                    className="block w-full cursor-pointer text-left"
                     onClick={handleLogout}
                     data-test="logout-button"
                 >
-                    <LogOut className="mr-2" />
+                    <LogOut className="mr-2 inline" />
                     Log out
-                </Link>
+                </button>
             </DropdownMenuItem>
         </>
     );

@@ -1,12 +1,11 @@
 import { BookOpen, Calendar, Clock, ClipboardList, GraduationCap, LayoutGrid, Layers, Settings, Tag, Users, Shield, Lock, Wallet } from 'lucide-react';
 import { route } from '@/helpers/route';
-import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';
 
 export const mainNavItems: NavItem[] = [
     {
         title: 'Tableau de bord',
-        href: dashboard(),
+        href: '/dashboard',
         icon: LayoutGrid,
     },
     {
