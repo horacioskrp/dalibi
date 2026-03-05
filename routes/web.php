@@ -4,6 +4,7 @@ use App\Http\Controllers\AcademicPeriodController;
 use App\Http\Controllers\AcademicYearController;
 use App\Http\Controllers\ClassroomController;
 use App\Http\Controllers\ClassroomTypeController;
+use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\LevelController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RoleController;
@@ -38,6 +39,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('academic-periods', AcademicPeriodController::class);
     Route::resource('schoolings', SchoolingController::class);
     Route::resource('students', StudentController::class);
+    Route::resource('enrollments', EnrollmentController::class);
     Route::resource('subject-assignments', SubjectAssignmentController::class);
 
     // Administration Routes

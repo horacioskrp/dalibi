@@ -19,6 +19,11 @@ export const mainNavItems: NavItem[] = [
                 href: route('students.index'),
                 icon: Users,
             },
+            {
+                title: 'Inscriptions',
+                href: route('enrollments.index'),
+                icon: ClipboardList,
+            },
         ],
     },
     {
