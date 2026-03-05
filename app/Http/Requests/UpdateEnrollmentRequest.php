@@ -25,6 +25,8 @@ class UpdateEnrollmentRequest extends FormRequest
             'schooling_id' => ['nullable', 'uuid', 'exists:schoolings,id'],
             'enrollment_date' => ['required', 'date'],
             'status' => ['required', Rule::in(['paid', 'unpaid'])],
+            'discount_percentage' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'amount_to_pay' => ['nullable', 'numeric', 'min:0'],
         ];
     }
 
@@ -43,6 +45,11 @@ class UpdateEnrollmentRequest extends FormRequest
             'schooling_id.exists' => 'Le tarif sélectionné est invalide.',
             'enrollment_date.required' => "La date d'inscription est obligatoire.",
             'status.required' => 'Le statut est obligatoire.',
+            'discount_percentage.numeric' => 'Le pourcentage de réduction doit être un nombre.',
+            'discount_percentage.min' => 'Le pourcentage de réduction ne peut pas être négatif.',
+            'discount_percentage.max' => 'Le pourcentage de réduction ne peut pas dépasser 100%.',
+            'amount_to_pay.numeric' => 'Le montant à payer doit être un nombre.',
+            'amount_to_pay.min' => 'Le montant à payer ne peut pas être négatif.',
         ];
     }
 }

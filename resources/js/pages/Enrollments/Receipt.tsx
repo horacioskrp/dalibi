@@ -35,6 +35,8 @@ interface Enrollment {
     enrollment_code: string;
     enrollment_date: string;
     status: 'paid' | 'unpaid';
+    discount_percentage?: number;
+    amount_to_pay?: number;
     created_at: string;
     school?: School | null;
     student?: Student | null;
@@ -54,6 +56,13 @@ const formatMoney = (value: number) =>
 const ReceiptContent = ({ enrollment }: { enrollment: Enrollment }) => {
     const enrolledByName = [enrollment.enrolled_by?.firstname, enrollment.enrolled_by?.lastname].filter(Boolean).join(' ');
     const studentName = enrollment.student ? `${enrollment.student.firstname} ${enrollment.student.lastname}` : '-';
+    
+    const getAmountToPay = (): string => {
+        if (enrollment.amount_to_pay !== null && enrollment.amount_to_pay !== undefined) {
+            return formatMoney(enrollment.amount_to_pay);
+        }
+        return enrollment.schooling ? formatMoney(enrollment.schooling.inscription_fee) : '-';
+    };
 
     return (
         <div className="w-full max-w-2xl mx-auto p-0">
@@ -117,10 +126,18 @@ const ReceiptContent = ({ enrollment }: { enrollment: Enrollment }) => {
                                         {enrollment.schooling ? formatMoney(enrollment.schooling.inscription_fee) : '-'}
                                     </p>
                                 </div>
+                                {(enrollment.discount_percentage ?? 0) > 0 && (
+                                    <div className="flex justify-between items-center text-orange-700">
+                                        <p className="text-sm font-semibold">Réduction ({enrollment.discount_percentage}%)</p>
+                                        <p className="text-lg font-bold">
+                                            -{enrollment.schooling && enrollment.discount_percentage ? formatMoney(enrollment.schooling.inscription_fee * enrollment.discount_percentage / 100) : '-'}
+                                        </p>
+                                    </div>
+                                )}
                                 <div className="border-t-2 border-gray-900 pt-3 flex justify-between items-center">
                                     <p className="text-base font-bold text-gray-900">MONTANT PAYÉ</p>
                                     <p className="text-2xl font-bold text-blue-700">
-                                        {enrollment.schooling ? formatMoney(enrollment.schooling.inscription_fee) : '-'}
+                                        {getAmountToPay()}
                                     </p>
                                 </div>
                             </div>
@@ -203,10 +220,18 @@ const ReceiptContent = ({ enrollment }: { enrollment: Enrollment }) => {
                                         {enrollment.schooling ? formatMoney(enrollment.schooling.inscription_fee) : '-'}
                                     </p>
                                 </div>
+                                {(enrollment.discount_percentage ?? 0) > 0 && (
+                                    <div className="flex justify-between items-center text-orange-700">
+                                        <p className="text-sm font-semibold">Réduction ({enrollment.discount_percentage}%)</p>
+                                        <p className="text-lg font-bold">
+                                            -{enrollment.schooling && enrollment.discount_percentage ? formatMoney(enrollment.schooling.inscription_fee * enrollment.discount_percentage / 100) : '-'}
+                                        </p>
+                                    </div>
+                                )}
                                 <div className="border-t-2 border-gray-900 pt-3 flex justify-between items-center">
                                     <p className="text-base font-bold text-gray-900">MONTANT PAYÉ</p>
                                     <p className="text-2xl font-bold text-blue-700">
-                                        {enrollment.schooling ? formatMoney(enrollment.schooling.inscription_fee) : '-'}
+                                        {getAmountToPay()}
                                     </p>
                                 </div>
                             </div>

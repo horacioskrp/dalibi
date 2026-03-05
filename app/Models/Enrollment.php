@@ -21,10 +21,14 @@ class Enrollment extends Model
         'enrolled_by',
         'enrollment_date',
         'status',
+        'discount_percentage',
+        'amount_to_pay',
     ];
 
     protected $casts = [
         'enrollment_date' => 'date',
+        'discount_percentage' => 'decimal:2',
+        'amount_to_pay' => 'decimal:2',
     ];
 
     public function school(): BelongsTo
