@@ -86,6 +86,16 @@ class EnrollmentController extends Controller
         $data['enrollment_code'] = $data['enrollment_code'] ?: $this->generateEnrollmentCode();
         $data['enrolled_by'] = auth()->id();
 
+        // Calculate amount_to_pay based on schooling inscription_fee and discount
+        if (!empty($data['schooling_id'])) {
+            $schooling = Schooling::find($data['schooling_id']);
+            if ($schooling) {
+                $inscriptionFee = $schooling->inscription_fee;
+                $discountPercentage = $data['discount_percentage'] ?? 0;
+                $data['amount_to_pay'] = $inscriptionFee - ($inscriptionFee * $discountPercentage / 100);
+            }
+        }
+
         $enrollment = Enrollment::create($data);
 
         return redirect()->route('enrollments.show', $enrollment->id)
@@ -130,6 +140,16 @@ class EnrollmentController extends Controller
 
         if (empty($data['enrollment_code'])) {
             $data['enrollment_code'] = $enrollment->enrollment_code ?: $this->generateEnrollmentCode();
+        }
+
+        // Calculate amount_to_pay based on schooling inscription_fee and discount
+        if (!empty($data['schooling_id'])) {
+            $schooling = Schooling::find($data['schooling_id']);
+            if ($schooling) {
+                $inscriptionFee = $schooling->inscription_fee;
+                $discountPercentage = $data['discount_percentage'] ?? 0;
+                $data['amount_to_pay'] = $inscriptionFee - ($inscriptionFee * $discountPercentage / 100);
+            }
         }
 
         $enrollment->update($data);

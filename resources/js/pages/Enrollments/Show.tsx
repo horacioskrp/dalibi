@@ -40,6 +40,8 @@ interface Enrollment {
     enrollment_code: string;
     enrollment_date: string;
     status: 'paid' | 'unpaid';
+    discount_percentage?: number;
+    amount_to_pay?: number;
     created_at: string;
     updated_at: string;
     school?: School | null;
@@ -112,6 +114,10 @@ export default function Show({ enrollment }: Readonly<ShowProps>) {
                             </span>
                         </p>
                     </div>
+                    <div>
+                        <p className="text-sm text-gray-500">Pourcentage de réduction</p>
+                        <p className="font-medium text-gray-900 mt-1">{enrollment.discount_percentage ?? 0}%</p>
+                    </div>
 
                     <div>
                         <p className="text-sm text-gray-500">École</p>
@@ -150,6 +156,12 @@ export default function Show({ enrollment }: Readonly<ShowProps>) {
                         <p className="text-sm text-gray-500">Montant d'inscription payé</p>
                         <p className="font-bold text-blue-700 mt-1 text-lg">
                             {enrollment.schooling ? formatMoney(enrollment.schooling.inscription_fee) : '-'}
+                        </p>
+                    </div>
+                    <div>
+                        <p className="text-sm text-gray-500">Montant à payer (après réduction)</p>
+                        <p className="font-bold text-green-700 mt-1 text-lg">
+                            {enrollment.amount_to_pay !== null && enrollment.amount_to_pay !== undefined ? formatMoney(enrollment.amount_to_pay) : '-'}
                         </p>
                     </div>
 

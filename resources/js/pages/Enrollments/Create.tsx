@@ -60,9 +60,23 @@ export default function Create({ schools, students, classrooms, academicYears, s
         schooling_id: '',
         enrollment_date: new Date().toISOString().slice(0, 10),
         status: 'paid',
+        discount_percentage: 0,
+        amount_to_pay: 0,
     });
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const calculateAmountToPay = () => {
+        if (formData.schooling_id) {
+            const schooling = schoolings.find((s) => s.id === formData.schooling_id);
+            if (schooling) {
+                const inscriptionFee = schooling.inscription_fee;
+                const discountPercentage = formData.discount_percentage || 0;
+                const amountToPay = inscriptionFee - (inscriptionFee * discountPercentage / 100);
+                setFormData((prev) => ({ ...prev, amount_to_pay: Math.max(0, amountToPay) }));
+            }
+        }
+    };
 
     const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -189,7 +203,10 @@ export default function Create({ schools, students, classrooms, academicYears, s
                             <select
                                 id="schooling_id"
                                 value={formData.schooling_id}
-                                onChange={(event) => setFormData((prev) => ({ ...prev, schooling_id: event.target.value }))}
+                                onChange={(event) => {
+                                    setFormData((prev) => ({ ...prev, schooling_id: event.target.value }));
+                                    setTimeout(() => calculateAmountToPay(), 0);
+                                }}
                                 className={`w-full px-3 py-2 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.schooling_id ? 'border-red-500' : 'border-gray-300'}`}
                             >
                                 <option value="">Aucune</option>
@@ -226,6 +243,37 @@ export default function Create({ schools, students, classrooms, academicYears, s
                                 <option value="unpaid">Non payé</option>
                             </select>
                             {errors.status && <p className="text-red-600 text-sm mt-1">{errors.status}</p>}
+                        </div>
+
+                        <div>
+                            <label htmlFor="discount_percentage" className="block text-sm font-medium text-gray-900 mb-2">Pourcentage de réduction (%)</label>
+                            <Input
+                                id="discount_percentage"
+                                type="number"
+                                value={formData.discount_percentage}
+                                onChange={(event) => {
+                                    setFormData((prev) => ({ ...prev, discount_percentage: Number.parseFloat(event.target.value) || 0 }));
+                                    setTimeout(() => calculateAmountToPay(), 0);
+                                }}
+                                min="0"
+                                max="100"
+                                step="0.01"
+                                className={errors.discount_percentage ? 'border-red-500' : 'border-gray-300'}
+                                placeholder="0"
+                            />
+                            {errors.discount_percentage && <p className="text-red-600 text-sm mt-1">{errors.discount_percentage}</p>}
+                        </div>
+
+                        <div>
+                            <label htmlFor="amount_to_pay" className="block text-sm font-medium text-gray-900 mb-2">Montant à payer</label>
+                            <Input
+                                id="amount_to_pay"
+                                type="text"
+                                value={formData.amount_to_pay.toFixed(2)}
+                                readOnly
+                                className="border-gray-300 bg-gray-50 cursor-not-allowed"
+                                placeholder="Calculé automatiquement"
+                            />
                         </div>
                     </div>
 
