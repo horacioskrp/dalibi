@@ -5,6 +5,7 @@ use App\Http\Controllers\AcademicYearController;
 use App\Http\Controllers\ClassroomController;
 use App\Http\Controllers\ClassroomTypeController;
 use App\Http\Controllers\EnrollmentController;
+use App\Http\Controllers\FeeCategorieController;
 use App\Http\Controllers\LevelController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RoleController;
@@ -38,6 +39,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('academic-years', AcademicYearController::class);
     Route::resource('academic-periods', AcademicPeriodController::class);
     Route::resource('schoolings', SchoolingController::class);
+    Route::resource('fee-categories', FeeCategorieController::class);
     Route::resource('students', StudentController::class);
     Route::resource('enrollments', EnrollmentController::class);
     Route::get('enrollments/{enrollment}/receipt', [EnrollmentController::class, 'receipt'])->name('enrollments.receipt');

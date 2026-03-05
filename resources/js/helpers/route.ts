@@ -117,6 +117,15 @@ export function route(name: string, params?: any): string {
         'schoolings.update': `/schoolings/${params}`,
         'schoolings.destroy': `/schoolings/${params}`,
 
+        // Fee Categories routes
+        'fee-categories.index': '/fee-categories',
+        'fee-categories.create': '/fee-categories/create',
+        'fee-categories.store': '/fee-categories',
+        'fee-categories.show': `/fee-categories/${params}`,
+        'fee-categories.edit': `/fee-categories/${params}/edit`,
+        'fee-categories.update': `/fee-categories/${params}`,
+        'fee-categories.destroy': `/fee-categories/${params}`,
+
         // Students routes
         'students.index': '/students',
         'students.create': '/students/create',

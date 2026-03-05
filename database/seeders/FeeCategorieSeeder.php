@@ -1,0 +1,46 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\FeeCategorie;
+use Illuminate\Database\Seeder;
+
+class FeeCategorieSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     */
+    public function run(): void
+    {
+        $categories = [
+            [
+                'name' => 'Inscription',
+                'description' => 'Frais d\'inscription pour l\'année scolaire',
+            ],
+            [
+                'name' => 'Écolage',
+                'description' => 'Frais de scolarité mensuels ou annuels',
+            ],
+            [
+                'name' => 'Tenue scolaire',
+                'description' => 'Frais pour l\'uniforme et les tenues scolaires',
+            ],
+            [
+                'name' => 'Transport',
+                'description' => 'Frais de transport scolaire',
+            ],
+            [
+                'name' => 'Cantine',
+                'description' => 'Frais de restauration et de cantine',
+            ],
+            [
+                'name' => 'Activité',
+                'description' => 'Frais pour les activités extrascolaires et parascolaires',
+            ],
+        ];
+
+        foreach ($categories as $category) {
+            FeeCategorie::create($category);
+        }
+    }
+}

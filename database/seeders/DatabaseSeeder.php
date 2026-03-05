@@ -19,5 +19,8 @@ class DatabaseSeeder extends Seeder
 
         // Then create demo school data
         $this->call(SchoolDemoSeeder::class);
+
+        // Create fee categories
+        $this->call(FeeCategorieSeeder::class);
     }
 }

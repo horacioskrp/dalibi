@@ -34,6 +34,7 @@ interface AcademicYear {
 
 interface Schooling {
     id: string;
+    class_id: string;
     inscription_fee: number;
     school_fee: number;
     classroom?: {
@@ -65,6 +66,11 @@ export default function Create({ schools, students, classrooms, academicYears, s
     });
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Filtrer les schoolings basés sur la classe sélectionnée
+    const filteredSchoolings = formData.class_id 
+        ? schoolings.filter((s) => s.class_id === formData.class_id)
+        : schoolings;
 
     const calculateAmountToPay = () => {
         if (formData.schooling_id) {
@@ -155,7 +161,35 @@ export default function Create({ schools, students, classrooms, academicYears, s
                             <select
                                 id="class_id"
                                 value={formData.class_id}
-                                onChange={(event) => setFormData((prev) => ({ ...prev, class_id: event.target.value }))}
+                                onChange={(event) => {
+                                    const selectedClassId = event.target.value;
+                                    setFormData((prev) => ({ ...prev, class_id: selectedClassId }));
+                                    
+                                    // Sélectionner automatiquement le schooling pour cette classe
+                                    if (selectedClassId) {
+                                        const classSchoolings = schoolings.filter((s) => s.class_id === selectedClassId);
+                                        if (classSchoolings.length > 0) {
+                                            const selectedSchooling = classSchoolings[0]; // Prendre le premier (plus récent)
+                                            setFormData((prev) => ({ 
+                                                ...prev, 
+                                                class_id: selectedClassId,
+                                                schooling_id: selectedSchooling.id 
+                                            }));
+                                            
+                                            // Recalculer le montant
+                                            setTimeout(() => {
+                                                const inscriptionFee = selectedSchooling.inscription_fee;
+                                                const discountPercentage = formData.discount_percentage || 0;
+                                                const amountToPay = inscriptionFee - (inscriptionFee * discountPercentage / 100);
+                                                setFormData((prev) => ({ ...prev, amount_to_pay: Math.max(0, amountToPay) }));
+                                            }, 0);
+                                        } else {
+                                            setFormData((prev) => ({ ...prev, class_id: selectedClassId, schooling_id: '' }));
+                                        }
+                                    } else {
+                                        setFormData((prev) => ({ ...prev, class_id: '', schooling_id: '' }));
+                                    }
+                                }}
                                 className={`w-full px-3 py-2 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.class_id ? 'border-red-500' : 'border-gray-300'}`}
                             >
                                 <option value="">Sélectionner une classe</option>
@@ -208,13 +242,17 @@ export default function Create({ schools, students, classrooms, academicYears, s
                                     setTimeout(() => calculateAmountToPay(), 0);
                                 }}
                                 className={`w-full px-3 py-2 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.schooling_id ? 'border-red-500' : 'border-gray-300'}`}
+                                disabled={!formData.class_id}
                             >
-                                <option value="">Aucune</option>
-                                {schoolings.map((schooling) => (
+                                <option value="">{formData.class_id ? 'Sélectionner' : 'Sélectionner d\'abord une classe'}</option>
+                                {filteredSchoolings.length > 0 && filteredSchoolings.map((schooling) => (
                                     <option key={schooling.id} value={schooling.id}>
                                         {schooling.classroom?.name ?? 'Classe'} - Inscr.: {schooling.inscription_fee} | Scolarité: {schooling.school_fee}
                                     </option>
                                 ))}
+                                {filteredSchoolings.length === 0 && formData.class_id && (
+                                    <option value="" disabled>Aucune tarification pour cette classe</option>
+                                )}
                             </select>
                             {errors.schooling_id && <p className="text-red-600 text-sm mt-1">{errors.schooling_id}</p>}
                         </div>
