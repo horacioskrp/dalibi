@@ -65,12 +65,16 @@ interface IndexProps {
     filters: {
         search?: string;
         status?: string;
+        academic_year_id?: string;
+        class_id?: string;
     };
     stats: {
         total: number;
         paid: number;
         unpaid: number;
     };
+    academicYears: AcademicYear[];
+    classrooms: Classroom[];
 }
 
 const statusMap: Record<Enrollment['status'], string> = {
@@ -83,19 +87,23 @@ const statusBadgeClass: Record<Enrollment['status'], string> = {
     unpaid: 'bg-red-100 text-red-700',
 };
 
-export default function Index({ enrollments, filters, stats }: Readonly<IndexProps>) {
+export default function Index({ enrollments, filters, stats, academicYears, classrooms }: Readonly<IndexProps>) {
     const [search, setSearch] = useState(filters.search ?? '');
     const [status, setStatus] = useState(filters.status ?? '');
+    const [academicYearId, setAcademicYearId] = useState(filters.academic_year_id ?? '');
+    const [classId, setClassId] = useState(filters.class_id ?? '');
     const [deletingId, setDeletingId] = useState<string | null>(null);
 
     const handleSearch = () => {
-        router.get(route('enrollments.index'), { search, status }, { preserveState: true, replace: true });
+        router.get(route('enrollments.index'), { search, status, academic_year_id: academicYearId, class_id: classId }, { preserveState: true, replace: true });
     };
 
     const handleClearSearch = () => {
         setSearch('');
         setStatus('');
-        router.get(route('enrollments.index'), { search: '', status: '' }, { preserveState: true, replace: true });
+        setAcademicYearId('');
+        setClassId('');
+        router.get(route('enrollments.index'), { search: '', status: '', academic_year_id: '', class_id: '' }, { preserveState: true, replace: true });
     };
 
     const handleDelete = (id: string) => {
@@ -136,7 +144,7 @@ export default function Index({ enrollments, filters, stats }: Readonly<IndexPro
                 </div>
 
                 <div className="bg-white rounded-lg p-4 shadow-sm">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
                         <div className="md:col-span-2 relative">
                             <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
                             <Input
@@ -162,13 +170,39 @@ export default function Index({ enrollments, filters, stats }: Readonly<IndexPro
                             <option value="unpaid">Non payé</option>
                         </select>
 
+                        <select
+                            value={academicYearId}
+                            onChange={(event) => setAcademicYearId(event.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="">Toutes les années</option>
+                            {academicYears.map((year) => (
+                                <option key={year.id} value={year.id}>
+                                    {year.year}
+                                </option>
+                            ))}
+                        </select>
+
+                        <select
+                            value={classId}
+                            onChange={(event) => setClassId(event.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="">Toutes les classes</option>
+                            {classrooms.map((classroom) => (
+                                <option key={classroom.id} value={classroom.id}>
+                                    {classroom.name} ({classroom.code})
+                                </option>
+                            ))}
+                        </select>
+
                         <div className="flex gap-2">
-                            <Button onClick={handleSearch} className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
+                            <Button onClick={handleSearch} className="bg-blue-600 hover:bg-blue-700 text-white gap-2 w-full md:w-auto">
                                 <Search className="w-4 h-4" />
                                 Rechercher
                             </Button>
-                            {(search || status) && (
-                                <Button variant="outline" onClick={handleClearSearch} className="border-gray-300 text-gray-700">
+                            {(search || status || academicYearId || classId) && (
+                                <Button variant="outline" onClick={handleClearSearch} className="border-gray-300 text-gray-700 w-full md:w-auto">
                                     Réinit.
                                 </Button>
                             )}
