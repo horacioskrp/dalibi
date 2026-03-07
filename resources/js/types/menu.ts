@@ -51,6 +51,11 @@ export const mainNavItems: NavItem[] = [
                 icon: BookOpen,
             },
             {
+                title: 'Attribution matière-classe',
+                href: route('class-subjects.index'),
+                icon: ClipboardList,
+            },
+            {
                 title: 'Années académiques',
                 href: route('academic-years.index'),
                 icon: Calendar,
@@ -79,6 +84,11 @@ export const mainNavItems: NavItem[] = [
                 title: 'Structures de frais',
                 href: route('fee-structures.index'),
                 icon: DollarSign,
+            },
+            {
+                title: 'Bourses',
+                href: route('scholarships.index'),
+                icon: Percent,
             },
         ],
     },

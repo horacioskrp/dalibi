@@ -15,7 +15,7 @@ class ClassSubject extends Model
     protected $fillable = [
         'class_id',
         'subject_id',
-        'teacher_id',
+        'academic_year_id',
     ];
 
     /**
@@ -35,11 +35,11 @@ class ClassSubject extends Model
     }
 
     /**
-     * Get the teacher teaching this subject in the class.
+     * Get the academic year for this class-subject assignment.
      */
-    public function teacher(): BelongsTo
+    public function academicYear(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'teacher_id');
+        return $this->belongsTo(AcademicYear::class);
     }
 
     /**

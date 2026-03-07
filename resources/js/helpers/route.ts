@@ -72,6 +72,15 @@ export function route(name: string, params?: any): string {
         'subjects.update': `/subjects/${params}`,
         'subjects.destroy': `/subjects/${params}`,
 
+        // Class Subjects routes
+        'class-subjects.index': '/class-subjects',
+        'class-subjects.create': '/class-subjects/create',
+        'class-subjects.store': '/class-subjects',
+        'class-subjects.show': `/class-subjects/${params}`,
+        'class-subjects.edit': `/class-subjects/${params}/edit`,
+        'class-subjects.update': `/class-subjects/${params}`,
+        'class-subjects.destroy': `/class-subjects/${params}`,
+
         // Academic Years routes
         'academic-years.index': '/academic-years',
         'academic-years.create': '/academic-years/create',
@@ -134,6 +143,15 @@ export function route(name: string, params?: any): string {
         'fee-structures.edit': `/fee-structures/${params}/edit`,
         'fee-structures.update': `/fee-structures/${params}`,
         'fee-structures.destroy': `/fee-structures/${params}`,
+
+        // Scholarships routes
+        'scholarships.index': '/scholarships',
+        'scholarships.create': '/scholarships/create',
+        'scholarships.store': '/scholarships',
+        'scholarships.show': `/scholarships/${params}`,
+        'scholarships.edit': `/scholarships/${params}/edit`,
+        'scholarships.update': `/scholarships/${params}`,
+        'scholarships.destroy': `/scholarships/${params}`,
 
         // Students routes
         'students.index': '/students',
