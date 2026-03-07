@@ -23,5 +23,12 @@ class AcademicYear extends Model
         'end_date' => 'date',
     ];
 
+    /**
+     * Get the name attribute for the academic year.
+     */
+    public function getNameAttribute(): string
+    {
+        return $this->year;
+    }
 }
 

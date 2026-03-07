@@ -1,0 +1,443 @@
+import { Head, router } from '@inertiajs/react';
+import { Plus, Pencil, Trash2, Search, BookOpen, CheckCircle2, Eye, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { useState } from 'react';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
+import { route } from '@/helpers/route';
+import AppLayout from '@/layouts/app-layout';
+
+interface Classroom {
+    id: string;
+    name: string;
+    code: string;
+}
+
+interface Subject {
+    id: string;
+    name: string;
+    code: string;
+}
+
+interface AcademicYear {
+    id: string;
+    year: string;
+    start_date: string;
+    end_date: string;
+}
+
+interface ClassSubjectData {
+    id: string;
+    class: Classroom;
+    subject: Subject;
+    academicYear?: AcademicYear;
+    created_at: string;
+}
+
+interface PaginatedClassSubjects {
+    data: ClassSubjectData[];
+    current_page: number;
+    from: number;
+    last_page: number;
+    per_page: number;
+    to: number;
+    total: number;
+}
+
+interface IndexProps {
+    classSubjects: PaginatedClassSubjects;
+    message?: string;
+    filters: {
+        search?: string;
+        class_id?: string;
+        academic_year_id?: string;
+    };
+}
+
+export default function Index({ classSubjects, message, filters }: Readonly<IndexProps>) {
+    const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [searchQuery, setSearchQuery] = useState(filters.search || '');
+
+    const handleDelete = (id: string) => {
+        setIsDeleting(true);
+        router.delete(route('class-subjects.destroy', id), {
+            onSuccess: () => {
+                setDeleteConfirm(null);
+                setIsDeleting(false);
+            },
+            onError: () => {
+                setIsDeleting(false);
+            },
+        });
+    };
+
+    const handleSearch = () => {
+        router.get(route('class-subjects.index'), { search: searchQuery }, {
+            preserveScroll: true,
+            replace: true,
+        });
+    };
+
+    const handleClearSearch = () => {
+        setSearchQuery('');
+        router.get(route('class-subjects.index'), {}, {
+            preserveScroll: true,
+            replace: true,
+        });
+    };
+
+    // Group class subjects by class_id and academic_year_id
+    const groupedData = classSubjects.data.reduce((acc, cs) => {
+        // Skip records with missing key data
+        if (!cs.class?.id) return acc;
+        
+        const key = `${cs.class.id}-${cs.academicYear?.id || 'no-year'}`;
+        if (!acc[key]) {
+            acc[key] = {
+                class: cs.class,
+                academicYear: cs.academicYear,
+                subjects: [],
+                firstId: cs.id,
+            };
+        }
+        acc[key].subjects.push({
+            id: cs.id,
+            name: cs.subject.name,
+        });
+        return acc;
+    }, {} as Record<string, { class: Classroom; academicYear?: AcademicYear; subjects: Array<{ id: string; name: string }>; firstId: string }>);
+
+    const groupedRows = Object.values(groupedData);
+
+    const statsCards = [
+        {
+            title: 'Attributions',
+            value: classSubjects.total,
+            icon: BookOpen,
+            bgColor: 'bg-blue-50',
+            textColor: 'text-blue-600',
+        },
+        {
+            title: 'Classes couvertes',
+            value: new Set(classSubjects.data.map(cs => cs.class.id)).size,
+            icon: CheckCircle2,
+            bgColor: 'bg-green-50',
+            textColor: 'text-green-600',
+        },
+    ];
+
+    return (
+        <AppLayout>
+            <Head title="Attribution des matières aux classes" />
+
+            <div className="space-y-6">
+                {/* Header */}
+                <div className="flex items-start justify-between">
+                    <div>
+                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">
+                            Attribution des matières aux classes
+                        </h1>
+                        <p className="mt-2 text-lg text-gray-600">
+                            Gérez l'attribution des matières à chaque classe
+                        </p>
+                    </div>
+                    <Button 
+                        onClick={() => router.get(route('class-subjects.create'))}
+                        className="gap-2 bg-blue-600 hover:bg-blue-700"
+                    >
+                        <Plus className="w-5 h-5" />
+                        Ajouter une attribution
+                    </Button>
+                </div>
+
+                {/* Stats Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {statsCards.map((card) => (
+                        <div
+                            key={card.title}
+                            className={`${card.bgColor} rounded-lg p-6 border border-gray-200`}
+                        >
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-gray-600">
+                                        {card.title}
+                                    </p>
+                                    <p className={`text-3xl font-bold mt-2 ${card.textColor}`}>
+                                        {card.value}
+                                    </p>
+                                </div>
+                                <card.icon className={`w-12 h-12 ${card.textColor} opacity-20`} />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Success Message */}
+                {message && (
+                    <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center gap-3 shadow-sm">
+                        <CheckCircle2 className="w-5 h-5 shrink-0" />
+                        <span>{message}</span>
+                    </div>
+                )}
+
+                {/* Barre de recherche */}
+                <div className="bg-white rounded-lg shadow-sm border border-gray-100">
+                    <div className="p-4">
+                        <div className="flex items-center gap-3">
+                            <div className="flex-1 relative group">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-400 group-focus-within:text-blue-600 transition" />
+                                <Input
+                                    type="text"
+                                    placeholder="Rechercher une classe ou matière..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                                    className="pl-10 pr-10 bg-gray-50 border-gray-200 focus:border-blue-300 focus:bg-white transition"
+                                />
+                                {searchQuery && (
+                                    <button
+                                        onClick={handleClearSearch}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                )}
+                            </div>
+                            <Button
+                                onClick={handleSearch}
+                                className="bg-blue-600 hover:bg-blue-700 text-white gap-2 shrink-0 transition"
+                            >
+                                <Search className="w-4 h-4" />
+                                Rechercher
+                            </Button>
+                        </div>
+                        {searchQuery && (
+                            <p className="text-sm text-gray-500 mt-3">
+                                Résultats pour : <span className="font-semibold text-gray-700">« {searchQuery} »</span>
+                            </p>
+                        )}
+                    </div>
+                </div>
+
+                {/* Tableau */}
+                <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader className="bg-gray-50">
+                                <TableRow className="border-b border-gray-200">
+                                    <TableHead className="font-semibold text-gray-900">Classe</TableHead>
+                                    <TableHead className="font-semibold text-gray-900">Matières attribuées</TableHead>
+                                    <TableHead className="font-semibold text-gray-900">Année académique</TableHead>
+                                    <TableHead className="text-center font-semibold text-gray-900 w-24">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {groupedRows.length > 0 ? (
+                                    groupedRows.map((group) => (
+                                        <TableRow key={`${group.class.id}-${group.academicYear?.id}`} className="border-b border-gray-100 hover:bg-blue-50/40 transition-colors">
+                                            <TableCell className="font-semibold text-gray-900">
+                                                <div className="space-y-1">
+                                                    <span className="block">{group.class.name}</span>
+                                                    <span className="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">
+                                                        {group.class.code}
+                                                    </span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {group.subjects.map((subject) => (
+                                                        <span
+                                                            key={subject.id}
+                                                            className="inline-flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium"
+                                                        >
+                                                            {subject.name}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="font-semibold text-gray-900">
+                                                {group.academicYear.year}
+                                            </TableCell>
+                                            <TableCell className="text-center">
+                                                <div className="flex gap-2 justify-center">
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                                                        onClick={() =>
+                                                            router.visit(
+                                                                route(
+                                                                    'class-subjects.show',
+                                                                    group.firstId
+                                                                )
+                                                            )
+                                                        }
+                                                    >
+                                                        <Eye className="w-4 h-4" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                                                        onClick={() =>
+                                                            router.get(
+                                                                route(
+                                                                    'class-subjects.edit',
+                                                                    group.firstId
+                                                                )
+                                                            )
+                                                        }
+                                                    >
+                                                        <Pencil className="w-4 h-4" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
+                                                        onClick={() => setDeleteConfirm(group.firstId)}
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </Button>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell
+                                            colSpan={4}
+                                            className="text-center py-12 text-gray-500"
+                                        >
+                                            <div className="flex flex-col items-center gap-2">
+                                                <BookOpen className="w-12 h-12 text-gray-300" />
+                                                <p className="text-lg">Aucune attribution trouvée</p>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </div>
+
+                {/* Pagination */}
+                {classSubjects.last_page > 1 && (
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
+                        <div className="flex items-center justify-between">
+                            <p className="text-sm text-gray-600">
+                                Affichage <span className="font-semibold">{classSubjects.from}</span> à <span className="font-semibold">{classSubjects.to}</span> sur <span className="font-semibold">{classSubjects.total}</span> attributions
+                            </p>
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={classSubjects.current_page === 1}
+                                    onClick={() => router.get(route('class-subjects.index'), { 
+                                        page: classSubjects.current_page - 1, 
+                                        search: filters.search,
+                                        class_id: filters.class_id,
+                                        academic_year_id: filters.academic_year_id,
+                                    }, { preserveScroll: true })}
+                                    className="border-gray-300 text-gray-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <ChevronLeft className="w-4 h-4 mr-1" />
+                                    Précédent
+                                </Button>
+                                <div className="flex gap-1">
+                                    {Array.from({ length: Math.min(5, classSubjects.last_page) }, (_, i) => {
+                                        let page = i + 1;
+                                        if (classSubjects.last_page > 5 && classSubjects.current_page > 3) {
+                                            page = classSubjects.current_page - 2 + i;
+                                        }
+                                        if (page > classSubjects.last_page) return null;
+                                        return (
+                                            <Button
+                                                key={page}
+                                                variant={page === classSubjects.current_page ? 'default' : 'outline'}
+                                                size="sm"
+                                                onClick={() => router.get(route('class-subjects.index'), { 
+                                                    page, 
+                                                    search: filters.search,
+                                                    class_id: filters.class_id,
+                                                    academic_year_id: filters.academic_year_id,
+                                                }, { preserveScroll: true })}
+                                                className={page === classSubjects.current_page 
+                                                    ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                                                    : 'border-gray-300 text-gray-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300'
+                                                }
+                                            >
+                                                {page}
+                                            </Button>
+                                        );
+                                    })}
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={classSubjects.current_page === classSubjects.last_page}
+                                    onClick={() => router.get(route('class-subjects.index'), { 
+                                        page: classSubjects.current_page + 1, 
+                                        search: filters.search,
+                                        class_id: filters.class_id,
+                                        academic_year_id: filters.academic_year_id,
+                                    }, { preserveScroll: true })}
+                                    className="border-gray-300 text-gray-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    Suivant
+                                    <ChevronRight className="w-4 h-4 ml-1" />
+                                </Button>
+                            </div>
+                            <p className="text-sm text-gray-600">
+                                Page <span className="font-semibold">{classSubjects.current_page}</span> sur <span className="font-semibold">{classSubjects.last_page}</span>
+                            </p>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Êtes-vous sûr de vouloir supprimer cette attribution ? Cette action
+                            est irréversible.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="flex gap-3 justify-end">
+                        <AlertDialogCancel>Annuler</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => {
+                                if (deleteConfirm) {
+                                    handleDelete(deleteConfirm);
+                                }
+                            }}
+                            disabled={isDeleting}
+                            className="bg-red-600 hover:bg-red-700"
+                        >
+                            {isDeleting ? 'Suppression...' : 'Supprimer'}
+                        </AlertDialogAction>
+                    </div>
+                </AlertDialogContent>
+            </AlertDialog>
+        </AppLayout>
+    );
+}

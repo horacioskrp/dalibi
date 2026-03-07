@@ -18,6 +18,10 @@ class FeeCategorieSeeder extends Seeder
                 'description' => 'Frais d\'inscription pour l\'année scolaire',
             ],
             [
+                'name' => 'Réinscription',
+                'description' => 'Frais de réinscription pour l\'année scolaire',
+            ],
+            [
                 'name' => 'Écolage',
                 'description' => 'Frais de scolarité mensuels ou annuels',
             ],
@@ -34,9 +38,13 @@ class FeeCategorieSeeder extends Seeder
                 'description' => 'Frais de restauration et de cantine',
             ],
             [
-                'name' => 'Activité',
+                'name' => 'Activité scolaire',
                 'description' => 'Frais pour les activités extrascolaires et parascolaires',
             ],
+            [
+                'name' => 'Frais d\'examen',
+                'description' => 'Frais pour les examens et les évaluations',
+            ]
         ];
 
         foreach ($categories as $category) {
