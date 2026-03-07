@@ -221,16 +221,17 @@ export default function Index({ assignments, filters }: Readonly<IndexProps>) {
                 </div>
 
                 {/* Table */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                    <div className="overflow-x-auto">
                     <Table>
-                        <TableHeader>
-                            <TableRow className="bg-gray-50">
+                        <TableHeader className="bg-gray-50">
+                            <TableRow className="border-b border-gray-200">
                                 <TableHead className="font-semibold text-gray-900">Matière</TableHead>
                                 <TableHead className="font-semibold text-gray-900">Enseignant</TableHead>
                                 <TableHead className="font-semibold text-gray-900">Classe</TableHead>
                                 <TableHead className="font-semibold text-gray-900">Année</TableHead>
                                 <TableHead className="font-semibold text-gray-900">Statut</TableHead>
-                                <TableHead className="text-right font-semibold text-gray-900">Actions</TableHead>
+                                <TableHead className="text-center font-semibold text-gray-900 w-28">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -245,7 +246,7 @@ export default function Index({ assignments, filters }: Readonly<IndexProps>) {
                                 </TableRow>
                             ) : (
                                 assignments.data.map((assignment) => (
-                                    <TableRow key={assignment.id} className="hover:bg-gray-50">
+                                    <TableRow key={assignment.id} className="border-b border-gray-100 hover:bg-blue-50/40 transition-colors">
                                         <TableCell>
                                             <div className="flex items-center gap-3">
                                                 <div className="h-10 w-10 flex items-center justify-center rounded-full bg-blue-100">
@@ -282,29 +283,29 @@ export default function Index({ assignments, filters }: Readonly<IndexProps>) {
                                                 </span>
                                             )}
                                         </TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex justify-end gap-2">
+                                        <TableCell className="text-center">
+                                            <div className="flex gap-2 justify-center">
                                                 <Button
-                                                    variant="ghost"
+                                                    variant="outline"
                                                     size="sm"
                                                     onClick={() => router.get(route('subject-assignments.show', assignment.id))}
-                                                    className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                                    className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                                                 >
                                                     <Eye className="w-4 h-4" />
                                                 </Button>
                                                 <Button
-                                                    variant="ghost"
+                                                    variant="outline"
                                                     size="sm"
                                                     onClick={() => router.get(route('subject-assignments.edit', assignment.id))}
-                                                    className="text-gray-600 hover:text-gray-700 hover:bg-gray-50"
+                                                    className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                                                 >
                                                     <Pencil className="w-4 h-4" />
                                                 </Button>
                                                 <Button
-                                                    variant="ghost"
+                                                    variant="outline"
                                                     size="sm"
                                                     onClick={() => setDeleteConfirm(assignment.id)}
-                                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                    className="border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
                                                 >
                                                     <Trash2 className="w-4 h-4" />
                                                 </Button>
@@ -315,11 +316,12 @@ export default function Index({ assignments, filters }: Readonly<IndexProps>) {
                             )}
                         </TableBody>
                     </Table>
+                    </div>
                 </div>
 
                 {/* Pagination */}
                 {assignments.last_page > 1 && (
-                    <div className="flex items-center justify-between bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+                    <div className="flex items-center justify-between bg-white rounded-lg shadow-sm p-4">
                         <div className="text-sm text-gray-600">
                             Affichage de {assignments.from} à {assignments.to} sur {assignments.total} résultats
                         </div>

@@ -11,7 +11,9 @@ interface Subject {
 
 interface Teacher {
     id: string;
-    name: string;
+    firstname?: string;
+    lastname?: string;
+    name?: string;
 }
 
 interface AcademicYear {
@@ -27,7 +29,7 @@ interface ClassroomType {
 interface Classroom {
     id: string;
     name: string;
-    classroom_type: ClassroomType;
+    type?: ClassroomType | null;
 }
 
 interface SubjectAssignment {
@@ -47,6 +49,10 @@ interface ShowProps {
 }
 
 export default function Show({ assignment }: Readonly<ShowProps>) {
+    const teacherName = assignment.teacher.name
+        ?? [assignment.teacher.firstname, assignment.teacher.lastname].filter(Boolean).join(' ')
+        ?? '—';
+
     const formatDate = (date: string) => {
         return new Date(date).toLocaleDateString('fr-FR', {
             year: 'numeric',
@@ -107,7 +113,7 @@ export default function Show({ assignment }: Readonly<ShowProps>) {
                                     <p className="text-sm text-gray-600">Enseignant</p>
                                     <p className="font-medium text-gray-900 mt-1 flex items-center gap-2">
                                         <Users className="w-4 h-4 text-gray-500" />
-                                        {assignment.teacher.name}
+                                        {teacherName}
                                     </p>
                                 </div>
                                 <div>
@@ -116,7 +122,9 @@ export default function Show({ assignment }: Readonly<ShowProps>) {
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-600">Type de classe</p>
-                                    <p className="font-medium text-gray-900 mt-1">{assignment.classroom.classroom_type.name}</p>
+                                    <p className="font-medium text-gray-900 mt-1">
+                                        {assignment.classroom.type?.name || '—'}
+                                    </p>
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-600">Année académique</p>

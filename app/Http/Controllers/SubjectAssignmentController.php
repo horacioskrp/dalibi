@@ -99,7 +99,7 @@ class SubjectAssignmentController extends Controller
      */
     public function show(SubjectAssignment $subjectAssignment): Response
     {
-        $subjectAssignment->load(['subject', 'teacher', 'academicYear', 'classroom.classroomType']);
+        $subjectAssignment->load(['subject', 'teacher', 'academicYear', 'classroom.type']);
 
         return Inertia::render('Administration/SubjectAssignments/Show', [
             'assignment' => $subjectAssignment,
