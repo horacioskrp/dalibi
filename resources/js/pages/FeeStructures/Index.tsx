@@ -205,10 +205,11 @@ export default function Index({ feeStructures, message, filters }: Readonly<Inde
                 </div>
 
                 {/* Tableau */}
-                <div className="bg-white rounded-lg border border-gray-300 shadow-sm overflow-hidden">
+                <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                    <div className="overflow-x-auto">
                     <Table>
-                        <TableHeader>
-                            <TableRow className="bg-gray-50">
+                        <TableHeader className="bg-gray-50">
+                            <TableRow className="border-b border-gray-200">
                                 <TableHead className="font-semibold text-gray-900">Année académique</TableHead>
                                 <TableHead className="font-semibold text-gray-900">Catégorie</TableHead>
                                 <TableHead className="font-semibold text-gray-900">Classe</TableHead>
@@ -220,14 +221,22 @@ export default function Index({ feeStructures, message, filters }: Readonly<Inde
                             {feeStructures.data.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={5} className="text-center py-12 text-gray-500">
-                                        Aucune structure de frais trouvée
+                                        <div className="flex flex-col items-center gap-2">
+                                            <DollarSign className="w-12 h-12 text-gray-300" />
+                                            <p className="text-lg">Aucune structure de frais trouvée</p>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             ) : (
                                 feeStructures.data.map((feeStructure) => (
-                                    <TableRow key={feeStructure.id} className="hover:bg-gray-50">
-                                        <TableCell className="font-medium text-gray-900">
-                                            {feeStructure.academic_year.year}
+                                    <TableRow key={feeStructure.id} className="border-b border-gray-100 hover:bg-blue-50/40 transition-colors">
+                                        <TableCell className="font-semibold text-gray-900">
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
+                                                    <DollarSign className="h-5 w-5 text-blue-600" />
+                                                </div>
+                                                <span>{feeStructure.academic_year.year}</span>
+                                            </div>
                                         </TableCell>
                                         <TableCell>
                                             <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${getCategoryColor(feeStructure.fee_category.name)}`}>
@@ -244,29 +253,29 @@ export default function Index({ feeStructures, message, filters }: Readonly<Inde
                                         <TableCell className="font-semibold text-green-600">
                                             {formatMoney(feeStructure.amount)}
                                         </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center justify-center gap-2">
+                                        <TableCell className="text-center">
+                                            <div className="flex gap-2 justify-center">
                                                 <Button
-                                                    variant="ghost"
+                                                    variant="outline"
                                                     size="sm"
                                                     onClick={() => router.visit(route('fee-structures.show', feeStructure.id))}
-                                                    className="text-gray-600 hover:text-blue-600 hover:bg-blue-50"
+                                                    className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                                                 >
                                                     <Eye className="h-4 w-4" />
                                                 </Button>
                                                 <Button
-                                                    variant="ghost"
+                                                    variant="outline"
                                                     size="sm"
                                                     onClick={() => router.visit(route('fee-structures.edit', feeStructure.id))}
-                                                    className="text-gray-600 hover:text-blue-600 hover:bg-blue-50"
+                                                    className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                                                 >
                                                     <Pencil className="h-4 w-4" />
                                                 </Button>
                                                 <Button
-                                                    variant="ghost"
+                                                    variant="outline"
                                                     size="sm"
                                                     onClick={() => setDeleteConfirm(feeStructure.id)}
-                                                    className="text-gray-600 hover:text-red-600 hover:bg-red-50"
+                                                    className="border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
                                                 >
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>
@@ -277,10 +286,11 @@ export default function Index({ feeStructures, message, filters }: Readonly<Inde
                             )}
                         </TableBody>
                     </Table>
+                    </div>
 
                     {/* Pagination */}
                     {feeStructures.last_page > 1 && (
-                        <div className="flex items-center justify-between border-t border-gray-300 bg-gray-50 px-6 py-4">
+                        <div className="flex items-center justify-between border-t border-gray-100 bg-white px-6 py-4">
                             <div className="text-sm text-gray-600">
                                 Affichage de {feeStructures.from} à {feeStructures.to} sur {feeStructures.total} résultats
                             </div>
@@ -293,7 +303,7 @@ export default function Index({ feeStructures, message, filters }: Readonly<Inde
                                         page: feeStructures.current_page - 1,
                                         search: searchQuery 
                                     }))}
-                                    className="border-gray-300"
+                                    className="border-gray-300 text-gray-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <ChevronLeft className="h-4 w-4" />
                                 </Button>
@@ -305,7 +315,7 @@ export default function Index({ feeStructures, message, filters }: Readonly<Inde
                                         page: feeStructures.current_page + 1,
                                         search: searchQuery 
                                     }))}
-                                    className="border-gray-300"
+                                    className="border-gray-300 text-gray-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <ChevronRight className="h-4 w-4" />
                                 </Button>
