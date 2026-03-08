@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreClassroomRequest;
 use App\Http\Requests\UpdateClassroomRequest;
+use App\Models\AcademicYear;
 use App\Models\Classroom;
 use App\Models\ClassroomType;
 use Inertia\Inertia;
@@ -58,10 +59,31 @@ class ClassroomController extends Controller
      */
     public function show(Classroom $classroom)
     {
-        $classroom->load('type', 'students');
+        $classroom->load('type');
+
+        // Get academic years with active first
+        $academicYears = AcademicYear::orderBy('active', 'desc')
+            ->orderBy('start_date', 'desc')
+            ->get(['id', 'year', 'start_date', 'end_date', 'active']);
+
+        // Get all class subjects with subjects and academic year, optimized
+        $subjectAssignments = $classroom->classSubjects()
+            ->with(['subject:id,name,code', 'academicYear:id,year,active'])
+            ->orderBy('academic_year_id')
+            ->get()
+            ->groupBy('academic_year_id')
+            ->map(fn ($items) => $items->map(fn ($assignment) => [
+                'id' => $assignment->id,
+                'subject' => $assignment->subject,
+                'coefficient' => (float) $assignment->coefficient,
+                'academic_year' => $assignment->academicYear,
+            ])->values())
+            ->toArray();
 
         return Inertia::render('Classrooms/Show', [
             'classroom' => $classroom,
+            'academicYears' => $academicYears,
+            'subjectAssignments' => $subjectAssignments,
         ]);
     }
 

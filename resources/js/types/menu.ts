@@ -51,11 +51,6 @@ export const mainNavItems: NavItem[] = [
                 icon: BookOpen,
             },
             {
-                title: 'Attribution matière-classe',
-                href: route('class-subjects.index'),
-                icon: ClipboardList,
-            },
-            {
                 title: 'Années académiques',
                 href: route('academic-years.index'),
                 icon: Calendar,

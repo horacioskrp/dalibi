@@ -3,8 +3,8 @@
 use App\Http\Controllers\AcademicPeriodController;
 use App\Http\Controllers\AcademicYearController;
 use App\Http\Controllers\ClassroomController;
+use App\Http\Controllers\ClassroomSubjectAssignmentController;
 use App\Http\Controllers\ClassroomTypeController;
-use App\Http\Controllers\ClassSubjectController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\FeeCategorieController;
 use App\Http\Controllers\FeeStructureController;
@@ -36,10 +36,13 @@ Route::get('dashboard', function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('schools', SchoolController::class);
     Route::resource('classrooms', ClassroomController::class);
+    Route::get('classrooms/{classroom}/subject-assignments', [ClassroomSubjectAssignmentController::class, 'create'])
+        ->name('classrooms.subject-assignments.create');
+    Route::post('classrooms/{classroom}/subject-assignments', [ClassroomSubjectAssignmentController::class, 'store'])
+        ->name('classrooms.subject-assignments.store');
     Route::resource('classroom-types', ClassroomTypeController::class);
     Route::resource('levels', LevelController::class);
     Route::resource('subjects', SubjectController::class);
-    Route::resource('class-subjects', ClassSubjectController::class);
     Route::resource('academic-years', AcademicYearController::class);
     Route::resource('academic-periods', AcademicPeriodController::class);
     Route::resource('schoolings', SchoolingController::class);

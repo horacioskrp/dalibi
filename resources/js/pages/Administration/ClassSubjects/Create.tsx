@@ -1,6 +1,6 @@
 import { Head, router } from '@inertiajs/react';
 import { ArrowLeft, Search, X } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { FormEvent, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -45,6 +45,7 @@ export default function Create({ classrooms, subjects, academicYears }: Readonly
         academic_year_id: '',
     });
     const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
+    const [coefficients, setCoefficients] = useState<Record<string, string>>({});
     const [searchQuery, setSearchQuery] = useState('');
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -58,14 +59,39 @@ export default function Create({ classrooms, subjects, academicYears }: Readonly
     }, [subjects, searchQuery]);
 
     const handleSubjectToggle = (subjectId: string) => {
+        const isSelected = selectedSubjects.includes(subjectId);
+
         setSelectedSubjects((prev) =>
             prev.includes(subjectId)
                 ? prev.filter((id) => id !== subjectId)
                 : [...prev, subjectId]
         );
+
+        setCoefficients((prev) => {
+            if (isSelected) {
+                const { [subjectId]: _, ...rest } = prev;
+                return rest;
+            }
+
+            return {
+                ...prev,
+                [subjectId]: prev[subjectId] ?? '1',
+            };
+        });
     };
 
-    const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
+    const updateCoefficient = (subjectId: string, value: string) => {
+        setCoefficients((prev) => ({
+            ...prev,
+            [subjectId]: value,
+        }));
+    };
+
+    const normalizeCoefficient = (value: string): number => {
+        return Number.parseFloat(value.replace(',', '.'));
+    };
+
+    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setIsSubmitting(true);
         setErrors({});
@@ -85,16 +111,28 @@ export default function Create({ classrooms, subjects, academicYears }: Readonly
             newErrors.subjects = 'Veuillez sélectionner au moins une matière.';
         }
 
+        selectedSubjects.forEach((subjectId) => {
+            const coefficient = normalizeCoefficient(coefficients[subjectId] ?? '');
+            if (!Number.isFinite(coefficient) || coefficient <= 0) {
+                newErrors[`coefficient_${subjectId}`] = 'Coefficient invalide (doit être > 0).';
+            }
+        });
+
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
             setIsSubmitting(false);
             return;
         }
 
+        const assignments = selectedSubjects.map((subjectId) => ({
+            subject_id: subjectId,
+            coefficient: normalizeCoefficient(coefficients[subjectId] ?? '0'),
+        }));
+
         router.post(route('class-subjects.store'), {
             class_id: formData.class_id,
             academic_year_id: formData.academic_year_id,
-            subject_ids: selectedSubjects,
+            assignments,
         }, {
             onError: (errors) => {
                 setErrors(errors as Record<string, string>);
@@ -218,7 +256,7 @@ export default function Create({ classrooms, subjects, academicYears }: Readonly
                     {/* Subject Selection with Search */}
                     <div className="bg-white rounded-lg p-6">
                         <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                            Sélection des matières
+                            Sélection des matières et coefficients
                         </h2>
 
                         {/* Search Box */}
@@ -249,7 +287,7 @@ export default function Create({ classrooms, subjects, academicYears }: Readonly
                                             key={subjectId}
                                             className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2"
                                         >
-                                            {subject?.name}
+                                            {subject?.name} · Coef {coefficients[subjectId] ?? '1'}
                                             <button
                                                 type="button"
                                                 onClick={() =>
@@ -269,27 +307,39 @@ export default function Create({ classrooms, subjects, academicYears }: Readonly
                         <div className="space-y-2 rounded-lg p-4 bg-gray-50 max-h-96 overflow-y-auto">
                             {filteredSubjects.length > 0 ? (
                                 filteredSubjects.map((subject) => (
-                                    <label
+                                    <div
                                         key={subject.id}
-                                        className="flex items-center gap-3 p-2 hover:bg-white cursor-pointer rounded transition"
+                                        className="flex items-center gap-3 p-2 hover:bg-white rounded transition"
                                     >
                                         <Checkbox
-                                            checked={selectedSubjects.includes(
-                                                subject.id
-                                            )}
-                                            onCheckedChange={() =>
-                                                handleSubjectToggle(subject.id)
-                                            }
+                                            checked={selectedSubjects.includes(subject.id)}
+                                            onCheckedChange={() => handleSubjectToggle(subject.id)}
                                         />
-                                        <div className="flex-1">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSubjectToggle(subject.id)}
+                                            className="flex-1 text-left"
+                                        >
                                             <p className="text-sm font-medium text-gray-900">
                                                 {subject.name}
                                             </p>
                                             <p className="text-xs text-gray-500">
                                                 Code: {subject.code}
                                             </p>
-                                        </div>
-                                    </label>
+                                        </button>
+                                        {selectedSubjects.includes(subject.id) && (
+                                            <div className="w-32">
+                                                <Input
+                                                    type="text"
+                                                    inputMode="decimal"
+                                                    value={coefficients[subject.id] ?? '1'}
+                                                    onChange={(e) => updateCoefficient(subject.id, e.target.value)}
+                                                    placeholder="Coef"
+                                                    className={errors[`coefficient_${subject.id}`] ? 'border-red-500' : ''}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
                                 ))
                             ) : (
                                 <p className="text-center text-gray-500 py-4">
@@ -303,6 +353,16 @@ export default function Create({ classrooms, subjects, academicYears }: Readonly
                                 {errors.subjects}
                             </p>
                         )}
+                        {errors['assignments'] && (
+                            <p className="text-red-600 text-sm mt-2">
+                                {errors['assignments']}
+                            </p>
+                        )}
+                        {errors['assignments.0.coefficient'] && (
+                            <p className="text-red-600 text-sm mt-2">
+                                {errors['assignments.0.coefficient']}
+                            </p>
+                        )}
                         {errors['subject_ids'] && (
                             <p className="text-red-600 text-sm mt-2">
                                 {errors['subject_ids']}
@@ -313,7 +373,7 @@ export default function Create({ classrooms, subjects, academicYears }: Readonly
                     {/* Summary */}
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                         <p className="text-sm text-blue-900">
-                            <span className="font-semibold">{selectedSubjects.length}</span> matière(s) sélectionnée(s)
+                            <span className="font-semibold">{selectedSubjects.length}</span> matière(s) sélectionnée(s) avec coefficient
                         </p>
                     </div>
 

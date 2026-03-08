@@ -50,6 +50,7 @@ class ClassSubjectController extends Controller
                 'class_id' => $item->class_id,
                 'subject_id' => $item->subject_id,
                 'academic_year_id' => $item->academic_year_id,
+                'coefficient' => (float) $item->coefficient,
                 'created_at' => $item->created_at,
                 'class' => $item->class,
                 'subject' => $item->subject,
@@ -90,14 +91,16 @@ class ClassSubjectController extends Controller
     public function store(StoreClassSubjectRequest $request)
     {
         $validated = $request->validated();
-        $subjectIds = $validated['subject_ids'];
+        $assignments = $validated['assignments'];
 
-        DB::transaction(function () use ($validated, $subjectIds): void {
-            foreach ($subjectIds as $subjectId) {
-                ClassSubject::firstOrCreate([
+        DB::transaction(function () use ($validated, $assignments): void {
+            foreach ($assignments as $assignment) {
+                ClassSubject::updateOrCreate([
                     'class_id' => $validated['class_id'],
-                    'subject_id' => $subjectId,
+                    'subject_id' => $assignment['subject_id'],
                     'academic_year_id' => $validated['academic_year_id'],
+                ], [
+                    'coefficient' => $assignment['coefficient'],
                 ]);
             }
         });
@@ -114,7 +117,19 @@ class ClassSubjectController extends Controller
         $classSubject->load(['class', 'subject', 'academicYear', 'grades']);
 
         return Inertia::render('Administration/ClassSubjects/Show', [
-            'classSubject' => $classSubject,
+            'classSubject' => [
+                'id' => $classSubject->id,
+                'class_id' => $classSubject->class_id,
+                'subject_id' => $classSubject->subject_id,
+                'academic_year_id' => $classSubject->academic_year_id,
+                'coefficient' => (float) $classSubject->coefficient,
+                'created_at' => $classSubject->created_at,
+                'updated_at' => $classSubject->updated_at,
+                'class' => $classSubject->class,
+                'subject' => $classSubject->subject,
+                'academicYear' => $classSubject->academicYear,
+                'grades' => $classSubject->grades,
+            ],
         ]);
     }
 
@@ -129,10 +144,16 @@ class ClassSubjectController extends Controller
         
         // Get all subjects and mark the ones already assigned for this class+year
         $subjects = Subject::orderBy('name')->get();
-        $assignedSubjectIds = ClassSubject::where('class_id', $classSubject->class_id)
+        $assignedSubjects = ClassSubject::where('class_id', $classSubject->class_id)
             ->where('academic_year_id', $classSubject->academic_year_id)
-            ->pluck('subject_id')
-            ->toArray();
+            ->with('subject:id,name,code')
+            ->get()
+            ->map(fn ($assignment) => [
+                'subject_id' => $assignment->subject_id,
+                'coefficient' => (float) $assignment->coefficient,
+                'subject' => $assignment->subject,
+            ])
+            ->values();
         
         $academicYears = AcademicYear::where('active', true)
             ->select(['id', 'year', 'start_date', 'end_date'])
@@ -143,7 +164,7 @@ class ClassSubjectController extends Controller
             'classSubject' => $classSubject,
             'classrooms' => $classrooms,
             'subjects' => $subjects,
-            'assignedSubjectIds' => $assignedSubjectIds,
+            'assignedSubjects' => $assignedSubjects,
             'academicYears' => $academicYears,
         ]);
     }
@@ -154,9 +175,9 @@ class ClassSubjectController extends Controller
     public function update(UpdateClassSubjectRequest $request, ClassSubject $classSubject)
     {
         $validated = $request->validated();
-        $subjectIds = $validated['subject_ids'];
+        $assignments = $validated['assignments'];
 
-        DB::transaction(function () use ($validated, $subjectIds, $classSubject): void {
+        DB::transaction(function () use ($validated, $assignments, $classSubject): void {
             $oldClassId = $classSubject->class_id;
             $oldAcademicYearId = $classSubject->academic_year_id;
 
@@ -171,11 +192,12 @@ class ClassSubjectController extends Controller
                 ->where('academic_year_id', $newAcademicYearId)
                 ->delete();
 
-            foreach ($subjectIds as $subjectId) {
+            foreach ($assignments as $assignment) {
                 ClassSubject::create([
                     'class_id' => $newClassId,
-                    'subject_id' => $subjectId,
+                    'subject_id' => $assignment['subject_id'],
                     'academic_year_id' => $newAcademicYearId,
+                    'coefficient' => $assignment['coefficient'],
                 ]);
             }
         });

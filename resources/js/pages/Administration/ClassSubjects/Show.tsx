@@ -38,6 +38,7 @@ interface ClassSubject {
     class: Classroom;
     subject: Subject;
     academicYear: AcademicYear;
+    coefficient: number;
     created_at: string;
     updated_at: string;
 }
@@ -148,6 +149,12 @@ export default function Show({ classSubject }: Readonly<ShowProps>) {
                                 <p className="text-sm text-gray-600">Code</p>
                                 <p className="text-lg font-medium text-gray-900">
                                     {classSubject.subject.code}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-gray-600">Coefficient</p>
+                                <p className="text-lg font-medium text-gray-900">
+                                    {classSubject.coefficient}
                                 </p>
                             </div>
                         </div>

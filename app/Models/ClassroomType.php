@@ -26,6 +26,6 @@ class ClassroomType extends Model
      */
     public function classrooms(): HasMany
     {
-        return $this->hasMany(Classroom::class);
+        return $this->hasMany(Classroom::class, 'classroom_type_id');
     }
 }

@@ -47,6 +47,7 @@ interface ClassSubjectData {
     class: Classroom;
     subject: Subject;
     academicYear?: AcademicYear;
+    coefficient: number;
     created_at: string;
 }
 
@@ -120,9 +121,10 @@ export default function Index({ classSubjects, message, filters }: Readonly<Inde
         acc[key].subjects.push({
             id: cs.id,
             name: cs.subject.name,
+            coefficient: cs.coefficient,
         });
         return acc;
-    }, {} as Record<string, { class: Classroom; academicYear?: AcademicYear; subjects: Array<{ id: string; name: string }>; firstId: string }>);
+    }, {} as Record<string, { class: Classroom; academicYear?: AcademicYear; subjects: Array<{ id: string; name: string; coefficient: number }>; firstId: string }>);
 
     const groupedRows = Object.values(groupedData);
 
@@ -142,6 +144,20 @@ export default function Index({ classSubjects, message, filters }: Readonly<Inde
             textColor: 'text-green-600',
         },
     ];
+
+    const subjectBadgePalette = [
+        'bg-blue-100 text-blue-800',
+        'bg-green-100 text-green-800',
+        'bg-purple-100 text-purple-800',
+        'bg-amber-100 text-amber-800',
+        'bg-rose-100 text-rose-800',
+        'bg-cyan-100 text-cyan-800',
+    ];
+
+    const getSubjectBadgeClass = (subjectName: string) => {
+        const hash = Array.from(subjectName).reduce((total, char) => total + char.charCodeAt(0), 0);
+        return subjectBadgePalette[hash % subjectBadgePalette.length];
+    };
 
     return (
         <AppLayout>
@@ -265,9 +281,9 @@ export default function Index({ classSubjects, message, filters }: Readonly<Inde
                                                     {group.subjects.map((subject) => (
                                                         <span
                                                             key={subject.id}
-                                                            className="inline-flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium"
+                                                            className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getSubjectBadgeClass(subject.name)}`}
                                                         >
-                                                            {subject.name}
+                                                            {subject.name} · Coef {subject.coefficient}
                                                         </span>
                                                     ))}
                                                 </div>
