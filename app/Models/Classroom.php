@@ -58,4 +58,12 @@ class Classroom extends Model
     {
         return $this->hasMany(ClassSubject::class, 'class_id');
     }
+
+    /**
+     * Get all evaluations for this class.
+     */
+    public function evaluations(): HasMany
+    {
+        return $this->hasMany(Evaluation::class, 'class_id');
+    }
 }

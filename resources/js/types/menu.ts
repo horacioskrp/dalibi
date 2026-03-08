@@ -51,6 +51,16 @@ export const mainNavItems: NavItem[] = [
                 icon: BookOpen,
             },
             {
+                title: 'Types d\'évaluation',
+                href: route('evaluation-types.index'),
+                icon: Tag,
+            },
+            {
+                title: 'Évaluations',
+                href: route('evaluations.index'),
+                icon: ClipboardList,
+            },
+            {
                 title: 'Années académiques',
                 href: route('academic-years.index'),
                 icon: Calendar,

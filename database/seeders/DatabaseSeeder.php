@@ -22,5 +22,8 @@ class DatabaseSeeder extends Seeder
 
         // Create fee categories
         $this->call(FeeCategorieSeeder::class);
+
+        // Seed evaluation types
+        $this->call(ExamenTypeSeeder::class);
     }
 }
