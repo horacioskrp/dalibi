@@ -74,6 +74,24 @@ export function route(name: string, params?: any): string {
         'subjects.update': `/subjects/${params}`,
         'subjects.destroy': `/subjects/${params}`,
 
+        // Evaluation Types routes
+        'evaluation-types.index': '/evaluation-types',
+        'evaluation-types.create': '/evaluation-types/create',
+        'evaluation-types.store': '/evaluation-types',
+        'evaluation-types.show': `/evaluation-types/${params}`,
+        'evaluation-types.edit': `/evaluation-types/${params}/edit`,
+        'evaluation-types.update': `/evaluation-types/${params}`,
+        'evaluation-types.destroy': `/evaluation-types/${params}`,
+
+        // Evaluations routes
+        'evaluations.index': '/evaluations',
+        'evaluations.create': '/evaluations/create',
+        'evaluations.store': '/evaluations',
+        'evaluations.show': `/evaluations/${params}`,
+        'evaluations.edit': `/evaluations/${params}/edit`,
+        'evaluations.update': `/evaluations/${params}`,
+        'evaluations.destroy': `/evaluations/${params}`,
+
         // Academic Years routes
         'academic-years.index': '/academic-years',
         'academic-years.create': '/academic-years/create',

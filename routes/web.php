@@ -6,6 +6,8 @@ use App\Http\Controllers\ClassroomController;
 use App\Http\Controllers\ClassroomSubjectAssignmentController;
 use App\Http\Controllers\ClassroomTypeController;
 use App\Http\Controllers\EnrollmentController;
+use App\Http\Controllers\EvaluationController;
+use App\Http\Controllers\EvaluationTypeController;
 use App\Http\Controllers\FeeCategorieController;
 use App\Http\Controllers\FeeStructureController;
 use App\Http\Controllers\LevelController;
@@ -43,6 +45,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('classroom-types', ClassroomTypeController::class);
     Route::resource('levels', LevelController::class);
     Route::resource('subjects', SubjectController::class);
+    Route::resource('evaluation-types', EvaluationTypeController::class);
+    Route::resource('evaluations', EvaluationController::class);
     Route::resource('academic-years', AcademicYearController::class);
     Route::resource('academic-periods', AcademicPeriodController::class);
     Route::resource('schoolings', SchoolingController::class);
