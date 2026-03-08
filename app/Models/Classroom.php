@@ -36,11 +36,11 @@ class Classroom extends Model
     }
 
     /**
-     * Get all students in this class.
+     * Alias for type() relationship.
      */
-    public function students(): HasMany
+    public function classroomType(): BelongsTo
     {
-        return $this->hasMany(Student::class, 'class_id');
+        return $this->type();
     }
 
     /**
@@ -48,7 +48,7 @@ class Classroom extends Model
      */
     public function attendances(): HasMany
     {
-        return $this->hasMany(Attendance::class);
+        return $this->hasMany(Attendance::class, 'class_id');
     }
 
     /**
@@ -56,6 +56,6 @@ class Classroom extends Model
      */
     public function classSubjects(): HasMany
     {
-        return $this->hasMany(ClassSubject::class);
+        return $this->hasMany(ClassSubject::class, 'class_id');
     }
 }

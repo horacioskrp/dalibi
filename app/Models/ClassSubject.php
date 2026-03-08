@@ -15,7 +15,12 @@ class ClassSubject extends Model
     protected $fillable = [
         'class_id',
         'subject_id',
+        'coefficient',
         'academic_year_id',
+    ];
+
+    protected $casts = [
+        'coefficient' => 'decimal:2',
     ];
 
     /**
@@ -23,7 +28,7 @@ class ClassSubject extends Model
      */
     public function class(): BelongsTo
     {
-        return $this->belongsTo(Classroom::class);
+        return $this->belongsTo(Classroom::class, 'class_id');
     }
 
     /**

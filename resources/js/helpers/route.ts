@@ -26,6 +26,8 @@ export function route(name: string, params?: any): string {
         'classrooms.edit': `/classrooms/${params}/edit`,
         'classrooms.update': `/classrooms/${params}`,
         'classrooms.destroy': `/classrooms/${params}`,
+        'classrooms.subject-assignments.create': `/classrooms/${params}/subject-assignments`,
+        'classrooms.subject-assignments.store': `/classrooms/${params}/subject-assignments`,
 
         // Classroom Types routes
         'classroom-types.index': '/classroom-types',
@@ -71,15 +73,6 @@ export function route(name: string, params?: any): string {
         'subjects.edit': `/subjects/${params}/edit`,
         'subjects.update': `/subjects/${params}`,
         'subjects.destroy': `/subjects/${params}`,
-
-        // Class Subjects routes
-        'class-subjects.index': '/class-subjects',
-        'class-subjects.create': '/class-subjects/create',
-        'class-subjects.store': '/class-subjects',
-        'class-subjects.show': `/class-subjects/${params}`,
-        'class-subjects.edit': `/class-subjects/${params}/edit`,
-        'class-subjects.update': `/class-subjects/${params}`,
-        'class-subjects.destroy': `/class-subjects/${params}`,
 
         // Academic Years routes
         'academic-years.index': '/academic-years',
