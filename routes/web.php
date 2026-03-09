@@ -47,6 +47,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('subjects', SubjectController::class);
     Route::resource('evaluation-types', EvaluationTypeController::class);
     Route::resource('evaluations', EvaluationController::class);
+    Route::get('evaluations/bulk/schedule', [EvaluationController::class, 'bulkScheduleForm'])
+        ->name('evaluations.bulk-schedule');
+    Route::post('evaluations/bulk/store', [EvaluationController::class, 'bulkStore'])
+        ->name('evaluations.bulk-store');
     Route::resource('academic-years', AcademicYearController::class);
     Route::resource('academic-periods', AcademicPeriodController::class);
     Route::resource('schoolings', SchoolingController::class);
