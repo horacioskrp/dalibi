@@ -1,5 +1,19 @@
 <?php
 
+/**
+ * Projet : Système de Gestion Scolaire (SIGE) - Togo
+ * Description : Gestion des élèves, des notes et des bulletins.
+ * * Copyright (c) 2026 Kudayah Sassou Horacio Herve.
+ * * Ce programme est un logiciel libre : vous pouvez le redistribuer et/ou le modifier 
+ * selon les termes de la Licence Publique Générale GNU (GPL v3) telle que publiée 
+ * par la Free Software Foundation.
+ * * Ce programme est distribué dans l'espoir qu'il sera utile, mais SANS AUCUNE GARANTIE ; 
+ * sans même la garantie implicite de COMMERCIALISATION ou d'ADÉQUATION À UN BUT PARTICULIER. 
+ * Consultez la Licence Publique Générale GNU pour plus de détails.
+ * * Vous devriez avoir reçu une copie de la Licence Publique Générale GNU 
+ * avec ce programme. Sinon, voir <https://www.gnu.org/licenses/>.
+ */
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -36,11 +50,11 @@ class Classroom extends Model
     }
 
     /**
-     * Get all students in this class.
+     * Alias for type() relationship.
      */
-    public function students(): HasMany
+    public function classroomType(): BelongsTo
     {
-        return $this->hasMany(Student::class, 'class_id');
+        return $this->type();
     }
 
     /**
@@ -48,7 +62,7 @@ class Classroom extends Model
      */
     public function attendances(): HasMany
     {
-        return $this->hasMany(Attendance::class);
+        return $this->hasMany(Attendance::class, 'class_id');
     }
 
     /**
@@ -56,6 +70,14 @@ class Classroom extends Model
      */
     public function classSubjects(): HasMany
     {
-        return $this->hasMany(ClassSubject::class);
+        return $this->hasMany(ClassSubject::class, 'class_id');
+    }
+
+    /**
+     * Get all evaluations for this class.
+     */
+    public function evaluations(): HasMany
+    {
+        return $this->hasMany(Evaluation::class, 'class_id');
     }
 }

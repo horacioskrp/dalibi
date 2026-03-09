@@ -1,12 +1,8 @@
 import { Head, router } from '@inertiajs/react';
-import { Plus, Pencil, Trash2, Search, Layers, Users, Eye } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Layers, Users, Eye, BookPlus } from 'lucide-react';
 import { useState } from 'react';
 import { ClassroomDrawer } from '@/components/Classrooms/classroom-drawer';
 import { FormDrawer } from '@/components/form-drawer';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { route } from '@/helpers/route';
-import AppLayout from '@/layouts/app-layout';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -16,6 +12,8 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
     Table,
     TableBody,
@@ -24,6 +22,8 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { route } from '@/helpers/route';
+import AppLayout from '@/layouts/app-layout';
 
 interface ClassroomType {
     id: string;
@@ -219,7 +219,7 @@ export default function Index({ classrooms, activeCount, classroomTypes = [], me
                                             <TableHead className="font-semibold text-gray-900">Code</TableHead>
                                             <TableHead className="font-semibold text-gray-900">Type</TableHead>
                                             <TableHead className="font-semibold text-gray-900">Capacité</TableHead>
-                                            <TableHead className="text-center font-semibold text-gray-900 w-28">Actions</TableHead>
+                                            <TableHead className="text-center font-semibold text-gray-900 w-36">Actions</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -265,6 +265,15 @@ export default function Index({ classrooms, activeCount, classroomTypes = [], me
                                                     </TableCell>
                                                     <TableCell className="text-center">
                                                         <div className="flex gap-2 justify-center">
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                className="border-blue-300 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                                                                onClick={() => router.get(route('classrooms.subject-assignments.create', classroom.id))}
+                                                                title="Attribuer des matières"
+                                                            >
+                                                                <BookPlus className="w-4 h-4" />
+                                                            </Button>
                                                             <Button
                                                                 variant="outline"
                                                                 size="sm"

@@ -1,13 +1,29 @@
-import { BookOpen, GraduationCap, LayoutGrid, Layers, Settings, Tag, Users, Shield, Lock } from 'lucide-react';
+import { BookOpen, Calendar, Clock, ClipboardList, GraduationCap, LayoutGrid, Layers, Settings, Tag, Users, Shield, Lock, Wallet, Percent, DollarSign, UserCircle } from 'lucide-react';
 import { route } from '@/helpers/route';
-import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';
 
 export const mainNavItems: NavItem[] = [
     {
         title: 'Tableau de bord',
-        href: dashboard(),
+        href: '/dashboard',
         icon: LayoutGrid,
+    },
+    {
+        title: 'Élèves',
+        href: '#',
+        icon: Users,
+        items: [
+            {
+                title: 'Élèves',
+                href: route('students.index'),
+                icon: Users,
+            },
+            {
+                title: 'Inscriptions',
+                href: route('enrollments.index'),
+                icon: ClipboardList,
+            },
+        ],
     },
     {
         title: 'Paramètres',
@@ -28,6 +44,56 @@ export const mainNavItems: NavItem[] = [
                 title: 'Types de classes',
                 href: route('classroom-types.index'),
                 icon: Tag,
+            },
+            {
+                title: 'Matières',
+                href: route('subjects.index'),
+                icon: BookOpen,
+            },
+            {
+                title: 'Types d\'évaluation',
+                href: route('evaluation-types.index'),
+                icon: Tag,
+            },
+            {
+                title: 'Évaluations',
+                href: route('evaluations.index'),
+                icon: ClipboardList,
+            },
+            {
+                title: 'Années académiques',
+                href: route('academic-years.index'),
+                icon: Calendar,
+            },
+            {
+                title: 'Périodes académiques',
+                href: route('academic-periods.index'),
+                icon: Clock,
+            },
+            {
+                title: 'Niveaux',
+                href: route('levels.index'),
+                icon: GraduationCap,
+            },
+            {
+                title: 'Ecolage',
+                href: route('schoolings.index'),
+                icon: Wallet,
+            },
+            {
+                title: 'Catégories de frais',
+                href: route('fee-categories.index'),
+                icon: Percent,
+            },
+            {
+                title: 'Structures de frais',
+                href: route('fee-structures.index'),
+                icon: DollarSign,
+            },
+            {
+                title: 'Bourses',
+                href: route('scholarships.index'),
+                icon: Percent,
             },
         ],
     },
@@ -51,6 +117,16 @@ export const mainNavItems: NavItem[] = [
                 href: route('permissions.index'),
                 icon: Lock,
             },
+            {
+                title: 'Affectations',
+                href: route('subject-assignments.index'),
+                icon: ClipboardList,
+            },
         ],
+    },
+    {
+        title: 'Mon compte',
+        href: '/settings/profile',
+        icon: UserCircle,
     },
 ];
