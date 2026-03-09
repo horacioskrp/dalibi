@@ -1,7 +1,6 @@
 import { Form, Head } from '@inertiajs/react';
 import { ShieldBan, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
-import Heading from '@/components/heading';
 import TwoFactorRecoveryCodes from '@/components/two-factor-recovery-codes';
 import TwoFactorSetupModal from '@/components/two-factor-setup-modal';
 import { Badge } from '@/components/ui/badge';
@@ -19,7 +18,7 @@ type Props = {
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Two-Factor Authentication',
+        title: 'Authentification à deux facteurs',
         href: show.url(),
     },
 ];
@@ -27,7 +26,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function TwoFactor({
     requiresConfirmation = false,
     twoFactorEnabled = false,
-}: Props) {
+}: Readonly<Props>) {
     const {
         qrCodeSvg,
         hasSetupData,
@@ -42,25 +41,28 @@ export default function TwoFactor({
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Two-Factor Authentication" />
+            <Head title="Authentification à deux facteurs" />
 
-            <h1 className="sr-only">Two-Factor Authentication Settings</h1>
+            <h1 className="sr-only">Authentification à deux facteurs</h1>
 
             <SettingsLayout>
                 <div className="space-y-6">
-                    <Heading
-                        variant="small"
-                        title="Two-Factor Authentication"
-                        description="Manage your two-factor authentication settings"
-                    />
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="p-2 bg-purple-50 rounded-lg">
+                            <ShieldCheck className="w-5 h-5 text-purple-600" />
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-semibold text-gray-900">Authentification à deux facteurs</h2>
+                            <p className="text-sm text-gray-600">Gérez vos paramètres d'authentification à deux facteurs</p>
+                        </div>
+                    </div>
                     {twoFactorEnabled ? (
                         <div className="flex flex-col items-start justify-start space-y-4">
-                            <Badge variant="default">Enabled</Badge>
+                            <Badge variant="default" className="bg-green-100 text-green-800">Activée</Badge>
                             <p className="text-muted-foreground">
-                                With two-factor authentication enabled, you will
-                                be prompted for a secure, random pin during
-                                login, which you can retrieve from the
-                                TOTP-supported application on your phone.
+                                Avec l'authentification à deux facteurs activée, vous serez
+                                invité à saisir un code de sécurité lors de la connexion,
+                                que vous pouvez récupérer depuis l'application TOTP sur votre téléphone.
                             </p>
 
                             <TwoFactorRecoveryCodes
@@ -77,7 +79,7 @@ export default function TwoFactor({
                                             type="submit"
                                             disabled={processing}
                                         >
-                                            <ShieldBan /> Disable 2FA
+                                            <ShieldBan /> Désactiver 2FA
                                         </Button>
                                     )}
                                 </Form>
@@ -85,21 +87,21 @@ export default function TwoFactor({
                         </div>
                     ) : (
                         <div className="flex flex-col items-start justify-start space-y-4">
-                            <Badge variant="destructive">Disabled</Badge>
+                            <Badge variant="destructive" className="bg-red-100 text-red-800">Désactivée</Badge>
                             <p className="text-muted-foreground">
-                                When you enable two-factor authentication, you
-                                will be prompted for a secure pin during login.
-                                This pin can be retrieved from a TOTP-supported
-                                application on your phone.
+                                Lorsque vous activez l'authentification à deux facteurs,
+                                vous serez invité à saisir un code de sécurité lors de la connexion.
+                                Ce code peut être récupéré depuis une application TOTP sur votre téléphone.
                             </p>
 
                             <div>
                                 {hasSetupData ? (
                                     <Button
                                         onClick={() => setShowSetupModal(true)}
+                                        className="bg-blue-600 hover:bg-blue-700"
                                     >
                                         <ShieldCheck />
-                                        Continue Setup
+                                        Continuer la configuration
                                     </Button>
                                 ) : (
                                     <Form
@@ -112,9 +114,10 @@ export default function TwoFactor({
                                             <Button
                                                 type="submit"
                                                 disabled={processing}
+                                                className="bg-blue-600 hover:bg-blue-700"
                                             >
                                                 <ShieldCheck />
-                                                Enable 2FA
+                                                Activer 2FA
                                             </Button>
                                         )}
                                     </Form>
