@@ -34,7 +34,7 @@ export default function Edit({ evaluation, evaluationTypes }: Readonly<EditProps
         evaluation_type_id: evaluation.evaluation_type_id,
         name: evaluation.name,
         description: evaluation.description || '',
-        date: evaluation.date || '',
+        date: evaluation.date ? evaluation.date.split(' ')[0] : '',
         coefficient: String(evaluation.coefficient),
         status: evaluation.status,
     });
