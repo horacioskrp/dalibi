@@ -1,4 +1,4 @@
-import { BookOpen, Calendar, Clock, ClipboardList, GraduationCap, LayoutGrid, Layers, Settings, Tag, Users, Shield, Lock, Wallet, Percent, DollarSign } from 'lucide-react';
+import { BookOpen, Calendar, Clock, ClipboardList, GraduationCap, LayoutGrid, Layers, Settings, Tag, Users, Shield, Lock, Wallet, Percent, DollarSign, UserCircle } from 'lucide-react';
 import { route } from '@/helpers/route';
 import type { NavItem } from '@/types';
 
@@ -123,5 +123,10 @@ export const mainNavItems: NavItem[] = [
                 icon: ClipboardList,
             },
         ],
+    },
+    {
+        title: 'Mon compte',
+        href: '/settings/profile',
+        icon: UserCircle,
     },
 ];

@@ -1,7 +1,7 @@
 import { Transition } from '@headlessui/react';
 import { Form, Head } from '@inertiajs/react';
+import { Lock, KeyRound, ShieldCheck } from 'lucide-react';
 import { useRef } from 'react';
-import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,7 +14,7 @@ import { edit } from '@/routes/user-password';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Password settings',
+        title: 'Mot de passe',
         href: edit().url,
     },
 ];
@@ -25,17 +25,21 @@ export default function Password() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Password settings" />
+            <Head title="Mot de passe" />
 
-            <h1 className="sr-only">Password Settings</h1>
+            <h1 className="sr-only">Mot de passe</h1>
 
             <SettingsLayout>
                 <div className="space-y-6">
-                    <Heading
-                        variant="small"
-                        title="Update password"
-                        description="Ensure your account is using a long, random password to stay secure"
-                    />
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="p-2 bg-amber-50 rounded-lg">
+                            <Lock className="w-5 h-5 text-amber-600" />
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-semibold text-gray-900">Modifier le mot de passe</h2>
+                            <p className="text-sm text-gray-600">Assurez-vous d'utiliser un mot de passe long et sécurisé</p>
+                        </div>
+                    </div>
 
                     <Form
                         {...PasswordController.update.form()}
@@ -61,80 +65,93 @@ export default function Password() {
                     >
                         {({ errors, processing, recentlySuccessful }) => (
                             <>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="current_password">
-                                        Current password
-                                    </Label>
-
+                                {/* Mot de passe actuel - Fond gris */}
+                                <div className="bg-gray-50 rounded-lg p-5 border border-gray-200">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <KeyRound className="w-4 h-4 text-gray-600" />
+                                        <Label htmlFor="current_password" className="text-sm font-semibold text-gray-900 mb-0">
+                                            Mot de passe actuel
+                                        </Label>
+                                    </div>
                                     <Input
                                         id="current_password"
                                         ref={currentPasswordInput}
                                         name="current_password"
                                         type="password"
-                                        className="mt-1 block w-full"
+                                        className="bg-white border-gray-300"
                                         autoComplete="current-password"
-                                        placeholder="Current password"
+                                        placeholder="Entrez votre mot de passe actuel"
                                     />
-
-                                    <InputError
-                                        message={errors.current_password}
-                                    />
+                                    <InputError message={errors.current_password} />
                                 </div>
 
-                                <div className="grid gap-2">
-                                    <Label htmlFor="password">
-                                        New password
-                                    </Label>
+                                {/* Nouveau mot de passe - Fond vert */}
+                                <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-5 border-2 border-green-200">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <ShieldCheck className="w-5 h-5 text-green-600" />
+                                        <span className="text-sm font-semibold text-green-900">
+                                            Nouveau mot de passe
+                                        </span>
+                                    </div>
+                                    
+                                    <div className="space-y-4">
+                                        <div>
+                                            <Label htmlFor="password" className="text-sm font-medium text-gray-900">
+                                                Nouveau mot de passe
+                                            </Label>
+                                            <Input
+                                                id="password"
+                                                ref={passwordInput}
+                                                name="password"
+                                                type="password"
+                                                className="mt-2 bg-white border-green-300 focus:ring-green-500"
+                                                autoComplete="new-password"
+                                                placeholder="Entrez un nouveau mot de passe"
+                                            />
+                                            <InputError message={errors.password} />
+                                        </div>
 
-                                    <Input
-                                        id="password"
-                                        ref={passwordInput}
-                                        name="password"
-                                        type="password"
-                                        className="mt-1 block w-full"
-                                        autoComplete="new-password"
-                                        placeholder="New password"
-                                    />
+                                        <div>
+                                            <Label htmlFor="password_confirmation" className="text-sm font-medium text-gray-900">
+                                                Confirmer le mot de passe
+                                            </Label>
+                                            <Input
+                                                id="password_confirmation"
+                                                name="password_confirmation"
+                                                type="password"
+                                                className="mt-2 bg-white border-green-300 focus:ring-green-500"
+                                                autoComplete="new-password"
+                                                placeholder="Confirmez le nouveau mot de passe"
+                                            />
+                                            <InputError message={errors.password_confirmation} />
+                                        </div>
+                                    </div>
 
-                                    <InputError message={errors.password} />
+                                    <div className="mt-4 p-3 bg-green-100 rounded-md">
+                                        <p className="text-xs text-green-800">
+                                            💡 <strong>Conseil :</strong> Utilisez au moins 8 caractères avec des lettres, chiffres et symboles.
+                                        </p>
+                                    </div>
                                 </div>
 
-                                <div className="grid gap-2">
-                                    <Label htmlFor="password_confirmation">
-                                        Confirm password
-                                    </Label>
-
-                                    <Input
-                                        id="password_confirmation"
-                                        name="password_confirmation"
-                                        type="password"
-                                        className="mt-1 block w-full"
-                                        autoComplete="new-password"
-                                        placeholder="Confirm password"
-                                    />
-
-                                    <InputError
-                                        message={errors.password_confirmation}
-                                    />
-                                </div>
-
-                                <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-4 pt-2">
                                     <Button
                                         disabled={processing}
+                                        className="bg-blue-600 hover:bg-blue-700"
                                         data-test="update-password-button"
                                     >
-                                        Save password
+                                        {processing ? 'Modification...' : 'Modifier le mot de passe'}
                                     </Button>
 
                                     <Transition
                                         show={recentlySuccessful}
-                                        enter="transition ease-in-out"
+                                        enter="transition ease-in-out duration-300"
                                         enterFrom="opacity-0"
-                                        leave="transition ease-in-out"
+                                        leave="transition ease-in-out duration-300"
                                         leaveTo="opacity-0"
                                     >
-                                        <p className="text-sm text-neutral-600">
-                                            Saved
+                                        <p className="text-sm text-green-600 font-medium">
+                                            ✓ Mot de passe modifié
                                         </p>
                                     </Transition>
                                 </div>

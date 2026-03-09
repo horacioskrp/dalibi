@@ -3,10 +3,6 @@ import { Plus, Pencil, Trash2, Search, Layers, Users, Eye, BookPlus } from 'luci
 import { useState } from 'react';
 import { ClassroomDrawer } from '@/components/Classrooms/classroom-drawer';
 import { FormDrawer } from '@/components/form-drawer';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { route } from '@/helpers/route';
-import AppLayout from '@/layouts/app-layout';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -16,6 +12,8 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
     Table,
     TableBody,
@@ -24,6 +22,8 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { route } from '@/helpers/route';
+import AppLayout from '@/layouts/app-layout';
 
 interface ClassroomType {
     id: string;
