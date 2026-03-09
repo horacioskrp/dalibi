@@ -91,6 +91,8 @@ export function route(name: string, params?: any): string {
         'evaluations.edit': `/evaluations/${params}/edit`,
         'evaluations.update': `/evaluations/${params}`,
         'evaluations.destroy': `/evaluations/${params}`,
+        'evaluations.bulk-schedule': '/evaluations/bulk/schedule',
+        'evaluations.bulk-store': '/evaluations/bulk/store',
 
         // Academic Years routes
         'academic-years.index': '/academic-years',

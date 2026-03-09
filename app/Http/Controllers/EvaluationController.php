@@ -192,4 +192,79 @@ class EvaluationController extends Controller
             ->route('evaluations.index')
             ->with('message', 'Évaluation supprimée avec succès.');
     }
+
+    /**
+     * Show form for bulk scheduling.
+     */
+    public function bulkScheduleForm(): Response
+    {
+        $evaluationTypes = EvaluationType::orderBy('name')->get(['id', 'name']);
+        $classrooms = Classroom::where('active', true)->orderBy('name')->get(['id', 'name', 'code', 'classroom_type_id']);
+        $classroomTypes = \App\Models\ClassroomType::orderBy('name')->get(['id', 'name']);
+        $academicPeriods = AcademicPeriod::orderByDesc('start_date')->get(['id', 'name']);
+
+        return Inertia::render('Administration/Evaluations/BulkSchedule', [
+            'evaluationTypes' => $evaluationTypes,
+            'classrooms' => $classrooms,
+            'classroomTypes' => $classroomTypes,
+            'academicPeriods' => $academicPeriods,
+        ]);
+    }
+
+    /**
+     * Store bulk scheduled evaluations.
+     */
+    public function bulkStore(Request $request)
+    {
+        $validated = $request->validate([
+            'classroom_ids' => ['required_without:classroom_type_id', 'array'],
+            'classroom_ids.*' => ['uuid', 'exists:classes,id'],
+            'classroom_type_id' => ['required_without:classroom_ids', 'nullable', 'uuid', 'exists:classroom_types,id'],
+            'academic_period_id' => ['required', 'uuid', 'exists:academic_periods,id'],
+            'evaluation_type_id' => ['required', 'uuid', 'exists:evaluation_types,id'],
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'date' => ['nullable', 'date'],
+            'coefficient' => ['required', 'numeric', 'gt:0', 'max:999.99'],
+            'status' => ['required', 'in:scheduled,completed'],
+        ], [
+            'name.required' => 'Le nom de l\'évaluation est obligatoire.',
+            'academic_period_id.required' => 'La période académique est obligatoire.',
+            'evaluation_type_id.required' => 'Le type d\'évaluation est obligatoire.',
+            'coefficient.gt' => 'Le coefficient doit être supérieur à 0.',
+        ]);
+
+        // Determine which classrooms to use
+        $classroomIds = $validated['classroom_ids'] ?? [];
+        
+        if ($validated['classroom_type_id']) {
+            $classroomIds = Classroom::where('active', true)
+                ->where('classroom_type_id', $validated['classroom_type_id'])
+                ->pluck('id')
+                ->toArray();
+        }
+
+        if (empty($classroomIds)) {
+            return back()->withErrors(['classrooms' => 'Aucune classe sélectionnée.']);
+        }
+
+        DB::transaction(function () use ($classroomIds, $validated): void {
+            foreach ($classroomIds as $classId) {
+                Evaluation::create([
+                    'class_id' => $classId,
+                    'academic_period_id' => $validated['academic_period_id'],
+                    'evaluation_type_id' => $validated['evaluation_type_id'],
+                    'name' => $validated['name'],
+                    'description' => $validated['description'] ?? null,
+                    'date' => $validated['date'] ?? null,
+                    'coefficient' => $validated['coefficient'],
+                    'status' => $validated['status'],
+                ]);
+            }
+        });
+
+        return redirect()
+            ->route('evaluations.index')
+            ->with('message', count($classroomIds) . ' évaluations créées avec succès.');
+    }
 }

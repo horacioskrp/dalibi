@@ -83,10 +83,16 @@ export default function Index({ evaluations, filters }: Readonly<IndexProps>) {
                         <h1 className="text-4xl font-bold tracking-tight text-gray-900">Évaluations</h1>
                         <p className="mt-2 text-lg text-gray-600">Gérez les évaluations par classe et période</p>
                     </div>
-                    <Button className="gap-2 bg-blue-600 hover:bg-blue-700" onClick={() => router.get(route('evaluations.create'))}>
-                        <Plus className="w-5 h-5" />
-                        Nouvelles évaluations
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button className="gap-2 bg-purple-600 hover:bg-purple-700" onClick={() => router.get(route('evaluations.bulk-schedule'))}>
+                            <Plus className="w-5 h-5" />
+                            Programmation en masse
+                        </Button>
+                        <Button className="gap-2 bg-blue-600 hover:bg-blue-700" onClick={() => router.get(route('evaluations.create'))}>
+                            <Plus className="w-5 h-5" />
+                            Nouvelles évaluations
+                        </Button>
+                    </div>
                 </div>
 
                 <div className="bg-white rounded-lg shadow-sm p-4 space-y-3">
