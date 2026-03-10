@@ -63,6 +63,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('fee-categories', FeeCategorieController::class);
     Route::resource('fee-structures', FeeStructureController::class);
     Route::resource('scholarships', ScholarshipController::class);
+    Route::post('students/bulk-status', [StudentController::class, 'bulkStatus'])
+        ->name('students.bulk-status');
     Route::resource('students', StudentController::class);
     Route::resource('enrollments', EnrollmentController::class);
     Route::get('enrollments/{enrollment}/receipt', [EnrollmentController::class, 'receipt'])->name('enrollments.receipt');
