@@ -34,17 +34,57 @@ class StudentController extends Controller
             });
         }
 
+        if ($request->filled('gender')) {
+            $query->where('gender', $request->string('gender')->toString());
+        }
+
+        if ($request->filled('nationality')) {
+            $query->where('nationality', 'ilike', '%' . $request->string('nationality')->toString() . '%');
+        }
+
+        if ($request->filled('status')) {
+            $status = $request->string('status')->toString();
+
+            if ($status === 'active') {
+                $query->where('active', true);
+            } elseif ($status === 'inactive') {
+                $query->where('active', false);
+            }
+        }
+
         $students = $query->paginate(10)->withQueryString();
 
         return Inertia::render('Students/Index', [
             'students' => $students,
-            'filters' => $request->only(['search']),
+            'filters' => $request->only(['search', 'gender', 'nationality', 'status']),
             'stats' => [
                 'total' => Student::count(),
                 'active' => Student::where('active', true)->count(),
                 'inactive' => Student::where('active', false)->count(),
+                'male' => Student::where('gender', 'male')->count(),
+                'female' => Student::where('gender', 'female')->count(),
+                'other' => Student::whereNull('gender')->orWhere('gender', '')->count(),
             ],
         ]);
+    }
+
+    public function bulkStatus(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'student_ids' => ['required', 'array', 'min:1'],
+            'student_ids.*' => ['required', 'uuid', 'exists:students,id'],
+            'action' => ['required', 'in:activate,deactivate'],
+        ]);
+
+        $isActive = $validated['action'] === 'activate';
+
+        $updatedCount = Student::whereIn('id', $validated['student_ids'])
+            ->update(['active' => $isActive]);
+
+        $statusLabel = $isActive ? 'activé(s)' : 'désactivé(s)';
+
+        return redirect()->route('students.index')
+            ->with('success', "{$updatedCount} élève(s) {$statusLabel} avec succès.");
     }
 
     public function create(): Response
