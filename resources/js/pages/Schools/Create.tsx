@@ -1,0 +1,59 @@
+import { Head, router, useForm } from '@inertiajs/react';
+import { ArrowLeft } from 'lucide-react';
+import { SchoolForm, type SchoolFormData } from '@/components/Schools/school-form';
+import { route } from '@/helpers/route';
+import AppLayout from '@/layouts/app-layout';
+
+const initialValues: SchoolFormData = {
+    name: '',
+    code: '',
+    logo: '',
+    email: '',
+    phone: '',
+    address: '',
+    region: '',
+    city: '',
+    po_box: '',
+    active: true,
+};
+
+export default function Create() {
+    const { data, setData, post, processing, errors } = useForm<SchoolFormData>(initialValues);
+
+    const handleSubmit = (event: React.SubmitEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        post(route('schools.store'));
+    };
+
+    return (
+        <AppLayout>
+            <Head title="Nouvelle école" />
+
+            <div className="max-w-4xl space-y-6">
+                <div className="flex items-center gap-4">
+                    <button
+                        type="button"
+                        onClick={() => router.get(route('schools.index'))}
+                        className="p-2 hover:bg-gray-100 rounded-lg transition"
+                    >
+                        <ArrowLeft className="w-5 h-5 text-gray-600" />
+                    </button>
+                    <div>
+                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Créer une école</h1>
+                        <p className="mt-2 text-gray-600">Renseignez les informations de l'établissement.</p>
+                    </div>
+                </div>
+
+                <SchoolForm
+                    mode="create"
+                    data={data}
+                    errors={errors}
+                    processing={processing}
+                    onCancel={() => router.get(route('schools.index'))}
+                    onSubmit={handleSubmit}
+                    setData={setData}
+                />
+            </div>
+        </AppLayout>
+    );
+}
