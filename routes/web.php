@@ -36,6 +36,12 @@ Route::get('dashboard', function () {
 
 // Schools Routes
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::post('schools/bulk-activate', [SchoolController::class, 'bulkActivate'])
+        ->name('schools.bulk-activate');
+    Route::post('schools/bulk-deactivate', [SchoolController::class, 'bulkDeactivate'])
+        ->name('schools.bulk-deactivate');
+    Route::patch('schools/{school}/toggle-active', [SchoolController::class, 'toggleActive'])
+        ->name('schools.toggle-active');
     Route::resource('schools', SchoolController::class);
     Route::resource('classrooms', ClassroomController::class);
     Route::get('classrooms/{classroom}/subject-assignments', [ClassroomSubjectAssignmentController::class, 'create'])

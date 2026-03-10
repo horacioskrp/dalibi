@@ -17,6 +17,9 @@ export function route(name: string, params?: any): string {
         'schools.edit': `/schools/${params}/edit`,
         'schools.update': `/schools/${params}`,
         'schools.destroy': `/schools/${params}`,
+        'schools.bulk-activate': '/schools/bulk-activate',
+        'schools.bulk-deactivate': '/schools/bulk-deactivate',
+        'schools.toggle-active': `/schools/${params}/toggle-active`,
 
         // Classrooms routes
         'classrooms.index': '/classrooms',
