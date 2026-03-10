@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { Plus, Pencil, Trash2, Search, Users, UserCheck, UserX, Eye } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Users, UserCheck, Eye, Mars, Venus, CircleHelp, Phone } from 'lucide-react';
 import { useState } from 'react';
 import {
     AlertDialog,
@@ -11,6 +11,7 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import {
     Table,
@@ -28,6 +29,8 @@ interface Student {
     matricule?: string | null;
     firstname: string;
     lastname: string;
+    gender?: 'male' | 'female' | '' | null;
+    nationality?: string | null;
     phone?: string | null;
     email?: string | null;
     active: boolean;
@@ -60,26 +63,56 @@ interface IndexProps {
         total: number;
         active: number;
         inactive: number;
+        male: number;
+        female: number;
+        other: number;
     };
     filters?: {
         search?: string;
+        gender?: string;
+        nationality?: string;
+        status?: string;
     };
 }
 
-function getUserLabel(student: Student): string {
-    const fullname = `${student.user?.firstname ?? ''} ${student.user?.lastname ?? ''}`.trim();
-
-    if (fullname) {
-        return fullname;
+function renderGenderBadge(gender?: 'male' | 'female' | '' | null) {
+    if (gender === 'male') {
+        return (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+                <Mars className="w-3.5 h-3.5" />
+                Masculin
+            </span>
+        );
     }
 
-    return student.user?.name ?? student.user?.email ?? '—';
+    if (gender === 'female') {
+        return (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-pink-100 text-pink-700">
+                <Venus className="w-3.5 h-3.5" />
+                Féminin
+            </span>
+        );
+    }
+
+    return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">
+            <CircleHelp className="w-3.5 h-3.5" />
+            Non renseigné
+        </span>
+    );
 }
 
 export default function Index({ students, stats, filters }: Readonly<IndexProps>) {
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [searchQuery, setSearchQuery] = useState(filters?.search ?? '');
+    const [genderFilter, setGenderFilter] = useState(filters?.gender ?? '');
+    const [nationalityFilter, setNationalityFilter] = useState(filters?.nationality ?? '');
+    const [statusFilter, setStatusFilter] = useState(filters?.status ?? '');
+    const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
+    const [bulkAction, setBulkAction] = useState('');
+
+    const allVisibleSelected = students.data.length > 0 && students.data.every((student) => selectedStudentIds.includes(student.id));
 
     const handleDelete = (studentId: string) => {
         setIsDeleting(true);
@@ -93,12 +126,67 @@ export default function Index({ students, stats, filters }: Readonly<IndexProps>
     };
 
     const handleSearch = () => {
-        router.get(route('students.index'), { search: searchQuery }, { preserveState: true });
+        router.get(route('students.index'), {
+            search: searchQuery,
+            gender: genderFilter,
+            nationality: nationalityFilter,
+            status: statusFilter,
+        }, {
+            preserveState: true,
+            onSuccess: () => setSelectedStudentIds([]),
+        });
     };
 
     const handleClearSearch = () => {
         setSearchQuery('');
-        router.get(route('students.index'), { search: '' }, { preserveState: true });
+        setGenderFilter('');
+        setNationalityFilter('');
+        setStatusFilter('');
+        router.get(route('students.index'), {
+            search: '',
+            gender: '',
+            nationality: '',
+            status: '',
+        }, {
+            preserveState: true,
+            onSuccess: () => setSelectedStudentIds([]),
+        });
+    };
+
+    const toggleSelectStudent = (studentId: string, checked: boolean) => {
+        setSelectedStudentIds((prev) => {
+            if (checked) {
+                return prev.includes(studentId) ? prev : [...prev, studentId];
+            }
+
+            return prev.filter((id) => id !== studentId);
+        });
+    };
+
+    const toggleSelectAllVisible = (checked: boolean) => {
+        if (checked) {
+            setSelectedStudentIds(students.data.map((student) => student.id));
+            return;
+        }
+
+        setSelectedStudentIds([]);
+    };
+
+    const handleBulkAction = () => {
+        if (selectedStudentIds.length === 0 || !bulkAction) {
+            return;
+        }
+
+        router.post(route('students.bulk-status'), {
+            student_ids: selectedStudentIds,
+            action: bulkAction,
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setSelectedStudentIds([]);
+                setBulkAction('');
+            },
+        });
     };
 
     const statsCards = [
@@ -117,11 +205,18 @@ export default function Index({ students, stats, filters }: Readonly<IndexProps>
             textColor: 'text-green-600',
         },
         {
-            title: 'Élèves inactifs',
-            value: stats.inactive,
-            icon: UserX,
-            bgColor: 'bg-orange-50',
-            textColor: 'text-orange-600',
+            title: 'Élèves hommes',
+            value: stats.male,
+            icon: Mars,
+            bgColor: 'bg-sky-50',
+            textColor: 'text-sky-600',
+        },
+        {
+            title: 'Élèves femmes',
+            value: stats.female,
+            icon: Venus,
+            bgColor: 'bg-pink-50',
+            textColor: 'text-pink-600',
         },
     ];
 
@@ -144,7 +239,7 @@ export default function Index({ students, stats, filters }: Readonly<IndexProps>
                     </Button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     {statsCards.map((stat) => {
                         const Icon = stat.icon;
 
@@ -162,8 +257,28 @@ export default function Index({ students, stats, filters }: Readonly<IndexProps>
                     })}
                 </div>
 
+                {selectedStudentIds.length > 0 && (
+                    <div className="bg-blue-50 text-blue-800 px-4 py-3 rounded-xl flex items-center justify-between gap-4 shadow-sm ring-1 ring-blue-100">
+                        <span className="text-sm font-medium">{selectedStudentIds.length} élève(s) sélectionné(s)</span>
+                        <div className="flex items-center gap-2">
+                            <select
+                                value={bulkAction}
+                                onChange={(event) => setBulkAction(event.target.value)}
+                                className="h-10 rounded-md border border-blue-200 bg-white px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                                <option value="">Choisir une action</option>
+                                <option value="activate">Activer</option>
+                                <option value="deactivate">Désactiver</option>
+                            </select>
+                            <Button onClick={handleBulkAction} disabled={!bulkAction} className="bg-blue-600 hover:bg-blue-700 text-white">
+                                Appliquer
+                            </Button>
+                        </div>
+                    </div>
+                )}
+
                 <div className="bg-white rounded-lg p-4 shadow-sm">
-                    <div className="flex gap-4">
+                    <div className="flex gap-4 flex-wrap">
                         <div className="flex-1 relative">
                             <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
                             <Input
@@ -174,6 +289,31 @@ export default function Index({ students, stats, filters }: Readonly<IndexProps>
                                 className="pl-10 bg-gray-50 border-gray-300"
                             />
                         </div>
+                        <Input
+                            type="text"
+                            placeholder="Nationalité"
+                            value={nationalityFilter}
+                            onChange={(event) => setNationalityFilter(event.target.value)}
+                            className="w-44 bg-gray-50 border-gray-300"
+                        />
+                        <select
+                            value={genderFilter}
+                            onChange={(event) => setGenderFilter(event.target.value)}
+                            className="h-10 rounded-md border border-gray-300 bg-gray-50 px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="">Sexe</option>
+                            <option value="male">Masculin</option>
+                            <option value="female">Féminin</option>
+                        </select>
+                        <select
+                            value={statusFilter}
+                            onChange={(event) => setStatusFilter(event.target.value)}
+                            className="h-10 rounded-md border border-gray-300 bg-gray-50 px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="">Statut</option>
+                            <option value="active">Actif</option>
+                            <option value="inactive">Inactif</option>
+                        </select>
                         <Button onClick={handleSearch} className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
                             <Search className="w-4 h-4" />
                             Rechercher
@@ -195,9 +335,17 @@ export default function Index({ students, stats, filters }: Readonly<IndexProps>
                         <Table>
                             <TableHeader className="bg-gray-50">
                                 <TableRow className="border-b border-gray-200">
+                                    <TableHead className="w-10">
+                                        <Checkbox
+                                            checked={allVisibleSelected}
+                                            onCheckedChange={(checked) => toggleSelectAllVisible(checked === true)}
+                                            aria-label="Sélectionner tous les élèves"
+                                        />
+                                    </TableHead>
                                     <TableHead className="font-semibold text-gray-900">Élève</TableHead>
                                     <TableHead className="font-semibold text-gray-900">Matricule</TableHead>
-                                    <TableHead className="font-semibold text-gray-900">Compte lié</TableHead>
+                                    <TableHead className="font-semibold text-gray-900">Sexe / Gender</TableHead>
+                                    <TableHead className="font-semibold text-gray-900">Nationalité</TableHead>
                                     <TableHead className="font-semibold text-gray-900">Contact</TableHead>
                                     <TableHead className="font-semibold text-gray-900">Statut</TableHead>
                                     <TableHead className="text-center font-semibold text-gray-900 w-28">Actions</TableHead>
@@ -206,7 +354,7 @@ export default function Index({ students, stats, filters }: Readonly<IndexProps>
                             <TableBody>
                                 {students.data.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={6} className="text-center py-12 text-gray-500">
+                                        <TableCell colSpan={8} className="text-center py-12 text-gray-500">
                                             <div className="flex flex-col items-center gap-2">
                                                 <Users className="w-12 h-12 text-gray-300" />
                                                 <p className="text-lg">Aucun élève trouvé</p>
@@ -216,6 +364,13 @@ export default function Index({ students, stats, filters }: Readonly<IndexProps>
                                 ) : (
                                     students.data.map((student) => (
                                         <TableRow key={student.id} className="border-b border-gray-100 hover:bg-blue-50/40 transition-colors">
+                                            <TableCell>
+                                                <Checkbox
+                                                    checked={selectedStudentIds.includes(student.id)}
+                                                    onCheckedChange={(checked) => toggleSelectStudent(student.id, checked === true)}
+                                                    aria-label={`Sélectionner ${student.firstname} ${student.lastname}`}
+                                                />
+                                            </TableCell>
                                             <TableCell className="font-semibold text-gray-900">
                                                 <div className="flex items-center gap-3">
                                                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
@@ -233,9 +388,15 @@ export default function Index({ students, stats, filters }: Readonly<IndexProps>
                                                     <span className="text-gray-400">—</span>
                                                 )}
                                             </TableCell>
-                                            <TableCell className="text-gray-600">{getUserLabel(student)}</TableCell>
+                                            <TableCell>{renderGenderBadge(student.gender)}</TableCell>
                                             <TableCell className="text-gray-600">
-                                                {student.phone ?? student.parent_info?.father_phone ?? student.parent_info?.mother_phone ?? '—'}
+                                                {student.nationality || <span className="text-gray-400">—</span>}
+                                            </TableCell>
+                                            <TableCell className="text-gray-600">
+                                                <span className="inline-flex items-center gap-1.5">
+                                                    <Phone className="w-3.5 h-3.5 text-violet-500" />
+                                                    {student.phone ?? student.parent_info?.father_phone ?? student.parent_info?.mother_phone ?? '—'}
+                                                </span>
                                             </TableCell>
                                             <TableCell>
                                                 <span className={`px-2 py-1 rounded text-sm font-medium ${student.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
@@ -287,7 +448,13 @@ export default function Index({ students, stats, filters }: Readonly<IndexProps>
                             {students.current_page > 1 && (
                                 <Button
                                     variant="outline"
-                                    onClick={() => router.get(route('students.index'), { page: students.current_page - 1 }, { preserveState: true })}
+                                    onClick={() => router.get(route('students.index'), {
+                                        page: students.current_page - 1,
+                                        search: searchQuery,
+                                        gender: genderFilter,
+                                        nationality: nationalityFilter,
+                                        status: statusFilter,
+                                    }, { preserveState: true })}
                                 >
                                     ← Précédent
                                 </Button>
@@ -298,7 +465,13 @@ export default function Index({ students, stats, filters }: Readonly<IndexProps>
                             {students.current_page < students.last_page && (
                                 <Button
                                     variant="outline"
-                                    onClick={() => router.get(route('students.index'), { page: students.current_page + 1 }, { preserveState: true })}
+                                    onClick={() => router.get(route('students.index'), {
+                                        page: students.current_page + 1,
+                                        search: searchQuery,
+                                        gender: genderFilter,
+                                        nationality: nationalityFilter,
+                                        status: statusFilter,
+                                    }, { preserveState: true })}
                                 >
                                     Suivant →
                                 </Button>
