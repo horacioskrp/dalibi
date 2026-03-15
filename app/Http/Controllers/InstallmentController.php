@@ -2,63 +2,40 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\FeeStructure;
+use App\Models\Installment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class InstallmentController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Store multiple installments for a fee structure.
      */
-    public function index()
+    public function storeMultiple(Request $request, FeeStructure $feeStructure)
     {
-        //
-    }
+        $request->validate([
+            'installments' => 'required|array|min:1',
+            'installments.*.name' => 'required|string|max:255',
+            'installments.*.installment_number' => 'required|integer|min:1',
+            'installments.*.amount' => 'required|numeric|min:0',
+        ]);
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
+        DB::transaction(function () use ($request, $feeStructure) {
+            // Delete existing installments
+            $feeStructure->installments()->delete();
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
+            // Create new installments
+            foreach ($request->installments as $installmentData) {
+                Installment::create([
+                    'fee_structure_id' => $feeStructure->id,
+                    'name' => $installmentData['name'],
+                    'installment_number' => $installmentData['installment_number'],
+                    'amount' => $installmentData['amount'],
+                ]);
+            }
+        });
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        return redirect()->back()->with('message', 'Tranches mises à jour avec succès.');
     }
 }

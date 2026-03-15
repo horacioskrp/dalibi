@@ -159,6 +159,7 @@ export function route(name: string, params?: any): string {
         'fee-structures.edit': `/fee-structures/${params}/edit`,
         'fee-structures.update': `/fee-structures/${params}`,
         'fee-structures.destroy': `/fee-structures/${params}`,
+        'fee-structures.installments.store-multiple': `/fee-structures/${params}/installments`,
 
         // Scholarships routes
         'scholarships.index': '/scholarships',
