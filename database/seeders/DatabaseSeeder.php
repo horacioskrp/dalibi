@@ -17,9 +17,6 @@ class DatabaseSeeder extends Seeder
         // Create roles and permissions first
         $this->call(RolesAndPermissionsSeeder::class);
 
-        // Then create demo school data
-        $this->call(SchoolDemoSeeder::class);
-
         // Create fee categories
         $this->call(FeeCategorieSeeder::class);
 

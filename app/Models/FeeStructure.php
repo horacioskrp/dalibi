@@ -58,4 +58,12 @@ class FeeStructure extends Model
     {
         return $this->belongsTo(Classroom::class, 'class_id');
     }
+
+    /**
+     * Get the installments for the fee structure.
+     */
+    public function installments()
+    {
+        return $this->hasMany(Installment::class);
+    }
 }
