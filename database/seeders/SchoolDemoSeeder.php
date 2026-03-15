@@ -62,7 +62,7 @@ class SchoolDemoSeeder extends Seeder
 
         // Create academic years
         $year2024 = AcademicYear::updateOrCreate(
-            ['school_id' => $primarySchool->id, 'year' => '2024-2025'],
+            ['year' => '2024-2025'],
             [
                 'start_date' => '2024-09-01',
                 'end_date' => '2025-07-31',
@@ -71,7 +71,7 @@ class SchoolDemoSeeder extends Seeder
         );
 
         $year2024College = AcademicYear::updateOrCreate(
-            ['school_id' => $collegSchool->id, 'year' => '2024-2025'],
+            ['year' => '2024-2025'],
             [
                 'start_date' => '2024-09-01',
                 'end_date' => '2025-07-31',
@@ -80,7 +80,7 @@ class SchoolDemoSeeder extends Seeder
         );
 
         $year2024Lycee = AcademicYear::updateOrCreate(
-            ['school_id' => $lyceeSchool->id, 'year' => '2024-2025'],
+            [ 'year' => '2024-2025'],
             [
                 'start_date' => '2024-09-01',
                 'end_date' => '2025-07-31',
@@ -175,34 +175,6 @@ class SchoolDemoSeeder extends Seeder
                 'capacity' => 35,
             ]
         );
-
-        // Create students
-        for ($i = 1; $i <= 10; $i++) {
-            $user = User::updateOrCreate(
-                ['email' => 'etudiant' . $i . '@ecoliotogo.tg'],
-                [
-                    'natricule' => 'STU' . str_pad($i, 4, '0', STR_PAD_LEFT),
-                    'firstname' => 'Etudiant',
-                    'lastname' => 'Togo' . $i,
-                    'gender' => $i % 2 == 0 ? 'female' : 'male',
-                    'password' => bcrypt('password'),
-                ]
-            );
-
-            Student::updateOrCreate(
-                ['user_id' => $user->id],
-                [
-                    'class_id' => $class1->id,
-                    'registration_number' => 'REG' . str_pad($i, 5, '0', STR_PAD_LEFT),
-                    'parent_name' => 'Parent Togo ' . $i,
-                    'parent_phone' => '+228 ' . rand(20000000, 99999999),
-                    'parent_email' => 'parent' . $i . '@example.tg',
-                    'enrollment_date' => now(),
-                    'active' => true,
-                ]
-            );
-        }
-
         $this->command->info('Données de démonstration créées avec succès!');
     }
 }
