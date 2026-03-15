@@ -62,6 +62,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('schoolings', SchoolingController::class);
     Route::resource('fee-categories', FeeCategorieController::class);
     Route::resource('fee-structures', FeeStructureController::class);
+    Route::post('fee-structures/{feeStructure}/installments', [\App\Http\Controllers\InstallmentController::class, 'storeMultiple'])
+        ->name('fee-structures.installments.store-multiple');
     Route::resource('scholarships', ScholarshipController::class);
     Route::post('students/bulk-status', [StudentController::class, 'bulkStatus'])
         ->name('students.bulk-status');

@@ -74,7 +74,7 @@ class FeeStructureController extends Controller
      */
     public function show(FeeStructure $feeStructure)
     {
-        $feeStructure->load(['academicYear', 'feeCategory', 'classroom']);
+        $feeStructure->load(['academicYear', 'feeCategory', 'classroom', 'installments']);
 
         return Inertia::render('FeeStructures/Show', [
             'feeStructure' => $feeStructure,
