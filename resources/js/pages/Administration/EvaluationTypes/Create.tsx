@@ -1,6 +1,7 @@
 import { Head, router } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
-import { FormEvent, useState } from 'react';
+import type { FormEvent} from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { route } from '@/helpers/route';
 import AppLayout from '@/layouts/app-layout';

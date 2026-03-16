@@ -17,6 +17,7 @@ use App\Http\Controllers\SchoolController;
 use App\Http\Controllers\SchoolingController;
 use App\Http\Controllers\ScholarshipController;
 use App\Http\Controllers\StudentController;
+use App\Http\Controllers\StudentScholarshipController;
 use App\Http\Controllers\SubjectAssignmentController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\UserController;
@@ -65,6 +66,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('fee-structures/{feeStructure}/installments', [\App\Http\Controllers\InstallmentController::class, 'storeMultiple'])
         ->name('fee-structures.installments.store-multiple');
     Route::resource('scholarships', ScholarshipController::class);
+    Route::resource('student-scholarships', StudentScholarshipController::class);
     Route::post('students/bulk-status', [StudentController::class, 'bulkStatus'])
         ->name('students.bulk-status');
     Route::resource('students', StudentController::class);

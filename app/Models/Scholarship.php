@@ -19,6 +19,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Scholarship extends Model
 {
@@ -34,4 +35,12 @@ class Scholarship extends Model
     protected $casts = [
         'value' => 'decimal:2',
     ];
+
+    /**
+     * Get all student scholarships for this scholarship.
+     */
+    public function studentScholarships(): HasMany
+    {
+        return $this->hasMany(StudentScholarship::class);
+    }
 }

@@ -23,6 +23,11 @@ export const mainNavItems: NavItem[] = [
                 href: route('enrollments.index'),
                 icon: ClipboardList,
             },
+            {
+                title: 'Bourses d\'étudiants',
+                href: route('student-scholarships.index'),
+                icon: Percent,
+            },
         ],
     },
     {

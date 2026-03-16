@@ -1,0 +1,43 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class StudentScholarship extends Model
+{
+    use HasFactory, HasUuids;
+
+    protected $fillable = [
+        'student_id',
+        'scholarship_id',
+        'academic_year_id',
+    ];
+
+    /**
+     * Get the student that owns the student scholarship.
+     */
+    public function student(): BelongsTo
+    {
+        return $this->belongsTo(Student::class);
+    }
+
+    /**
+     * Get the scholarship that owns the student scholarship.
+     */
+    public function scholarship(): BelongsTo
+    {
+        return $this->belongsTo(Scholarship::class);
+    }
+
+    /**
+     * Get the academic year that owns the student scholarship.
+     */
+    public function academicYear(): BelongsTo
+    {
+        return $this->belongsTo(AcademicYear::class);
+    }
+}

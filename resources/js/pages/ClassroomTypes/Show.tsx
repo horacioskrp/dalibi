@@ -1,8 +1,6 @@
 import { Head, router } from '@inertiajs/react';
 import { ArrowLeft, CheckCircle2, Tag, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { route } from '@/helpers/route';
-import AppLayout from '@/layouts/app-layout';
 import {
     Table,
     TableBody,
@@ -11,6 +9,8 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { route } from '@/helpers/route';
+import AppLayout from '@/layouts/app-layout';
 
 interface Classroom {
     id: string;

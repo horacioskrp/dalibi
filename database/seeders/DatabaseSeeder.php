@@ -22,5 +22,8 @@ class DatabaseSeeder extends Seeder
 
         // Seed evaluation types
         $this->call(ExamenTypeSeeder::class);
+
+        // Seed scholarships
+        $this->call(ScholarshipSeeder::class);
     }
 }
