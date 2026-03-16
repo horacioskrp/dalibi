@@ -170,6 +170,15 @@ export function route(name: string, params?: any): string {
         'scholarships.update': `/scholarships/${params}`,
         'scholarships.destroy': `/scholarships/${params}`,
 
+        // Student Scholarships routes
+        'student-scholarships.index': '/student-scholarships',
+        'student-scholarships.create': '/student-scholarships/create',
+        'student-scholarships.store': '/student-scholarships',
+        'student-scholarships.show': `/student-scholarships/${params}`,
+        'student-scholarships.edit': `/student-scholarships/${params}/edit`,
+        'student-scholarships.update': `/student-scholarships/${params}`,
+        'student-scholarships.destroy': `/student-scholarships/${params}`,
+
         // Students routes
         'students.index': '/students',
         'students.create': '/students/create',

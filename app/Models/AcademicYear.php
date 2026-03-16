@@ -19,6 +19,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class AcademicYear extends Model
 {
@@ -43,6 +44,14 @@ class AcademicYear extends Model
     public function getNameAttribute(): string
     {
         return $this->year;
+    }
+
+    /**
+     * Get all student scholarships for this academic year.
+     */
+    public function studentScholarships(): HasMany
+    {
+        return $this->hasMany(StudentScholarship::class);
     }
 }
 

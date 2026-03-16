@@ -1,10 +1,10 @@
 import { useForm } from '@inertiajs/react';
+import { Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { CreateDrawer } from '@/components/create-drawer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { route } from '@/helpers/route';
-import { Search } from 'lucide-react';
 
 interface ClassroomType {
     id: string;

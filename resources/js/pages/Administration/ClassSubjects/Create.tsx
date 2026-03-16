@@ -1,6 +1,7 @@
 import { Head, router } from '@inertiajs/react';
 import { ArrowLeft, Search, X } from 'lucide-react';
-import { FormEvent, useMemo, useState } from 'react';
+import type { FormEvent} from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
