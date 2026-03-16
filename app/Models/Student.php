@@ -99,6 +99,14 @@ class Student extends Model
     }
 
     /**
+     * Get all scholarships for this student.
+     */
+    public function scholarships(): HasMany
+    {
+        return $this->hasMany(StudentScholarship::class);
+    }
+
+    /**
      * Générer un matricule pour cet élève
      *
      * @return string

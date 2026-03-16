@@ -3,8 +3,8 @@ import { useEffect } from 'react';
 import { CreateDrawer } from '@/components/create-drawer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { route } from '@/helpers/route';
 import { Textarea } from '@/components/ui/textarea';
+import { route } from '@/helpers/route';
 
 interface ClassroomTypeData {
     id?: string;

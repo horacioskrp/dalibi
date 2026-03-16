@@ -1,12 +1,8 @@
 import { Head, router } from '@inertiajs/react';
 import { Plus, Pencil, Trash2, Search, Tag, CheckCircle2, Eye } from 'lucide-react';
 import { useState } from 'react';
-import { FormDrawer } from '@/components/form-drawer';
 import { ClassroomTypeDrawer } from '@/components/ClassroomTypes/classroom-type-drawer';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { route } from '@/helpers/route';
-import AppLayout from '@/layouts/app-layout';
+import { FormDrawer } from '@/components/form-drawer';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -16,6 +12,8 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
     Table,
     TableBody,
@@ -24,6 +22,8 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { route } from '@/helpers/route';
+import AppLayout from '@/layouts/app-layout';
 
 interface ClassroomType {
     id: string;
