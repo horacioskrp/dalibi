@@ -44,6 +44,9 @@ interface AcademicYear {
 interface StudentScholarship {
     id: string;
     notes?: string;
+    number_of_year?: number;
+    start_date?: string;
+    end_date?: string;
     created_at: string;
     updated_at: string;
     student: Student;
@@ -116,7 +119,7 @@ export default function Show({ studentScholarship }: Readonly<ShowProps>) {
                     {/* Main Information */}
                     <div className="md:col-span-2 space-y-6">
                         {/* Student Information */}
-                        <Card>
+                        <Card className="border-0">
                             <CardHeader className="bg-blue-50">
                                 <CardTitle className="flex items-center gap-2 text-blue-900">
                                     <User className="h-5 w-5" />
@@ -165,7 +168,7 @@ export default function Show({ studentScholarship }: Readonly<ShowProps>) {
                         </Card>
 
                         {/* Scholarship Information */}
-                        <Card>
+                        <Card className="border-0">
                             <CardHeader className="bg-green-50">
                                 <CardTitle className="flex items-center gap-2 text-green-900">
                                     <Award className="h-5 w-5" />
@@ -200,7 +203,7 @@ export default function Show({ studentScholarship }: Readonly<ShowProps>) {
 
                         {/* Notes */}
                         {studentScholarship.notes && (
-                            <Card>
+                            <Card className="border-0">
                                 <CardHeader className="bg-gray-50">
                                     <CardTitle className="flex items-center gap-2 text-gray-900">
                                         <FileText className="h-5 w-5" />
@@ -217,7 +220,7 @@ export default function Show({ studentScholarship }: Readonly<ShowProps>) {
                     {/* Sidebar */}
                     <div className="space-y-6">
                         {/* Academic Year */}
-                        <Card>
+                        <Card className="border-0">
                             <CardHeader className="bg-purple-50">
                                 <CardTitle className="flex items-center gap-2 text-purple-900">
                                     <Calendar className="h-5 w-5" />
@@ -242,7 +245,7 @@ export default function Show({ studentScholarship }: Readonly<ShowProps>) {
                         </Card>
 
                         {/* Attribution Details */}
-                        <Card>
+                        <Card className="border-0">
                             <CardHeader className="bg-orange-50">
                                 <CardTitle className="flex items-center gap-2 text-orange-900">
                                     <Clock className="h-5 w-5" />
@@ -259,6 +262,24 @@ export default function Show({ studentScholarship }: Readonly<ShowProps>) {
                                         <label className="text-sm font-medium text-gray-500">Dernière modification</label>
                                         <p>{new Date(studentScholarship.updated_at).toLocaleDateString('fr-FR')}</p>
                                     </div>
+                                    {studentScholarship.number_of_year && (
+                                        <div>
+                                            <label className="text-sm font-medium text-gray-500">Nombre d'années</label>
+                                            <p className="text-lg font-semibold">{studentScholarship.number_of_year}</p>
+                                        </div>
+                                    )}
+                                    {studentScholarship.start_date && (
+                                        <div>
+                                            <label className="text-sm font-medium text-gray-500">Date de début</label>
+                                            <p>{new Date(studentScholarship.start_date).toLocaleDateString('fr-FR')}</p>
+                                        </div>
+                                    )}
+                                    {studentScholarship.end_date && (
+                                        <div>
+                                            <label className="text-sm font-medium text-gray-500">Date de fin</label>
+                                            <p>{new Date(studentScholarship.end_date).toLocaleDateString('fr-FR')}</p>
+                                        </div>
+                                    )}
                                 </div>
                             </CardContent>
                         </Card>

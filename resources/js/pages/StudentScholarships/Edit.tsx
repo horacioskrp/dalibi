@@ -33,6 +33,9 @@ interface StudentScholarship {
     student_id: string;
     scholarship_id: string;
     academic_year_id: string;
+    number_of_year?: number;
+    start_date?: string;
+    end_date?: string;
     notes?: string;
     student: Student;
     scholarship: Scholarship;
@@ -206,6 +209,9 @@ export default function Edit({ studentScholarship, students, scholarships, acade
         student_id: studentScholarship.student_id,
         scholarship_id: studentScholarship.scholarship_id,
         academic_year_id: studentScholarship.academic_year_id,
+        number_of_year: studentScholarship.number_of_year || '',
+        start_date: studentScholarship.start_date || '',
+        end_date: studentScholarship.end_date || '',
         notes: studentScholarship.notes || '',
     });
 
@@ -311,6 +317,61 @@ export default function Edit({ studentScholarship, students, scholarships, acade
                                     </Select>
                                     {errors.academic_year_id && (
                                         <p className="text-sm text-red-600">{errors.academic_year_id}</p>
+                                    )}
+                                </div>
+
+                                {/* Scholarship Duration */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="number_of_year" className="flex items-center gap-2 text-blue-800">
+                                        Nombre d'années
+                                    </Label>
+                                    <Input
+                                        type="number"
+                                        id="number_of_year"
+                                        value={data.number_of_year}
+                                        onChange={(e) => setData('number_of_year', e.target.value)}
+                                        placeholder="Ex: 1, 2, 3..."
+                                        className="bg-white"
+                                        min="1"
+                                    />
+                                    {errors.number_of_year && (
+                                        <p className="text-sm text-red-600">{errors.number_of_year}</p>
+                                    )}
+                                </div>
+
+                                {/* Scholarship Start Date */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="start_date" className="flex items-center gap-2 text-blue-800">
+                                        <Calendar className="h-4 w-4" />
+                                        Date de début
+                                    </Label>
+                                    <Input
+                                        type="date"
+                                        id="start_date"
+                                        value={data.start_date}
+                                        onChange={(e) => setData('start_date', e.target.value)}
+                                        className="bg-white"
+                                    />
+                                    {errors.start_date && (
+                                        <p className="text-sm text-red-600">{errors.start_date}</p>
+                                    )}
+                                </div>
+
+                                {/* Scholarship End Date */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="end_date" className="flex items-center gap-2 text-blue-800">
+                                        <Calendar className="h-4 w-4" />
+                                        Date de fin
+                                    </Label>
+                                    <Input
+                                        type="date"
+                                        id="end_date"
+                                        value={data.end_date}
+                                        onChange={(e) => setData('end_date', e.target.value)}
+                                        className="bg-white"
+                                    />
+                                    {errors.end_date && (
+                                        <p className="text-sm text-red-600">{errors.end_date}</p>
                                     )}
                                 </div>
                             </div>
