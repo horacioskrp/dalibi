@@ -15,6 +15,14 @@ class StudentScholarship extends Model
         'student_id',
         'scholarship_id',
         'academic_year_id',
+        'number_of_year',
+        'start_date',
+        'end_date',
+    ];
+
+    protected $casts = [
+        'start_date' => 'date',
+        'end_date' => 'date',
     ];
 
     /**
