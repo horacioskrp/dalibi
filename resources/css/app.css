@@ -87,22 +87,23 @@
     --chart-4: oklch(0.828 0.189 84.429);
     --chart-5: oklch(0.769 0.188 70.08);
     --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.87 0 0);
+    /* Sidebar — thème bleu (light) */
+    --sidebar: oklch(0.546 0.245 262.881);              /* blue-600 */
+    --sidebar-foreground: oklch(1 0 0);                 /* white */
+    --sidebar-primary: oklch(1 0 0);                    /* white — fond item actif */
+    --sidebar-primary-foreground: oklch(0.488 0.243 264.376); /* blue-700 — texte item actif */
+    --sidebar-accent: oklch(0.623 0.214 259.532);       /* blue-500 — fond hover */
+    --sidebar-accent-foreground: oklch(1 0 0);          /* white — texte hover */
+    --sidebar-border: oklch(0.488 0.243 264.376);       /* blue-700 */
+    --sidebar-ring: oklch(0.546 0.245 262.881);         /* blue-600 */
 }
 
 .dark {
     --background: oklch(0.145 0 0);
     --foreground: oklch(0.985 0 0);
-    --card: oklch(0.145 0 0);
+    --card: oklch(0.195 0 0);          /* légèrement plus clair que le background */
     --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.145 0 0);
+    --popover: oklch(0.195 0 0);
     --popover-foreground: oklch(0.985 0 0);
     --primary: oklch(0.985 0 0);
     --primary-foreground: oklch(0.205 0 0);
@@ -122,14 +123,15 @@
     --chart-3: oklch(0.769 0.188 70.08);
     --chart-4: oklch(0.627 0.265 303.9);
     --chart-5: oklch(0.645 0.246 16.439);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.985 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(0.269 0 0);
-    --sidebar-ring: oklch(0.439 0 0);
+    /* Sidebar — thème bleu foncé (dark) */
+    --sidebar: oklch(0.22 0.09 264);                    /* bleu très sombre (≈ blue-950) */
+    --sidebar-foreground: oklch(0.92 0.03 264);         /* blanc bleuté */
+    --sidebar-primary: oklch(0.546 0.245 262.881);      /* blue-600 — fond item actif */
+    --sidebar-primary-foreground: oklch(1 0 0);         /* white — texte item actif */
+    --sidebar-accent: oklch(0.32 0.12 264);             /* bleu foncé léger — fond hover */
+    --sidebar-accent-foreground: oklch(0.92 0.03 264);  /* blanc bleuté — texte hover */
+    --sidebar-border: oklch(0.32 0.12 264);
+    --sidebar-ring: oklch(0.488 0.243 264.376);         /* blue-700 */
 }
 
 @layer base {
@@ -137,4 +139,136 @@
         @apply bg-background text-foreground;
     }
 }
+
+/* =============================================================
+   DARK MODE — Overrides globaux pour les classes gray codées en dur
+   Placés hors @layer pour avoir la priorité sur les utilitaires Tailwind
+   ============================================================= */
+
+/* --- Backgrounds --- */
+.dark .bg-white                        { background-color: var(--card); }
+.dark .bg-gray-50                      { background-color: oklch(0.22 0 0); }
+.dark .bg-gray-100                     { background-color: oklch(0.25 0 0); }
+
+/* --- Hover backgrounds --- */
+.dark .hover\:bg-gray-50:hover         { background-color: oklch(0.25 0 0); }
+.dark .hover\:bg-gray-100:hover        { background-color: oklch(0.28 0 0); }
+.dark .hover\:bg-white:hover           { background-color: oklch(0.25 0 0); }
+
+/* --- Focus backgrounds (inputs) --- */
+.dark .focus\:bg-white:focus           { background-color: oklch(0.22 0 0); }
+
+/* --- Couleurs du texte --- */
+.dark .text-gray-900                   { color: var(--foreground); }
+.dark .text-gray-800                   { color: var(--foreground); }
+.dark .text-gray-700                   { color: oklch(0.85 0 0); }
+.dark .text-gray-600                   { color: var(--muted-foreground); }
+.dark .text-gray-500                   { color: var(--muted-foreground); }
+.dark .text-gray-400                   { color: oklch(0.56 0 0); }
+
+/* --- Hover texte --- */
+.dark .hover\:text-gray-900:hover      { color: var(--foreground); }
+.dark .hover\:text-gray-700:hover      { color: oklch(0.85 0 0); }
+.dark .hover\:text-gray-600:hover      { color: var(--muted-foreground); }
+
+/* --- Bordures --- */
+.dark .border-gray-100                 { border-color: var(--border); }
+.dark .border-gray-200                 { border-color: var(--border); }
+.dark .border-gray-300                 { border-color: oklch(0.35 0 0); }
+
+/* --- Gradients page background --- */
+.dark .from-gray-50                    { --tw-gradient-from: var(--background); }
+.dark .to-gray-50                      { --tw-gradient-to: var(--background); }
+.dark .via-blue-50\/30                 { --tw-gradient-via: transparent; }
+
+/* --- Couleurs pastels — Badges, stat cards, icônes en cercle --- */
+
+/* Blue */
+.dark .bg-blue-50                      { background-color: oklch(0.26 0.07 265); }
+.dark .bg-blue-100                     { background-color: oklch(0.30 0.09 265); }
+.dark .text-blue-600                   { color: oklch(0.72 0.18 260); }
+.dark .text-blue-700                   { color: oklch(0.72 0.18 260); }
+.dark .text-blue-800                   { color: oklch(0.78 0.14 260); }
+
+/* Green / Emerald */
+.dark .bg-green-50                     { background-color: oklch(0.25 0.06 163); }
+.dark .bg-green-100                    { background-color: oklch(0.29 0.08 163); }
+.dark .text-green-600                  { color: oklch(0.73 0.17 160); }
+.dark .text-green-700                  { color: oklch(0.73 0.17 160); }
+.dark .text-green-800                  { color: oklch(0.78 0.14 160); }
+.dark .bg-emerald-50                   { background-color: oklch(0.25 0.06 162); }
+.dark .bg-emerald-100                  { background-color: oklch(0.29 0.08 162); }
+.dark .text-emerald-600                { color: oklch(0.73 0.17 162); }
+.dark .text-emerald-700                { color: oklch(0.73 0.17 162); }
+
+/* Red */
+.dark .bg-red-50                       { background-color: oklch(0.26 0.08 25); }
+.dark .bg-red-100                      { background-color: oklch(0.30 0.10 25); }
+.dark .text-red-600                    { color: oklch(0.72 0.21 27); }
+.dark .text-red-700                    { color: oklch(0.72 0.21 27); }
+.dark .text-red-800                    { color: oklch(0.77 0.17 27); }
+
+/* Purple / Violet */
+.dark .bg-purple-50                    { background-color: oklch(0.25 0.06 300); }
+.dark .bg-purple-100                   { background-color: oklch(0.29 0.08 300); }
+.dark .text-purple-600                 { color: oklch(0.72 0.17 298); }
+.dark .text-purple-700                 { color: oklch(0.72 0.17 298); }
+.dark .text-purple-800                 { color: oklch(0.77 0.14 298); }
+.dark .bg-violet-50                    { background-color: oklch(0.25 0.06 276); }
+.dark .bg-violet-100                   { background-color: oklch(0.29 0.08 276); }
+.dark .text-violet-600                 { color: oklch(0.72 0.17 276); }
+.dark .text-violet-700                 { color: oklch(0.72 0.17 276); }
+
+/* Pink / Rose */
+.dark .bg-pink-50                      { background-color: oklch(0.25 0.06 342); }
+.dark .bg-pink-100                     { background-color: oklch(0.29 0.08 342); }
+.dark .text-pink-600                   { color: oklch(0.72 0.18 340); }
+.dark .text-pink-700                   { color: oklch(0.72 0.18 340); }
+.dark .bg-rose-50                      { background-color: oklch(0.26 0.07 16); }
+.dark .bg-rose-100                     { background-color: oklch(0.30 0.09 16); }
+.dark .text-rose-600                   { color: oklch(0.72 0.20 15); }
+.dark .text-rose-700                   { color: oklch(0.72 0.20 15); }
+
+/* Amber / Yellow / Orange */
+.dark .bg-amber-50                     { background-color: oklch(0.28 0.07 76); }
+.dark .bg-amber-100                    { background-color: oklch(0.32 0.09 76); }
+.dark .text-amber-600                  { color: oklch(0.79 0.18 74); }
+.dark .text-amber-700                  { color: oklch(0.79 0.18 74); }
+.dark .bg-yellow-50                    { background-color: oklch(0.28 0.07 92); }
+.dark .bg-yellow-100                   { background-color: oklch(0.32 0.09 92); }
+.dark .text-yellow-600                 { color: oklch(0.81 0.18 90); }
+.dark .text-yellow-700                 { color: oklch(0.81 0.18 90); }
+.dark .bg-orange-50                    { background-color: oklch(0.28 0.07 55); }
+.dark .bg-orange-100                   { background-color: oklch(0.32 0.09 55); }
+.dark .text-orange-600                 { color: oklch(0.76 0.20 50); }
+.dark .text-orange-700                 { color: oklch(0.76 0.20 50); }
+
+/* Sky / Cyan / Teal */
+.dark .bg-sky-50                       { background-color: oklch(0.25 0.06 228); }
+.dark .bg-sky-100                      { background-color: oklch(0.29 0.08 228); }
+.dark .text-sky-600                    { color: oklch(0.72 0.17 226); }
+.dark .text-sky-700                    { color: oklch(0.72 0.17 226); }
+.dark .bg-cyan-50                      { background-color: oklch(0.25 0.06 198); }
+.dark .bg-cyan-100                     { background-color: oklch(0.29 0.08 198); }
+.dark .text-cyan-600                   { color: oklch(0.75 0.16 196); }
+.dark .text-cyan-700                   { color: oklch(0.75 0.16 196); }
+
+/* Indigo */
+.dark .bg-indigo-50                    { background-color: oklch(0.25 0.07 270); }
+.dark .bg-indigo-100                   { background-color: oklch(0.29 0.09 270); }
+.dark .text-indigo-600                 { color: oklch(0.72 0.18 268); }
+.dark .text-indigo-700                 { color: oklch(0.72 0.18 268); }
+
+/* --- Classes slate (navigation-menu) --- */
+.dark .bg-slate-50                     { background-color: oklch(0.22 0 0); }
+.dark .bg-slate-100                    { background-color: oklch(0.25 0 0); }
+.dark .text-slate-900                  { color: var(--foreground); }
+.dark .text-slate-700                  { color: oklch(0.85 0 0); }
+.dark .text-slate-500                  { color: var(--muted-foreground); }
+.dark .hover\:bg-slate-50:hover        { background-color: oklch(0.22 0 0); }
+.dark .hover\:bg-slate-100:hover       { background-color: oklch(0.25 0 0); }
+.dark .hover\:text-slate-900:hover     { color: var(--foreground); }
+.dark .focus\:bg-slate-50:focus        { background-color: oklch(0.22 0 0); }
+.dark .focus\:bg-slate-100:focus       { background-color: oklch(0.25 0 0); }
+.dark .focus\:text-slate-900:focus     { color: var(--foreground); }
 

@@ -5,10 +5,10 @@ import type { User } from '@/types';
 export function UserInfo({
     user,
     showEmail = false,
-}: {
+}: Readonly<{
     user: User;
     showEmail?: boolean;
-}) {
+}>) {
     const getInitials = useInitials();
     const fullName = getFullName(user.firstname, user.lastname);
 
