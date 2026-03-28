@@ -105,8 +105,8 @@
     --card-foreground: oklch(0.985 0 0);
     --popover: oklch(0.195 0 0);
     --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.985 0 0);
-    --primary-foreground: oklch(0.205 0 0);
+    --primary: oklch(0.546 0.245 262.881);  /* blue-600 — cohérent avec le thème */
+    --primary-foreground: oklch(1 0 0);     /* white */
     --secondary: oklch(0.269 0 0);
     --secondary-foreground: oklch(0.985 0 0);
     --muted: oklch(0.269 0 0);
@@ -189,6 +189,9 @@
 .dark .text-blue-600                   { color: oklch(0.72 0.18 260); }
 .dark .text-blue-700                   { color: oklch(0.72 0.18 260); }
 .dark .text-blue-800                   { color: oklch(0.78 0.14 260); }
+/* Boutons avec hover hardcodé — texte toujours blanc */
+.dark .bg-blue-600                     { color: oklch(1 0 0); }
+.dark .hover\:bg-blue-700:hover        { background-color: oklch(0.49 0.24 265); }
 
 /* Green / Emerald */
 .dark .bg-green-50                     { background-color: oklch(0.25 0.06 163); }
