@@ -39,7 +39,7 @@ export function NavMain({ items = [] }: Readonly<{ items: NavItem[] }>) {
                                             tooltip={{
                                                 children: item.title,
                                             }}
-                                            className="text-white hover:bg-blue-500/30 data-[active=true]:bg-white data-[active=true]:text-blue-700 [&_svg]:text-current"
+                                            className="data-[active=true]:bg-sidebar-primary data-[active=true]:text-sidebar-primary-foreground data-[active=true]:font-semibold data-[active=true]:[&>svg]:text-sidebar-primary-foreground"
                                         >
                                             {item.icon && <item.icon />}
                                             <span>{item.title}</span>
@@ -57,7 +57,7 @@ export function NavMain({ items = [] }: Readonly<{ items: NavItem[] }>) {
                                                         isActive={isCurrentUrl(
                                                             subItem.href
                                                         )}
-                                                        className="text-white hover:bg-blue-500/20 data-[active=true]:bg-white data-[active=true]:text-blue-700 [&_svg]:text-current"
+                                                        className="data-[active=true]:bg-sidebar-primary data-[active=true]:text-sidebar-primary-foreground data-[active=true]:font-semibold data-[active=true]:[&>svg]:text-sidebar-primary-foreground"
                                                     >
                                                         <Link
                                                             href={subItem.href}
@@ -81,7 +81,7 @@ export function NavMain({ items = [] }: Readonly<{ items: NavItem[] }>) {
                                     asChild
                                     isActive={isCurrentUrl(item.href)}
                                     tooltip={{ children: item.title }}
-                                    className="text-white hover:bg-blue-500/30 data-[active=true]:bg-white data-[active=true]:text-blue-700 [&_svg]:text-current"
+                                    className="data-[active=true]:bg-sidebar-primary data-[active=true]:text-sidebar-primary-foreground data-[active=true]:font-semibold data-[active=true]:[&>svg]:text-sidebar-primary-foreground"
                                 >
                                     <Link href={item.href} prefetch>
                                         {item.icon && <item.icon />}

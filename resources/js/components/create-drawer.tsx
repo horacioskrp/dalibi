@@ -26,7 +26,7 @@ export function CreateDrawer({
         <Sheet open={isOpen} onOpenChange={onOpenChange}>
             <SheetContent side="right" className="w-full sm:w-[600px] md:w-[700px] p-0 sm:p-0">
                 <div className="h-full overflow-y-auto">
-                    <div className="sticky top-0 bg-white border-b p-6 sm:p-8">
+                    <div className="sticky top-0 bg-card border-b border-border p-6 sm:p-8">
                         <SheetHeader>
                             <SheetTitle className="text-2xl">{title}</SheetTitle>
                             {description && (

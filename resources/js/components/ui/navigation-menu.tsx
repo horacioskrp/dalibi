@@ -59,7 +59,7 @@ function NavigationMenuItem({
 }
 
 const navigationMenuTriggerStyle = cva(
-  "group inline-flex h-9 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 focus:bg-slate-100 focus:text-slate-900 disabled:pointer-events-none disabled:opacity-50 data-[active=true]:bg-blue-50 data-[state=open]:bg-blue-50 data-[active=true]:text-blue-700 ring-blue-200/60 outline-blue-300/60 transition-[color,box-shadow] focus-visible:ring-4 focus-visible:outline-1"
+  "group inline-flex h-9 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 data-[active=true]:bg-blue-50 data-[state=open]:bg-blue-50 data-[active=true]:text-blue-700 dark:data-[active=true]:bg-blue-900/30 dark:data-[active=true]:text-blue-400 dark:data-[state=open]:bg-blue-900/30 ring-blue-200/60 outline-blue-300/60 transition-[color,box-shadow] focus-visible:ring-4 focus-visible:outline-1"
 )
 
 function NavigationMenuTrigger({
@@ -129,7 +129,7 @@ function NavigationMenuLink({
     <NavigationMenuPrimitive.Link
       data-slot="navigation-menu-link"
       className={cn(
-        "hover:bg-slate-50 hover:text-slate-900 focus:bg-slate-50 focus:text-slate-900 data-[active=true]:bg-blue-50 data-[active=true]:text-blue-700 ring-blue-200/60 outline-blue-300/60 [&_svg:not([class*='text-'])]:text-slate-500 flex flex-col gap-1 rounded-sm p-2 text-sm transition-[color,box-shadow] focus-visible:ring-4 focus-visible:outline-1 [&_svg:not([class*='size-'])]:size-4",
+        "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground data-[active=true]:bg-blue-50 data-[active=true]:text-blue-700 dark:data-[active=true]:bg-blue-900/30 dark:data-[active=true]:text-blue-400 ring-blue-200/60 outline-blue-300/60 [&_svg:not([class*='text-'])]:text-muted-foreground flex flex-col gap-1 rounded-sm p-2 text-sm transition-[color,box-shadow] focus-visible:ring-4 focus-visible:outline-1 [&_svg:not([class*='size-'])]:size-4",
         className
       )}
       {...props}
