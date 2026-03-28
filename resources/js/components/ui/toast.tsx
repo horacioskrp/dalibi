@@ -64,23 +64,23 @@ export function ToastProvider({ children }: Readonly<{ children: ReactNode }>) {
                         <div
                             key={toastItem.id}
                             className={isSuccess
-                                ? 'pointer-events-auto rounded-xl bg-white p-4 shadow-md ring-1 ring-green-100'
-                                : 'pointer-events-auto rounded-xl bg-white p-4 shadow-md ring-1 ring-red-100'}
+                                ? 'pointer-events-auto rounded-xl bg-card p-4 shadow-md ring-1 ring-green-200 dark:ring-green-800'
+                                : 'pointer-events-auto rounded-xl bg-card p-4 shadow-md ring-1 ring-red-200 dark:ring-red-800'}
                         >
                             <div className="flex items-start gap-3">
-                                <div className={isSuccess ? 'mt-0.5 text-green-600' : 'mt-0.5 text-red-600'}>
+                                <div className={isSuccess ? 'mt-0.5 text-green-600 dark:text-green-400' : 'mt-0.5 text-red-600 dark:text-red-400'}>
                                     {isSuccess ? <CheckCircle2 className="h-5 w-5" /> : <CircleAlert className="h-5 w-5" />}
                                 </div>
                                 <div className="flex-1">
-                                    <p className="text-sm font-semibold text-gray-900">{toastItem.title}</p>
+                                    <p className="text-sm font-semibold text-foreground">{toastItem.title}</p>
                                     {toastItem.description && (
-                                        <p className="mt-1 text-sm text-gray-600">{toastItem.description}</p>
+                                        <p className="mt-1 text-sm text-muted-foreground">{toastItem.description}</p>
                                     )}
                                 </div>
                                 <button
                                     type="button"
                                     onClick={() => removeToast(toastItem.id)}
-                                    className="text-gray-400 hover:text-gray-600"
+                                    className="text-muted-foreground hover:text-foreground"
                                 >
                                     <X className="h-4 w-4" />
                                 </button>

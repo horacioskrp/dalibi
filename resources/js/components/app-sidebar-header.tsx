@@ -15,7 +15,7 @@ export function AppSidebarHeader() {
     const fullName = getFullName(auth.user.firstname, auth.user.lastname);
 
     return (
-        <header className="flex h-16 shrink-0 items-center justify-between gap-2 bg-gray-50 px-6 dark:bg-gray-900">
+        <header className="flex h-16 shrink-0 items-center justify-between gap-2 bg-background border-b border-border px-6 transition-colors">
             <div className="flex items-center gap-4">
                 <SidebarTrigger className="-ml-1" />
             </div>

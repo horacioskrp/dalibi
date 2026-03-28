@@ -43,7 +43,7 @@ export default function SettingsLayout({ children }: Readonly<PropsWithChildren>
     }
 
     return (
-        <div className="min-h-screen bg-linear-to-br from-gray-50 via-blue-50/30 to-gray-50">
+        <div className="min-h-screen bg-background">
             <div className="px-4 py-6">
                 <Heading
                     title="Mon compte"
@@ -52,7 +52,7 @@ export default function SettingsLayout({ children }: Readonly<PropsWithChildren>
 
                 <div className="flex flex-col lg:flex-row lg:gap-6 mt-6">
                     <aside className="w-full lg:w-64">
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3">
+                        <div className="bg-card rounded-xl shadow-sm border border-border p-3">
                             <nav
                                 className="flex flex-col space-y-1"
                                 aria-label="Settings"
@@ -64,8 +64,8 @@ export default function SettingsLayout({ children }: Readonly<PropsWithChildren>
                                         className={cn(
                                             'flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all',
                                             isCurrentUrl(item.href)
-                                                ? 'bg-blue-50 text-blue-700 shadow-sm'
-                                                : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                                                ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 shadow-sm'
+                                                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                                         )}
                                     >
                                         {item.icon && (
@@ -81,7 +81,7 @@ export default function SettingsLayout({ children }: Readonly<PropsWithChildren>
                     <Separator className="my-6 lg:hidden" />
 
                     <div className="flex-1 max-w-3xl">
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+                        <div className="bg-card rounded-xl shadow-sm border border-border">
                             <section className="p-6 space-y-8">
                                 {children}
                             </section>
