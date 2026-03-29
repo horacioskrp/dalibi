@@ -40,7 +40,7 @@ interface Enrollment {
     academic_year_id: string;
     enrollment_code: string;
     enrollment_date: string;
-    status: 'paid' | 'unpaid';
+    status: 'PENDING' | 'ACTIVE' | 'CANCELLED';
 }
 
 interface EditProps {
@@ -206,8 +206,9 @@ export default function Edit({ enrollment, schools, students, classrooms, academ
                                 onChange={(event) => setFormData((prev) => ({ ...prev, status: event.target.value as Enrollment['status'] }))}
                                 className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-card dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.status ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
                             >
-                                <option value="paid">Payé</option>
-                                <option value="unpaid">Non payé</option>
+                                <option value="PENDING">En attente</option>
+                                <option value="ACTIVE">Actif</option>
+                                <option value="CANCELLED">Annulé</option>
                             </select>
                             {errors.status && <p className="text-red-600 text-sm mt-1">{errors.status}</p>}
                         </div>

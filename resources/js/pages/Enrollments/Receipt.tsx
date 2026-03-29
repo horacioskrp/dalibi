@@ -30,7 +30,7 @@ interface Enrollment {
     id: string;
     enrollment_code: string;
     enrollment_date: string;
-    status: 'paid' | 'unpaid';
+    status: 'PENDING' | 'ACTIVE' | 'CANCELLED';
     created_at: string;
     school?: School | null;
     student?: Student | null;
@@ -111,12 +111,18 @@ const ReceiptBlock = ({ enrollment }: { enrollment: Enrollment }) => {
                 <div className="text-center">
                     <div
                         className={`inline-block px-6 py-2 rounded-lg font-bold ${
-                            enrollment.status === 'paid'
+                            enrollment.status === 'ACTIVE'
                                 ? 'bg-green-100 text-green-700'
-                                : 'bg-red-100 text-red-700'
+                                : enrollment.status === 'PENDING'
+                                    ? 'bg-yellow-100 text-yellow-700'
+                                    : 'bg-red-100 text-red-700'
                         }`}
                     >
-                        {enrollment.status === 'paid' ? '✓ PAYÉ' : '✗ NON PAYÉ'}
+                        {enrollment.status === 'ACTIVE'
+                            ? '✓ ACTIF'
+                            : enrollment.status === 'PENDING'
+                                ? '⏳ EN ATTENTE'
+                                : '✗ ANNULÉ'}
                     </div>
                 </div>
             </div>

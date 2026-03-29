@@ -34,7 +34,7 @@ interface Enrollment {
     id: string;
     enrollment_code: string;
     enrollment_date: string;
-    status: 'paid' | 'unpaid';
+    status: 'PENDING' | 'ACTIVE' | 'CANCELLED';
     created_at: string;
     updated_at: string;
     school?: School | null;
@@ -49,13 +49,15 @@ interface ShowProps {
 }
 
 const statusMap: Record<Enrollment['status'], string> = {
-    paid: 'Payé',
-    unpaid: 'Non payé',
+    PENDING:   'En attente',
+    ACTIVE:    'Actif',
+    CANCELLED: 'Annulé',
 };
 
 const statusBadgeClass: Record<Enrollment['status'], string> = {
-    paid: 'bg-green-100 text-green-700',
-    unpaid: 'bg-red-100 text-red-700',
+    PENDING:   'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+    ACTIVE:    'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+    CANCELLED: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
 };
 
 export default function Show({ enrollment }: Readonly<ShowProps>) {
