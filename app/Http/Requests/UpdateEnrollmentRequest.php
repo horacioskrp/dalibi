@@ -23,7 +23,7 @@ class UpdateEnrollmentRequest extends FormRequest
             'academic_year_id' => ['required', 'uuid', 'exists:academic_years,id'],
             'enrollment_code' => ['nullable', 'string', 'max:50', Rule::unique('enrollments', 'enrollment_code')->ignore($enrollmentId)],
             'enrollment_date' => ['required', 'date'],
-            'status' => ['required', Rule::in(['paid', 'unpaid'])],
+            'status' => ['required', Rule::in(['PENDING', 'ACTIVE', 'CANCELLED'])],
         ];
     }
 
