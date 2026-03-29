@@ -31,18 +31,13 @@ class Enrollment extends Model
         'class_id',
         'academic_year_id',
         'enrollment_code',
-        'schooling_id',
         'enrolled_by',
         'enrollment_date',
         'status',
-        'discount_percentage',
-        'amount_to_pay',
     ];
 
     protected $casts = [
         'enrollment_date' => 'date',
-        'discount_percentage' => 'decimal:2',
-        'amount_to_pay' => 'decimal:2',
     ];
 
     public function school(): BelongsTo
@@ -63,11 +58,6 @@ class Enrollment extends Model
     public function academicYear(): BelongsTo
     {
         return $this->belongsTo(AcademicYear::class, 'academic_year_id');
-    }
-
-    public function schooling(): BelongsTo
-    {
-        return $this->belongsTo(Schooling::class);
     }
 
     public function enrolledBy(): BelongsTo

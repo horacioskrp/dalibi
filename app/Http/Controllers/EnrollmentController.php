@@ -8,7 +8,6 @@ use App\Models\AcademicYear;
 use App\Models\Classroom;
 use App\Models\Enrollment;
 use App\Models\School;
-use App\Models\Schooling;
 use App\Models\Student;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -76,7 +75,6 @@ class EnrollmentController extends Controller
             'students' => Student::where('active', true)->orderBy('firstname')->orderBy('lastname')->get(['id', 'firstname', 'lastname', 'matricule']),
             'classrooms' => Classroom::where('active', true)->orderBy('name')->get(['id', 'name', 'code']),
             'academicYears' => AcademicYear::orderByDesc('year')->get(['id', 'year', 'active']),
-            'schoolings' => Schooling::with('classroom:id,name,code')->orderByDesc('created_at')->get(['id', 'class_id', 'inscription_fee', 'school_fee', 'created_at']),
         ]);
     }
 
@@ -86,16 +84,6 @@ class EnrollmentController extends Controller
         $data['enrollment_code'] = $data['enrollment_code'] ?: $this->generateEnrollmentCode();
         $data['enrolled_by'] = auth()->id();
 
-        // Calculate amount_to_pay based on schooling inscription_fee and discount
-        if (!empty($data['schooling_id'])) {
-            $schooling = Schooling::find($data['schooling_id']);
-            if ($schooling) {
-                $inscriptionFee = $schooling->inscription_fee;
-                $discountPercentage = $data['discount_percentage'] ?? 0;
-                $data['amount_to_pay'] = $inscriptionFee - ($inscriptionFee * $discountPercentage / 100);
-            }
-        }
-
         $enrollment = Enrollment::create($data);
 
         return redirect()->route('enrollments.show', $enrollment->id)
@@ -104,7 +92,7 @@ class EnrollmentController extends Controller
 
     public function show(Enrollment $enrollment): Response
     {
-        $enrollment->load(['school', 'student', 'classroom', 'academicYear', 'schooling', 'enrolledBy']);
+        $enrollment->load(['school', 'student', 'classroom', 'academicYear', 'enrolledBy']);
 
         return Inertia::render('Enrollments/Show', [
             'enrollment' => $enrollment,
@@ -113,7 +101,7 @@ class EnrollmentController extends Controller
 
     public function receipt(Enrollment $enrollment): Response
     {
-        $enrollment->load(['school', 'student', 'classroom', 'academicYear', 'schooling', 'enrolledBy']);
+        $enrollment->load(['school', 'student', 'classroom', 'academicYear', 'enrolledBy']);
 
         return Inertia::render('Enrollments/Receipt', [
             'enrollment' => $enrollment,
@@ -122,7 +110,7 @@ class EnrollmentController extends Controller
 
     public function edit(Enrollment $enrollment): Response
     {
-        $enrollment->load(['school', 'student', 'classroom', 'academicYear', 'schooling']);
+        $enrollment->load(['school', 'student', 'classroom', 'academicYear']);
 
         return Inertia::render('Enrollments/Edit', [
             'enrollment' => $enrollment,
@@ -130,7 +118,6 @@ class EnrollmentController extends Controller
             'students' => Student::where('active', true)->orderBy('firstname')->orderBy('lastname')->get(['id', 'firstname', 'lastname', 'matricule']),
             'classrooms' => Classroom::where('active', true)->orderBy('name')->get(['id', 'name', 'code']),
             'academicYears' => AcademicYear::orderByDesc('year')->get(['id', 'year', 'active']),
-            'schoolings' => Schooling::with('classroom:id,name,code')->orderByDesc('created_at')->get(['id', 'class_id', 'inscription_fee', 'school_fee', 'created_at']),
         ]);
     }
 
@@ -140,16 +127,6 @@ class EnrollmentController extends Controller
 
         if (empty($data['enrollment_code'])) {
             $data['enrollment_code'] = $enrollment->enrollment_code ?: $this->generateEnrollmentCode();
-        }
-
-        // Calculate amount_to_pay based on schooling inscription_fee and discount
-        if (!empty($data['schooling_id'])) {
-            $schooling = Schooling::find($data['schooling_id']);
-            if ($schooling) {
-                $inscriptionFee = $schooling->inscription_fee;
-                $discountPercentage = $data['discount_percentage'] ?? 0;
-                $data['amount_to_pay'] = $inscriptionFee - ($inscriptionFee * $discountPercentage / 100);
-            }
         }
 
         $enrollment->update($data);

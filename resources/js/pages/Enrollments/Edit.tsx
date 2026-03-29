@@ -32,17 +32,6 @@ interface AcademicYear {
     active: boolean;
 }
 
-interface Schooling {
-    id: string;
-    class_id: string;
-    inscription_fee: number;
-    school_fee: number;
-    classroom?: {
-        name: string;
-        code: string;
-    };
-}
-
 interface Enrollment {
     id: string;
     school_id: string;
@@ -50,11 +39,8 @@ interface Enrollment {
     class_id: string;
     academic_year_id: string;
     enrollment_code: string;
-    schooling_id?: string | null;
     enrollment_date: string;
     status: 'paid' | 'unpaid';
-    discount_percentage?: number;
-    amount_to_pay?: number;
 }
 
 interface EditProps {
@@ -63,7 +49,6 @@ interface EditProps {
     students: Student[];
     classrooms: Classroom[];
     academicYears: AcademicYear[];
-    schoolings: Schooling[];
 }
 
 const normalizeDate = (value?: string | null): string => {
@@ -71,47 +56,25 @@ const normalizeDate = (value?: string | null): string => {
     return value.slice(0, 10);
 };
 
-export default function Edit({ enrollment, schools, students, classrooms, academicYears, schoolings }: Readonly<EditProps>) {
+export default function Edit({ enrollment, schools, students, classrooms, academicYears }: Readonly<EditProps>) {
     const [formData, setFormData] = useState({
         school_id: enrollment.school_id,
         student_id: enrollment.student_id,
         class_id: enrollment.class_id,
         academic_year_id: enrollment.academic_year_id,
         enrollment_code: enrollment.enrollment_code,
-        schooling_id: enrollment.schooling_id ?? '',
         enrollment_date: normalizeDate(enrollment.enrollment_date),
         status: enrollment.status,
-        discount_percentage: enrollment.discount_percentage ?? 0,
-        amount_to_pay: enrollment.amount_to_pay ?? 0,
     });
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
-
-    // Filtrer les schoolings basés sur la classe sélectionnée
-    const filteredSchoolings = formData.class_id 
-        ? schoolings.filter((s) => s.class_id === formData.class_id)
-        : schoolings;
-
-    const calculateAmountToPay = () => {
-        if (formData.schooling_id) {
-            const schooling = schoolings.find((s) => s.id === formData.schooling_id);
-            if (schooling) {
-                const inscriptionFee = schooling.inscription_fee;
-                const discountPercentage = formData.discount_percentage || 0;
-                const amountToPay = inscriptionFee - (inscriptionFee * discountPercentage / 100);
-                setFormData((prev) => ({ ...prev, amount_to_pay: Math.max(0, amountToPay) }));
-            }
-        }
-    };
 
     const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setIsSubmitting(true);
         setErrors({});
 
-        const payload = { ...formData };
-
-        router.put(route('enrollments.update', enrollment.id), payload as never, {
+        router.put(route('enrollments.update', enrollment.id), formData as never, {
             onError: (validationErrors) => {
                 setErrors(validationErrors as Record<string, string>);
                 setIsSubmitting(false);
@@ -129,24 +92,24 @@ export default function Edit({ enrollment, schools, students, classrooms, academ
                     <button
                         type="button"
                         onClick={() => router.get(route('enrollments.index'))}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition"
+                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition"
                     >
-                        <ArrowLeft className="w-5 h-5 text-gray-600" />
+                        <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                     </button>
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Modifier l'inscription</h1>
+                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Modifier l'inscription</h1>
                     </div>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl">
-                    <div className="bg-white rounded-lg p-6 shadow-sm grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-white dark:bg-card rounded-lg p-6 shadow-sm grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label htmlFor="school_id" className="block text-sm font-medium text-gray-900 mb-2">École *</label>
+                            <label htmlFor="school_id" className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">École *</label>
                             <select
                                 id="school_id"
                                 value={formData.school_id}
                                 onChange={(event) => setFormData((prev) => ({ ...prev, school_id: event.target.value }))}
-                                className={`w-full px-3 py-2 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.school_id ? 'border-red-500' : 'border-gray-300'}`}
+                                className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-card dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.school_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
                             >
                                 <option value="">Sélectionner une école</option>
                                 {schools.map((school) => (
@@ -159,12 +122,12 @@ export default function Edit({ enrollment, schools, students, classrooms, academ
                         </div>
 
                         <div>
-                            <label htmlFor="student_id" className="block text-sm font-medium text-gray-900 mb-2">Élève *</label>
+                            <label htmlFor="student_id" className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Élève *</label>
                             <select
                                 id="student_id"
                                 value={formData.student_id}
                                 onChange={(event) => setFormData((prev) => ({ ...prev, student_id: event.target.value }))}
-                                className={`w-full px-3 py-2 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.student_id ? 'border-red-500' : 'border-gray-300'}`}
+                                className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-card dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.student_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
                             >
                                 <option value="">Sélectionner un élève</option>
                                 {students.map((student) => (
@@ -177,40 +140,12 @@ export default function Edit({ enrollment, schools, students, classrooms, academ
                         </div>
 
                         <div>
-                            <label htmlFor="class_id" className="block text-sm font-medium text-gray-900 mb-2">Classe *</label>
+                            <label htmlFor="class_id" className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Classe *</label>
                             <select
                                 id="class_id"
                                 value={formData.class_id}
-                                onChange={(event) => {
-                                    const selectedClassId = event.target.value;
-                                    setFormData((prev) => ({ ...prev, class_id: selectedClassId }));
-                                    
-                                    // Sélectionner automatiquement le schooling pour cette classe
-                                    if (selectedClassId) {
-                                        const classSchoolings = schoolings.filter((s) => s.class_id === selectedClassId);
-                                        if (classSchoolings.length > 0) {
-                                            const selectedSchooling = classSchoolings[0]; // Prendre le premier (plus récent)
-                                            setFormData((prev) => ({ 
-                                                ...prev, 
-                                                class_id: selectedClassId,
-                                                schooling_id: selectedSchooling.id 
-                                            }));
-                                            
-                                            // Recalculer le montant
-                                            setTimeout(() => {
-                                                const inscriptionFee = selectedSchooling.inscription_fee;
-                                                const discountPercentage = formData.discount_percentage || 0;
-                                                const amountToPay = inscriptionFee - (inscriptionFee * discountPercentage / 100);
-                                                setFormData((prev) => ({ ...prev, amount_to_pay: Math.max(0, amountToPay) }));
-                                            }, 0);
-                                        } else {
-                                            setFormData((prev) => ({ ...prev, class_id: selectedClassId, schooling_id: '' }));
-                                        }
-                                    } else {
-                                        setFormData((prev) => ({ ...prev, class_id: '', schooling_id: '' }));
-                                    }
-                                }}
-                                className={`w-full px-3 py-2 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.class_id ? 'border-red-500' : 'border-gray-300'}`}
+                                onChange={(event) => setFormData((prev) => ({ ...prev, class_id: event.target.value }))}
+                                className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-card dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.class_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
                             >
                                 <option value="">Sélectionner une classe</option>
                                 {classrooms.map((classroom) => (
@@ -223,12 +158,12 @@ export default function Edit({ enrollment, schools, students, classrooms, academ
                         </div>
 
                         <div>
-                            <label htmlFor="academic_year_id" className="block text-sm font-medium text-gray-900 mb-2">Année académique *</label>
+                            <label htmlFor="academic_year_id" className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Année académique *</label>
                             <select
                                 id="academic_year_id"
                                 value={formData.academic_year_id}
                                 onChange={(event) => setFormData((prev) => ({ ...prev, academic_year_id: event.target.value }))}
-                                className={`w-full px-3 py-2 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.academic_year_id ? 'border-red-500' : 'border-gray-300'}`}
+                                className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-card dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.academic_year_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
                             >
                                 <option value="">Sélectionner une année</option>
                                 {academicYears.map((academicYear) => (
@@ -241,104 +176,48 @@ export default function Edit({ enrollment, schools, students, classrooms, academ
                         </div>
 
                         <div>
-                            <label htmlFor="enrollment_code" className="block text-sm font-medium text-gray-900 mb-2">Code d'inscription</label>
+                            <label htmlFor="enrollment_code" className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Code d'inscription</label>
                             <Input
                                 id="enrollment_code"
                                 value={formData.enrollment_code}
                                 onChange={(event) => setFormData((prev) => ({ ...prev, enrollment_code: event.target.value }))}
-                                className={errors.enrollment_code ? 'border-red-500' : 'border-gray-300'}
+                                className={errors.enrollment_code ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}
                             />
                             {errors.enrollment_code && <p className="text-red-600 text-sm mt-1">{errors.enrollment_code}</p>}
                         </div>
 
                         <div>
-                            <label htmlFor="schooling_id" className="block text-sm font-medium text-gray-900 mb-2">Tarification</label>
-                            <select
-                                id="schooling_id"
-                                value={formData.schooling_id}
-                                onChange={(event) => {
-                                    setFormData((prev) => ({ ...prev, schooling_id: event.target.value }));
-                                    setTimeout(() => calculateAmountToPay(), 0);
-                                }}
-                                className={`w-full px-3 py-2 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.schooling_id ? 'border-red-500' : 'border-gray-300'}`}
-                                disabled={!formData.class_id}
-                            >
-                                <option value="">{formData.class_id ? 'Sélectionner' : 'Sélectionner d\'abord une classe'}</option>
-                                {filteredSchoolings.length > 0 && filteredSchoolings.map((schooling) => (
-                                    <option key={schooling.id} value={schooling.id}>
-                                        {schooling.classroom?.name ?? 'Classe'} - Inscr.: {schooling.inscription_fee} | Scolarité: {schooling.school_fee}
-                                    </option>
-                                ))}
-                                {filteredSchoolings.length === 0 && formData.class_id && (
-                                    <option value="" disabled>Aucune tarification pour cette classe</option>
-                                )}
-                            </select>
-                            {errors.schooling_id && <p className="text-red-600 text-sm mt-1">{errors.schooling_id}</p>}
-                        </div>
-
-                        <div>
-                            <label htmlFor="enrollment_date" className="block text-sm font-medium text-gray-900 mb-2">Date d'inscription *</label>
+                            <label htmlFor="enrollment_date" className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Date d'inscription *</label>
                             <Input
                                 id="enrollment_date"
                                 type="date"
                                 value={formData.enrollment_date}
                                 onChange={(event) => setFormData((prev) => ({ ...prev, enrollment_date: event.target.value }))}
-                                className={errors.enrollment_date ? 'border-red-500' : 'border-gray-300'}
+                                className={errors.enrollment_date ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}
                             />
                             {errors.enrollment_date && <p className="text-red-600 text-sm mt-1">{errors.enrollment_date}</p>}
                         </div>
 
                         <div>
-                            <label htmlFor="status" className="block text-sm font-medium text-gray-900 mb-2">Statut *</label>
+                            <label htmlFor="status" className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Statut *</label>
                             <select
                                 id="status"
                                 value={formData.status}
                                 onChange={(event) => setFormData((prev) => ({ ...prev, status: event.target.value as Enrollment['status'] }))}
-                                className={`w-full px-3 py-2 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.status ? 'border-red-500' : 'border-gray-300'}`}
+                                className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-card dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.status ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
                             >
                                 <option value="paid">Payé</option>
                                 <option value="unpaid">Non payé</option>
                             </select>
                             {errors.status && <p className="text-red-600 text-sm mt-1">{errors.status}</p>}
                         </div>
-
-                        <div>
-                            <label htmlFor="discount_percentage" className="block text-sm font-medium text-gray-900 mb-2">Pourcentage de réduction (%)</label>
-                            <Input
-                                id="discount_percentage"
-                                type="number"
-                                value={formData.discount_percentage}
-                                onChange={(event) => {
-                                    setFormData((prev) => ({ ...prev, discount_percentage: Number.parseFloat(event.target.value) || 0 }));
-                                    setTimeout(() => calculateAmountToPay(), 0);
-                                }}
-                                min="0"
-                                max="100"
-                                step="0.01"
-                                className={errors.discount_percentage ? 'border-red-500' : 'border-gray-300'}
-                                placeholder="0"
-                            />
-                            {errors.discount_percentage && <p className="text-red-600 text-sm mt-1">{errors.discount_percentage}</p>}
-                        </div>
-
-                        <div>
-                            <label htmlFor="amount_to_pay" className="block text-sm font-medium text-gray-900 mb-2">Montant à payer</label>
-                            <Input
-                                id="amount_to_pay"
-                                type="text"
-                                value={formData.amount_to_pay.toFixed(2)}
-                                readOnly
-                                className="border-gray-300 bg-gray-50 cursor-not-allowed"
-                                placeholder="Calculé automatiquement"
-                            />
-                        </div>
                     </div>
 
                     <div className="flex gap-3">
-                        <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700">
+                        <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white">
                             {isSubmitting ? 'Enregistrement...' : 'Enregistrer'}
                         </Button>
-                        <Button type="button" variant="outline" className="border-gray-300 text-gray-700" onClick={() => router.get(route('enrollments.index'))}>
+                        <Button type="button" variant="outline" onClick={() => router.get(route('enrollments.index'))}>
                             Annuler
                         </Button>
                     </div>
