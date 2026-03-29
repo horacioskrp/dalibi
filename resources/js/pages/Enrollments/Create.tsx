@@ -47,7 +47,7 @@ export default function Create({ schools, students, classrooms, academicYears }:
         academic_year_id: '',
         enrollment_code: '',
         enrollment_date: new Date().toISOString().slice(0, 10),
-        status: 'paid',
+        status: 'PENDING',
     });
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -190,8 +190,9 @@ export default function Create({ schools, students, classrooms, academicYears }:
                                 onChange={(event) => setFormData((prev) => ({ ...prev, status: event.target.value }))}
                                 className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-card dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.status ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
                             >
-                                <option value="paid">Payé</option>
-                                <option value="unpaid">Non payé</option>
+                                <option value="PENDING">En attente</option>
+                                <option value="ACTIVE">Actif</option>
+                                <option value="CANCELLED">Annulé</option>
                             </select>
                             {errors.status && <p className="text-red-600 text-sm mt-1">{errors.status}</p>}
                         </div>

@@ -45,7 +45,7 @@ interface Enrollment {
     id: string;
     enrollment_code: string;
     enrollment_date: string;
-    status: 'paid' | 'unpaid';
+    status: 'PENDING' | 'ACTIVE' | 'CANCELLED';
     student: Student;
     classroom: Classroom;
     academic_year: AcademicYear;
@@ -70,21 +70,24 @@ interface IndexProps {
     };
     stats: {
         total: number;
-        paid: number;
-        unpaid: number;
+        pending: number;
+        active: number;
+        cancelled: number;
     };
     academicYears: AcademicYear[];
     classrooms: Classroom[];
 }
 
 const statusMap: Record<Enrollment['status'], string> = {
-    paid: 'Payé',
-    unpaid: 'Non payé',
+    PENDING:   'En attente',
+    ACTIVE:    'Actif',
+    CANCELLED: 'Annulé',
 };
 
 const statusBadgeClass: Record<Enrollment['status'], string> = {
-    paid: 'bg-green-100 text-green-700',
-    unpaid: 'bg-red-100 text-red-700',
+    PENDING:   'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+    ACTIVE:    'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+    CANCELLED: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
 };
 
 export default function Index({ enrollments, filters, stats, academicYears, classrooms }: Readonly<IndexProps>) {
@@ -128,18 +131,22 @@ export default function Index({ enrollments, filters, stats, academicYears, clas
                     </Button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-blue-50 rounded-lg p-6 shadow-sm">
-                        <p className="text-sm font-medium text-gray-600">Total inscriptions</p>
-                        <p className="text-3xl font-bold text-blue-600 mt-2">{stats.total}</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6 shadow-sm">
+                        <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total</p>
+                        <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mt-2">{stats.total}</p>
                     </div>
-                    <div className="bg-green-50 rounded-lg p-6 shadow-sm">
-                        <p className="text-sm font-medium text-gray-600">Payées</p>
-                        <p className="text-3xl font-bold text-green-600 mt-2">{stats.paid}</p>
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-6 shadow-sm">
+                        <p className="text-sm font-medium text-gray-600 dark:text-gray-400">En attente</p>
+                        <p className="text-3xl font-bold text-yellow-600 dark:text-yellow-400 mt-2">{stats.pending}</p>
                     </div>
-                    <div className="bg-red-50 rounded-lg p-6 shadow-sm">
-                        <p className="text-sm font-medium text-gray-600">Non payées</p>
-                        <p className="text-3xl font-bold text-red-600 mt-2">{stats.unpaid}</p>
+                    <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-6 shadow-sm">
+                        <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Actifs</p>
+                        <p className="text-3xl font-bold text-green-600 dark:text-green-400 mt-2">{stats.active}</p>
+                    </div>
+                    <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-6 shadow-sm">
+                        <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Annulés</p>
+                        <p className="text-3xl font-bold text-red-600 dark:text-red-400 mt-2">{stats.cancelled}</p>
                     </div>
                 </div>
 
@@ -166,8 +173,9 @@ export default function Index({ enrollments, filters, stats, academicYears, clas
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                             <option value="">Tous les statuts</option>
-                            <option value="paid">Payé</option>
-                            <option value="unpaid">Non payé</option>
+                            <option value="PENDING">En attente</option>
+                            <option value="ACTIVE">Actif</option>
+                            <option value="CANCELLED">Annulé</option>
                         </select>
 
                         <select

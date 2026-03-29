@@ -59,9 +59,10 @@ class EnrollmentController extends Controller
             'enrollments' => $enrollments,
             'filters' => $request->only(['search', 'status', 'academic_year_id', 'class_id']),
             'stats' => [
-                'total' => Enrollment::count(),
-                'paid' => Enrollment::where('status', 'paid')->count(),
-                'unpaid' => Enrollment::where('status', 'unpaid')->count(),
+                'total'     => Enrollment::count(),
+                'pending'   => Enrollment::where('status', 'PENDING')->count(),
+                'active'    => Enrollment::where('status', 'ACTIVE')->count(),
+                'cancelled' => Enrollment::where('status', 'CANCELLED')->count(),
             ],
             'academicYears' => AcademicYear::orderByDesc('year')->get(['id', 'year']),
             'classrooms' => Classroom::where('active', true)->orderBy('name')->get(['id', 'name', 'code']),
