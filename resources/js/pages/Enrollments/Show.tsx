@@ -24,11 +24,6 @@ interface AcademicYear {
     year: string;
 }
 
-interface Schooling {
-    inscription_fee: number;
-    school_fee: number;
-}
-
 interface User {
     firstname?: string | null;
     lastname?: string | null;
@@ -40,15 +35,12 @@ interface Enrollment {
     enrollment_code: string;
     enrollment_date: string;
     status: 'paid' | 'unpaid';
-    discount_percentage?: number;
-    amount_to_pay?: number;
     created_at: string;
     updated_at: string;
     school?: School | null;
     student?: Student | null;
     classroom?: Classroom | null;
     academic_year?: AcademicYear | null;
-    schooling?: Schooling | null;
     enrolled_by?: User | null;
 }
 
@@ -65,9 +57,6 @@ const statusBadgeClass: Record<Enrollment['status'], string> = {
     paid: 'bg-green-100 text-green-700',
     unpaid: 'bg-red-100 text-red-700',
 };
-
-const formatMoney = (value: number) =>
-    new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(value);
 
 export default function Show({ enrollment }: Readonly<ShowProps>) {
     const enrolledByName = [enrollment.enrolled_by?.firstname, enrollment.enrolled_by?.lastname].filter(Boolean).join(' ');
@@ -115,11 +104,6 @@ export default function Show({ enrollment }: Readonly<ShowProps>) {
                         </p>
                     </div>
                     <div>
-                        <p className="text-sm text-gray-500">Pourcentage de réduction</p>
-                        <p className="font-medium text-gray-900 mt-1">{enrollment.discount_percentage ?? 0}%</p>
-                    </div>
-
-                    <div>
                         <p className="text-sm text-gray-500">École</p>
                         <p className="font-medium text-gray-900 mt-1">
                             {enrollment.school ? `${enrollment.school.name} (${enrollment.school.code})` : '-'}
@@ -150,19 +134,6 @@ export default function Show({ enrollment }: Readonly<ShowProps>) {
                     <div>
                         <p className="text-sm text-gray-500">Enregistré par</p>
                         <p className="font-medium text-gray-900 mt-1">{enrolledByName || enrollment.enrolled_by?.email || '-'}</p>
-                    </div>
-
-                    <div>
-                        <p className="text-sm text-gray-500">Montant d'inscription payé</p>
-                        <p className="font-bold text-blue-700 mt-1 text-lg">
-                            {enrollment.schooling ? formatMoney(enrollment.schooling.inscription_fee) : '-'}
-                        </p>
-                    </div>
-                    <div>
-                        <p className="text-sm text-gray-500">Montant à payer (après réduction)</p>
-                        <p className="font-bold text-green-700 mt-1 text-lg">
-                            {enrollment.amount_to_pay !== null && enrollment.amount_to_pay !== undefined ? formatMoney(enrollment.amount_to_pay) : '-'}
-                        </p>
                     </div>
 
                     <div>
