@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePaymentRequest;
+use App\Models\CashAccount;
 use App\Models\Enrollment;
 use App\Models\Payment;
 use App\Services\InvoiceService;
@@ -35,8 +36,9 @@ class InvoiceController extends Controller
         }
 
         return Inertia::render('Enrollments/Invoice', [
-            'enrollment' => $enrollment,
-            'invoice'    => $invoice,
+            'enrollment'   => $enrollment,
+            'invoice'      => $invoice,
+            'cashAccounts' => CashAccount::where('active', true)->orderBy('type')->orderBy('name')->get(['id', 'name', 'type']),
         ]);
     }
 

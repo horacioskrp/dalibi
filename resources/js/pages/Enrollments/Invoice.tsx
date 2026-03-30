@@ -65,9 +65,12 @@ interface Invoice {
     payments: Payment[];
 }
 
+interface CashAccount { id: string; name: string; type: 'CASH' | 'MOBILE_MONEY' | 'BANK'; }
+
 interface InvoicePageProps {
     enrollment: Enrollment;
     invoice: Invoice;
+    cashAccounts: CashAccount[];
 }
 
 /* ------------------------------------------------------------------ */
@@ -95,13 +98,18 @@ const methodLabel: Record<PaymentMethod, string> = {
 /* Composant                                                           */
 /* ------------------------------------------------------------------ */
 
-export default function InvoicePage({ enrollment, invoice }: Readonly<InvoicePageProps>) {
+const cashAccountTypeIcon: Record<string, string> = {
+    CASH: '💵', MOBILE_MONEY: '📱', BANK: '🏦',
+};
+
+export default function InvoicePage({ enrollment, invoice, cashAccounts }: Readonly<InvoicePageProps>) {
     const [showForm, setShowForm] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [form, setForm] = useState({
         amount:           invoice.amount_remaining > 0 ? String(invoice.amount_remaining) : '',
         payment_method:   'CASH' as PaymentMethod,
+        cash_account_id:  cashAccounts[0]?.id ?? '',
         reference_number: '',
         paid_by:          '',
         paid_at:          new Date().toISOString().slice(0, 10),
@@ -290,6 +298,25 @@ export default function InvoicePage({ enrollment, invoice }: Readonly<InvoicePag
                                     </select>
                                     {errors.payment_method && <p className="text-red-600 text-xs mt-1">{errors.payment_method}</p>}
                                 </div>
+
+                                {cashAccounts.length > 0 && (
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Caisse de destination</label>
+                                        <select
+                                            value={form.cash_account_id}
+                                            onChange={field('cash_account_id')}
+                                            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-card dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        >
+                                            <option value="">— Sans caisse —</option>
+                                            {cashAccounts.map(ca => (
+                                                <option key={ca.id} value={ca.id}>
+                                                    {cashAccountTypeIcon[ca.type]} {ca.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        {errors.cash_account_id && <p className="text-red-600 text-xs mt-1">{errors.cash_account_id}</p>}
+                                    </div>
+                                )}
 
                                 <div>
                                     <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Date de paiement *</label>
