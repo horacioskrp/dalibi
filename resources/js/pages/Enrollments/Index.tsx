@@ -60,13 +60,17 @@ interface PaginatedEnrollments {
     total: number;
 }
 
+const PER_PAGE_OPTIONS = [10, 25, 50, 100];
+
 interface IndexProps {
     enrollments: PaginatedEnrollments;
+    perPage: number;
     filters: {
         search?: string;
         status?: string;
         academic_year_id?: string;
         class_id?: string;
+        per_page?: string;
     };
     stats: {
         total: number;
@@ -90,15 +94,40 @@ const statusBadgeClass: Record<Enrollment['status'], string> = {
     CANCELLED: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
 };
 
-export default function Index({ enrollments, filters, stats, academicYears, classrooms }: Readonly<IndexProps>) {
+export default function Index({ enrollments, perPage, filters, stats, academicYears, classrooms }: Readonly<IndexProps>) {
     const [search, setSearch] = useState(filters.search ?? '');
     const [status, setStatus] = useState(filters.status ?? '');
     const [academicYearId, setAcademicYearId] = useState(filters.academic_year_id ?? '');
     const [classId, setClassId] = useState(filters.class_id ?? '');
     const [deletingId, setDeletingId] = useState<string | null>(null);
 
+    const getFilters = () => ({
+        search,
+        status,
+        academic_year_id: academicYearId,
+        class_id: classId,
+        per_page: perPage !== 25 ? String(perPage) : undefined,
+    });
+
+    const goToPage = (page: number) => {
+        router.get(route('enrollments.index'), { ...getFilters(), page }, { preserveState: true, replace: true });
+    };
+
+    const changePerPage = (value: number) => {
+        router.get(route('enrollments.index'), { ...getFilters(), per_page: String(value), page: 1 }, { preserveState: true, replace: true });
+    };
+
+    const windowedPages = () => {
+        const total = enrollments.last_page;
+        const cur = enrollments.current_page;
+        const win = 5;
+        const start = Math.max(1, Math.min(cur - Math.floor(win / 2), total - win + 1));
+        const end = Math.min(total, start + win - 1);
+        return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+    };
+
     const handleSearch = () => {
-        router.get(route('enrollments.index'), { search, status, academic_year_id: academicYearId, class_id: classId }, { preserveState: true, replace: true });
+        router.get(route('enrollments.index'), { ...getFilters(), page: 1 }, { preserveState: true, replace: true });
     };
 
     const handleClearSearch = () => {
@@ -106,7 +135,7 @@ export default function Index({ enrollments, filters, stats, academicYears, clas
         setStatus('');
         setAcademicYearId('');
         setClassId('');
-        router.get(route('enrollments.index'), { search: '', status: '', academic_year_id: '', class_id: '' }, { preserveState: true, replace: true });
+        router.get(route('enrollments.index'), { per_page: perPage !== 25 ? String(perPage) : undefined }, { preserveState: true, replace: true });
     };
 
     const handleDelete = (id: string) => {
@@ -219,6 +248,24 @@ export default function Index({ enrollments, filters, stats, academicYears, clas
                 </div>
 
                 <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                    {/* Table header: count + per-page selector */}
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                        <p className="text-sm text-gray-600">
+                            <span className="font-semibold">{enrollments.total}</span> inscription(s)
+                        </p>
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <span>Lignes par page :</span>
+                            <select
+                                value={perPage}
+                                onChange={(e) => changePerPage(Number(e.target.value))}
+                                className="h-8 px-2 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                                {PER_PAGE_OPTIONS.map((n) => (
+                                    <option key={n} value={n}>{n}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
                     <div className="overflow-x-auto">
                         <Table>
                             <TableHeader className="bg-gray-50">
@@ -297,30 +344,37 @@ export default function Index({ enrollments, filters, stats, academicYears, clas
 
                 {enrollments.last_page > 1 && (
                     <div className="flex items-center justify-between bg-white rounded-lg p-4 shadow-sm">
-                        <div className="text-sm text-gray-600">
-                            Affichage de <span className="font-semibold">{enrollments.from}</span> à{' '}
-                            <span className="font-semibold">{enrollments.to}</span> sur{' '}
-                            <span className="font-semibold">{enrollments.total}</span> inscriptions
-                        </div>
-                        <div className="flex gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="border-gray-300 text-gray-700"
+                        <p className="text-sm text-gray-600">
+                            {enrollments.from}–{enrollments.to} sur <span className="font-semibold">{enrollments.total}</span> inscriptions
+                        </p>
+                        <div className="flex items-center gap-1">
+                            <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 px-2"
                                 disabled={enrollments.current_page === 1}
-                                onClick={() => router.get(route('enrollments.index'), { ...filters, page: enrollments.current_page - 1 }, { preserveState: true })}
-                            >
-                                Précédent
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="border-gray-300 text-gray-700"
+                                onClick={() => goToPage(1)}>⟪</Button>
+                            <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 px-2"
+                                disabled={enrollments.current_page === 1}
+                                onClick={() => goToPage(enrollments.current_page - 1)}>‹</Button>
+
+                            {windowedPages().map((page) => (
+                                <Button
+                                    key={page}
+                                    variant={page === enrollments.current_page ? 'default' : 'outline'}
+                                    size="sm"
+                                    onClick={() => goToPage(page)}
+                                    className={page === enrollments.current_page
+                                        ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                                        : 'border-gray-300 text-gray-700 hover:bg-blue-50 hover:text-blue-700'}
+                                >
+                                    {page}
+                                </Button>
+                            ))}
+
+                            <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 px-2"
                                 disabled={enrollments.current_page === enrollments.last_page}
-                                onClick={() => router.get(route('enrollments.index'), { ...filters, page: enrollments.current_page + 1 }, { preserveState: true })}
-                            >
-                                Suivant
-                            </Button>
+                                onClick={() => goToPage(enrollments.current_page + 1)}>›</Button>
+                            <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 px-2"
+                                disabled={enrollments.current_page === enrollments.last_page}
+                                onClick={() => goToPage(enrollments.last_page)}>⟫</Button>
                         </div>
                     </div>
                 )}
