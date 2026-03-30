@@ -198,6 +198,21 @@ export function route(name: string, params?: any): string {
         'enrollments.edit': `/enrollments/${params}/edit`,
         'enrollments.update': `/enrollments/${params}`,
         'enrollments.destroy': `/enrollments/${params}`,
+        'enrollments.invoice': `/enrollments/${params}/invoice`,
+        'enrollments.payments.store': `/enrollments/${params}/payments`,
+
+        // Payments routes
+        'payments.receipt': `/payments/${params}/receipt`,
+
+        // Accounting routes
+        'accounting.index':        '/accounting',
+        'accounting.transactions': '/accounting/transactions',
+
+        // Cash accounts routes
+        'cash-accounts.index':   '/cash-accounts',
+        'cash-accounts.store':   '/cash-accounts',
+        'cash-accounts.update':  `/cash-accounts/${params}`,
+        'cash-accounts.destroy': `/cash-accounts/${params}`,
     };
 
     try {

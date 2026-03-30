@@ -17,6 +17,7 @@ class StorePaymentRequest extends FormRequest
         return [
             'amount'           => ['required', 'numeric', 'min:1'],
             'payment_method'   => ['required', Rule::in(['CASH', 'MOBILE_MONEY', 'BANK_TRANSFER', 'CHEQUE'])],
+            'cash_account_id'  => ['nullable', 'uuid', 'exists:cash_accounts,id'],
             'reference_number' => ['nullable', 'string', 'max:100'],
             'paid_by'          => ['nullable', 'string', 'max:150'],
             'paid_at'          => ['required', 'date'],
