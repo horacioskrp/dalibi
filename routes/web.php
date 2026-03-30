@@ -6,6 +6,7 @@ use App\Http\Controllers\ClassroomController;
 use App\Http\Controllers\ClassroomSubjectAssignmentController;
 use App\Http\Controllers\ClassroomTypeController;
 use App\Http\Controllers\EnrollmentController;
+use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\EvaluationController;
 use App\Http\Controllers\EvaluationTypeController;
 use App\Http\Controllers\FeeCategorieController;
@@ -71,7 +72,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('students.bulk-status');
     Route::resource('students', StudentController::class);
     Route::resource('enrollments', EnrollmentController::class);
-    Route::get('enrollments/{enrollment}/receipt', [EnrollmentController::class, 'receipt'])->name('enrollments.receipt');
+    Route::get('enrollments/{enrollment}/invoice', [InvoiceController::class, 'show'])->name('enrollments.invoice');
+    Route::post('enrollments/{enrollment}/payments', [InvoiceController::class, 'storePayment'])->name('enrollments.payments.store');
+    Route::get('payments/{payment}/receipt', [InvoiceController::class, 'receipt'])->name('payments.receipt');
     Route::resource('subject-assignments', SubjectAssignmentController::class);
 
     // Administration Routes
