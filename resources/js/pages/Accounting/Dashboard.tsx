@@ -90,31 +90,30 @@ const statusConfig: Record<InvoiceStatus, { label: string; badge: string; icon: 
 /* Sous-composants                                                     */
 /* ------------------------------------------------------------------ */
 
-function KpiCard({ title, value, sub, icon, color, trend }: {
+function KpiCard({ title, value, sub, icon: Icon, color, trend }: {
     title: string; value: string; sub?: string;
-    icon: React.ReactNode; color: 'blue' | 'green' | 'orange' | 'red';
+    icon: React.ElementType; color: 'blue' | 'green' | 'orange' | 'red';
     trend?: { value: number; label: string };
 }) {
-    const bg = {
-        blue:   'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400',
-        green:  'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400',
-        orange: 'bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400',
-        red:    'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400',
+    const styles = {
+        blue:   { bg: 'bg-blue-50 dark:bg-blue-900/20',    text: 'text-blue-600 dark:text-blue-400' },
+        green:  { bg: 'bg-green-50 dark:bg-green-900/20',  text: 'text-green-600 dark:text-green-400' },
+        orange: { bg: 'bg-orange-50 dark:bg-orange-900/20', text: 'text-orange-600 dark:text-orange-400' },
+        red:    { bg: 'bg-red-50 dark:bg-red-900/20',      text: 'text-red-600 dark:text-red-400' },
     };
+    const { bg, text } = styles[color];
     return (
-        <div className="bg-white dark:bg-card rounded-xl border border-gray-100 dark:border-gray-700 px-6 py-7 flex flex-col gap-5 shadow-sm">
+        <div className={`${bg} rounded-lg p-6 transition-all hover:shadow-md shadow-sm`}>
             <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${bg[color]}`}>
-                    {icon}
+                <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{title}</p>
+                    <p className={`text-3xl font-bold ${text} mt-2`}>{value}</p>
+                    {sub && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{sub}</p>}
                 </div>
-            </div>
-            <div className="space-y-1">
-                <p className="text-3xl font-extrabold text-gray-900 dark:text-white leading-tight">{value}</p>
-                {sub && <p className="text-xs text-gray-400">{sub}</p>}
+                <Icon className={`w-12 h-12 ${text} opacity-20`} />
             </div>
             {trend !== undefined && (
-                <div className={`flex items-center gap-1.5 text-xs font-semibold pt-1 border-t border-gray-100 dark:border-gray-700 ${trend.value >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
+                <div className={`flex items-center gap-1.5 text-xs font-semibold mt-3 pt-3 border-t border-black/5 dark:border-white/10 ${trend.value >= 0 ? 'text-green-700 dark:text-green-500' : 'text-red-600 dark:text-red-400'}`}>
                     {trend.value >= 0
                         ? <TrendingUp className="w-3.5 h-3.5" />
                         : <TrendingDown className="w-3.5 h-3.5" />}
@@ -267,19 +266,19 @@ export default function AccountingDashboard({
                 )}
 
                 {/* ── KPIs ── */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     <KpiCard
                         title="Total facturé"
                         value={fmt(globalStats?.total_amount ?? 0)}
                         sub={`${globalStats?.total_invoices ?? 0} factures`}
-                        icon={<Banknote className="w-5 h-5" />}
+                        icon={Banknote}
                         color="blue"
                     />
                     <KpiCard
                         title="Encaissé"
                         value={fmt(globalStats?.total_paid ?? 0)}
                         sub={`${collectedPct}% du total`}
-                        icon={<CheckCircle2 className="w-5 h-5" />}
+                        icon={CheckCircle2}
                         color="green"
                         trend={{ value: collectedPct, label: `${collectedPct}% recouvré` }}
                     />
@@ -287,14 +286,14 @@ export default function AccountingDashboard({
                         title="Reste à recouvrer"
                         value={fmt(globalStats?.total_remaining ?? 0)}
                         sub={`${(globalStats?.issued_count ?? 0) + (globalStats?.partial_count ?? 0)} dossiers ouverts`}
-                        icon={<Clock className="w-5 h-5" />}
+                        icon={Clock}
                         color="orange"
                     />
                     <KpiCard
                         title="Soldés / En retard"
                         value={`${globalStats?.paid_count ?? 0} / ${globalStats?.issued_count ?? 0}`}
                         sub={`${globalStats?.partial_count ?? 0} paiements partiels`}
-                        icon={<Users className="w-5 h-5" />}
+                        icon={Users}
                         color="red"
                     />
                 </div>
