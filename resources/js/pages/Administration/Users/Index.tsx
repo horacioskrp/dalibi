@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { Plus, Pencil, Trash2, Search, Users, CheckCircle2, User as UserIcon, Eye, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Users, CheckCircle2, User as UserIcon, Eye, X } from 'lucide-react';
 import { useState } from 'react';
 import {
     AlertDialog,
@@ -50,18 +50,22 @@ interface PaginatedUsers {
     total: number;
 }
 
+const PER_PAGE_OPTIONS = [10, 25, 50, 100];
+
 interface IndexProps {
     users: PaginatedUsers;
+    perPage: number;
     roles: Role[];
     message?: string;
     filters: {
         search?: string;
         role?: string;
         gender?: string;
+        per_page?: string;
     };
 }
 
-export default function Index({ users, roles, message, filters }: Readonly<IndexProps>) {
+export default function Index({ users, perPage, roles, message, filters }: Readonly<IndexProps>) {
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
@@ -72,6 +76,24 @@ export default function Index({ users, roles, message, filters }: Readonly<Index
         search: searchQuery || undefined,
         role: selectedRole || undefined,
         gender: selectedGender || undefined,
+        per_page: perPage !== 25 ? String(perPage) : undefined,
+    };
+
+    const goToPage = (page: number) => {
+        router.get(route('users.index'), { ...currentFilters, page }, { preserveScroll: true, replace: true });
+    };
+
+    const changePerPage = (value: number) => {
+        router.get(route('users.index'), { ...currentFilters, per_page: String(value), page: 1 }, { preserveScroll: true, replace: true });
+    };
+
+    const windowedPages = () => {
+        const total = users.last_page;
+        const cur = users.current_page;
+        const win = 5;
+        const start = Math.max(1, Math.min(cur - Math.floor(win / 2), total - win + 1));
+        const end = Math.min(total, start + win - 1);
+        return Array.from({ length: end - start + 1 }, (_, i) => start + i);
     };
 
     const formatGenderLabel = (gender: string) => {
@@ -101,7 +123,7 @@ export default function Index({ users, roles, message, filters }: Readonly<Index
     };
 
     const handleSearch = () => {
-        router.get(route('users.index'), currentFilters, {
+        router.get(route('users.index'), { ...currentFilters, page: 1 }, {
             preserveScroll: true,
             replace: true
         });
@@ -112,7 +134,7 @@ export default function Index({ users, roles, message, filters }: Readonly<Index
         setSelectedRole('');
         setSelectedGender('');
 
-        router.get(route('users.index'), {}, {
+        router.get(route('users.index'), { per_page: perPage !== 25 ? String(perPage) : undefined }, {
             preserveScroll: true,
             replace: true
         });
@@ -286,6 +308,24 @@ export default function Index({ users, roles, message, filters }: Readonly<Index
 
                 {/* Tableau des utilisateurs */}
                 <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                    {/* Table header: count + per-page selector */}
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                        <p className="text-sm text-gray-600">
+                            <span className="font-semibold">{users.total}</span> utilisateur(s)
+                        </p>
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <span>Lignes par page :</span>
+                            <select
+                                value={perPage}
+                                onChange={(e) => changePerPage(Number(e.target.value))}
+                                className="h-8 px-2 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                                {PER_PAGE_OPTIONS.map((n) => (
+                                    <option key={n} value={n}>{n}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
                     <div className="overflow-x-auto">
                         <Table>
                             <TableHeader className="bg-gray-50">
@@ -386,76 +426,40 @@ export default function Index({ users, roles, message, filters }: Readonly<Index
                     </div>
                 </div>
 
-                {/* Pagination améliorée */}
+                {/* Pagination */}
                 {users.last_page > 1 && (
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
-                        <div className="flex items-center justify-between">
-                            <p className="text-sm text-gray-600">
-                                Affichage <span className="font-semibold">{users.from}</span> à <span className="font-semibold">{users.to}</span> sur <span className="font-semibold">{users.total}</span> utilisateurs
-                            </p>
-                            <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between bg-white rounded-lg p-4 shadow-sm">
+                        <p className="text-sm text-gray-600">
+                            {users.from}–{users.to} sur <span className="font-semibold">{users.total}</span> utilisateurs
+                        </p>
+                        <div className="flex items-center gap-1">
+                            <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 px-2"
+                                disabled={users.current_page === 1}
+                                onClick={() => goToPage(1)}>⟪</Button>
+                            <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 px-2"
+                                disabled={users.current_page === 1}
+                                onClick={() => goToPage(users.current_page - 1)}>‹</Button>
+
+                            {windowedPages().map((page) => (
                                 <Button
-                                    variant="outline"
+                                    key={page}
+                                    variant={page === users.current_page ? 'default' : 'outline'}
                                     size="sm"
-                                    disabled={users.current_page === 1}
-                                    onClick={() => router.get(route('users.index'), { 
-                                        page: users.current_page - 1, 
-                                        search: filters.search,
-                                        role: filters.role,
-                                        gender: filters.gender,
-                                    }, { preserveScroll: true })}
-                                    className="border-gray-300 text-gray-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    onClick={() => goToPage(page)}
+                                    className={page === users.current_page
+                                        ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                                        : 'border-gray-300 text-gray-700 hover:bg-blue-50 hover:text-blue-700'}
                                 >
-                                    <ChevronLeft className="w-4 h-4 mr-1" />
-                                    Précédent
+                                    {page}
                                 </Button>
-                                <div className="flex gap-1">
-                                    {Array.from({ length: Math.min(5, users.last_page) }, (_, i) => {
-                                        let page = i + 1;
-                                        if (users.last_page > 5 && users.current_page > 3) {
-                                            page = users.current_page - 2 + i;
-                                        }
-                                        if (page > users.last_page) return null;
-                                        return (
-                                            <Button
-                                                key={page}
-                                                variant={page === users.current_page ? 'default' : 'outline'}
-                                                size="sm"
-                                                onClick={() => router.get(route('users.index'), { 
-                                                    page, 
-                                                    search: filters.search,
-                                                    role: filters.role,
-                                                    gender: filters.gender,
-                                                }, { preserveScroll: true })}
-                                                className={page === users.current_page 
-                                                    ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                                                    : 'border-gray-300 text-gray-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300'
-                                                }
-                                            >
-                                                {page}
-                                            </Button>
-                                        );
-                                    })}
-                                </div>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    disabled={users.current_page === users.last_page}
-                                    onClick={() => router.get(route('users.index'), { 
-                                        page: users.current_page + 1, 
-                                        search: filters.search,
-                                        role: filters.role,
-                                        gender: filters.gender,
-                                    }, { preserveScroll: true })}
-                                    className="border-gray-300 text-gray-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    Suivant
-                                    <ChevronRight className="w-4 h-4 ml-1" />
-                                </Button>
-                            </div>
-                            <p className="text-sm text-gray-600">
-                                Page <span className="font-semibold">{users.current_page}</span> sur <span className="font-semibold">{users.last_page}</span>
-                            </p>
+                            ))}
+
+                            <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 px-2"
+                                disabled={users.current_page === users.last_page}
+                                onClick={() => goToPage(users.current_page + 1)}>›</Button>
+                            <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 px-2"
+                                disabled={users.current_page === users.last_page}
+                                onClick={() => goToPage(users.last_page)}>⟫</Button>
                         </div>
                     </div>
                 )}
