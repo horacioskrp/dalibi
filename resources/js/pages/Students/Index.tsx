@@ -57,8 +57,11 @@ interface PaginatedStudents {
     total: number;
 }
 
+const PER_PAGE_OPTIONS = [10, 25, 50, 100];
+
 interface IndexProps {
     students: PaginatedStudents;
+    perPage: number;
     stats: {
         total: number;
         active: number;
@@ -72,6 +75,7 @@ interface IndexProps {
         gender?: string;
         nationality?: string;
         status?: string;
+        per_page?: string;
     };
 }
 
@@ -102,7 +106,7 @@ function renderGenderBadge(gender?: 'male' | 'female' | '' | null) {
     );
 }
 
-export default function Index({ students, stats, filters }: Readonly<IndexProps>) {
+export default function Index({ students, perPage, stats, filters }: Readonly<IndexProps>) {
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [searchQuery, setSearchQuery] = useState(filters?.search ?? '');
@@ -111,6 +115,31 @@ export default function Index({ students, stats, filters }: Readonly<IndexProps>
     const [statusFilter, setStatusFilter] = useState(filters?.status ?? '');
     const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
     const [bulkAction, setBulkAction] = useState('');
+
+    const getFilters = () => ({
+        search: searchQuery,
+        gender: genderFilter,
+        nationality: nationalityFilter,
+        status: statusFilter,
+        per_page: perPage !== 25 ? String(perPage) : undefined,
+    });
+
+    const goToPage = (page: number) => {
+        router.get(route('students.index'), { ...getFilters(), page }, { preserveState: true, replace: true });
+    };
+
+    const changePerPage = (value: number) => {
+        router.get(route('students.index'), { ...getFilters(), per_page: String(value), page: 1 }, { preserveState: true, replace: true });
+    };
+
+    const windowedPages = () => {
+        const total = students.last_page;
+        const cur = students.current_page;
+        const window = 5;
+        const start = Math.max(1, Math.min(cur - Math.floor(window / 2), total - window + 1));
+        const end = Math.min(total, start + window - 1);
+        return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+    };
 
     const allVisibleSelected = students.data.length > 0 && students.data.every((student) => selectedStudentIds.includes(student.id));
 
@@ -126,13 +155,9 @@ export default function Index({ students, stats, filters }: Readonly<IndexProps>
     };
 
     const handleSearch = () => {
-        router.get(route('students.index'), {
-            search: searchQuery,
-            gender: genderFilter,
-            nationality: nationalityFilter,
-            status: statusFilter,
-        }, {
+        router.get(route('students.index'), { ...getFilters(), page: 1 }, {
             preserveState: true,
+            replace: true,
             onSuccess: () => setSelectedStudentIds([]),
         });
     };
@@ -142,13 +167,9 @@ export default function Index({ students, stats, filters }: Readonly<IndexProps>
         setGenderFilter('');
         setNationalityFilter('');
         setStatusFilter('');
-        router.get(route('students.index'), {
-            search: '',
-            gender: '',
-            nationality: '',
-            status: '',
-        }, {
+        router.get(route('students.index'), { per_page: perPage !== 25 ? String(perPage) : undefined }, {
             preserveState: true,
+            replace: true,
             onSuccess: () => setSelectedStudentIds([]),
         });
     };
@@ -331,6 +352,24 @@ export default function Index({ students, stats, filters }: Readonly<IndexProps>
                 </div>
 
                 <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                    {/* Table header: count + per-page selector */}
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                        <p className="text-sm text-gray-600">
+                            <span className="font-semibold">{students.total}</span> élève(s)
+                        </p>
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <span>Lignes par page :</span>
+                            <select
+                                value={perPage}
+                                onChange={(e) => changePerPage(Number(e.target.value))}
+                                className="h-8 px-2 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                                {PER_PAGE_OPTIONS.map((n) => (
+                                    <option key={n} value={n}>{n}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
                     <div className="overflow-x-auto">
                         <Table>
                             <TableHeader className="bg-gray-50">
@@ -441,41 +480,40 @@ export default function Index({ students, stats, filters }: Readonly<IndexProps>
 
                 {students.last_page > 1 && (
                     <div className="flex items-center justify-between bg-white rounded-lg p-4 shadow-sm">
-                        <div className="text-sm text-gray-600">
-                            Affichage de <span className="font-semibold">{students.from}</span> à <span className="font-semibold">{students.to}</span> sur <span className="font-semibold">{students.total}</span> élèves
-                        </div>
-                        <div className="flex gap-2">
-                            {students.current_page > 1 && (
+                        <p className="text-sm text-gray-600">
+                            {students.from}–{students.to} sur <span className="font-semibold">{students.total}</span> élèves
+                        </p>
+                        <div className="flex items-center gap-1">
+                            {/* First + Prev */}
+                            <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 px-2"
+                                disabled={students.current_page === 1}
+                                onClick={() => goToPage(1)}>⟪</Button>
+                            <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 px-2"
+                                disabled={students.current_page === 1}
+                                onClick={() => goToPage(students.current_page - 1)}>‹</Button>
+
+                            {/* Windowed pages */}
+                            {windowedPages().map((page) => (
                                 <Button
-                                    variant="outline"
-                                    onClick={() => router.get(route('students.index'), {
-                                        page: students.current_page - 1,
-                                        search: searchQuery,
-                                        gender: genderFilter,
-                                        nationality: nationalityFilter,
-                                        status: statusFilter,
-                                    }, { preserveState: true })}
+                                    key={page}
+                                    variant={page === students.current_page ? 'default' : 'outline'}
+                                    size="sm"
+                                    onClick={() => goToPage(page)}
+                                    className={page === students.current_page
+                                        ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                                        : 'border-gray-300 text-gray-700 hover:bg-blue-50 hover:text-blue-700'}
                                 >
-                                    ← Précédent
+                                    {page}
                                 </Button>
-                            )}
-                            <span className="flex items-center px-4 text-sm font-medium text-gray-700">
-                                Page {students.current_page} sur {students.last_page}
-                            </span>
-                            {students.current_page < students.last_page && (
-                                <Button
-                                    variant="outline"
-                                    onClick={() => router.get(route('students.index'), {
-                                        page: students.current_page + 1,
-                                        search: searchQuery,
-                                        gender: genderFilter,
-                                        nationality: nationalityFilter,
-                                        status: statusFilter,
-                                    }, { preserveState: true })}
-                                >
-                                    Suivant →
-                                </Button>
-                            )}
+                            ))}
+
+                            {/* Next + Last */}
+                            <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 px-2"
+                                disabled={students.current_page === students.last_page}
+                                onClick={() => goToPage(students.current_page + 1)}>›</Button>
+                            <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 px-2"
+                                disabled={students.current_page === students.last_page}
+                                onClick={() => goToPage(students.last_page)}>⟫</Button>
                         </div>
                     </div>
                 )}

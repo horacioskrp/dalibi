@@ -52,11 +52,15 @@ class StudentController extends Controller
             }
         }
 
-        $students = $query->paginate(10)->withQueryString();
+        $perPage  = in_array((int) $request->per_page, [10, 25, 50, 100], true)
+            ? (int) $request->per_page : 25;
+
+        $students = $query->paginate($perPage)->withQueryString();
 
         return Inertia::render('Students/Index', [
             'students' => $students,
-            'filters' => $request->only(['search', 'gender', 'nationality', 'status']),
+            'perPage'  => $perPage,
+            'filters' => $request->only(['search', 'gender', 'nationality', 'status', 'per_page']),
             'stats' => [
                 'total' => Student::count(),
                 'active' => Student::where('active', true)->count(),

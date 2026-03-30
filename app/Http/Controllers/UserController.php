@@ -64,15 +64,20 @@ class UserController extends Controller
             });
         }
 
-        $users = $query->orderBy('created_at', 'desc')->paginate(10)->appends(request()->query());
+        $perPage = in_array((int) request('per_page'), [10, 25, 50, 100], true)
+            ? (int) request('per_page') : 25;
+
+        $users = $query->orderBy('created_at', 'desc')->paginate($perPage)->withQueryString();
 
         return Inertia::render('Administration/Users/Index', [
-            'users' => $users,
-            'roles' => $roles,
+            'users'   => $users,
+            'roles'   => $roles,
+            'perPage' => $perPage,
             'filters' => [
-                'search' => $search,
-                'role' => $roleId,
-                'gender' => $normalizedGender,
+                'search'   => $search,
+                'role'     => $roleId,
+                'gender'   => $normalizedGender,
+                'per_page' => request('per_page'),
             ],
         ]);
     }

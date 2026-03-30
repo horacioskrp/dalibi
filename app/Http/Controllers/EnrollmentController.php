@@ -56,11 +56,15 @@ class EnrollmentController extends Controller
             $query->where('class_id', $request->string('class_id')->toString());
         }
 
-        $enrollments = $query->latest()->paginate(10)->withQueryString();
+        $perPage     = in_array((int) $request->per_page, [10, 25, 50, 100], true)
+            ? (int) $request->per_page : 25;
+
+        $enrollments = $query->latest()->paginate($perPage)->withQueryString();
 
         return Inertia::render('Enrollments/Index', [
             'enrollments' => $enrollments,
-            'filters' => $request->only(['search', 'status', 'academic_year_id', 'class_id']),
+            'perPage'     => $perPage,
+            'filters' => $request->only(['search', 'status', 'academic_year_id', 'class_id', 'per_page']),
             'stats' => [
                 'total'     => Enrollment::count(),
                 'pending'   => Enrollment::where('status', 'PENDING')->count(),
