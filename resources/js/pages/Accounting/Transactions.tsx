@@ -79,29 +79,28 @@ const cashTypeIcon: Record<CashType, React.ReactNode> = {
 };
 
 /* ------------------------------------------------------------------ */
-/* StatCard — même structure que KpiCard du Dashboard, taille réduite  */
+/* StatCard — même design que les cards élèves                         */
 /* ------------------------------------------------------------------ */
-function StatCard({ title, value, sub, icon, color }: {
+function StatCard({ title, value, sub, icon: Icon, color }: {
     title: string; value: string; sub?: string;
-    icon: React.ReactNode; color: 'blue' | 'green' | 'red' | 'gray';
+    icon: React.ElementType; color: 'blue' | 'green' | 'red' | 'gray';
 }) {
-    const iconBg = {
-        blue:  'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400',
-        green: 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400',
-        red:   'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400',
-        gray:  'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400',
+    const styles = {
+        blue:  { bg: 'bg-blue-50 dark:bg-blue-900/20',   text: 'text-blue-600 dark:text-blue-400' },
+        green: { bg: 'bg-green-50 dark:bg-green-900/20',  text: 'text-green-600 dark:text-green-400' },
+        red:   { bg: 'bg-red-50 dark:bg-red-900/20',      text: 'text-red-600 dark:text-red-400' },
+        gray:  { bg: 'bg-gray-100 dark:bg-gray-700',      text: 'text-gray-500 dark:text-gray-400' },
     };
+    const { bg, text } = styles[color];
     return (
-        <div className="bg-white dark:bg-card rounded-xl border border-gray-100 dark:border-gray-700 px-5 py-5 flex flex-col gap-3 shadow-sm">
+        <div className={`${bg} rounded-lg p-6 transition-all hover:shadow-md shadow-sm`}>
             <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
-                <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${iconBg[color]}`}>
-                    {icon}
+                <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{title}</p>
+                    <p className={`text-3xl font-bold ${text} mt-2`}>{value}</p>
+                    {sub && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{sub}</p>}
                 </div>
-            </div>
-            <div>
-                <p className="text-2xl font-extrabold text-gray-900 dark:text-white leading-tight">{value}</p>
-                {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
+                <Icon className={`w-12 h-12 ${text} opacity-20`} />
             </div>
         </div>
     );
@@ -196,27 +195,27 @@ export default function Transactions({ transactions, cashAccounts, cashSummary, 
                             title="Total encaissé"
                             value={fmt(totals?.total_income ?? 0)}
                             sub={`${totals?.total_count ?? 0} transaction(s)`}
-                            icon={<TrendingUp className="w-4.5 h-4.5" />}
+                            icon={TrendingUp}
                             color="green"
                         />
                         <StatCard
                             title="Total sorties"
                             value={fmt(totals?.total_expense ?? 0)}
-                            icon={<TrendingDown className="w-4.5 h-4.5" />}
+                            icon={TrendingDown}
                             color="red"
                         />
                         <StatCard
                             title="Solde net"
                             value={fmt(balance)}
                             sub={balance >= 0 ? 'Positif' : 'Négatif'}
-                            icon={<ArrowLeftRight className="w-4.5 h-4.5" />}
+                            icon={ArrowLeftRight}
                             color={balance >= 0 ? 'blue' : 'red'}
                         />
                         <StatCard
                             title="Transactions"
                             value={String(totals?.total_count ?? transactions.total)}
                             sub="au total"
-                            icon={<ArrowLeftRight className="w-4.5 h-4.5" />}
+                            icon={ArrowLeftRight}
                             color="gray"
                         />
                     </div>
