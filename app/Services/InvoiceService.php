@@ -12,6 +12,7 @@ use App\Models\StudentScholarship;
 
 class InvoiceService
 {
+    public function __construct(private readonly AccountingService $accountingService) {}
     /**
      * Génère automatiquement une facture à partir d'une inscription.
      * Récupère les FeeStructures de la classe/année et les bourses éventuelles.
@@ -89,16 +90,19 @@ class InvoiceService
 
         $payment = Payment::create($data);
 
-        // Reçu automatique
+        // 1. Reçu automatique
         Receipt::create([
             'payment_id'     => $payment->id,
             'receipt_number' => $this->generateReceiptNumber(),
         ]);
 
-        // Recalculer la facture
+        // 2. Recalculer la facture
         $invoice->recalculate();
 
-        // Mettre à jour le statut de l'inscription
+        // 3. Transaction comptable + mise à jour caisse
+        $this->accountingService->recordPaymentTransaction($payment);
+
+        // 4. Mettre à jour le statut de l'inscription
         $enrollment = $invoice->enrollment;
         if (in_array($invoice->fresh()->status, ['PARTIALLY_PAID', 'PAID'], true)) {
             $enrollment->update(['status' => 'ACTIVE']);

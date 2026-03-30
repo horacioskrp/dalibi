@@ -16,6 +16,7 @@ class Payment extends Model
         'invoice_id',
         'amount',
         'payment_method',    // CASH | MOBILE_MONEY | BANK_TRANSFER | CHEQUE
+        'cash_account_id',
         'reference_number',
         'paid_by',
         'paid_at',
@@ -45,5 +46,15 @@ class Payment extends Model
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function cashAccount(): BelongsTo
+    {
+        return $this->belongsTo(CashAccount::class);
+    }
+
+    public function accountingTransaction(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(AccountingTransaction::class, 'reference_id');
     }
 }

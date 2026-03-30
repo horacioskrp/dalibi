@@ -6,7 +6,10 @@ use App\Http\Controllers\ClassroomController;
 use App\Http\Controllers\ClassroomSubjectAssignmentController;
 use App\Http\Controllers\ClassroomTypeController;
 use App\Http\Controllers\EnrollmentController;
+use App\Http\Controllers\AccountingController;
+use App\Http\Controllers\CashAccountController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\EvaluationController;
 use App\Http\Controllers\EvaluationTypeController;
 use App\Http\Controllers\FeeCategorieController;
@@ -71,6 +74,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('students/bulk-status', [StudentController::class, 'bulkStatus'])
         ->name('students.bulk-status');
     Route::resource('students', StudentController::class);
+    Route::get('accounting', [AccountingController::class, 'index'])->name('accounting.index');
+    Route::get('accounting/transactions', [TransactionController::class, 'index'])->name('accounting.transactions');
+    Route::get('cash-accounts', [CashAccountController::class, 'index'])->name('cash-accounts.index');
+    Route::post('cash-accounts', [CashAccountController::class, 'store'])->name('cash-accounts.store');
+    Route::put('cash-accounts/{cashAccount}', [CashAccountController::class, 'update'])->name('cash-accounts.update');
+    Route::delete('cash-accounts/{cashAccount}', [CashAccountController::class, 'destroy'])->name('cash-accounts.destroy');
     Route::resource('enrollments', EnrollmentController::class);
     Route::get('enrollments/{enrollment}/invoice', [InvoiceController::class, 'show'])->name('enrollments.invoice');
     Route::post('enrollments/{enrollment}/payments', [InvoiceController::class, 'storePayment'])->name('enrollments.payments.store');
