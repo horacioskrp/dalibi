@@ -207,6 +207,8 @@ export function route(name: string, params?: any): string {
         // Accounting routes
         'accounting.index':        '/accounting',
         'accounting.transactions': '/accounting/transactions',
+        'accounting.situation':        '/accounting/situation',
+        'accounting.situation.export': '/accounting/situation/export',
 
         // Cash accounts routes
         'cash-accounts.index':   '/cash-accounts',
