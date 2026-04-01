@@ -9,6 +9,7 @@ use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\AccountingController;
 use App\Http\Controllers\CashAccountController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\SituationController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\EvaluationController;
 use App\Http\Controllers\EvaluationTypeController;
@@ -76,6 +77,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('students', StudentController::class);
     Route::get('accounting', [AccountingController::class, 'index'])->name('accounting.index');
     Route::get('accounting/transactions', [TransactionController::class, 'index'])->name('accounting.transactions');
+    Route::get('accounting/situation', [SituationController::class, 'index'])->name('accounting.situation');
+    Route::get('accounting/situation/export', [SituationController::class, 'export'])->name('accounting.situation.export');
     Route::get('cash-accounts', [CashAccountController::class, 'index'])->name('cash-accounts.index');
     Route::post('cash-accounts', [CashAccountController::class, 'store'])->name('cash-accounts.store');
     Route::put('cash-accounts/{cashAccount}', [CashAccountController::class, 'update'])->name('cash-accounts.update');

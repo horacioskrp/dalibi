@@ -1,4 +1,4 @@
-import { BookOpen, Calendar, Clock, ClipboardList, GraduationCap, LayoutGrid, Layers, Settings, Tag, Users, Shield, Lock, Wallet, Percent, DollarSign, UserCircle, TrendingUp, ArrowLeftRight } from 'lucide-react';
+import { BookOpen, Calendar, Clock, ClipboardList, GraduationCap, LayoutGrid, Layers, Settings, Tag, Users, Shield, Lock, Wallet, Percent, DollarSign, UserCircle, TrendingUp, ArrowLeftRight, PieChart } from 'lucide-react';
 import { route } from '@/helpers/route';
 import type { NavItem } from '@/types';
 
@@ -46,14 +46,14 @@ export const mainNavItems: NavItem[] = [
                 icon: ArrowLeftRight,
             },
             {
+                title: 'Situation par classe',
+                href: route('accounting.situation'),
+                icon: PieChart,
+            },
+            {
                 title: 'Caisses',
                 href: route('cash-accounts.index'),
                 icon: Wallet,
-            },
-            {
-                title: 'Inscriptions',
-                href: route('enrollments.index'),
-                icon: ClipboardList,
             },
         ],
     },
