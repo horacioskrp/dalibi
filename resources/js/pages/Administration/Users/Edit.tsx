@@ -1,5 +1,15 @@
 import { Head, router } from '@inertiajs/react';
-import { ArrowLeft } from 'lucide-react';
+import {
+    ArrowLeft,
+    CircleUserRound,
+    Mail,
+    MapPin,
+    Phone,
+    Shield,
+    Sparkles,
+    UserCheck,
+    Users,
+} from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -104,8 +114,13 @@ export default function Edit({ user, roles }: Readonly<EditProps>) {
                         {/* Colonne 1 & 2: Informations de base */}
                         <div className="lg:col-span-2 space-y-6">
                             {/* Informations personnelles */}
-                            <div className="bg-white rounded-lg border p-6">
-                                <h2 className="text-lg font-semibold text-gray-900 mb-4">Informations personnelles</h2>
+                            <div className="bg-white rounded-xl border border-blue-100 shadow-sm p-6">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="h-9 w-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                                        <CircleUserRound className="w-5 h-5" />
+                                    </div>
+                                    <h2 className="text-lg font-semibold text-gray-900">Informations personnelles</h2>
+                                </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label htmlFor="firstname" className="block text-sm font-medium text-gray-900 mb-2">
@@ -117,7 +132,7 @@ export default function Edit({ user, roles }: Readonly<EditProps>) {
                                             value={formData.firstname}
                                             onChange={(e) => setFormData(prev => ({ ...prev, firstname: e.target.value }))}
                                             placeholder="Ex: Jean"
-                                            className={errors.firstname ? 'border-red-500' : ''}
+                                            className={errors.firstname ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-50 focus:bg-white focus:ring-blue-500'}
                                         />
                                         {errors.firstname && (
                                             <p className="text-red-600 text-sm mt-1">{errors.firstname}</p>
@@ -134,7 +149,7 @@ export default function Edit({ user, roles }: Readonly<EditProps>) {
                                             value={formData.lastname}
                                             onChange={(e) => setFormData(prev => ({ ...prev, lastname: e.target.value }))}
                                             placeholder="Ex: Dupont"
-                                            className={errors.lastname ? 'border-red-500' : ''}
+                                            className={errors.lastname ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-50 focus:bg-white focus:ring-blue-500'}
                                         />
                                         {errors.lastname && (
                                             <p className="text-red-600 text-sm mt-1">{errors.lastname}</p>
@@ -149,7 +164,7 @@ export default function Edit({ user, roles }: Readonly<EditProps>) {
                                             id="gender"
                                             value={formData.gender}
                                             onChange={(e) => setFormData(prev => ({ ...prev, gender: e.target.value }))}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            className="w-full px-3 py-2 border border-gray-200 bg-gray-50 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
                                         >
                                             <option value="male">Masculin</option>
                                             <option value="female">Féminin</option>
@@ -159,31 +174,21 @@ export default function Edit({ user, roles }: Readonly<EditProps>) {
                                             <p className="text-red-600 text-sm mt-1">{errors.gender}</p>
                                         )}
                                     </div>
-
-                                    <div>
-                                        <label htmlFor="birth_date" className="block text-sm font-medium text-gray-900 mb-2">
-                                            Date de naissance
-                                        </label>
-                                        <Input
-                                            id="birth_date"
-                                            type="date"
-                                            value={formData.birth_date}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, birth_date: e.target.value }))}
-                                            className={errors.birth_date ? 'border-red-500' : ''}
-                                        />
-                                        {errors.birth_date && (
-                                            <p className="text-red-600 text-sm mt-1">{errors.birth_date}</p>
-                                        )}
-                                    </div>
                                 </div>
                             </div>
 
                             {/* Coordonnées */}
-                            <div className="bg-white rounded-lg border p-6">
-                                <h2 className="text-lg font-semibold text-gray-900 mb-4">Coordonnées</h2>
+                            <div className="bg-white rounded-xl border border-violet-100 shadow-sm p-6">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="h-9 w-9 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center">
+                                        <Phone className="w-5 h-5" />
+                                    </div>
+                                    <h2 className="text-lg font-semibold text-gray-900">Coordonnées</h2>
+                                </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label htmlFor="email" className="block text-sm font-medium text-gray-900 mb-2">
+                                            <Mail className="inline w-4 h-4 mr-1 text-violet-500" />
                                             Email *
                                         </label>
                                         <Input
@@ -192,7 +197,7 @@ export default function Edit({ user, roles }: Readonly<EditProps>) {
                                             value={formData.email}
                                             onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                                             placeholder="exemple@email.com"
-                                            className={errors.email ? 'border-red-500' : ''}
+                                            className={errors.email ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-50 focus:bg-white focus:ring-blue-500'}
                                         />
                                         {errors.email && (
                                             <p className="text-red-600 text-sm mt-1">{errors.email}</p>
@@ -201,6 +206,7 @@ export default function Edit({ user, roles }: Readonly<EditProps>) {
 
                                     <div>
                                         <label htmlFor="telephone" className="block text-sm font-medium text-gray-900 mb-2">
+                                            <Phone className="inline w-4 h-4 mr-1 text-violet-500" />
                                             Téléphone
                                         </label>
                                         <Input
@@ -209,7 +215,7 @@ export default function Edit({ user, roles }: Readonly<EditProps>) {
                                             value={formData.telephone}
                                             onChange={(e) => setFormData(prev => ({ ...prev, telephone: e.target.value }))}
                                             placeholder="+228 XX XX XX XX"
-                                            className={errors.telephone ? 'border-red-500' : ''}
+                                            className={errors.telephone ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-50 focus:bg-white focus:ring-blue-500'}
                                         />
                                         {errors.telephone && (
                                             <p className="text-red-600 text-sm mt-1">{errors.telephone}</p>
@@ -218,6 +224,7 @@ export default function Edit({ user, roles }: Readonly<EditProps>) {
 
                                     <div className="md:col-span-2">
                                         <label htmlFor="address" className="block text-sm font-medium text-gray-900 mb-2">
+                                            <MapPin className="inline w-4 h-4 mr-1 text-violet-500" />
                                             Adresse
                                         </label>
                                         <Input
@@ -226,7 +233,7 @@ export default function Edit({ user, roles }: Readonly<EditProps>) {
                                             value={formData.address}
                                             onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
                                             placeholder="123 Rue de la Paix"
-                                            className={errors.address ? 'border-red-500' : ''}
+                                            className={errors.address ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-50 focus:bg-white focus:ring-blue-500'}
                                         />
                                         {errors.address && (
                                             <p className="text-red-600 text-sm mt-1">{errors.address}</p>
@@ -236,8 +243,13 @@ export default function Edit({ user, roles }: Readonly<EditProps>) {
                             </div>
 
                             {/* Sécurité */}
-                            <div className="bg-white rounded-lg border p-6">
-                                <h2 className="text-lg font-semibold text-gray-900 mb-4">Sécurité</h2>
+                            <div className="bg-white rounded-xl border border-amber-100 shadow-sm p-6">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="h-9 w-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                                        <Shield className="w-5 h-5" />
+                                    </div>
+                                    <h2 className="text-lg font-semibold text-gray-900">Sécurité</h2>
+                                </div>
                                 <p className="text-sm text-gray-600 mb-4">
                                     Laissez ces champs vides pour conserver le mot de passe actuel.
                                 </p>
@@ -252,7 +264,7 @@ export default function Edit({ user, roles }: Readonly<EditProps>) {
                                             value={formData.password}
                                             onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
                                             placeholder="••••••••"
-                                            className={errors.password ? 'border-red-500' : ''}
+                                            className={errors.password ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-50 focus:bg-white focus:ring-blue-500'}
                                         />
                                         {errors.password && (
                                             <p className="text-red-600 text-sm mt-1">{errors.password}</p>
@@ -269,14 +281,20 @@ export default function Edit({ user, roles }: Readonly<EditProps>) {
                                             value={formData.password_confirmation}
                                             onChange={(e) => setFormData(prev => ({ ...prev, password_confirmation: e.target.value }))}
                                             placeholder="••••••••"
+                                            className="border-gray-200 bg-gray-50 focus:bg-white focus:ring-blue-500"
                                         />
                                     </div>
                                 </div>
                             </div>
 
                             {/* Profil */}
-                            <div className="bg-white rounded-lg border p-6">
-                                <h2 className="text-lg font-semibold text-gray-900 mb-4">Profil</h2>
+                            <div className="bg-white rounded-xl border border-emerald-100 shadow-sm p-6">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="h-9 w-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                                        <Sparkles className="w-5 h-5" />
+                                    </div>
+                                    <h2 className="text-lg font-semibold text-gray-900">Profil</h2>
+                                </div>
                                 <div>
                                     <label htmlFor="profile" className="block text-sm font-medium text-gray-900 mb-2">
                                         Description du profil
@@ -287,7 +305,7 @@ export default function Edit({ user, roles }: Readonly<EditProps>) {
                                         onChange={(e) => setFormData(prev => ({ ...prev, profile: e.target.value }))}
                                         placeholder="Décrivez le profil de l'utilisateur..."
                                         rows={4}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className="w-full px-3 py-2 border border-gray-200 bg-gray-50 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
                                     />
                                     {errors.profile && (
                                         <p className="text-red-600 text-sm mt-1">{errors.profile}</p>
@@ -298,13 +316,33 @@ export default function Edit({ user, roles }: Readonly<EditProps>) {
 
                         {/* Colonne 3: Rôles */}
                         <div className="lg:col-span-1">
-                            <div className="bg-white rounded-lg border p-6 sticky top-6">
-                                <h2 className="text-lg font-semibold text-gray-900 mb-4">Rôles</h2>
+                            <div className="bg-white rounded-xl border border-indigo-100 shadow-sm p-6 sticky top-6 space-y-4">
+                                <div className="rounded-lg bg-indigo-50 border border-indigo-100 p-4">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2 text-indigo-700">
+                                            <Users className="w-4 h-4" />
+                                            <p className="text-sm font-semibold">Rôles sélectionnés</p>
+                                        </div>
+                                        <span className="inline-flex h-6 min-w-6 px-2 items-center justify-center rounded-full bg-indigo-600 text-white text-xs font-semibold">
+                                            {formData.roles.length}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-indigo-600 mt-2">Attribuez un ou plusieurs rôles selon les responsabilités.</p>
+                                </div>
+
+                                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                                    <UserCheck className="w-5 h-5 text-indigo-600" />
+                                    Rôles
+                                </h2>
                                 <div className="space-y-3">
                                     {roles.map((role) => (
                                         <label
                                             key={role.id}
-                                            className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition"
+                                            className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition ${
+                                                formData.roles.includes(role.id)
+                                                    ? 'border-indigo-200 bg-indigo-50/60'
+                                                    : 'border-gray-100 hover:bg-indigo-50/40 hover:border-indigo-100'
+                                            }`}
                                         >
                                             <input
                                                 type="checkbox"
@@ -333,13 +371,14 @@ export default function Edit({ user, roles }: Readonly<EditProps>) {
                         <Button
                             type="submit"
                             disabled={isSubmitting}
-                            className="bg-blue-600 hover:bg-blue-700"
+                            className="bg-blue-600 hover:bg-blue-700 shadow-sm"
                         >
                             {isSubmitting ? 'Mise à jour...' : 'Mettre à jour'}
                         </Button>
                         <Button
                             type="button"
                             variant="outline"
+                            className="border-gray-200 hover:bg-gray-50"
                             onClick={() => router.get(route('users.index'))}
                         >
                             Annuler
