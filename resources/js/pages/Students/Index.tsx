@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { Plus, Pencil, Trash2, Search, Users, UserCheck, Eye, Mars, Venus, CircleHelp, Phone } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Users, UserCheck, Eye, Mars, Venus, CircleHelp, Phone, History } from 'lucide-react';
 import { useState } from 'react';
 import {
     AlertDialog,
@@ -459,6 +459,14 @@ export default function Index({ students, perPage, stats, filters }: Readonly<In
                                                         onClick={() => router.visit(route('students.edit', student.id))}
                                                     >
                                                         <Pencil className="w-4 h-4" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="border-amber-300 text-amber-700 hover:bg-amber-50 hover:text-amber-800"
+                                                        onClick={() => router.visit(route('students.history', student.id))}
+                                                    >
+                                                        <History className="w-4 h-4" />
                                                     </Button>
                                                     <Button
                                                         variant="outline"
