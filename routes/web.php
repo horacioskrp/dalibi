@@ -74,6 +74,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('student-scholarships', StudentScholarshipController::class);
     Route::post('students/bulk-status', [StudentController::class, 'bulkStatus'])
         ->name('students.bulk-status');
+    Route::get('students/{student}/history', [StudentController::class, 'history'])
+        ->name('students.history');
     Route::resource('students', StudentController::class);
     Route::get('accounting', [AccountingController::class, 'index'])->name('accounting.index');
     Route::get('accounting/transactions', [TransactionController::class, 'index'])->name('accounting.transactions');

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreStudentRequest;
 use App\Http\Requests\UpdateStudentRequest;
+use App\Models\Enrollment;
 use App\Models\Student;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -126,6 +127,41 @@ class StudentController extends Controller
 
         return Inertia::render('Students/Show', [
             'student' => $student,
+        ]);
+    }
+
+    public function history(Student $student): Response
+    {
+        $enrollments = Enrollment::query()
+            ->with([
+                'classroom:id,name,code',
+                'academicYear:id,year',
+            ])
+            ->where('student_id', $student->id)
+            ->orderByDesc('enrollment_date')
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(static fn (Enrollment $enrollment): array => [
+                'id' => $enrollment->id,
+                'classroom' => [
+                    'name' => $enrollment->classroom?->name,
+                    'code' => $enrollment->classroom?->code,
+                ],
+                'academic_year' => $enrollment->academicYear?->year,
+                'enrollment_date' => $enrollment->enrollment_date?->format('Y-m-d'),
+                'enrollment_code' => $enrollment->enrollment_code,
+                'status' => $enrollment->status,
+            ])
+            ->values();
+
+        return Inertia::render('Students/History', [
+            'student' => [
+                'id' => $student->id,
+                'firstname' => $student->firstname,
+                'lastname' => $student->lastname,
+                'matricule' => $student->matricule,
+            ],
+            'enrollments' => $enrollments,
         ]);
     }
 

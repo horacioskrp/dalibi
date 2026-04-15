@@ -185,6 +185,7 @@ export function route(name: string, params?: any): string {
         'students.store': '/students',
         'students.show': `/students/${params}`,
         'students.edit': `/students/${params}/edit`,
+        'students.history': `/students/${params}/history`,
         'students.update': `/students/${params}`,
         'students.destroy': `/students/${params}`,
         'students.bulk-status': '/students/bulk-status',
