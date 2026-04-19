@@ -71,13 +71,42 @@ export default function Index({ evaluations, filters }: Readonly<IndexProps>) {
         });
     };
 
+    const completedCount = evaluations.data.filter((item) => item.status === 'completed').length;
+
+    const statsCards = [
+        {
+            title: 'Évaluations totales',
+            value: evaluations.total,
+            icon: Plus,
+            cardClass: 'bg-linear-to-br from-blue-50/70 to-white ring-1 ring-blue-100',
+            iconWrapClass: 'bg-blue-100',
+            textColor: 'text-blue-600',
+        },
+        {
+            title: 'Terminées (page)',
+            value: completedCount,
+            icon: Eye,
+            cardClass: 'bg-linear-to-br from-emerald-50/70 to-white ring-1 ring-emerald-100',
+            iconWrapClass: 'bg-emerald-100',
+            textColor: 'text-emerald-600',
+        },
+        {
+            title: 'Page',
+            value: `${evaluations.current_page}/${evaluations.last_page}`,
+            icon: Search,
+            cardClass: 'bg-linear-to-br from-violet-50/70 to-white ring-1 ring-violet-100',
+            iconWrapClass: 'bg-violet-100',
+            textColor: 'text-violet-600',
+        },
+    ];
+
     const statusLabel = (value: string) => value === 'completed' ? 'Terminée' : 'Planifiée';
 
     return (
         <AppLayout>
             <Head title="Évaluations" />
 
-            <div className="space-y-6">
+            <div className="max-w-7xl space-y-6">
                 <div className="flex items-start justify-between">
                     <div>
                         <h1 className="text-4xl font-bold tracking-tight text-gray-900">Évaluations</h1>
@@ -95,7 +124,26 @@ export default function Index({ evaluations, filters }: Readonly<IndexProps>) {
                     </div>
                 </div>
 
-                <div className="bg-white rounded-lg shadow-sm p-4 space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {statsCards.map((stat) => {
+                        const Icon = stat.icon;
+                        return (
+                            <div key={stat.title} className={`${stat.cardClass} rounded-2xl p-6 transition-all hover:shadow-md shadow-sm`}>
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-600">{stat.title}</p>
+                                        <p className={`text-3xl font-bold mt-2 ${stat.textColor}`}>{stat.value}</p>
+                                    </div>
+                                    <div className={`w-12 h-12 rounded-full ${stat.iconWrapClass} flex items-center justify-center`}>
+                                        <Icon className={`w-6 h-6 ${stat.textColor}`} />
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+
+                <div className="rounded-2xl bg-linear-to-br from-slate-50/70 to-white ring-1 ring-slate-200 shadow-sm p-4 space-y-3">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <div className="relative md:col-span-2">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -129,7 +177,7 @@ export default function Index({ evaluations, filters }: Readonly<IndexProps>) {
                     </div>
                 </div>
 
-                <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                <div className="bg-white rounded-2xl shadow-sm ring-1 ring-gray-100 overflow-hidden">
                     <Table>
                         <TableHeader className="bg-gray-50">
                             <TableRow className="border-b border-gray-200">
