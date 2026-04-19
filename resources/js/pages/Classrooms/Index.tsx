@@ -1,8 +1,6 @@
 import { Head, router } from '@inertiajs/react';
 import { Plus, Pencil, Trash2, Search, Layers, Users, Eye, BookPlus } from 'lucide-react';
 import { useState } from 'react';
-import { ClassroomDrawer } from '@/components/Classrooms/classroom-drawer';
-import { FormDrawer } from '@/components/form-drawer';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -52,11 +50,10 @@ interface PaginatedClassrooms {
 interface IndexProps {
     classrooms: PaginatedClassrooms;
     activeCount: number;
-    classroomTypes?: ClassroomType[];
     message?: string;
 }
 
-export default function Index({ classrooms, activeCount, classroomTypes = [], message }: Readonly<IndexProps>) {
+export default function Index({ classrooms, activeCount, message }: Readonly<IndexProps>) {
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -82,8 +79,6 @@ export default function Index({ classrooms, activeCount, classroomTypes = [], me
         setSearchQuery('');
         router.get(route('classrooms.index'), { search: '' }, { preserveState: true });
     };
-
-    const pageCapacity = classrooms.data.reduce((total, item) => total + item.capacity, 0);
 
     const statsCards = [
         {
@@ -113,21 +108,8 @@ export default function Index({ classrooms, activeCount, classroomTypes = [], me
     ];
 
     return (
-        <FormDrawer<Classroom>
-            onSuccess={() => router.reload()}
-            renderDrawer={({ isOpen, onOpenChange, selectedItem, onSuccess }) => (
-                <ClassroomDrawer
-                    isOpen={isOpen}
-                    onOpenChange={onOpenChange}
-                    classroom={selectedItem}
-                    onSuccess={onSuccess}
-                    classroomTypes={classroomTypes}
-                />
-            )}
-        >
-            {({ onOpenCreate, onOpenEdit }) => (
-                <AppLayout>
-                    <Head title="Classes" />
+        <AppLayout>
+            <Head title="Classes" />
 
                     <div className="space-y-6">
                         <div className="flex items-start justify-between">
@@ -140,7 +122,7 @@ export default function Index({ classrooms, activeCount, classroomTypes = [], me
                                 </p>
                             </div>
                             <Button
-                                onClick={onOpenCreate}
+                                onClick={() => router.visit(route('classrooms.create'))}
                                 className="gap-2 bg-blue-600 hover:bg-blue-700"
                             >
                                 <Plus className="w-5 h-5" />
@@ -149,11 +131,11 @@ export default function Index({ classrooms, activeCount, classroomTypes = [], me
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            {statsCards.map((stat, index) => {
+                            {statsCards.map((stat) => {
                                 const Icon = stat.icon;
                                 return (
                                     <div
-                                        key={index}
+                                        key={stat.title}
                                         className={`${stat.bgColor} rounded-lg p-6 transition-all hover:shadow-md shadow-sm`}
                                     >
                                         <div className="flex items-center justify-between">
@@ -174,7 +156,7 @@ export default function Index({ classrooms, activeCount, classroomTypes = [], me
 
                         {message && (
                             <div className="bg-green-50 text-green-800 px-4 py-3 rounded-lg flex items-center gap-3 shadow-sm">
-                                <Users className="w-5 h-5 flex-shrink-0" />
+                                <Users className="w-5 h-5 shrink-0" />
                                 <span>{message}</span>
                             </div>
                         )}
@@ -286,7 +268,7 @@ export default function Index({ classrooms, activeCount, classroomTypes = [], me
                                                                 variant="outline"
                                                                 size="sm"
                                                                 className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
-                                                                onClick={() => onOpenEdit(classroom)}
+                                                                onClick={() => router.visit(route('classrooms.edit', classroom.id))}
                                                             >
                                                                 <Pencil className="w-4 h-4" />
                                                             </Button>
@@ -352,36 +334,34 @@ export default function Index({ classrooms, activeCount, classroomTypes = [], me
                         )}
                     </div>
 
-                    <AlertDialog
-                        open={deleteConfirm !== null}
-                        onOpenChange={(open) => {
-                            if (!open) setDeleteConfirm(null);
-                        }}
-                    >
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                                <AlertDialogTitle>Supprimer la classe</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    Êtes-vous sûr de vouloir supprimer cette classe ?
-                                    Cette action est irréversible.
-                                </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <div className="flex gap-3 justify-end">
-                                <AlertDialogCancel disabled={isDeleting}>
-                                    Annuler
-                                </AlertDialogCancel>
-                                <AlertDialogAction
-                                    onClick={() => deleteConfirm && handleDelete(deleteConfirm)}
-                                    disabled={isDeleting}
-                                    className="bg-red-600 hover:bg-red-700"
-                                >
-                                    {isDeleting ? 'Suppression...' : 'Supprimer'}
-                                </AlertDialogAction>
-                            </div>
-                        </AlertDialogContent>
-                    </AlertDialog>
-                </AppLayout>
-            )}
-        </FormDrawer>
+            <AlertDialog
+                open={deleteConfirm !== null}
+                onOpenChange={(open) => {
+                    if (!open) setDeleteConfirm(null);
+                }}
+            >
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Supprimer la classe</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Êtes-vous sûr de vouloir supprimer cette classe ?
+                            Cette action est irréversible.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="flex gap-3 justify-end">
+                        <AlertDialogCancel disabled={isDeleting}>
+                            Annuler
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => deleteConfirm && handleDelete(deleteConfirm)}
+                            disabled={isDeleting}
+                            className="bg-red-600 hover:bg-red-700"
+                        >
+                            {isDeleting ? 'Suppression...' : 'Supprimer'}
+                        </AlertDialogAction>
+                    </div>
+                </AlertDialogContent>
+            </AlertDialog>
+        </AppLayout>
     );
 }
