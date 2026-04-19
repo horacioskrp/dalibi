@@ -40,7 +40,11 @@ class ClassroomController extends Controller
      */
     public function create()
     {
-        return redirect()->route('classrooms.index');
+        $classroomTypes = ClassroomType::select('id', 'name')->where('active', true)->get();
+
+        return Inertia::render('Classrooms/Create', [
+            'classroomTypes' => $classroomTypes,
+        ]);
     }
 
     /**
@@ -92,7 +96,13 @@ class ClassroomController extends Controller
      */
     public function edit(Classroom $classroom)
     {
-        return redirect()->route('classrooms.index');
+        $classroom->load('type:id,name');
+        $classroomTypes = ClassroomType::select('id', 'name')->where('active', true)->get();
+
+        return Inertia::render('Classrooms/Edit', [
+            'classroom' => $classroom,
+            'classroomTypes' => $classroomTypes,
+        ]);
     }
 
     /**
