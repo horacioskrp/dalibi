@@ -3,7 +3,9 @@ import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import type { SyntheticEvent } from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { route } from '@/helpers/route';
 import AppLayout from '@/layouts/app-layout';
 
@@ -80,19 +82,19 @@ export default function Create({ evaluationTypes, classrooms, academicPeriods }:
         <AppLayout>
             <Head title="Créer des évaluations" />
 
-            <div className="space-y-6">
+            <div className="max-w-6xl space-y-6">
                 <div className="flex items-center gap-4">
-                    <button onClick={() => router.get(route('evaluations.index'))} className="p-2 hover:bg-gray-100 rounded-lg transition">
+                    <button type="button" onClick={() => router.get(route('evaluations.index'))} className="p-2 hover:bg-gray-100 rounded-lg transition">
                         <ArrowLeft className="w-5 h-5 text-gray-600" />
                     </button>
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Créer plusieurs évaluations</h1>
-                        <p className="text-gray-600 mt-1">Ajoutez plusieurs lignes puis enregistrez en une fois</p>
+                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Créer plusieurs évaluations</h1>
+                        <p className="text-gray-600 mt-2">Ajoutez plusieurs lignes puis enregistrez en une seule opération.</p>
                     </div>
                 </div>
 
                 <form onSubmit={submit} className="space-y-6">
-                    <div className="bg-white rounded-lg border border-gray-100 p-6">
+                    <div className="rounded-2xl p-5 bg-linear-to-br from-blue-50/60 to-white ring-1 ring-blue-100 shadow-sm">
                         <h2 className="text-lg font-semibold text-gray-900 mb-4">Contexte commun</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
@@ -127,7 +129,7 @@ export default function Create({ evaluationTypes, classrooms, academicPeriods }:
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-lg border border-gray-100 p-6 space-y-4">
+                    <div className="rounded-2xl p-5 bg-linear-to-br from-violet-50/60 to-white ring-1 ring-violet-100 shadow-sm space-y-4">
                         <div className="flex items-center justify-between">
                             <h2 className="text-lg font-semibold text-gray-900">Évaluations</h2>
                             <Button type="button" variant="outline" className="border-gray-300" onClick={addLine}>
@@ -143,7 +145,7 @@ export default function Create({ evaluationTypes, classrooms, academicPeriods }:
                                 const coefficientErrorKey = `evaluations.${index}.coefficient`;
 
                                 return (
-                                <div key={line.temp_id} className="rounded-lg border border-gray-200 p-4 space-y-3">
+                                <div key={line.temp_id} className="rounded-xl border border-violet-200/70 bg-white/80 p-4 space-y-3">
                                     <div className="flex items-center justify-between">
                                         <p className="text-sm font-semibold text-gray-700">Évaluation #{index + 1}</p>
                                         <Button type="button" variant="outline" size="sm" className="border-red-300 text-red-600 hover:bg-red-50" onClick={() => removeLine(index)}>
@@ -168,35 +170,35 @@ export default function Create({ evaluationTypes, classrooms, academicPeriods }:
 
                                         <div>
                                             <label htmlFor={`evaluation_name_${line.temp_id}`} className="block text-xs font-medium text-gray-700 mb-1">Nom *</label>
-                                            <input
+                                            <Input
                                                 id={`evaluation_name_${line.temp_id}`}
                                                 value={line.name}
                                                 onChange={(e) => updateLine(index, 'name', e.target.value)}
-                                                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors[nameErrorKey] ? 'border-red-500' : 'border-gray-300'}`}
+                                                className={errors[nameErrorKey] ? 'border-red-500 bg-red-50/40' : 'border-gray-200 bg-white focus-visible:ring-blue-500'}
                                             />
                                         </div>
 
                                         <div>
                                             <label htmlFor={`evaluation_date_${line.temp_id}`} className="block text-xs font-medium text-gray-700 mb-1">Date</label>
-                                            <input
+                                            <Input
                                                 id={`evaluation_date_${line.temp_id}`}
                                                 type="date"
                                                 value={line.date}
                                                 onChange={(e) => updateLine(index, 'date', e.target.value)}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                className="border-gray-200 bg-white focus-visible:ring-blue-500"
                                             />
                                         </div>
 
                                         <div>
                                             <label htmlFor={`evaluation_coefficient_${line.temp_id}`} className="block text-xs font-medium text-gray-700 mb-1">Coefficient *</label>
-                                            <input
+                                            <Input
                                                 id={`evaluation_coefficient_${line.temp_id}`}
                                                 type="number"
                                                 step="0.01"
                                                 min="0.01"
                                                 value={line.coefficient}
                                                 onChange={(e) => updateLine(index, 'coefficient', e.target.value)}
-                                                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors[coefficientErrorKey] ? 'border-red-500' : 'border-gray-300'}`}
+                                                className={errors[coefficientErrorKey] ? 'border-red-500 bg-red-50/40' : 'border-gray-200 bg-white focus-visible:ring-blue-500'}
                                             />
                                         </div>
 
@@ -215,14 +217,19 @@ export default function Create({ evaluationTypes, classrooms, academicPeriods }:
 
                                         <div className="lg:col-span-3">
                                             <label htmlFor={`evaluation_description_${line.temp_id}`} className="block text-xs font-medium text-gray-700 mb-1">Description</label>
-                                            <textarea
+                                            <Textarea
                                                 id={`evaluation_description_${line.temp_id}`}
                                                 rows={2}
                                                 value={line.description}
                                                 onChange={(e) => updateLine(index, 'description', e.target.value)}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                className="border-gray-200 bg-white focus-visible:ring-blue-500"
                                             />
                                         </div>
+                                    </div>
+                                    <div className="flex flex-wrap gap-3 text-xs text-gray-500">
+                                        {errors[typeErrorKey] && <p className="text-red-600">{errors[typeErrorKey]}</p>}
+                                        {errors[nameErrorKey] && <p className="text-red-600">{errors[nameErrorKey]}</p>}
+                                        {errors[coefficientErrorKey] && <p className="text-red-600">{errors[coefficientErrorKey]}</p>}
                                     </div>
                                 </div>
                                 );

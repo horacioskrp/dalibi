@@ -3,7 +3,9 @@ import { ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 import type { SyntheticEvent } from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { route } from '@/helpers/route';
 import AppLayout from '@/layouts/app-layout';
 
@@ -59,19 +61,19 @@ export default function Edit({ evaluation, evaluationTypes }: Readonly<EditProps
         <AppLayout>
             <Head title="Modifier évaluation" />
 
-            <div className="space-y-6">
+            <div className="max-w-5xl space-y-6">
                 <div className="flex items-center gap-4">
-                    <button onClick={() => router.get(route('evaluations.index'))} className="p-2 hover:bg-gray-100 rounded-lg transition">
+                    <button type="button" onClick={() => router.get(route('evaluations.index'))} className="p-2 hover:bg-gray-100 rounded-lg transition">
                         <ArrowLeft className="w-5 h-5 text-gray-600" />
                     </button>
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Modifier l'évaluation</h1>
-                        <p className="text-gray-600 mt-1">{evaluation.classroom?.name || '—'} • {evaluation.academic_period?.name || '—'}</p>
+                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Modifier l'évaluation</h1>
+                        <p className="text-gray-600 mt-2">{evaluation.classroom?.name || '—'} • {evaluation.academic_period?.name || '—'}</p>
                     </div>
                 </div>
 
                 <form onSubmit={submit} className="space-y-6">
-                    <div className="bg-white rounded-lg border border-gray-100 p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="rounded-2xl p-5 bg-linear-to-br from-blue-50/60 to-white ring-1 ring-blue-100 shadow-sm grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label htmlFor="evaluation_type_id" className="block text-sm font-medium text-gray-900 mb-2">Type *</label>
                             <Select value={formData.evaluation_type_id} onValueChange={(value) => setFormData((prev) => ({ ...prev, evaluation_type_id: value }))}>
@@ -89,36 +91,36 @@ export default function Edit({ evaluation, evaluationTypes }: Readonly<EditProps
 
                         <div>
                             <label htmlFor="evaluation_name" className="block text-sm font-medium text-gray-900 mb-2">Nom *</label>
-                            <input
+                            <Input
                                 id="evaluation_name"
                                 value={formData.name}
                                 onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.name ? 'border-red-500' : 'border-gray-300'}`}
+                                className={errors.name ? 'border-red-500 bg-red-50/40' : 'border-gray-200 bg-white focus-visible:ring-blue-500'}
                             />
                             {errors.name && <p className="text-red-600 text-sm mt-1">{errors.name}</p>}
                         </div>
 
                         <div>
                             <label htmlFor="evaluation_date" className="block text-sm font-medium text-gray-900 mb-2">Date</label>
-                            <input
+                            <Input
                                 id="evaluation_date"
                                 type="date"
                                 value={formData.date}
                                 onChange={(e) => setFormData((prev) => ({ ...prev, date: e.target.value }))}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="border-gray-200 bg-white focus-visible:ring-blue-500"
                             />
                         </div>
 
                         <div>
                             <label htmlFor="evaluation_coefficient" className="block text-sm font-medium text-gray-900 mb-2">Coefficient *</label>
-                            <input
+                            <Input
                                 id="evaluation_coefficient"
                                 type="number"
                                 step="0.01"
                                 min="0.01"
                                 value={formData.coefficient}
                                 onChange={(e) => setFormData((prev) => ({ ...prev, coefficient: e.target.value }))}
-                                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.coefficient ? 'border-red-500' : 'border-gray-300'}`}
+                                className={errors.coefficient ? 'border-red-500 bg-red-50/40' : 'border-gray-200 bg-white focus-visible:ring-blue-500'}
                             />
                             {errors.coefficient && <p className="text-red-600 text-sm mt-1">{errors.coefficient}</p>}
                         </div>
@@ -138,12 +140,12 @@ export default function Edit({ evaluation, evaluationTypes }: Readonly<EditProps
 
                         <div className="md:col-span-2">
                             <label htmlFor="evaluation_description" className="block text-sm font-medium text-gray-900 mb-2">Description</label>
-                            <textarea
+                            <Textarea
                                 id="evaluation_description"
                                 rows={4}
                                 value={formData.description}
                                 onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="border-gray-200 bg-white focus-visible:ring-blue-500"
                             />
                         </div>
                     </div>
