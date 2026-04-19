@@ -1,8 +1,6 @@
 import { Head, router } from '@inertiajs/react';
 import { Plus, Pencil, Trash2, Search, Tag, CheckCircle2, Eye } from 'lucide-react';
 import { useState } from 'react';
-import { ClassroomTypeDrawer } from '@/components/ClassroomTypes/classroom-type-drawer';
-import { FormDrawer } from '@/components/form-drawer';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -103,20 +101,8 @@ export default function Index({ classroomTypes, activeCount, message }: Readonly
     ];
 
     return (
-        <FormDrawer<ClassroomType>
-            onSuccess={() => router.reload()}
-            renderDrawer={({ isOpen, onOpenChange, selectedItem, onSuccess }) => (
-                <ClassroomTypeDrawer
-                    isOpen={isOpen}
-                    onOpenChange={onOpenChange}
-                    classroomType={selectedItem}
-                    onSuccess={onSuccess}
-                />
-            )}
-        >
-            {({ onOpenCreate, onOpenEdit }) => (
-                <AppLayout>
-                    <Head title="Types de classes" />
+        <AppLayout>
+            <Head title="Types de classes" />
 
                     <div className="space-y-6">
                         <div className="flex items-start justify-between">
@@ -129,7 +115,7 @@ export default function Index({ classroomTypes, activeCount, message }: Readonly
                                 </p>
                             </div>
                             <Button
-                                onClick={onOpenCreate}
+                                onClick={() => router.visit(route('classroom-types.create'))}
                                 className="gap-2 bg-blue-600 hover:bg-blue-700"
                             >
                                 <Plus className="w-5 h-5" />
@@ -138,11 +124,11 @@ export default function Index({ classroomTypes, activeCount, message }: Readonly
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            {statsCards.map((stat, index) => {
+                            {statsCards.map((stat) => {
                                 const Icon = stat.icon;
                                 return (
                                     <div
-                                        key={index}
+                                        key={stat.title}
                                         className={`${stat.bgColor} rounded-lg p-6 transition-all hover:shadow-md shadow-sm`}
                                     >
                                         <div className="flex items-center justify-between">
@@ -163,7 +149,7 @@ export default function Index({ classroomTypes, activeCount, message }: Readonly
 
                         {message && (
                             <div className="bg-green-50 text-green-800 px-4 py-3 rounded-lg flex items-center gap-3 shadow-sm">
-                                <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+                                <CheckCircle2 className="w-5 h-5 shrink-0" />
                                 <span>{message}</span>
                             </div>
                         )}
@@ -268,7 +254,7 @@ export default function Index({ classroomTypes, activeCount, message }: Readonly
                                                                 variant="outline"
                                                                 size="sm"
                                                                 className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
-                                                                onClick={() => onOpenEdit(type)}
+                                                                onClick={() => router.visit(route('classroom-types.edit', type.id))}
                                                             >
                                                                 <Pencil className="w-4 h-4" />
                                                             </Button>
@@ -334,36 +320,34 @@ export default function Index({ classroomTypes, activeCount, message }: Readonly
                         )}
                     </div>
 
-                    <AlertDialog
-                        open={deleteConfirm !== null}
-                        onOpenChange={(open) => {
-                            if (!open) setDeleteConfirm(null);
-                        }}
-                    >
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                                <AlertDialogTitle>Supprimer le type</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    Êtes-vous sûr de vouloir supprimer ce type de classe ?
-                                    Cette action est irréversible.
-                                </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <div className="flex gap-3 justify-end">
-                                <AlertDialogCancel disabled={isDeleting}>
-                                    Annuler
-                                </AlertDialogCancel>
-                                <AlertDialogAction
-                                    onClick={() => deleteConfirm && handleDelete(deleteConfirm)}
-                                    disabled={isDeleting}
-                                    className="bg-red-600 hover:bg-red-700"
-                                >
-                                    {isDeleting ? 'Suppression...' : 'Supprimer'}
-                                </AlertDialogAction>
-                            </div>
-                        </AlertDialogContent>
-                    </AlertDialog>
-                </AppLayout>
-            )}
-        </FormDrawer>
+            <AlertDialog
+                open={deleteConfirm !== null}
+                onOpenChange={(open) => {
+                    if (!open) setDeleteConfirm(null);
+                }}
+            >
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Supprimer le type</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Êtes-vous sûr de vouloir supprimer ce type de classe ?
+                            Cette action est irréversible.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="flex gap-3 justify-end">
+                        <AlertDialogCancel disabled={isDeleting}>
+                            Annuler
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => deleteConfirm && handleDelete(deleteConfirm)}
+                            disabled={isDeleting}
+                            className="bg-red-600 hover:bg-red-700"
+                        >
+                            {isDeleting ? 'Suppression...' : 'Supprimer'}
+                        </AlertDialogAction>
+                    </div>
+                </AlertDialogContent>
+            </AlertDialog>
+        </AppLayout>
     );
 }

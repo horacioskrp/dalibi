@@ -36,7 +36,7 @@ class ClassroomTypeController extends Controller
      */
     public function create()
     {
-        return redirect()->route('classroom-types.index');
+        return Inertia::render('ClassroomTypes/Create');
     }
 
     /**
@@ -67,7 +67,9 @@ class ClassroomTypeController extends Controller
      */
     public function edit(ClassroomType $classroomType)
     {
-        return redirect()->route('classroom-types.index');
+        return Inertia::render('ClassroomTypes/Edit', [
+            'classroomType' => $classroomType,
+        ]);
     }
 
     /**
