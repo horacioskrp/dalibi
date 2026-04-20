@@ -1,60 +1,60 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
 import {
-    SubjectForm,
-    type SubjectFormData,
-} from '@/components/Subjects/subject-form';
+    ClassroomTypeForm,
+    type ClassroomTypeFormData,
+} from '@/components/ClassroomTypes/classroom-type-form';
 import { route } from '@/helpers/route';
 import AppLayout from '@/layouts/app-layout';
 
-interface Subject {
+interface ClassroomType {
     id: string;
     name: string;
-    code: string;
     description: string | null;
+    active: boolean;
 }
 
 interface EditProps {
-    subject: Subject;
+    classroomType: ClassroomType;
 }
 
-export default function Edit({ subject }: Readonly<EditProps>) {
-    const { data, setData, put, processing, errors } = useForm<SubjectFormData>({
-        name: subject.name,
-        code: subject.code,
-        description: subject.description || '',
+export default function Edit({ classroomType }: Readonly<EditProps>) {
+    const { data, setData, put, processing, errors } = useForm<ClassroomTypeFormData>({
+        name: classroomType.name,
+        description: classroomType.description || '',
+        active: classroomType.active,
     });
 
     const handleSubmit = (event: React.SubmitEvent<HTMLFormElement>) => {
         event.preventDefault();
-        put(route('subjects.update', subject.id));
+        put(route('classroom-types.update', classroomType.id));
     };
 
     return (
         <AppLayout>
-            <Head title={`Éditer ${subject.name}`} />
+            <Head title={`Éditer ${classroomType.name}`} />
 
             <div className="max-w-4xl space-y-6">
                 <div className="flex items-center gap-4">
                     <button
                         type="button"
-                        onClick={() => router.get(route('subjects.index'))}
+                        onClick={() => router.get(route('classroom-types.index'))}
                         className="p-2 hover:bg-gray-100 rounded-lg transition"
                     >
                         <ArrowLeft className="w-5 h-5 text-gray-600" />
                     </button>
                     <div>
-                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Éditer une matière</h1>
-                        <p className="mt-2 text-gray-600">Mettez à jour les informations de {subject.name}.</p>
+                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Éditer un type de classe</h1>
+                        <p className="mt-2 text-gray-600">Mettez à jour les informations de {classroomType.name}.</p>
                     </div>
                 </div>
 
-                <SubjectForm
+                <ClassroomTypeForm
                     mode="edit"
                     data={data}
                     errors={errors}
                     processing={processing}
-                    onCancel={() => router.get(route('subjects.index'))}
+                    onCancel={() => router.get(route('classroom-types.index'))}
                     onSubmit={handleSubmit}
                     setData={setData}
                 />

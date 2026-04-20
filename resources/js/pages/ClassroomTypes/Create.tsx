@@ -1,60 +1,51 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
 import {
-    SubjectForm,
-    type SubjectFormData,
-} from '@/components/Subjects/subject-form';
+    ClassroomTypeForm,
+    type ClassroomTypeFormData,
+} from '@/components/ClassroomTypes/classroom-type-form';
 import { route } from '@/helpers/route';
 import AppLayout from '@/layouts/app-layout';
 
-interface Subject {
-    id: string;
-    name: string;
-    code: string;
-    description: string | null;
-}
+const initialValues: ClassroomTypeFormData = {
+    name: '',
+    description: '',
+    active: true,
+};
 
-interface EditProps {
-    subject: Subject;
-}
-
-export default function Edit({ subject }: Readonly<EditProps>) {
-    const { data, setData, put, processing, errors } = useForm<SubjectFormData>({
-        name: subject.name,
-        code: subject.code,
-        description: subject.description || '',
-    });
+export default function Create() {
+    const { data, setData, post, processing, errors } = useForm<ClassroomTypeFormData>(initialValues);
 
     const handleSubmit = (event: React.SubmitEvent<HTMLFormElement>) => {
         event.preventDefault();
-        put(route('subjects.update', subject.id));
+        post(route('classroom-types.store'));
     };
 
     return (
         <AppLayout>
-            <Head title={`Éditer ${subject.name}`} />
+            <Head title="Nouveau type de classe" />
 
             <div className="max-w-4xl space-y-6">
                 <div className="flex items-center gap-4">
                     <button
                         type="button"
-                        onClick={() => router.get(route('subjects.index'))}
+                        onClick={() => router.get(route('classroom-types.index'))}
                         className="p-2 hover:bg-gray-100 rounded-lg transition"
                     >
                         <ArrowLeft className="w-5 h-5 text-gray-600" />
                     </button>
                     <div>
-                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Éditer une matière</h1>
-                        <p className="mt-2 text-gray-600">Mettez à jour les informations de {subject.name}.</p>
+                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Créer un type de classe</h1>
+                        <p className="mt-2 text-gray-600">Renseignez les informations du type.</p>
                     </div>
                 </div>
 
-                <SubjectForm
-                    mode="edit"
+                <ClassroomTypeForm
+                    mode="create"
                     data={data}
                     errors={errors}
                     processing={processing}
-                    onCancel={() => router.get(route('subjects.index'))}
+                    onCancel={() => router.get(route('classroom-types.index'))}
                     onSubmit={handleSubmit}
                     setData={setData}
                 />

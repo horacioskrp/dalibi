@@ -60,11 +60,38 @@ export default function Index({ evaluationTypes, filters }: Readonly<IndexProps>
         });
     };
 
+    const statsCards = [
+        {
+            title: 'Types totaux',
+            value: evaluationTypes.total,
+            icon: Tag,
+            cardClass: 'bg-linear-to-br from-blue-50/70 to-white ring-1 ring-blue-100',
+            iconWrapClass: 'bg-blue-100',
+            textColor: 'text-blue-600',
+        },
+        {
+            title: 'Résultats affichés',
+            value: evaluationTypes.data.length,
+            icon: Eye,
+            cardClass: 'bg-linear-to-br from-emerald-50/70 to-white ring-1 ring-emerald-100',
+            iconWrapClass: 'bg-emerald-100',
+            textColor: 'text-emerald-600',
+        },
+        {
+            title: 'Page',
+            value: `${evaluationTypes.current_page}/${evaluationTypes.last_page}`,
+            icon: Plus,
+            cardClass: 'bg-linear-to-br from-violet-50/70 to-white ring-1 ring-violet-100',
+            iconWrapClass: 'bg-violet-100',
+            textColor: 'text-violet-600',
+        },
+    ];
+
     return (
         <AppLayout>
             <Head title="Types d'évaluation" />
 
-            <div className="space-y-6">
+            <div className="max-w-6xl space-y-6">
                 <div className="flex items-start justify-between">
                     <div>
                         <h1 className="text-4xl font-bold tracking-tight text-gray-900">Types d'évaluation</h1>
@@ -76,7 +103,26 @@ export default function Index({ evaluationTypes, filters }: Readonly<IndexProps>
                     </Button>
                 </div>
 
-                <div className="bg-white rounded-lg shadow-sm p-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {statsCards.map((stat) => {
+                        const Icon = stat.icon;
+                        return (
+                            <div key={stat.title} className={`${stat.cardClass} rounded-2xl p-6 transition-all hover:shadow-md shadow-sm`}>
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-600">{stat.title}</p>
+                                        <p className={`text-3xl font-bold mt-2 ${stat.textColor}`}>{stat.value}</p>
+                                    </div>
+                                    <div className={`w-12 h-12 rounded-full ${stat.iconWrapClass} flex items-center justify-center`}>
+                                        <Icon className={`w-6 h-6 ${stat.textColor}`} />
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+
+                <div className="rounded-2xl bg-linear-to-br from-slate-50/70 to-white ring-1 ring-slate-200 shadow-sm p-4">
                     <div className="flex items-center gap-3">
                         <div className="relative flex-1">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -97,7 +143,7 @@ export default function Index({ evaluationTypes, filters }: Readonly<IndexProps>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                <div className="bg-white rounded-2xl shadow-sm ring-1 ring-gray-100 overflow-hidden">
                     <Table>
                         <TableHeader className="bg-gray-50">
                             <TableRow className="border-b border-gray-200">

@@ -87,21 +87,24 @@ export default function Index({ subjects, message, filters }: Readonly<IndexProp
             title: 'Matières totales',
             value: subjects.total,
             icon: BookOpen,
-            bgColor: 'bg-blue-50',
+            cardClass: 'bg-linear-to-br from-blue-50/70 to-white ring-1 ring-blue-100',
+            iconWrapClass: 'bg-blue-100',
             textColor: 'text-blue-600',
         },
         {
-            title: 'Matières actives',
-            value: subjects.total,
+            title: 'Résultats affichés',
+            value: subjects.data.length,
             icon: CheckCircle2,
-            bgColor: 'bg-green-50',
+            cardClass: 'bg-linear-to-br from-emerald-50/70 to-white ring-1 ring-emerald-100',
+            iconWrapClass: 'bg-emerald-100',
             textColor: 'text-green-600',
         },
         {
             title: 'Page',
             value: `${subjects.current_page}/${subjects.last_page}`,
             icon: BookOpen,
-            bgColor: 'bg-purple-50',
+            cardClass: 'bg-linear-to-br from-violet-50/70 to-white ring-1 ring-violet-100',
+            iconWrapClass: 'bg-violet-100',
             textColor: 'text-purple-600',
         },
     ];
@@ -110,7 +113,7 @@ export default function Index({ subjects, message, filters }: Readonly<IndexProp
         <AppLayout>
             <Head title="Matières" />
 
-            <div className="space-y-6">
+            <div className="max-w-6xl space-y-6">
                 {/* Header */}
                 <div className="flex items-start justify-between">
                     <div>
@@ -137,7 +140,7 @@ export default function Index({ subjects, message, filters }: Readonly<IndexProp
                         return (
                             <div
                                 key={stat.title}
-                                className={`${stat.bgColor} rounded-lg p-6 transition-all hover:shadow-md shadow-sm`}
+                                className={`${stat.cardClass} rounded-2xl p-6 transition-all hover:shadow-md shadow-sm`}
                             >
                                 <div className="flex items-center justify-between">
                                     <div>
@@ -148,7 +151,9 @@ export default function Index({ subjects, message, filters }: Readonly<IndexProp
                                             {stat.value}
                                         </p>
                                     </div>
-                                    <Icon className={`w-12 h-12 ${stat.textColor} opacity-20`} />
+                                    <div className={`w-12 h-12 rounded-full ${stat.iconWrapClass} flex items-center justify-center`}>
+                                        <Icon className={`w-6 h-6 ${stat.textColor}`} />
+                                    </div>
                                 </div>
                             </div>
                         );
@@ -164,7 +169,7 @@ export default function Index({ subjects, message, filters }: Readonly<IndexProp
                 )}
 
                 {/* Barre de recherche */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-100">
+                <div className="rounded-2xl bg-linear-to-br from-slate-50/70 to-white ring-1 ring-slate-200 shadow-sm">
                     <div className="p-4">
                         <div className="flex items-center gap-3">
                             <div className="flex-1 relative group">
@@ -203,7 +208,7 @@ export default function Index({ subjects, message, filters }: Readonly<IndexProp
                 </div>
 
                 {/* Tableau */}
-                <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                <div className="bg-white rounded-2xl shadow-sm ring-1 ring-gray-100 overflow-hidden">
                     <div className="overflow-x-auto">
                         <Table>
                             <TableHeader className="bg-gray-50">
@@ -283,8 +288,8 @@ export default function Index({ subjects, message, filters }: Readonly<IndexProp
 
                 {/* Pagination */}
                 {subjects.last_page > 1 && (
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
-                        <div className="flex items-center justify-between">
+                    <div className="bg-white rounded-2xl shadow-sm ring-1 ring-gray-100 p-4">
+                        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                             <p className="text-sm text-gray-600">
                                 Affichage <span className="font-semibold">{subjects.from}</span> à <span className="font-semibold">{subjects.to}</span> sur <span className="font-semibold">{subjects.total}</span> matières
                             </p>
