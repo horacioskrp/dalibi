@@ -141,6 +141,55 @@
 }
 
 /* =============================================================
+   WAVE DOTS — Effet de vague de points flottants sur les lignes
+   Chaque keyframe approxime un cycle sinus complet sur X et Y
+   pour donner l'impression que les points flottent en permanence.
+   ============================================================= */
+
+@keyframes wave-dots {
+    0% {
+        background-position: 0px 0px, 20px 10px, 50px 25px, 75px 35px;
+    }
+    25% {
+        background-position: 25px -10px, 45px 20px, 75px 35px, 100px 25px;
+    }
+    50% {
+        background-position: 50px 0px, 70px 10px, 100px 25px, 125px 35px;
+    }
+    75% {
+        background-position: 75px 10px, 95px 0px, 125px 15px, 150px 45px;
+    }
+    100% {
+        background-position: 100px 0px, 120px 10px, 150px 25px, 175px 35px;
+    }
+}
+
+.wave-table-row {
+    transition: background-color 250ms ease-out;
+}
+
+.wave-table-row:hover {
+    background-color: rgb(219 234 254 / 0.55);
+    background-image:
+        radial-gradient(circle at 14px 12px, rgb(59 130 246 / 0.42) 3px, transparent 3.2px),
+        radial-gradient(circle at 40px 28px, rgb(37 99 235 / 0.28) 2.4px, transparent 2.6px),
+        radial-gradient(circle at 66px 10px, rgb(29 78 216 / 0.25) 2.2px, transparent 2.4px),
+        radial-gradient(circle at 82px 36px, rgb(96 165 250 / 0.24) 2px, transparent 2.2px);
+    background-size: 100px 50px, 100px 50px, 100px 50px, 100px 50px;
+    background-position: 0 0, 20px 10px, 50px 25px, 75px 35px;
+    animation: wave-dots 2.2s linear infinite;
+}
+
+.dark .wave-table-row:hover {
+    background-color: oklch(0.26 0.07 265 / 0.55);
+    background-image:
+        radial-gradient(circle at 14px 12px, oklch(0.72 0.18 260 / 0.45) 3px, transparent 3.2px),
+        radial-gradient(circle at 40px 28px, oklch(0.78 0.14 260 / 0.30) 2.4px, transparent 2.6px),
+        radial-gradient(circle at 66px 10px, oklch(0.68 0.19 260 / 0.27) 2.2px, transparent 2.4px),
+        radial-gradient(circle at 82px 36px, oklch(0.84 0.10 260 / 0.24) 2px, transparent 2.2px);
+}
+
+/* =============================================================
    DARK MODE — Overrides globaux pour les classes gray codées en dur
    Placés hors @layer pour avoir la priorité sur les utilitaires Tailwind
    ============================================================= */

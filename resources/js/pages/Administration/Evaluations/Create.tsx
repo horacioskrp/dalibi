@@ -1,7 +1,23 @@
 import { Head, router } from '@inertiajs/react';
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import {
+    ArrowLeft,
+    BookOpen,
+    CalendarDays,
+    CheckCircle2,
+    ClipboardList,
+    Clock,
+    FileText,
+    GraduationCap,
+    Hash,
+    Plus,
+    Save,
+    Tag,
+    Trash2,
+    X,
+} from 'lucide-react';
 import { useState } from 'react';
 import type { SyntheticEvent } from 'react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -13,6 +29,7 @@ interface OptionItem {
     id: string;
     name: string;
     code?: string;
+    is_current?: boolean;
 }
 
 interface EvaluationLine {
@@ -29,6 +46,7 @@ interface CreateProps {
     evaluationTypes: OptionItem[];
     classrooms: OptionItem[];
     academicPeriods: OptionItem[];
+    currentAcademicPeriodId?: string;
 }
 
 const emptyLine = (): EvaluationLine => ({
@@ -41,9 +59,9 @@ const emptyLine = (): EvaluationLine => ({
     status: 'scheduled',
 });
 
-export default function Create({ evaluationTypes, classrooms, academicPeriods }: Readonly<CreateProps>) {
+export default function Create({ evaluationTypes, classrooms, academicPeriods, currentAcademicPeriodId }: Readonly<CreateProps>) {
     const [classId, setClassId] = useState('');
-    const [academicPeriodId, setAcademicPeriodId] = useState('');
+    const [academicPeriodId, setAcademicPeriodId] = useState(currentAcademicPeriodId ?? '');
     const [evaluations, setEvaluations] = useState<EvaluationLine[]>([emptyLine()]);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -65,11 +83,14 @@ export default function Create({ evaluationTypes, classrooms, academicPeriods }:
         setIsSubmitting(true);
         setErrors({});
 
-        router.post(route('evaluations.store'), {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const payload: Record<string, any> = {
             class_id: classId,
             academic_period_id: academicPeriodId,
             evaluations,
-        }, {
+        };
+
+        router.post(route('evaluations.store'), payload, {
             onError: (validationErrors) => {
                 setErrors(validationErrors as Record<string, string>);
                 setIsSubmitting(false);
@@ -83,57 +104,105 @@ export default function Create({ evaluationTypes, classrooms, academicPeriods }:
             <Head title="Créer des évaluations" />
 
             <div className="max-w-6xl space-y-6">
+                {/* En-tête */}
                 <div className="flex items-center gap-4">
-                    <button type="button" onClick={() => router.get(route('evaluations.index'))} className="p-2 hover:bg-gray-100 rounded-lg transition">
-                        <ArrowLeft className="w-5 h-5 text-gray-600" />
+                    <button
+                        type="button"
+                        onClick={() => router.get(route('evaluations.index'))}
+                        className="p-2 hover:bg-indigo-50 rounded-xl transition text-indigo-600 border border-indigo-100"
+                    >
+                        <ArrowLeft className="w-5 h-5" />
                     </button>
                     <div>
-                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Créer plusieurs évaluations</h1>
-                        <p className="text-gray-600 mt-2">Ajoutez plusieurs lignes puis enregistrez en une seule opération.</p>
+                        <h1 className="text-3xl font-bold tracking-tight text-gray-900 flex items-center gap-2">
+                            <ClipboardList className="w-7 h-7 text-indigo-600" />
+                            Créer des évaluations
+                        </h1>
+                        <p className="text-gray-500 mt-1 text-sm">Ajoutez plusieurs évaluations puis enregistrez en une seule opération.</p>
                     </div>
                 </div>
 
                 <form onSubmit={submit} className="space-y-6">
-                    <div className="rounded-2xl p-5 bg-linear-to-br from-blue-50/60 to-white ring-1 ring-blue-100 shadow-sm">
-                        <h2 className="text-lg font-semibold text-gray-900 mb-4">Contexte commun</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label htmlFor="class_id" className="block text-sm font-medium text-gray-900 mb-2">Classe *</label>
+                    {/* Contexte commun */}
+                    <div className="rounded-2xl p-6 bg-linear-to-br from-indigo-50 to-blue-50 border border-indigo-100 shadow-sm">
+                        <h2 className="text-base font-semibold text-indigo-800 mb-4 flex items-center gap-2">
+                            <BookOpen className="w-5 h-5 text-indigo-500" />
+                            Contexte commun
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            {/* Classe */}
+                            <div className="space-y-1.5">
+                                <label htmlFor="class_id" className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
+                                    <GraduationCap className="w-4 h-4 text-indigo-400" />
+                                    Classe <span className="text-red-500">*</span>
+                                </label>
                                 <Select value={classId} onValueChange={setClassId}>
-                                    <SelectTrigger id="class_id" className={errors.class_id ? 'border-red-500' : ''}>
+                                    <SelectTrigger
+                                        id="class_id"
+                                        className={`bg-white ${errors.class_id ? 'border-red-400 ring-1 ring-red-300' : 'border-indigo-200 focus:ring-indigo-400'}`}
+                                    >
                                         <SelectValue placeholder="Sélectionner une classe" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {classrooms.map((item) => (
-                                            <SelectItem key={item.id} value={item.id}>{item.name}{item.code ? ` (${item.code})` : ''}</SelectItem>
+                                            <SelectItem key={item.id} value={item.id}>
+                                                {item.name}{item.code ? ` (${item.code})` : ''}
+                                            </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
-                                {errors.class_id && <p className="text-red-600 text-sm mt-1">{errors.class_id}</p>}
+                                {errors.class_id && <p className="text-red-600 text-xs flex items-center gap-1"><X className="w-3 h-3" />{errors.class_id}</p>}
                             </div>
 
-                            <div>
-                                <label htmlFor="academic_period_id" className="block text-sm font-medium text-gray-900 mb-2">Période académique *</label>
+                            {/* Période académique */}
+                            <div className="space-y-1.5">
+                                <label htmlFor="academic_period_id" className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
+                                    <CalendarDays className="w-4 h-4 text-indigo-400" />
+                                    Période académique <span className="text-red-500">*</span>
+                                </label>
                                 <Select value={academicPeriodId} onValueChange={setAcademicPeriodId}>
-                                    <SelectTrigger id="academic_period_id" className={errors.academic_period_id ? 'border-red-500' : ''}>
+                                    <SelectTrigger
+                                        id="academic_period_id"
+                                        className={`bg-white ${errors.academic_period_id ? 'border-red-400 ring-1 ring-red-300' : 'border-indigo-200 focus:ring-indigo-400'}`}
+                                    >
                                         <SelectValue placeholder="Sélectionner une période" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {academicPeriods.map((item) => (
-                                            <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
+                                            <SelectItem key={item.id} value={item.id}>
+                                                <span className="flex items-center gap-2">
+                                                    {item.name}
+                                                    {item.is_current && (
+                                                        <Badge className="text-[10px] px-1.5 py-0 bg-emerald-100 text-emerald-700 border-emerald-200">
+                                                            Active
+                                                        </Badge>
+                                                    )}
+                                                </span>
+                                            </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
-                                {errors.academic_period_id && <p className="text-red-600 text-sm mt-1">{errors.academic_period_id}</p>}
+                                {errors.academic_period_id && <p className="text-red-600 text-xs flex items-center gap-1"><X className="w-3 h-3" />{errors.academic_period_id}</p>}
                             </div>
                         </div>
                     </div>
 
-                    <div className="rounded-2xl p-5 bg-linear-to-br from-violet-50/60 to-white ring-1 ring-violet-100 shadow-sm space-y-4">
+                    {/* Lignes d'évaluations */}
+                    <div className="rounded-2xl p-6 bg-linear-to-br from-violet-50 to-purple-50 border border-violet-100 shadow-sm space-y-4">
                         <div className="flex items-center justify-between">
-                            <h2 className="text-lg font-semibold text-gray-900">Évaluations</h2>
-                            <Button type="button" variant="outline" className="border-gray-300" onClick={addLine}>
-                                <Plus className="w-4 h-4 mr-2" />
+                            <h2 className="text-base font-semibold text-violet-800 flex items-center gap-2">
+                                <FileText className="w-5 h-5 text-violet-500" />
+                                Évaluations
+                                <Badge className="ml-1 bg-violet-100 text-violet-700 border-violet-200 text-xs">
+                                    {evaluations.length}
+                                </Badge>
+                            </h2>
+                            <Button
+                                type="button"
+                                onClick={addLine}
+                                className="bg-violet-600 hover:bg-violet-700 text-white shadow-sm"
+                            >
+                                <Plus className="w-4 h-4 mr-1.5" />
                                 Ajouter une ligne
                             </Button>
                         </div>
@@ -145,105 +214,180 @@ export default function Create({ evaluationTypes, classrooms, academicPeriods }:
                                 const coefficientErrorKey = `evaluations.${index}.coefficient`;
 
                                 return (
-                                <div key={line.temp_id} className="rounded-xl border border-violet-200/70 bg-white/80 p-4 space-y-3">
-                                    <div className="flex items-center justify-between">
-                                        <p className="text-sm font-semibold text-gray-700">Évaluation #{index + 1}</p>
-                                        <Button type="button" variant="outline" size="sm" className="border-red-300 text-red-600 hover:bg-red-50" onClick={() => removeLine(index)}>
-                                            <Trash2 className="w-4 h-4" />
-                                        </Button>
+                                    <div
+                                        key={line.temp_id}
+                                        className="rounded-xl border border-violet-200 bg-white shadow-sm p-5 space-y-4"
+                                    >
+                                        {/* Header de ligne */}
+                                        <div className="flex items-center justify-between pb-2 border-b border-violet-100">
+                                            <span className="flex items-center gap-2 text-sm font-semibold text-violet-700">
+                                                <Hash className="w-4 h-4" />
+                                                Évaluation #{index + 1}
+                                            </span>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                className="border-red-200 text-red-500 hover:bg-red-50 hover:border-red-300"
+                                                onClick={() => removeLine(index)}
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                            {/* Type */}
+                                            <div className="space-y-1.5">
+                                                <label htmlFor={`evaluation_type_id_${line.temp_id}`} className="flex items-center gap-1.5 text-xs font-medium text-gray-600">
+                                                    <Tag className="w-3.5 h-3.5 text-violet-400" />
+                                                    Type <span className="text-red-500">*</span>
+                                                </label>
+                                                <Select
+                                                    value={line.evaluation_type_id}
+                                                    onValueChange={(value) => updateLine(index, 'evaluation_type_id', value)}
+                                                >
+                                                    <SelectTrigger
+                                                        id={`evaluation_type_id_${line.temp_id}`}
+                                                        className={errors[typeErrorKey] ? 'border-red-400 ring-1 ring-red-300 bg-red-50/40' : 'border-gray-200 bg-white'}
+                                                    >
+                                                        <SelectValue placeholder="Type d'évaluation" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {evaluationTypes.map((item) => (
+                                                            <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                {errors[typeErrorKey] && <p className="text-red-600 text-xs flex items-center gap-1"><X className="w-3 h-3" />{errors[typeErrorKey]}</p>}
+                                            </div>
+
+                                            {/* Nom */}
+                                            <div className="space-y-1.5">
+                                                <label htmlFor={`evaluation_name_${line.temp_id}`} className="flex items-center gap-1.5 text-xs font-medium text-gray-600">
+                                                    <FileText className="w-3.5 h-3.5 text-violet-400" />
+                                                    Nom <span className="text-red-500">*</span>
+                                                </label>
+                                                <Input
+                                                    id={`evaluation_name_${line.temp_id}`}
+                                                    value={line.name}
+                                                    onChange={(e) => updateLine(index, 'name', e.target.value)}
+                                                    placeholder="Ex: Devoir 1"
+                                                    className={errors[nameErrorKey] ? 'border-red-400 bg-red-50/40 ring-1 ring-red-300' : 'border-gray-200 bg-white focus-visible:ring-violet-400'}
+                                                />
+                                                {errors[nameErrorKey] && <p className="text-red-600 text-xs flex items-center gap-1"><X className="w-3 h-3" />{errors[nameErrorKey]}</p>}
+                                            </div>
+
+                                            {/* Date */}
+                                            <div className="space-y-1.5">
+                                                <label htmlFor={`evaluation_date_${line.temp_id}`} className="flex items-center gap-1.5 text-xs font-medium text-gray-600">
+                                                    <CalendarDays className="w-3.5 h-3.5 text-violet-400" />
+                                                    Date
+                                                </label>
+                                                <Input
+                                                    id={`evaluation_date_${line.temp_id}`}
+                                                    type="date"
+                                                    value={line.date}
+                                                    onChange={(e) => updateLine(index, 'date', e.target.value)}
+                                                    className="border-gray-200 bg-white focus-visible:ring-violet-400"
+                                                />
+                                            </div>
+
+                                            {/* Coefficient */}
+                                            <div className="space-y-1.5">
+                                                <label htmlFor={`evaluation_coefficient_${line.temp_id}`} className="flex items-center gap-1.5 text-xs font-medium text-gray-600">
+                                                    <Hash className="w-3.5 h-3.5 text-violet-400" />
+                                                    Coefficient <span className="text-red-500">*</span>
+                                                </label>
+                                                <Input
+                                                    id={`evaluation_coefficient_${line.temp_id}`}
+                                                    type="number"
+                                                    step="0.01"
+                                                    min="0.01"
+                                                    value={line.coefficient}
+                                                    onChange={(e) => updateLine(index, 'coefficient', e.target.value)}
+                                                    className={errors[coefficientErrorKey] ? 'border-red-400 bg-red-50/40 ring-1 ring-red-300' : 'border-gray-200 bg-white focus-visible:ring-violet-400'}
+                                                />
+                                                {errors[coefficientErrorKey] && <p className="text-red-600 text-xs flex items-center gap-1"><X className="w-3 h-3" />{errors[coefficientErrorKey]}</p>}
+                                            </div>
+
+                                            {/* Statut */}
+                                            <div className="space-y-1.5">
+                                                <label htmlFor={`evaluation_status_${line.temp_id}`} className="flex items-center gap-1.5 text-xs font-medium text-gray-600">
+                                                    <Clock className="w-3.5 h-3.5 text-violet-400" />
+                                                    Statut <span className="text-red-500">*</span>
+                                                </label>
+                                                <Select
+                                                    value={line.status}
+                                                    onValueChange={(value) => updateLine(index, 'status', value)}
+                                                >
+                                                    <SelectTrigger id={`evaluation_status_${line.temp_id}`} className="border-gray-200 bg-white">
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="scheduled">
+                                                            <span className="flex items-center gap-2 text-amber-600">
+                                                                <Clock className="w-3.5 h-3.5" />
+                                                                Planifiée
+                                                            </span>
+                                                        </SelectItem>
+                                                        <SelectItem value="completed">
+                                                            <span className="flex items-center gap-2 text-emerald-600">
+                                                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                                                Terminée
+                                                            </span>
+                                                        </SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+
+                                            {/* Description */}
+                                            <div className="space-y-1.5 lg:col-span-3">
+                                                <label htmlFor={`evaluation_description_${line.temp_id}`} className="flex items-center gap-1.5 text-xs font-medium text-gray-600">
+                                                    <FileText className="w-3.5 h-3.5 text-violet-400" />
+                                                    Description
+                                                </label>
+                                                <Textarea
+                                                    id={`evaluation_description_${line.temp_id}`}
+                                                    rows={2}
+                                                    value={line.description}
+                                                    onChange={(e) => updateLine(index, 'description', e.target.value)}
+                                                    placeholder="Description optionnelle..."
+                                                    className="border-gray-200 bg-white focus-visible:ring-violet-400 resize-none"
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                        <div>
-                                            <label htmlFor={`evaluation_type_id_${line.temp_id}`} className="block text-xs font-medium text-gray-700 mb-1">Type *</label>
-                                            <Select value={line.evaluation_type_id} onValueChange={(value) => updateLine(index, 'evaluation_type_id', value)}>
-                                                <SelectTrigger id={`evaluation_type_id_${line.temp_id}`} className={errors[typeErrorKey] ? 'border-red-500' : ''}>
-                                                    <SelectValue placeholder="Type" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {evaluationTypes.map((item) => (
-                                                        <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-
-                                        <div>
-                                            <label htmlFor={`evaluation_name_${line.temp_id}`} className="block text-xs font-medium text-gray-700 mb-1">Nom *</label>
-                                            <Input
-                                                id={`evaluation_name_${line.temp_id}`}
-                                                value={line.name}
-                                                onChange={(e) => updateLine(index, 'name', e.target.value)}
-                                                className={errors[nameErrorKey] ? 'border-red-500 bg-red-50/40' : 'border-gray-200 bg-white focus-visible:ring-blue-500'}
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label htmlFor={`evaluation_date_${line.temp_id}`} className="block text-xs font-medium text-gray-700 mb-1">Date</label>
-                                            <Input
-                                                id={`evaluation_date_${line.temp_id}`}
-                                                type="date"
-                                                value={line.date}
-                                                onChange={(e) => updateLine(index, 'date', e.target.value)}
-                                                className="border-gray-200 bg-white focus-visible:ring-blue-500"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label htmlFor={`evaluation_coefficient_${line.temp_id}`} className="block text-xs font-medium text-gray-700 mb-1">Coefficient *</label>
-                                            <Input
-                                                id={`evaluation_coefficient_${line.temp_id}`}
-                                                type="number"
-                                                step="0.01"
-                                                min="0.01"
-                                                value={line.coefficient}
-                                                onChange={(e) => updateLine(index, 'coefficient', e.target.value)}
-                                                className={errors[coefficientErrorKey] ? 'border-red-500 bg-red-50/40' : 'border-gray-200 bg-white focus-visible:ring-blue-500'}
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label htmlFor={`evaluation_status_${line.temp_id}`} className="block text-xs font-medium text-gray-700 mb-1">Statut *</label>
-                                            <Select value={line.status} onValueChange={(value) => updateLine(index, 'status', value)}>
-                                                <SelectTrigger id={`evaluation_status_${line.temp_id}`}>
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="scheduled">Planifiée</SelectItem>
-                                                    <SelectItem value="completed">Terminée</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-
-                                        <div className="lg:col-span-3">
-                                            <label htmlFor={`evaluation_description_${line.temp_id}`} className="block text-xs font-medium text-gray-700 mb-1">Description</label>
-                                            <Textarea
-                                                id={`evaluation_description_${line.temp_id}`}
-                                                rows={2}
-                                                value={line.description}
-                                                onChange={(e) => updateLine(index, 'description', e.target.value)}
-                                                className="border-gray-200 bg-white focus-visible:ring-blue-500"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="flex flex-wrap gap-3 text-xs text-gray-500">
-                                        {errors[typeErrorKey] && <p className="text-red-600">{errors[typeErrorKey]}</p>}
-                                        {errors[nameErrorKey] && <p className="text-red-600">{errors[nameErrorKey]}</p>}
-                                        {errors[coefficientErrorKey] && <p className="text-red-600">{errors[coefficientErrorKey]}</p>}
-                                    </div>
-                                </div>
                                 );
                             })}
                         </div>
 
-                        {errors.evaluations && <p className="text-red-600 text-sm">{errors.evaluations}</p>}
+                        {errors.evaluations && (
+                            <p className="text-red-600 text-sm flex items-center gap-1 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                                <X className="w-4 h-4 shrink-0" />
+                                {errors.evaluations}
+                            </p>
+                        )}
                     </div>
 
-                    <div className="flex gap-3">
-                        <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700">
+                    {/* Actions */}
+                    <div className="flex gap-3 pb-6">
+                        <Button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm min-w-45"
+                        >
+                            <Save className="w-4 h-4 mr-2" />
                             {isSubmitting ? 'Enregistrement...' : 'Enregistrer les évaluations'}
                         </Button>
-                        <Button type="button" variant="outline" onClick={() => router.get(route('evaluations.index'))}>Annuler</Button>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="border-gray-200 text-gray-600 hover:bg-gray-50"
+                            onClick={() => router.get(route('evaluations.index'))}
+                        >
+                            <X className="w-4 h-4 mr-1.5" />
+                            Annuler
+                        </Button>
                     </div>
                 </form>
             </div>

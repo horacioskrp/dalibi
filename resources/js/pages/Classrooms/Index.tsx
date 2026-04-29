@@ -219,7 +219,10 @@ export default function Index({ classrooms, activeCount, message }: Readonly<Ind
                                             </TableRow>
                                         ) : (
                                             classrooms.data.map((classroom) => (
-                                                <TableRow key={classroom.id} className="border-b border-gray-100 hover:bg-blue-50/40 transition-colors">
+                                                <TableRow
+                                                    key={classroom.id}
+                                                    className="border-b border-gray-100 wave-table-row"
+                                                >
                                                     <TableCell className="font-semibold text-gray-900">
                                                         <div className="flex items-center gap-3">
                                                             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
@@ -250,7 +253,7 @@ export default function Index({ classrooms, activeCount, message }: Readonly<Ind
                                                             <Button
                                                                 variant="outline"
                                                                 size="sm"
-                                                                className="border-blue-300 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                                                                className="border-blue-300 text-blue-600 transition-colors duration-200 ease-out hover:bg-blue-50 hover:text-blue-700"
                                                                 onClick={() => router.get(route('classrooms.subject-assignments.create', classroom.id))}
                                                                 title="Attribuer des matières"
                                                             >
@@ -259,7 +262,7 @@ export default function Index({ classrooms, activeCount, message }: Readonly<Ind
                                                             <Button
                                                                 variant="outline"
                                                                 size="sm"
-                                                                className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                                                                className="border-gray-300 text-gray-700 transition-colors duration-200 ease-out hover:bg-blue-50/60 hover:text-blue-800"
                                                                 onClick={() => router.visit(route('classrooms.show', classroom.id))}
                                                             >
                                                                 <Eye className="w-4 h-4" />
@@ -267,7 +270,7 @@ export default function Index({ classrooms, activeCount, message }: Readonly<Ind
                                                             <Button
                                                                 variant="outline"
                                                                 size="sm"
-                                                                className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                                                                className="border-gray-300 text-gray-700 transition-colors duration-200 ease-out hover:bg-blue-50/60 hover:text-blue-800"
                                                                 onClick={() => router.visit(route('classrooms.edit', classroom.id))}
                                                             >
                                                                 <Pencil className="w-4 h-4" />
@@ -275,7 +278,7 @@ export default function Index({ classrooms, activeCount, message }: Readonly<Ind
                                                             <Button
                                                                 variant="outline"
                                                                 size="sm"
-                                                                className="border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
+                                                                className="border-red-300 text-red-600 transition-colors duration-200 ease-out hover:bg-red-50 hover:text-red-700"
                                                                 onClick={() => setDeleteConfirm(classroom.id)}
                                                             >
                                                                 <Trash2 className="w-4 h-4" />
