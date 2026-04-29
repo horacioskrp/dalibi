@@ -4,7 +4,6 @@ import {
     BookOpen,
     CalendarDays,
     CheckCircle2,
-    ClipboardList,
     Clock,
     FileText,
     GraduationCap,
@@ -103,7 +102,7 @@ export default function Create({ evaluationTypes, classrooms, academicPeriods, c
         <AppLayout>
             <Head title="Créer des évaluations" />
 
-            <div className="max-w-6xl space-y-6">
+            <div className="space-y-6">
                 {/* En-tête */}
                 <div className="flex items-center gap-4">
                     <button
@@ -114,8 +113,7 @@ export default function Create({ evaluationTypes, classrooms, academicPeriods, c
                         <ArrowLeft className="w-5 h-5" />
                     </button>
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight text-gray-900 flex items-center gap-2">
-                            <ClipboardList className="w-7 h-7 text-indigo-600" />
+                        <h1 className="text-3xl font-bold tracking-tight text-gray-900">
                             Créer des évaluations
                         </h1>
                         <p className="text-gray-500 mt-1 text-sm">Ajoutez plusieurs évaluations puis enregistrez en une seule opération.</p>
