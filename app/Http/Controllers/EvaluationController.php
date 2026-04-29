@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AcademicPeriod;
+use App\Models\AcademicYear;
 use App\Models\Classroom;
 use App\Models\Evaluation;
 use App\Models\EvaluationType;
@@ -67,12 +68,23 @@ class EvaluationController extends Controller
     {
         $evaluationTypes = EvaluationType::orderBy('name')->get(['id', 'name']);
         $classrooms = Classroom::where('active', true)->orderBy('name')->get(['id', 'name', 'code']);
-        $academicPeriods = AcademicPeriod::orderByDesc('start_date')->get(['id', 'name']);
+
+        $activeYear = AcademicYear::where('active', true)->first(['id']);
+        $academicPeriods = AcademicPeriod::orderByDesc('start_date')->get(['id', 'name', 'is_current', 'academic_year_id']);
+
+        $currentPeriod = $activeYear
+            ? $academicPeriods->where('academic_year_id', $activeYear->id)->where('is_current', true)->first()
+            : $academicPeriods->where('is_current', true)->first();
+
+        if (! $currentPeriod && $activeYear) {
+            $currentPeriod = $academicPeriods->where('academic_year_id', $activeYear->id)->first();
+        }
 
         return Inertia::render('Administration/Evaluations/Create', [
             'evaluationTypes' => $evaluationTypes,
             'classrooms' => $classrooms,
-            'academicPeriods' => $academicPeriods,
+            'academicPeriods' => $academicPeriods->values(),
+            'currentAcademicPeriodId' => $currentPeriod?->id,
         ]);
     }
 
