@@ -1,9 +1,23 @@
 import { Head, router } from '@inertiajs/react';
-import { ArrowLeft } from 'lucide-react';
+import {
+    ArrowLeft,
+    CalendarDays,
+    CalendarRange,
+    FileText,
+    GraduationCap,
+    Hash,
+    ListOrdered,
+    Save,
+    Star,
+    X,
+} from 'lucide-react';
 import { useState } from 'react';
+import type { SyntheticEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { route } from '@/helpers/route';
 import AppLayout from '@/layouts/app-layout';
 
@@ -44,7 +58,7 @@ export default function Edit({ academicPeriod, academicYears }: Readonly<EditPro
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = (e: SyntheticEvent<HTMLFormElement>) => {
         e.preventDefault();
         setIsSubmitting(true);
         setErrors({});
@@ -65,28 +79,39 @@ export default function Edit({ academicPeriod, academicYears }: Readonly<EditPro
             <Head title={`Modifier ${academicPeriod.name}`} />
 
             <div className="space-y-6">
+                {/* En-tête */}
                 <div className="flex items-center gap-4">
                     <button
+                        type="button"
                         onClick={() => router.get(route('academic-periods.index'))}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition"
+                        className="p-2 hover:bg-indigo-50 rounded-xl transition text-indigo-600 border border-indigo-100"
                     >
-                        <ArrowLeft className="w-5 h-5 text-gray-600" />
+                        <ArrowLeft className="w-5 h-5" />
                     </button>
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900">
-                            Modifier {academicPeriod.name}
+                        <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+                            Modifier la période
                         </h1>
+                        <p className="text-gray-500 mt-1 text-sm">
+                            {academicPeriod.name} — {academicPeriod.academic_year.year}
+                        </p>
                     </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="bg-white rounded-lg border p-6">
-                        <h2 className="text-lg font-semibold text-gray-900 mb-4">Informations de la période</h2>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="md:col-span-2">
-                                <label htmlFor="name" className="block text-sm font-medium text-gray-900 mb-2">
-                                    Nom *
+                <form onSubmit={handleSubmit} className="space-y-5">
+
+                    {/* Section 1 — Identification */}
+                    <div className="rounded-2xl p-6 bg-linear-to-br from-indigo-50 to-blue-50 border border-indigo-100 shadow-sm">
+                        <h2 className="text-base font-semibold text-indigo-800 mb-5 flex items-center gap-2">
+                            <GraduationCap className="w-5 h-5 text-indigo-500" />
+                            Identification
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            {/* Nom */}
+                            <div className="space-y-1.5">
+                                <label htmlFor="name" className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
+                                    <FileText className="w-4 h-4 text-indigo-400" />
+                                    Nom <span className="text-red-500">*</span>
                                 </label>
                                 <Input
                                     id="name"
@@ -94,49 +119,73 @@ export default function Edit({ academicPeriod, academicYears }: Readonly<EditPro
                                     value={formData.name}
                                     onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                                     placeholder="Ex: Trimestre 1, Semestre 1..."
-                                    className={errors.name ? 'border-red-500' : ''}
+                                    className={errors.name ? 'border-red-400 bg-red-50/40 ring-1 ring-red-300' : 'border-indigo-200 bg-white focus-visible:ring-indigo-400'}
                                 />
-                                {errors.name && <p className="text-red-600 text-sm mt-1">{errors.name}</p>}
+                                {errors.name && <p className="text-red-600 text-xs flex items-center gap-1"><X className="w-3 h-3" />{errors.name}</p>}
                             </div>
 
-                            <div className="md:col-span-2">
-                                <label htmlFor="academic_year_id" className="block text-sm font-medium text-gray-900 mb-2">
-                                    Année académique *
+                            {/* Année académique */}
+                            <div className="space-y-1.5">
+                                <label htmlFor="academic_year_id" className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
+                                    <GraduationCap className="w-4 h-4 text-indigo-400" />
+                                    Année académique <span className="text-red-500">*</span>
                                 </label>
-                                <select
-                                    id="academic_year_id"
+                                <Select
                                     value={formData.academic_year_id}
-                                    onChange={(e) => setFormData((prev) => ({ ...prev, academic_year_id: e.target.value }))}
-                                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.academic_year_id ? 'border-red-500' : 'border-gray-300'}`}
+                                    onValueChange={(value) => setFormData((prev) => ({ ...prev, academic_year_id: value }))}
                                 >
-                                    <option value="">Sélectionner une année</option>
-                                    {academicYears.map((year) => (
-                                        <option key={year.id} value={year.id}>
-                                            {year.year}
-                                        </option>
-                                    ))}
-                                </select>
-                                {errors.academic_year_id && <p className="text-red-600 text-sm mt-1">{errors.academic_year_id}</p>}
+                                    <SelectTrigger
+                                        id="academic_year_id"
+                                        className={`bg-white ${errors.academic_year_id ? 'border-red-400 ring-1 ring-red-300' : 'border-indigo-200'}`}
+                                    >
+                                        <SelectValue placeholder="Sélectionner une année" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {academicYears.map((year) => (
+                                            <SelectItem key={year.id} value={year.id}>{year.year}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                {errors.academic_year_id && <p className="text-red-600 text-xs flex items-center gap-1"><X className="w-3 h-3" />{errors.academic_year_id}</p>}
                             </div>
+                        </div>
+                    </div>
 
-                            <div>
-                                <label htmlFor="type" className="block text-sm font-medium text-gray-900 mb-2">
-                                    Type *
+                    {/* Section 2 — Classification */}
+                    <div className="rounded-2xl p-6 bg-linear-to-br from-violet-50 to-purple-50 border border-violet-100 shadow-sm">
+                        <h2 className="text-base font-semibold text-violet-800 mb-5 flex items-center gap-2">
+                            <Hash className="w-5 h-5 text-violet-500" />
+                            Classification
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            {/* Type */}
+                            <div className="space-y-1.5">
+                                <label htmlFor="type" className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
+                                    <Hash className="w-4 h-4 text-violet-400" />
+                                    Type <span className="text-red-500">*</span>
                                 </label>
-                                <select
-                                    id="type"
+                                <Select
                                     value={formData.type}
-                                    onChange={(e) => setFormData((prev) => ({ ...prev, type: e.target.value as 'trimestre' | 'semestre' }))}
-                                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.type ? 'border-red-500' : 'border-gray-300'}`}
+                                    onValueChange={(value) => setFormData((prev) => ({ ...prev, type: value as 'trimestre' | 'semestre' }))}
                                 >
-                                    <option value="trimestre">Trimestre</option>
-                                    <option value="semestre">Semestre</option>
-                                </select>
-                                {errors.type && <p className="text-red-600 text-sm mt-1">{errors.type}</p>}
+                                    <SelectTrigger
+                                        id="type"
+                                        className={`bg-white ${errors.type ? 'border-red-400 ring-1 ring-red-300' : 'border-violet-200'}`}
+                                    >
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="trimestre">Trimestre</SelectItem>
+                                        <SelectItem value="semestre">Semestre</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                {errors.type && <p className="text-red-600 text-xs flex items-center gap-1"><X className="w-3 h-3" />{errors.type}</p>}
                             </div>
 
-                            <div>
-                                <label htmlFor="order" className="block text-sm font-medium text-gray-900 mb-2">
+                            {/* Ordre */}
+                            <div className="space-y-1.5">
+                                <label htmlFor="order" className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
+                                    <ListOrdered className="w-4 h-4 text-violet-400" />
                                     Ordre
                                 </label>
                                 <Input
@@ -146,55 +195,80 @@ export default function Edit({ academicPeriod, academicYears }: Readonly<EditPro
                                     value={formData.order}
                                     onChange={(e) => setFormData((prev) => ({ ...prev, order: e.target.value }))}
                                     placeholder="1, 2, 3..."
-                                    className={errors.order ? 'border-red-500' : ''}
+                                    className={errors.order ? 'border-red-400 bg-red-50/40 ring-1 ring-red-300' : 'border-violet-200 bg-white focus-visible:ring-violet-400'}
                                 />
-                                {errors.order && <p className="text-red-600 text-sm mt-1">{errors.order}</p>}
+                                {errors.order && <p className="text-red-600 text-xs flex items-center gap-1"><X className="w-3 h-3" />{errors.order}</p>}
                             </div>
+                        </div>
+                    </div>
 
-                            <div>
-                                <label htmlFor="start_date" className="block text-sm font-medium text-gray-900 mb-2">
-                                    Date de début *
+                    {/* Section 3 — Calendrier */}
+                    <div className="rounded-2xl p-6 bg-linear-to-br from-teal-50 to-emerald-50 border border-teal-100 shadow-sm">
+                        <h2 className="text-base font-semibold text-teal-800 mb-5 flex items-center gap-2">
+                            <CalendarRange className="w-5 h-5 text-teal-500" />
+                            Calendrier
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            {/* Date de début */}
+                            <div className="space-y-1.5">
+                                <label htmlFor="start_date" className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
+                                    <CalendarDays className="w-4 h-4 text-teal-400" />
+                                    Date de début <span className="text-red-500">*</span>
                                 </label>
                                 <Input
                                     id="start_date"
                                     type="date"
                                     value={formData.start_date}
                                     onChange={(e) => setFormData((prev) => ({ ...prev, start_date: e.target.value }))}
-                                    className={errors.start_date ? 'border-red-500' : ''}
+                                    className={errors.start_date ? 'border-red-400 bg-red-50/40 ring-1 ring-red-300' : 'border-teal-200 bg-white focus-visible:ring-teal-400'}
                                 />
-                                {errors.start_date && <p className="text-red-600 text-sm mt-1">{errors.start_date}</p>}
+                                {errors.start_date && <p className="text-red-600 text-xs flex items-center gap-1"><X className="w-3 h-3" />{errors.start_date}</p>}
                             </div>
 
-                            <div>
-                                <label htmlFor="end_date" className="block text-sm font-medium text-gray-900 mb-2">
-                                    Date de fin *
+                            {/* Date de fin */}
+                            <div className="space-y-1.5">
+                                <label htmlFor="end_date" className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
+                                    <CalendarDays className="w-4 h-4 text-teal-400" />
+                                    Date de fin <span className="text-red-500">*</span>
                                 </label>
                                 <Input
                                     id="end_date"
                                     type="date"
                                     value={formData.end_date}
                                     onChange={(e) => setFormData((prev) => ({ ...prev, end_date: e.target.value }))}
-                                    className={errors.end_date ? 'border-red-500' : ''}
+                                    className={errors.end_date ? 'border-red-400 bg-red-50/40 ring-1 ring-red-300' : 'border-teal-200 bg-white focus-visible:ring-teal-400'}
                                 />
-                                {errors.end_date && <p className="text-red-600 text-sm mt-1">{errors.end_date}</p>}
+                                {errors.end_date && <p className="text-red-600 text-xs flex items-center gap-1"><X className="w-3 h-3" />{errors.end_date}</p>}
                             </div>
+                        </div>
+                    </div>
 
-                            <div className="md:col-span-2">
-                                <label htmlFor="description" className="block text-sm font-medium text-gray-900 mb-2">
+                    {/* Section 4 — Détails & Statut */}
+                    <div className="rounded-2xl p-6 bg-linear-to-br from-amber-50 to-orange-50 border border-amber-100 shadow-sm">
+                        <h2 className="text-base font-semibold text-amber-800 mb-5 flex items-center gap-2">
+                            <Star className="w-5 h-5 text-amber-500" />
+                            Détails &amp; Statut
+                        </h2>
+                        <div className="space-y-5">
+                            {/* Description */}
+                            <div className="space-y-1.5">
+                                <label htmlFor="description" className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
+                                    <FileText className="w-4 h-4 text-amber-400" />
                                     Description
                                 </label>
-                                <textarea
+                                <Textarea
                                     id="description"
                                     value={formData.description}
                                     onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
                                     placeholder="Description de la période..."
                                     rows={3}
-                                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.description ? 'border-red-500' : 'border-gray-300'}`}
+                                    className={errors.description ? 'border-red-400 bg-red-50/40 ring-1 ring-red-300 resize-none' : 'border-amber-200 bg-white focus-visible:ring-amber-400 resize-none'}
                                 />
-                                {errors.description && <p className="text-red-600 text-sm mt-1">{errors.description}</p>}
+                                {errors.description && <p className="text-red-600 text-xs flex items-center gap-1"><X className="w-3 h-3" />{errors.description}</p>}
                             </div>
 
-                            <div className="md:col-span-2 flex items-center gap-2">
+                            {/* Période active */}
+                            <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border border-amber-200 bg-white hover:bg-amber-50/60 transition w-fit">
                                 <Checkbox
                                     id="is_current"
                                     checked={formData.is_current}
@@ -202,26 +276,31 @@ export default function Edit({ academicPeriod, academicYears }: Readonly<EditPro
                                         setFormData((prev) => ({ ...prev, is_current: checked === true }))
                                     }
                                 />
-                                <label htmlFor="is_current" className="text-sm font-medium text-gray-900 cursor-pointer">
-                                    Période active
-                                </label>
-                            </div>
+                                <span className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
+                                    <Star className="w-4 h-4 text-amber-400" />
+                                    Période active (en cours)
+                                </span>
+                            </label>
                         </div>
                     </div>
 
-                    <div className="flex gap-3">
-                        <Button 
-                            type="submit" 
-                            disabled={isSubmitting} 
-                            className="bg-blue-600 hover:bg-blue-700"
+                    {/* Actions */}
+                    <div className="flex gap-3 pb-6">
+                        <Button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm min-w-40"
                         >
+                            <Save className="w-4 h-4 mr-2" />
                             {isSubmitting ? 'Enregistrement...' : 'Enregistrer les modifications'}
                         </Button>
-                        <Button 
-                            type="button" 
-                            variant="outline" 
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="border-gray-200 text-gray-600 hover:bg-gray-50"
                             onClick={() => router.get(route('academic-periods.index'))}
                         >
+                            <X className="w-4 h-4 mr-1.5" />
                             Annuler
                         </Button>
                     </div>
