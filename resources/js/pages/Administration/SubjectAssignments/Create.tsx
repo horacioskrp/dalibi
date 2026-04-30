@@ -93,7 +93,7 @@ export default function Create({ subjects, teachers, academicYears, classrooms }
         <AppLayout>
             <Head title="Créer une affectation" />
 
-            <div className="space-y-6 max-w-4xl">
+            <div className="space-y-6">
                 {/* En-tête */}
                 <div className="flex items-center gap-4">
                     <button
@@ -111,8 +111,10 @@ export default function Create({ subjects, teachers, academicYears, classrooms }
 
                 <form onSubmit={handleSubmit} className="space-y-6">
 
-                    {/* Section Matière */}
-                    <div className="rounded-xl bg-blue-50 border border-blue-100 shadow-sm">
+                    {/* Section Matière + Enseignant */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                    <div className="rounded-xl bg-blue-50 border border-blue-100 shadow-sm overflow-hidden">
                         <div className="flex items-center gap-2 px-5 py-3 bg-blue-100 text-blue-800 rounded-t-xl">
                             <BookOpen className="w-4 h-4" />
                             <span className="font-semibold text-sm">Matière</span>
@@ -137,7 +139,7 @@ export default function Create({ subjects, teachers, academicYears, classrooms }
                     </div>
 
                     {/* Section Enseignant */}
-                    <div className="rounded-xl bg-violet-50 border border-violet-100 shadow-sm">
+                    <div className="rounded-xl bg-violet-50 border border-violet-100 shadow-sm overflow-hidden">
                         <div className="flex items-center gap-2 px-5 py-3 bg-violet-100 text-violet-800 rounded-t-xl">
                             <UserCheck className="w-4 h-4" />
                             <span className="font-semibold text-sm">Enseignant</span>
@@ -200,6 +202,8 @@ export default function Create({ subjects, teachers, academicYears, classrooms }
                             {errors.teacher_id && <p className="text-red-500 text-sm mt-1">{errors.teacher_id}</p>}
                         </div>
                     </div>
+
+                    </div>{/* fin grid Matière + Enseignant */}
 
                     {/* Section Classe & Année — deux colonnes */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
