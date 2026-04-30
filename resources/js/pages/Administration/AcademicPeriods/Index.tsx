@@ -219,7 +219,7 @@ export default function Index({ academicPeriods, filters }: Readonly<IndexProps>
                 </div>
 
                 {/* Table */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                <div className="bg-white rounded-lg shadow-sm overflow-hidden">
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-gray-50">

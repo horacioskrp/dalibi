@@ -6,7 +6,6 @@ import {
     Clock,
     FileText,
     Hash,
-    Pencil,
     Save,
     Tag,
     X,
@@ -72,7 +71,7 @@ export default function Edit({ evaluation, evaluationTypes }: Readonly<EditProps
         <AppLayout>
             <Head title="Modifier évaluation" />
 
-            <div className="max-w-5xl space-y-6">
+            <div className="space-y-6">
                 {/* En-tête */}
                 <div className="flex items-center gap-4">
                     <button
@@ -83,8 +82,7 @@ export default function Edit({ evaluation, evaluationTypes }: Readonly<EditProps
                         <ArrowLeft className="w-5 h-5" />
                     </button>
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight text-gray-900 flex items-center gap-2">
-                            <Pencil className="w-7 h-7 text-indigo-600" />
+                        <h1 className="text-3xl font-bold tracking-tight text-gray-900">
                             Modifier l'évaluation
                         </h1>
                         <p className="text-gray-500 mt-1 text-sm">
