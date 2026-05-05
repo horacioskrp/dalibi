@@ -22,7 +22,9 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        DB::statement("ALTER TABLE payments ADD CONSTRAINT payments_method_check CHECK (payment_method IN ('CASH','MOBILE_MONEY','BANK_TRANSFER','CHEQUE'))");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE payments ADD CONSTRAINT payments_method_check CHECK (payment_method IN ('CASH','MOBILE_MONEY','BANK_TRANSFER','CHEQUE'))");
+        }
     }
 
     public function down(): void

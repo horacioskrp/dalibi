@@ -56,6 +56,11 @@ class AppServiceProvider extends ServiceProvider
             app()->isProduction(),
         );
 
+        // SQLite (tests) : désactiver les FK pour permettre les dropColumn
+        if (config('database.connections.' . config('database.default') . '.driver') === 'sqlite') {
+            DB::statement('PRAGMA foreign_keys = OFF');
+        }
+
         Password::defaults(fn (): ?Password => app()->isProduction()
             ? Password::min(12)
                 ->mixedCase()
