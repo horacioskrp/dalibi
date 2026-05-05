@@ -18,7 +18,9 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        DB::statement("ALTER TABLE invoice_items ADD CONSTRAINT invoice_items_type_check CHECK (type IN ('FEE','DISCOUNT'))");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE invoice_items ADD CONSTRAINT invoice_items_type_check CHECK (type IN ('FEE','DISCOUNT'))");
+        }
     }
 
     public function down(): void

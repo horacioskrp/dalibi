@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateClassroomTypeRequest extends FormRequest
 {
@@ -20,7 +21,7 @@ class UpdateClassroomTypeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255', 'unique:classroom_types,name,' . $this->classroomType->id],
+            'name' => ['required', 'string', 'max:255', Rule::unique('classroom_types', 'name')->ignore($this->route('classroom_type'))],
             'description' => ['nullable', 'string', 'max:1000'],
             'active' => ['boolean'],
         ];

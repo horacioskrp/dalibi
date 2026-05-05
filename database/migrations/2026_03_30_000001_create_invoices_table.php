@@ -25,7 +25,9 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        DB::statement("ALTER TABLE invoices ADD CONSTRAINT invoices_status_check CHECK (status IN ('ISSUED','PARTIALLY_PAID','PAID','CANCELLED'))");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE invoices ADD CONSTRAINT invoices_status_check CHECK (status IN ('ISSUED','PARTIALLY_PAID','PAID','CANCELLED'))");
+        }
     }
 
     public function down(): void
