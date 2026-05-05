@@ -9,6 +9,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('enrollments', function (Blueprint $table): void {
+            // Supprimer la FK avant la colonne (requis par SQLite)
+            if (Schema::hasColumn('enrollments', 'schooling_id')) {
+                $table->dropForeign(['schooling_id']);
+            }
             $table->dropColumn(['schooling_id', 'discount_percentage', 'amount_to_pay']);
         });
     }

@@ -7,6 +7,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            return; // SQLite n'a pas de contraintes CHECK ALTER COLUMN — les données sont compatibles
+        }
+
         // 1. Supprimer l'ancienne contrainte check
         DB::statement("ALTER TABLE enrollments DROP CONSTRAINT IF EXISTS enrollments_status_check");
 
@@ -22,6 +26,10 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
+
         DB::statement("ALTER TABLE enrollments DROP CONSTRAINT IF EXISTS enrollments_status_check");
 
         DB::statement("UPDATE enrollments SET status = 'paid'   WHERE status = 'ACTIVE'");

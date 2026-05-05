@@ -18,8 +18,9 @@ return new class extends Migration
                 $table->dropColumn('school_id');
             }
             
-            // Drop name column if exists
+            // Drop name column if exists (drop unique index first for SQLite compatibility)
             if (Schema::hasColumn('users', 'name')) {
+                $table->dropUnique('users_name_unique');
                 $table->dropColumn('name');
             }
         });
