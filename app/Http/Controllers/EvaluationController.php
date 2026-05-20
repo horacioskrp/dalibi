@@ -7,6 +7,7 @@ use App\Models\AcademicYear;
 use App\Models\Classroom;
 use App\Models\Evaluation;
 use App\Models\EvaluationType;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -14,6 +15,12 @@ use Inertia\Response;
 
 class EvaluationController extends Controller
 {
+    private const MSG_EVALUATION_NAME_REQUIRED = 'Le nom de l\'évaluation est obligatoire.';
+
+    private const MSG_EVALUATION_TYPE_REQUIRED = 'Le type d\'évaluation est obligatoire.';
+
+    private const MSG_COEFFICIENT_GT_ZERO = 'Le coefficient doit être supérieur à 0.';
+
     /**
      * Display a listing of the resource.
      */
@@ -21,6 +28,8 @@ class EvaluationController extends Controller
     {
         $search = $request->string('search')->toString();
         $status = $request->string('status')->toString();
+        $classId = $request->string('class_id')->toString();
+        $evaluationTypeId = $request->string('evaluation_type_id')->toString();
 
         $query = Evaluation::query()
             ->with([
@@ -46,17 +55,61 @@ class EvaluationController extends Controller
             $query->where('status', $status);
         }
 
+        if ($classId !== '') {
+            $query->where('class_id', $classId);
+        }
+
+        if ($evaluationTypeId !== '') {
+            $query->where('evaluation_type_id', $evaluationTypeId);
+        }
+
         $evaluations = $query
             ->orderByDesc('date')
             ->orderByDesc('created_at')
             ->paginate(10)
             ->appends($request->query());
 
+        $today = Carbon::today();
+        $weekEnd = Carbon::today()->addDays(7)->endOfDay();
+        $globalStatsQuery = Evaluation::query();
+        $total = (clone $globalStatsQuery)->count();
+        $scheduledCount = (clone $globalStatsQuery)->where('status', 'scheduled')->count();
+        $completedCount = (clone $globalStatsQuery)->where('status', 'completed')->count();
+        $overdueCount = (clone $globalStatsQuery)
+            ->where('status', 'scheduled')
+            ->whereNotNull('date')
+            ->whereDate('date', '<', $today)
+            ->count();
+        $upcomingWeekCount = (clone $globalStatsQuery)
+            ->where('status', 'scheduled')
+            ->whereBetween('date', [$today, $weekEnd])
+            ->count();
+        $classCoverage = (clone $globalStatsQuery)
+            ->whereNotNull('class_id')
+            ->distinct('class_id')
+            ->count('class_id');
+        $completionRate = $total > 0 ? round(($completedCount / $total) * 100, 1) : 0;
+
         return Inertia::render('Administration/Evaluations/Index', [
             'evaluations' => $evaluations,
             'filters' => [
                 'search' => $search,
                 'status' => $status,
+                'class_id' => $classId,
+                'evaluation_type_id' => $evaluationTypeId,
+            ],
+            'classrooms' => Classroom::where('active', true)
+                ->orderBy('name')
+                ->get(['id', 'name', 'code']),
+            'evaluationTypes' => EvaluationType::orderBy('name')->get(['id', 'name']),
+            'stats' => [
+                'total' => $total,
+                'scheduled' => $scheduledCount,
+                'completed' => $completedCount,
+                'overdue' => $overdueCount,
+                'upcoming_week' => $upcomingWeekCount,
+                'class_coverage' => $classCoverage,
+                'completion_rate' => $completionRate,
             ],
         ]);
     }
@@ -108,9 +161,9 @@ class EvaluationController extends Controller
             'academic_period_id.required' => 'La période académique est obligatoire.',
             'evaluations.required' => 'Ajoutez au moins une évaluation.',
             'evaluations.min' => 'Ajoutez au moins une évaluation.',
-            'evaluations.*.name.required' => 'Le nom de l\'évaluation est obligatoire.',
-            'evaluations.*.evaluation_type_id.required' => 'Le type d\'évaluation est obligatoire.',
-            'evaluations.*.coefficient.gt' => 'Le coefficient doit être supérieur à 0.',
+            'evaluations.*.name.required' => self::MSG_EVALUATION_NAME_REQUIRED,
+            'evaluations.*.evaluation_type_id.required' => self::MSG_EVALUATION_TYPE_REQUIRED,
+            'evaluations.*.coefficient.gt' => self::MSG_COEFFICIENT_GT_ZERO,
         ]);
 
         DB::transaction(function () use ($validated): void {
@@ -181,9 +234,9 @@ class EvaluationController extends Controller
             'coefficient' => ['required', 'numeric', 'gt:0', 'max:999.99'],
             'status' => ['required', 'in:scheduled,completed'],
         ], [
-            'name.required' => 'Le nom de l\'évaluation est obligatoire.',
-            'evaluation_type_id.required' => 'Le type d\'évaluation est obligatoire.',
-            'coefficient.gt' => 'Le coefficient doit être supérieur à 0.',
+            'name.required' => self::MSG_EVALUATION_NAME_REQUIRED,
+            'evaluation_type_id.required' => self::MSG_EVALUATION_TYPE_REQUIRED,
+            'coefficient.gt' => self::MSG_COEFFICIENT_GT_ZERO,
         ]);
 
         $evaluation->update($validated);
@@ -240,10 +293,10 @@ class EvaluationController extends Controller
             'coefficient' => ['required', 'numeric', 'gt:0', 'max:999.99'],
             'status' => ['required', 'in:scheduled,completed'],
         ], [
-            'name.required' => 'Le nom de l\'évaluation est obligatoire.',
+            'name.required' => self::MSG_EVALUATION_NAME_REQUIRED,
             'academic_period_id.required' => 'La période académique est obligatoire.',
-            'evaluation_type_id.required' => 'Le type d\'évaluation est obligatoire.',
-            'coefficient.gt' => 'Le coefficient doit être supérieur à 0.',
+            'evaluation_type_id.required' => self::MSG_EVALUATION_TYPE_REQUIRED,
+            'coefficient.gt' => self::MSG_COEFFICIENT_GT_ZERO,
         ]);
 
         // Determine which classrooms to use

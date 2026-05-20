@@ -17,6 +17,16 @@ class DatabaseSeeder extends Seeder
         // Create roles and permissions first
         $this->call(RolesAndPermissionsSeeder::class);
 
+        // Create admin user (requires roles)
+        $this->call(CreateAdminSeeder::class);
+
+        // Create classroom types then classrooms
+        $this->call(ClassTypeSeeder::class);
+        $this->call(ClassroomSeeder::class);
+
+        // Seed subjects
+        $this->call(SubjectSeeder::class);
+
         // Create fee categories
         $this->call(FeeCategorieSeeder::class);
 
@@ -25,5 +35,8 @@ class DatabaseSeeder extends Seeder
 
         // Seed scholarships
         $this->call(ScholarshipSeeder::class);
+
+        // Seed test students (dev only)
+        $this->call(StudentTestSeeder::class);
     }
 }
