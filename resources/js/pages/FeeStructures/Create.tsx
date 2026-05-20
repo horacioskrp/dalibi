@@ -1,5 +1,5 @@
 import { Head, router, useForm } from '@inertiajs/react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Banknote, CalendarDays, Layers, School } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -37,7 +37,7 @@ export default function Create({ academicYears, feeCategories, classrooms }: Rea
         amount: '',
     });
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
         e.preventDefault();
         post(route('fee-structures.store'));
     };
@@ -68,9 +68,14 @@ export default function Create({ academicYears, feeCategories, classrooms }: Rea
                     </p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-300 shadow-sm p-6 space-y-6">
-                    {/* Année académique */}
-                    <div className="space-y-2">
+                <form onSubmit={handleSubmit} className="space-y-6 max-w-6xl">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="rounded-2xl bg-linear-to-br from-indigo-50 to-white ring-1 ring-indigo-100 p-6 space-y-4">
+                        <div className="flex items-center gap-2 text-indigo-700">
+                            <CalendarDays className="h-4 w-4" />
+                            <p className="text-sm font-semibold">Contexte académique</p>
+                        </div>
+                        <div className="space-y-2">
                         <Label htmlFor="academic_year_id">
                             Année académique <span className="text-red-600">*</span>
                         </Label>
@@ -78,7 +83,7 @@ export default function Create({ academicYears, feeCategories, classrooms }: Rea
                             value={data.academic_year_id}
                             onValueChange={(value) => setData('academic_year_id', value)}
                         >
-                            <SelectTrigger id="academic_year_id" className="border-gray-300">
+                            <SelectTrigger id="academic_year_id" className="border-slate-200 bg-white/90">
                                 <SelectValue placeholder="Sélectionner une année académique" />
                             </SelectTrigger>
                             <SelectContent>
@@ -92,10 +97,15 @@ export default function Create({ academicYears, feeCategories, classrooms }: Rea
                         {errors.academic_year_id && (
                             <p className="text-sm text-red-600">{errors.academic_year_id}</p>
                         )}
+                        </div>
                     </div>
 
-                    {/* Catégorie de frais */}
-                    <div className="space-y-2">
+                    <div className="rounded-2xl bg-linear-to-br from-amber-50 to-white ring-1 ring-amber-100 p-6 space-y-4">
+                        <div className="flex items-center gap-2 text-amber-700">
+                            <Layers className="h-4 w-4" />
+                            <p className="text-sm font-semibold">Catégorie de frais</p>
+                        </div>
+                        <div className="space-y-2">
                         <Label htmlFor="fee_category_id">
                             Catégorie de frais <span className="text-red-600">*</span>
                         </Label>
@@ -103,7 +113,7 @@ export default function Create({ academicYears, feeCategories, classrooms }: Rea
                             value={data.fee_category_id}
                             onValueChange={(value) => setData('fee_category_id', value)}
                         >
-                            <SelectTrigger id="fee_category_id" className="border-gray-300">
+                            <SelectTrigger id="fee_category_id" className="border-slate-200 bg-white/90">
                                 <SelectValue placeholder="Sélectionner une catégorie" />
                             </SelectTrigger>
                             <SelectContent>
@@ -117,10 +127,15 @@ export default function Create({ academicYears, feeCategories, classrooms }: Rea
                         {errors.fee_category_id && (
                             <p className="text-sm text-red-600">{errors.fee_category_id}</p>
                         )}
+                        </div>
                     </div>
 
-                    {/* Classe */}
-                    <div className="space-y-2">
+                    <div className="rounded-2xl bg-linear-to-br from-sky-50 to-white ring-1 ring-sky-100 p-6 space-y-4">
+                        <div className="flex items-center gap-2 text-sky-700">
+                            <School className="h-4 w-4" />
+                            <p className="text-sm font-semibold">Classe concernée</p>
+                        </div>
+                        <div className="space-y-2">
                         <Label htmlFor="class_id">
                             Classe <span className="text-red-600">*</span>
                         </Label>
@@ -128,7 +143,7 @@ export default function Create({ academicYears, feeCategories, classrooms }: Rea
                             value={data.class_id}
                             onValueChange={(value) => setData('class_id', value)}
                         >
-                            <SelectTrigger id="class_id" className="border-gray-300">
+                            <SelectTrigger id="class_id" className="border-slate-200 bg-white/90">
                                 <SelectValue placeholder="Sélectionner une classe" />
                             </SelectTrigger>
                             <SelectContent>
@@ -142,10 +157,15 @@ export default function Create({ academicYears, feeCategories, classrooms }: Rea
                         {errors.class_id && (
                             <p className="text-sm text-red-600">{errors.class_id}</p>
                         )}
+                        </div>
                     </div>
 
-                    {/* Montant */}
-                    <div className="space-y-2">
+                    <div className="rounded-2xl bg-linear-to-br from-emerald-50 to-white ring-1 ring-emerald-100 p-6 space-y-4">
+                        <div className="flex items-center gap-2 text-emerald-700">
+                            <Banknote className="h-4 w-4" />
+                            <p className="text-sm font-semibold">Montant</p>
+                        </div>
+                        <div className="space-y-2">
                         <Label htmlFor="amount">
                             Montant (FCFA) <span className="text-red-600">*</span>
                         </Label>
@@ -157,21 +177,22 @@ export default function Create({ academicYears, feeCategories, classrooms }: Rea
                             placeholder="Ex: 50000"
                             value={data.amount}
                             onChange={(e) => setData('amount', e.target.value)}
-                            className="border-gray-300"
+                            className="border-slate-200 bg-white/90"
                         />
                         {errors.amount && (
                             <p className="text-sm text-red-600">{errors.amount}</p>
                         )}
+                        </div>
+                    </div>
                     </div>
 
-                    {/* Boutons d'action */}
-                    <div className="flex justify-end gap-3 pt-4 border-t border-gray-300">
+                    <div className="flex justify-end gap-3 pt-1">
                         <Button
                             type="button"
                             variant="outline"
                             onClick={() => router.visit(route('fee-structures.index'))}
                             disabled={processing}
-                            className="border-gray-300"
+                            className="border-slate-200"
                         >
                             Annuler
                         </Button>

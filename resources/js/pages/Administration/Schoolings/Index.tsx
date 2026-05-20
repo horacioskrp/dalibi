@@ -137,7 +137,7 @@ export default function Index({ schoolings, filters, totals }: Readonly<IndexPro
                     })}
                 </div>
 
-                <div className="bg-white rounded-lg p-4 shadow-sm">
+                <div className="rounded-2xl bg-linear-to-br from-slate-50 to-white ring-1 ring-slate-100 p-4 shadow-sm">
                     <div className="flex gap-4">
                         <div className="flex-1 relative">
                             <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
@@ -150,7 +150,7 @@ export default function Index({ schoolings, filters, totals }: Readonly<IndexPro
                                     }
                                 }}
                                 placeholder="Rechercher par nom/code de classe..."
-                                className="pl-10 bg-gray-50 border-gray-300"
+                                className="pl-10 bg-white border-slate-200"
                             />
                         </div>
                         <Button onClick={handleSearch} className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
@@ -158,14 +158,14 @@ export default function Index({ schoolings, filters, totals }: Readonly<IndexPro
                             Rechercher
                         </Button>
                         {search && (
-                            <Button variant="outline" onClick={handleClearSearch} className="border-gray-300 text-gray-700 hover:bg-gray-50">
+                            <Button variant="outline" onClick={handleClearSearch} className="border-slate-200 text-gray-700 hover:bg-gray-50">
                                 Réinitialiser
                             </Button>
                         )}
                     </div>
                 </div>
 
-                <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                <div className="bg-white rounded-2xl ring-1 ring-slate-100 shadow-sm overflow-hidden">
                     <div className="overflow-x-auto">
                         <Table>
                             <TableHeader className="bg-gray-50">
@@ -210,7 +210,7 @@ export default function Index({ schoolings, filters, totals }: Readonly<IndexPro
                                                     <Button
                                                         variant="outline"
                                                         size="sm"
-                                                        className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                                                        className="border-slate-200 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                                                         onClick={() => router.get(route('schoolings.show', schooling.id))}
                                                     >
                                                         <Eye className="w-4 h-4" />
@@ -218,7 +218,7 @@ export default function Index({ schoolings, filters, totals }: Readonly<IndexPro
                                                     <Button
                                                         variant="outline"
                                                         size="sm"
-                                                        className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                                                        className="border-slate-200 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                                                         onClick={() => router.get(route('schoolings.edit', schooling.id))}
                                                     >
                                                         <Pencil className="w-4 h-4" />
@@ -242,7 +242,7 @@ export default function Index({ schoolings, filters, totals }: Readonly<IndexPro
                 </div>
 
                 {schoolings.last_page > 1 && (
-                    <div className="flex items-center justify-between bg-white rounded-lg p-4 shadow-sm">
+                    <div className="flex items-center justify-between rounded-2xl bg-linear-to-br from-slate-50 to-white ring-1 ring-slate-100 p-4 shadow-sm">
                         <div className="text-sm text-gray-600">
                             Affichage de <span className="font-semibold">{schoolings.from}</span> à{' '}
                             <span className="font-semibold">{schoolings.to}</span> sur{' '}
@@ -252,6 +252,7 @@ export default function Index({ schoolings, filters, totals }: Readonly<IndexPro
                             <Button
                                 variant="outline"
                                 size="sm"
+                                className="border-slate-200"
                                 disabled={schoolings.current_page === 1}
                                 onClick={() => router.get(route('schoolings.index'), { ...filters, page: schoolings.current_page - 1 }, { preserveState: true })}
                             >
@@ -260,6 +261,7 @@ export default function Index({ schoolings, filters, totals }: Readonly<IndexPro
                             <Button
                                 variant="outline"
                                 size="sm"
+                                className="border-slate-200"
                                 disabled={schoolings.current_page === schoolings.last_page}
                                 onClick={() => router.get(route('schoolings.index'), { ...filters, page: schoolings.current_page + 1 }, { preserveState: true })}
                             >

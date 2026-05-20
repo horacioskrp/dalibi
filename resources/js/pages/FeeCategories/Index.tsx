@@ -112,7 +112,7 @@ export default function Index({ feeCategories, message, filters }: Readonly<Inde
                 </div>
 
                 {/* Stats Card */}
-                <div className="bg-linear-to-r from-blue-50 to-blue-100 rounded-lg p-6 border border-gray-300 shadow-sm">
+                <div className="bg-linear-to-r from-blue-50 to-cyan-50 rounded-2xl p-6 ring-1 ring-blue-100 shadow-sm">
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm font-medium text-gray-600">Catégories totales</p>
@@ -123,16 +123,16 @@ export default function Index({ feeCategories, message, filters }: Readonly<Inde
                 </div>
 
                 {/* Search Bar */}
-                <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-300">
+                <div className="rounded-2xl bg-linear-to-br from-slate-50 to-white p-4 shadow-sm ring-1 ring-slate-100">
                     <div className="flex gap-2">
                         <div className="flex-1 relative">
                             <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
                             <Input
                                 placeholder="Rechercher par nom ou description..."
-                                className="pl-10 border-gray-300 focus:border-blue-500"
+                                className="pl-10 border-slate-200 focus:border-blue-500"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                onKeyPress={handleKeyPress}
+                                onKeyDown={handleKeyPress}
                             />
                         </div>
                         <Button 
@@ -145,7 +145,7 @@ export default function Index({ feeCategories, message, filters }: Readonly<Inde
                             <Button 
                                 onClick={handleClearSearch}
                                 variant="outline"
-                                className="border-gray-300"
+                                className="border-slate-200"
                             >
                                 <X className="w-4 h-4" />
                             </Button>
@@ -161,9 +161,9 @@ export default function Index({ feeCategories, message, filters }: Readonly<Inde
                 )}
 
                 {/* Table */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-300 overflow-hidden">
+                <div className="bg-white rounded-2xl shadow-sm ring-1 ring-slate-100 overflow-hidden">
                     <Table>
-                        <TableHeader className="bg-gray-50 border-b border-gray-300">
+                        <TableHeader className="bg-gray-50 border-b border-slate-200">
                             <TableRow>
                                 <TableHead className="text-gray-700 font-semibold">Nom</TableHead>
                                 <TableHead className="text-gray-700 font-semibold">Description</TableHead>
@@ -174,7 +174,7 @@ export default function Index({ feeCategories, message, filters }: Readonly<Inde
                         <TableBody>
                             {feeCategories.data.length > 0 ? (
                                 feeCategories.data.map((category) => (
-                                    <TableRow key={category.id} className="border-b border-gray-300 hover:bg-gray-50">
+                                    <TableRow key={category.id} className="border-b border-slate-100 hover:bg-blue-50/30">
                                         <TableCell className="font-semibold text-gray-900">{category.name}</TableCell>
                                         <TableCell className="text-gray-600 max-w-md truncate">
                                             {category.description || '-'}
@@ -187,7 +187,7 @@ export default function Index({ feeCategories, message, filters }: Readonly<Inde
                                                 <Button
                                                     size="sm"
                                                     variant="outline"
-                                                    className="border-gray-300 text-gray-700 hover:bg-gray-100"
+                                                    className="border-slate-200 text-gray-700 hover:bg-gray-100"
                                                     onClick={() => router.get(route('fee-categories.show', category.id))}
                                                 >
                                                     <Eye className="w-4 h-4" />
@@ -195,7 +195,7 @@ export default function Index({ feeCategories, message, filters }: Readonly<Inde
                                                 <Button
                                                     size="sm"
                                                     variant="outline"
-                                                    className="border-gray-300 text-gray-700 hover:bg-gray-100"
+                                                    className="border-slate-200 text-gray-700 hover:bg-gray-100"
                                                     onClick={() => router.get(route('fee-categories.edit', category.id))}
                                                 >
                                                     <Pencil className="w-4 h-4" />
@@ -203,7 +203,7 @@ export default function Index({ feeCategories, message, filters }: Readonly<Inde
                                                 <Button
                                                     size="sm"
                                                     variant="outline"
-                                                    className="border-gray-300 text-gray-700 hover:bg-red-50 hover:text-red-600"
+                                                    className="border-slate-200 text-gray-700 hover:bg-red-50 hover:text-red-600"
                                                     onClick={() => setDeleteConfirm(category.id)}
                                                 >
                                                     <Trash2 className="w-4 h-4" />
@@ -233,7 +233,7 @@ export default function Index({ feeCategories, message, filters }: Readonly<Inde
                             <Button
                                 variant="outline"
                                 size="sm"
-                                className="border-gray-300"
+                                className="border-slate-200"
                                 disabled={feeCategories.current_page === 1}
                                 onClick={() => router.get(route('fee-categories.index'), 
                                     { search: searchQuery, page: feeCategories.current_page - 1 }, 
@@ -245,7 +245,7 @@ export default function Index({ feeCategories, message, filters }: Readonly<Inde
                             <Button
                                 variant="outline"
                                 size="sm"
-                                className="border-gray-300"
+                                className="border-slate-200"
                                 disabled={feeCategories.current_page === feeCategories.last_page}
                                 onClick={() => router.get(route('fee-categories.index'), 
                                     { search: searchQuery, page: feeCategories.current_page + 1 }, 
@@ -268,7 +268,7 @@ export default function Index({ feeCategories, message, filters }: Readonly<Inde
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <div className="flex justify-end gap-3">
-                            <AlertDialogCancel className="border-gray-300">Annuler</AlertDialogCancel>
+                            <AlertDialogCancel className="border-slate-200">Annuler</AlertDialogCancel>
                             <AlertDialogAction
                                 onClick={() => deleteConfirm && handleDelete(deleteConfirm)}
                                 disabled={isDeleting}

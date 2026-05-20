@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, CalendarDays, School, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { route } from '@/helpers/route';
 import AppLayout from '@/layouts/app-layout';
@@ -51,29 +51,29 @@ export default function Show({ schooling }: Readonly<ShowProps>) {
                     </Button>
                 </div>
 
-                <div className="bg-white border rounded-lg p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="rounded-2xl bg-linear-to-br from-sky-50 to-white ring-1 ring-sky-100 p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <p className="text-sm text-gray-500">Classe</p>
+                        <p className="text-sm text-sky-700 flex items-center gap-2"><School className="h-4 w-4" />Classe</p>
                         <p className="font-medium text-gray-900 mt-1">{schooling.classroom?.name ?? '-'}</p>
                     </div>
                     <div>
-                        <p className="text-sm text-gray-500">Code</p>
+                        <p className="text-sm text-sky-700">Code</p>
                         <p className="font-medium text-gray-900 mt-1">{schooling.classroom?.code ?? '-'}</p>
                     </div>
-                    <div>
-                        <p className="text-sm text-gray-500">Frais d'inscription</p>
+                    <div className="rounded-xl bg-white/80 ring-1 ring-emerald-100 p-4">
+                        <p className="text-sm text-emerald-700 flex items-center gap-2"><Wallet className="h-4 w-4" />Frais d'inscription</p>
                         <p className="font-medium text-blue-700 mt-1">{formatMoney(schooling.inscription_fee)}</p>
                     </div>
-                    <div>
-                        <p className="text-sm text-gray-500">Frais de scolarité</p>
+                    <div className="rounded-xl bg-white/80 ring-1 ring-emerald-100 p-4">
+                        <p className="text-sm text-emerald-700 flex items-center gap-2"><Wallet className="h-4 w-4" />Frais de scolarité</p>
                         <p className="font-medium text-green-700 mt-1">{formatMoney(schooling.school_fee)}</p>
                     </div>
-                    <div>
-                        <p className="text-sm text-gray-500">Créé le</p>
+                    <div className="rounded-xl bg-white/80 ring-1 ring-slate-100 p-4">
+                        <p className="text-sm text-slate-600 flex items-center gap-2"><CalendarDays className="h-4 w-4" />Créé le</p>
                         <p className="font-medium text-gray-900 mt-1">{new Date(schooling.created_at).toLocaleString('fr-FR')}</p>
                     </div>
-                    <div>
-                        <p className="text-sm text-gray-500">Modifié le</p>
+                    <div className="rounded-xl bg-white/80 ring-1 ring-slate-100 p-4">
+                        <p className="text-sm text-slate-600 flex items-center gap-2"><CalendarDays className="h-4 w-4" />Modifié le</p>
                         <p className="font-medium text-gray-900 mt-1">{new Date(schooling.updated_at).toLocaleString('fr-FR')}</p>
                     </div>
                 </div>
