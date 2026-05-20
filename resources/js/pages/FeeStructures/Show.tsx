@@ -70,7 +70,7 @@ export default function Show({ feeStructure }: Readonly<ShowProps>) {
 
     // Calculer le total des tranches
     const totalInstallments = newInstallments.reduce((total, inst) => {
-        const amount = parseFloat(inst.amount) || 0;
+        const amount = Number.parseFloat(inst.amount) || 0;
         return total + amount;
     }, 0);
 
@@ -78,13 +78,13 @@ export default function Show({ feeStructure }: Readonly<ShowProps>) {
     const isTotalExceeded = totalInstallments > feeStructure.amount;
 
     const addInstallmentRow = () => {
-        const nextNumber = Math.max(...newInstallments.map(inst => parseInt(inst.installment_number) || 0), 0) + 1;
+        const nextNumber = Math.max(...newInstallments.map(inst => Number.parseInt(inst.installment_number, 10) || 0), 0) + 1;
         const updated = [...newInstallments, {name: '', installment_number: nextNumber.toString(), amount: '0'}];
         setNewInstallments(updated);
 
         // Vérifier le total
         const newTotal = updated.reduce((total, inst) => {
-            const amount = parseFloat(inst.amount) || 0;
+            const amount = Number.parseFloat(inst.amount) || 0;
             return total + amount;
         }, 0);
 
@@ -101,7 +101,7 @@ export default function Show({ feeStructure }: Readonly<ShowProps>) {
 
         // Vérifier le total
         const newTotal = updated.reduce((total, inst) => {
-            const amount = parseFloat(inst.amount) || 0;
+            const amount = Number.parseFloat(inst.amount) || 0;
             return total + amount;
         }, 0);
 
@@ -119,7 +119,7 @@ export default function Show({ feeStructure }: Readonly<ShowProps>) {
 
         // Vérifier le total après mise à jour
         const newTotal = updated.reduce((total, inst) => {
-            const amount = parseFloat(inst.amount) || 0;
+            const amount = Number.parseFloat(inst.amount) || 0;
             return total + amount;
         }, 0);
 
@@ -133,7 +133,7 @@ export default function Show({ feeStructure }: Readonly<ShowProps>) {
     const formatMoney = (amount: number) => {
         return new Intl.NumberFormat('fr-FR', {
             style: 'currency',
-            currency: 'XAF',
+            currency: 'XOF',
             minimumFractionDigits: 0,
             maximumFractionDigits: 0,
         }).format(amount);
@@ -205,7 +205,7 @@ export default function Show({ feeStructure }: Readonly<ShowProps>) {
                         <Button
                             variant="outline"
                             onClick={() => router.visit(route('fee-structures.edit', feeStructure.id))}
-                            className="border-gray-300"
+                            className="border-slate-200"
                         >
                             <Pencil className="h-4 w-4 mr-2" />
                             Modifier
@@ -337,7 +337,7 @@ export default function Show({ feeStructure }: Readonly<ShowProps>) {
                                 {feeStructure.installments && feeStructure.installments.length > 0 ? (
                                     <div className="space-y-2">
                                         {feeStructure.installments
-                                            .sort((a, b) => a.installment_number - b.installment_number)
+                                            .toSorted((a, b) => a.installment_number - b.installment_number)
                                             .map((installment) => (
                                             <div key={installment.id} className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
                                                 <div>
@@ -430,7 +430,7 @@ export default function Show({ feeStructure }: Readonly<ShowProps>) {
                     </DialogHeader>
 
                     <div className="space-y-4">
-                        <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                        <div className="bg-blue-50 rounded-lg p-4 ring-1 ring-blue-100">
                             <div className="flex items-center gap-2 mb-2">
                                 <CreditCard className="h-4 w-4 text-blue-600" />
                                 <span className="text-sm font-medium text-blue-800">Structure actuelle</span>
@@ -447,7 +447,7 @@ export default function Show({ feeStructure }: Readonly<ShowProps>) {
                             </div>
                         </div>
 
-                        <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                        <div className="bg-green-50 rounded-lg p-4 ring-1 ring-green-100">
                             <div className="flex items-center gap-2 mb-2">
                                 <Layers className="h-4 w-4 text-green-600" />
                                 <span className="text-sm font-medium text-green-800">Total des tranches configurées</span>
@@ -466,42 +466,51 @@ export default function Show({ feeStructure }: Readonly<ShowProps>) {
                         </div>
 
                         <div className="space-y-3">
-                            {newInstallments.map((installment, index) => (
-                                <div key={index} className="flex gap-3 items-end">
+                            {newInstallments.map((installment, index) => {
+                                const rowKey = `${installment.installment_number}-${installment.name}-${installment.amount}`;
+                                const nameId = `installment-name-${index}`;
+                                const numberId = `installment-number-${index}`;
+                                const amountId = `installment-amount-${index}`;
+
+                                return (
+                                <div key={rowKey} className="flex gap-3 items-end">
                                     <div className="flex-1">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        <label htmlFor={nameId} className="block text-sm font-medium text-gray-700 mb-1">
                                             Nom de la tranche
                                         </label>
                                         <input
+                                            id={nameId}
                                             type="text"
                                             value={installment.name}
                                             onChange={(e) => updateInstallment(index, 'name', e.target.value)}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             placeholder="Ex: Première tranche"
                                         />
                                     </div>
                                     <div className="w-24">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        <label htmlFor={numberId} className="block text-sm font-medium text-gray-700 mb-1">
                                             N°
                                         </label>
                                         <input
+                                            id={numberId}
                                             type="number"
                                             value={installment.installment_number}
                                             onChange={(e) => updateInstallment(index, 'installment_number', e.target.value)}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             placeholder="1"
                                             min="1"
                                         />
                                     </div>
                                     <div className="flex-1">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        <label htmlFor={amountId} className="block text-sm font-medium text-gray-700 mb-1">
                                             Montant
                                         </label>
                                         <input
+                                            id={amountId}
                                             type="number"
                                             value={installment.amount}
                                             onChange={(e) => updateInstallment(index, 'amount', e.target.value)}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             placeholder="0"
                                             min="0"
                                             step="0.01"
@@ -518,7 +527,8 @@ export default function Show({ feeStructure }: Readonly<ShowProps>) {
                                         <Trash2 className="h-4 w-4" />
                                     </Button>
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
                         <Button
                             type="button"
@@ -545,7 +555,7 @@ export default function Show({ feeStructure }: Readonly<ShowProps>) {
                                         inst.name.trim() &&
                                         inst.installment_number.trim() &&
                                         inst.amount.trim() &&
-                                        parseFloat(inst.amount) > 0
+                                        Number.parseFloat(inst.amount) > 0
                                     );
                                     if (validInstallments.length === 0) {
                                         alert('Veuillez ajouter au moins une tranche valide.');

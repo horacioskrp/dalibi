@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { ArrowLeft, Pencil, Trash2 } from 'lucide-react';
+import { ArrowLeft, CalendarDays, FileText, Pencil, Tag, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import {
     AlertDialog,
@@ -80,15 +80,15 @@ export default function Show({ feeCategorie }: Readonly<ShowProps>) {
                     </div>
                 </div>
 
-                <div className="bg-white rounded-lg shadow-sm border border-gray-300 p-6 space-y-6">
+                <div className="rounded-2xl bg-linear-to-br from-amber-50 to-white shadow-sm ring-1 ring-amber-100 p-6 space-y-6">
                     {/* Informations principales */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <div className="block text-sm font-medium text-gray-600 mb-2">Nom</div>
+                        <div className="rounded-xl bg-white/80 ring-1 ring-amber-100 p-4">
+                            <div className="text-sm font-medium text-amber-700 mb-2 flex items-center gap-2"><Tag className="h-4 w-4" />Nom</div>
                             <p className="text-lg font-semibold text-gray-900">{feeCategorie.name}</p>
                         </div>
-                        <div>
-                            <div className="block text-sm font-medium text-gray-600 mb-2">Créée le</div>
+                        <div className="rounded-xl bg-white/80 ring-1 ring-amber-100 p-4">
+                            <div className="text-sm font-medium text-amber-700 mb-2 flex items-center gap-2"><CalendarDays className="h-4 w-4" />Créée le</div>
                             <p className="text-lg font-semibold text-gray-900">
                                 {new Date(feeCategorie.created_at).toLocaleDateString('fr-FR', {
                                     year: 'numeric',
@@ -102,15 +102,15 @@ export default function Show({ feeCategorie }: Readonly<ShowProps>) {
                     </div>
 
                     {/* Description */}
-                    <div>
-                        <div className="block text-sm font-medium text-gray-600 mb-2">Description</div>
-                        <p className="text-gray-900 whitespace-pre-wrap bg-gray-50 rounded p-4 border border-gray-300">
+                    <div className="rounded-xl bg-white/80 ring-1 ring-cyan-100 p-4">
+                        <div className="text-sm font-medium text-cyan-700 mb-2 flex items-center gap-2"><FileText className="h-4 w-4" />Description</div>
+                        <p className="text-gray-900 whitespace-pre-wrap bg-white rounded p-4 border border-slate-200">
                             {feeCategorie.description || 'Aucune description fournie'}
                         </p>
                     </div>
 
                     {/* Métadonnées */}
-                    <div className="pt-4 border-t border-gray-300">
+                    <div className="pt-4 border-t border-slate-200">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <div className="block text-sm font-medium text-gray-600 mb-2">Dernière modification</div>
@@ -142,7 +142,7 @@ export default function Show({ feeCategorie }: Readonly<ShowProps>) {
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <div className="flex justify-end gap-3">
-                            <AlertDialogCancel className="border-gray-300">Annuler</AlertDialogCancel>
+                            <AlertDialogCancel className="border-slate-200">Annuler</AlertDialogCancel>
                             <AlertDialogAction
                                 onClick={handleDelete}
                                 disabled={isDeleting}

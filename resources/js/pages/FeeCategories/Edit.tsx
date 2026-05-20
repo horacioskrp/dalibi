@@ -1,7 +1,6 @@
 import { Head, router } from '@inertiajs/react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, FileText, Tag } from 'lucide-react';
 import { useState } from 'react';
-import type { FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { route } from '@/helpers/route';
@@ -25,14 +24,14 @@ export default function Edit({ feeCategorie }: Readonly<EditProps>) {
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    const handleSubmit = (event: React.SyntheticEvent<HTMLFormElement>) => {
         event.preventDefault();
         setIsSubmitting(true);
         setErrors({});
 
         router.put(route('fee-categories.update', feeCategorie.id), formData as never, {
             onError: (validationErrors) => {
-                setErrors(validationErrors as Record<string, string>);
+                setErrors(validationErrors);
                 setIsSubmitting(false);
             },
             onSuccess: () => setIsSubmitting(false),
@@ -57,38 +56,50 @@ export default function Edit({ feeCategorie }: Readonly<EditProps>) {
                     </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
-                    <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-300 space-y-4">
-                        <div>
-                            <label htmlFor="name" className="block text-sm font-medium text-gray-900 mb-2">
-                                Nom *
-                            </label>
-                            <Input
-                                id="name"
-                                type="text"
-                                value={formData.name}
-                                onChange={(event) => setFormData((prev) => ({ ...prev, name: event.target.value }))}
-                                className={`border-gray-300 ${errors.name ? 'border-red-500' : ''}`}
-                                placeholder="Ex: Frais de scolarité, Frais de cantine..."
-                            />
-                            {errors.name && <p className="text-red-600 text-sm mt-1">{errors.name}</p>}
+                <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="rounded-2xl bg-linear-to-br from-amber-50 to-white ring-1 ring-amber-100 p-6 shadow-sm space-y-4">
+                            <div className="flex items-center gap-2 text-amber-700">
+                                <Tag className="h-4 w-4" />
+                                <p className="text-sm font-semibold">Identité de la catégorie</p>
+                            </div>
+                            <div>
+                                <label htmlFor="name" className="block text-sm font-medium text-gray-900 mb-2">
+                                    Nom *
+                                </label>
+                                <Input
+                                    id="name"
+                                    type="text"
+                                    value={formData.name}
+                                    onChange={(event) => setFormData((prev) => ({ ...prev, name: event.target.value }))}
+                                    className={`${errors.name ? 'border-red-500 bg-white/90' : 'border-slate-200 bg-white/90'}`}
+                                    placeholder="Ex: Frais de scolarité, Frais de cantine..."
+                                />
+                                {errors.name && <p className="text-red-600 text-sm mt-1">{errors.name}</p>}
+                            </div>
                         </div>
 
-                        <div>
-                            <label htmlFor="description" className="block text-sm font-medium text-gray-900 mb-2">
-                                Description
-                            </label>
-                            <textarea
-                                id="description"
-                                value={formData.description}
-                                onChange={(event) => setFormData((prev) => ({ ...prev, description: event.target.value }))}
-                                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                    errors.description ? 'border-red-500' : 'border-gray-300'
-                                }`}
-                                placeholder="Décrivez cette catégorie de frais..."
-                                rows={4}
-                            />
-                            {errors.description && <p className="text-red-600 text-sm mt-1">{errors.description}</p>}
+                        <div className="rounded-2xl bg-linear-to-br from-cyan-50 to-white ring-1 ring-cyan-100 p-6 shadow-sm space-y-4">
+                            <div className="flex items-center gap-2 text-cyan-700">
+                                <FileText className="h-4 w-4" />
+                                <p className="text-sm font-semibold">Description</p>
+                            </div>
+                            <div>
+                                <label htmlFor="description" className="block text-sm font-medium text-gray-900 mb-2">
+                                    Description
+                                </label>
+                                <textarea
+                                    id="description"
+                                    value={formData.description}
+                                    onChange={(event) => setFormData((prev) => ({ ...prev, description: event.target.value }))}
+                                    className={`w-full px-3 py-2 rounded-lg bg-white/90 focus:outline-none focus:ring-2 focus:ring-cyan-500 ${
+                                        errors.description ? 'border border-red-500' : 'border border-slate-200'
+                                    }`}
+                                    placeholder="Décrivez cette catégorie de frais..."
+                                    rows={4}
+                                />
+                                {errors.description && <p className="text-red-600 text-sm mt-1">{errors.description}</p>}
+                            </div>
                         </div>
                     </div>
 
@@ -99,7 +110,7 @@ export default function Edit({ feeCategorie }: Readonly<EditProps>) {
                         <Button
                             type="button"
                             variant="outline"
-                            className="border-gray-300 text-gray-700"
+                            className="border-slate-200 text-gray-700"
                             onClick={() => router.get(route('fee-categories.index'))}
                         >
                             Annuler
