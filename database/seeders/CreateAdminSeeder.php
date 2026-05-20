@@ -46,7 +46,7 @@ class CreateAdminSeeder extends Seeder
             'firstname' => 'Admin',
             'lastname' => 'Système',
             'email' => 'admin@ecoliotogo.tg',
-            'password' => bcrypt('admin@123'),  // À changer lors de la première connexion
+            'password' => bcrypt('password'),  // À changer lors de la première connexion
             'gender' => 'male',
             'telephone' => '+228 22 123 456',
             'address' => 'Siège administratif',
