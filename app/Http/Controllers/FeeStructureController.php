@@ -18,12 +18,18 @@ class FeeStructureController extends Controller
      */
     public function index(Request $request)
     {
+        $search = $request->string('search')->toString();
+        $academicYearId = $request->string('academic_year_id')->toString();
+        $feeCategoryId = $request->string('fee_category_id')->toString();
+        $classId = $request->string('class_id')->toString();
+        $minAmount = $request->string('min_amount')->toString();
+        $maxAmount = $request->string('max_amount')->toString();
+
         $query = FeeStructure::with(['academicYear', 'feeCategory', 'classroom'])
             ->orderBy('created_at', 'desc');
 
         // Search functionality
-        if ($request->filled('search')) {
-            $search = $request->search;
+        if ($search !== '') {
             $query->where(function ($q) use ($search) {
                 $q->whereHas('feeCategory', function ($query) use ($search) {
                     $query->where('name', 'ilike', "%{$search}%");
@@ -38,11 +44,70 @@ class FeeStructureController extends Controller
             });
         }
 
+        if ($academicYearId !== '') {
+            $query->where('academic_year_id', $academicYearId);
+        }
+
+        if ($feeCategoryId !== '') {
+            $query->where('fee_category_id', $feeCategoryId);
+        }
+
+        if ($classId !== '') {
+            $query->where('class_id', $classId);
+        }
+
+        if (is_numeric($minAmount)) {
+            $query->where('amount', '>=', (float) $minAmount);
+        }
+
+        if (is_numeric($maxAmount)) {
+            $query->where('amount', '<=', (float) $maxAmount);
+        }
+
+        $stats = (clone $query)
+            ->selectRaw('COUNT(*) as count')
+            ->selectRaw('COALESCE(SUM(amount), 0) as amount_total')
+            ->selectRaw('COALESCE(AVG(amount), 0) as amount_avg')
+            ->selectRaw('COALESCE(MIN(amount), 0) as amount_min')
+            ->selectRaw('COALESCE(MAX(amount), 0) as amount_max')
+            ->selectRaw('COUNT(DISTINCT class_id) as classes_covered')
+            ->selectRaw('COUNT(DISTINCT fee_category_id) as categories_covered')
+            ->first();
+
+        $statsCount = (int) ($stats->count ?? 0);
+        $statsAmountTotal = (float) ($stats->amount_total ?? 0);
+        $statsAmountAvg = (float) ($stats->amount_avg ?? 0);
+        $statsAmountMin = (float) ($stats->amount_min ?? 0);
+        $statsAmountMax = (float) ($stats->amount_max ?? 0);
+        $statsAmountRange = max(0, $statsAmountMax - $statsAmountMin);
+        $statsClassesCovered = (int) ($stats->classes_covered ?? 0);
+        $statsCategoriesCovered = (int) ($stats->categories_covered ?? 0);
+
         $feeStructures = $query->paginate(10)->withQueryString();
 
         return Inertia::render('FeeStructures/Index', [
             'feeStructures' => $feeStructures,
-            'filters' => $request->only('search'),
+            'filters' => [
+                'search' => $search,
+                'academic_year_id' => $academicYearId,
+                'fee_category_id' => $feeCategoryId,
+                'class_id' => $classId,
+                'min_amount' => $minAmount,
+                'max_amount' => $maxAmount,
+            ],
+            'academicYears' => AcademicYear::orderBy('year', 'desc')->get(['id', 'year', 'active']),
+            'feeCategories' => FeeCategorie::orderBy('name')->get(['id', 'name']),
+            'classrooms' => Classroom::orderBy('name')->get(['id', 'name', 'code']),
+            'stats' => [
+                'count' => $statsCount,
+                'amount_total' => $statsAmountTotal,
+                'amount_avg' => $statsAmountAvg,
+                'amount_min' => $statsAmountMin,
+                'amount_max' => $statsAmountMax,
+                'amount_range' => $statsAmountRange,
+                'classes_covered' => $statsClassesCovered,
+                'categories_covered' => $statsCategoriesCovered,
+            ],
         ]);
     }
 

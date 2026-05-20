@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { Plus, Pencil, Trash2, Search, DollarSign, Eye, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, DollarSign, Eye, ChevronLeft, ChevronRight, X, Layers, School, TrendingUp } from 'lucide-react';
 import { useState } from 'react';
 import {
     AlertDialog,
@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
     Table,
     TableBody,
@@ -26,6 +27,7 @@ import AppLayout from '@/layouts/app-layout';
 interface AcademicYear {
     id: string;
     year: string;
+    active?: boolean;
 }
 
 interface FeeCategory {
@@ -60,21 +62,44 @@ interface PaginatedFeeStructures {
 
 interface IndexProps {
     feeStructures: PaginatedFeeStructures;
+    academicYears: AcademicYear[];
+    feeCategories: FeeCategory[];
+    classrooms: Classroom[];
+    stats: {
+        count: number;
+        amount_total: number;
+        amount_avg: number;
+        amount_min: number;
+        amount_max: number;
+        amount_range: number;
+        classes_covered: number;
+        categories_covered: number;
+    };
     message?: string;
     filters: {
         search?: string;
+        academic_year_id?: string;
+        fee_category_id?: string;
+        class_id?: string;
+        min_amount?: string;
+        max_amount?: string;
     };
 }
 
-export default function Index({ feeStructures, message, filters }: Readonly<IndexProps>) {
+export default function Index({ feeStructures, academicYears, feeCategories, classrooms, stats, message, filters }: Readonly<IndexProps>) {
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
+    const [academicYearId, setAcademicYearId] = useState(filters.academic_year_id || 'all');
+    const [feeCategoryId, setFeeCategoryId] = useState(filters.fee_category_id || 'all');
+    const [classId, setClassId] = useState(filters.class_id || 'all');
+    const [minAmount, setMinAmount] = useState(filters.min_amount || '');
+    const [maxAmount, setMaxAmount] = useState(filters.max_amount || '');
 
     const formatMoney = (amount: number) => {
         return new Intl.NumberFormat('fr-FR', {
             style: 'currency',
-            currency: 'XAF',
+            currency: 'XOF',
             minimumFractionDigits: 0,
             maximumFractionDigits: 0,
         }).format(amount);
@@ -105,18 +130,32 @@ export default function Index({ feeStructures, message, filters }: Readonly<Inde
         });
     };
 
+    const buildFilters = () => ({
+        search: searchQuery || '',
+        academic_year_id: academicYearId === 'all' ? '' : academicYearId,
+        fee_category_id: feeCategoryId === 'all' ? '' : feeCategoryId,
+        class_id: classId === 'all' ? '' : classId,
+        min_amount: minAmount || '',
+        max_amount: maxAmount || '',
+    });
+
     const handleSearch = () => {
-        router.get(route('fee-structures.index'), { search: searchQuery }, { 
+        router.get(route('fee-structures.index'), buildFilters(), {
             preserveScroll: true,
-            replace: true 
+            replace: true
         });
     };
 
     const handleClearSearch = () => {
         setSearchQuery('');
-        router.get(route('fee-structures.index'), {}, { 
+        setAcademicYearId('all');
+        setFeeCategoryId('all');
+        setClassId('all');
+        setMinAmount('');
+        setMaxAmount('');
+        router.get(route('fee-structures.index'), {}, {
             preserveScroll: true,
-            replace: true 
+            replace: true
         });
     };
 
@@ -158,22 +197,69 @@ export default function Index({ feeStructures, message, filters }: Readonly<Inde
                 )}
 
                 {/* Statistiques */}
-                <div className="bg-linear-to-r from-blue-50 to-blue-100 rounded-lg p-6 border border-gray-300 shadow-sm">
-                    <div className="flex items-center gap-4">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-600">
-                            <DollarSign className="h-6 w-6 text-white" />
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
+                    <div className="rounded-2xl bg-linear-to-br from-blue-50 to-white p-6 ring-1 ring-blue-100 shadow-sm">
+                        <div className="flex items-center gap-4">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
+                                <DollarSign className="h-6 w-6 text-blue-600" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-gray-600">Montant total</p>
+                                <p className="text-2xl font-bold text-blue-700">{formatMoney(stats.amount_total)}</p>
+                            </div>
                         </div>
-                        <div>
-                            <p className="text-sm font-medium text-gray-600">Total des structures</p>
-                            <p className="text-2xl font-bold text-gray-900">{feeStructures.total}</p>
+                    </div>
+                    <div className="rounded-2xl bg-linear-to-br from-emerald-50 to-white p-6 ring-1 ring-emerald-100 shadow-sm">
+                        <div className="flex items-center gap-4">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
+                                <TrendingUp className="h-6 w-6 text-emerald-600" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-gray-600">Montant moyen</p>
+                                <p className="text-2xl font-bold text-emerald-700">{formatMoney(stats.amount_avg)}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="rounded-2xl bg-linear-to-br from-amber-50 to-white p-6 ring-1 ring-amber-100 shadow-sm">
+                        <div className="flex items-center gap-4">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-100">
+                                <School className="h-6 w-6 text-amber-600" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-gray-600">Classes couvertes</p>
+                                <p className="text-2xl font-bold text-amber-700">{stats.classes_covered}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="rounded-2xl bg-linear-to-br from-violet-50 to-white p-6 ring-1 ring-violet-100 shadow-sm">
+                        <div className="flex items-center gap-4">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-violet-100">
+                                <Layers className="h-6 w-6 text-violet-600" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-gray-600">Catégories couvertes</p>
+                                <p className="text-2xl font-bold text-violet-700">{stats.categories_covered}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="rounded-2xl bg-linear-to-br from-rose-50 to-white p-6 ring-1 ring-rose-100 shadow-sm">
+                        <div className="flex items-center gap-4">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-rose-100">
+                                <TrendingUp className="h-6 w-6 text-rose-600" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-gray-600">Écart min/max</p>
+                                <p className="text-2xl font-bold text-rose-700">{formatMoney(stats.amount_range)}</p>
+                                <p className="text-xs text-gray-500">Min {formatMoney(stats.amount_min)} | Max {formatMoney(stats.amount_max)}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Barre de recherche */}
-                <div className="bg-white rounded-lg border border-gray-300 shadow-sm p-4">
-                    <div className="flex gap-3">
-                        <div className="relative flex-1">
+                {/* Filtres */}
+                <div className="bg-white rounded-2xl ring-1 ring-slate-100 shadow-sm p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                        <div className="relative xl:col-span-3">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                             <Input
                                 type="text"
@@ -181,19 +267,60 @@ export default function Index({ feeStructures, message, filters }: Readonly<Inde
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 onKeyDown={handleKeyPress}
-                                className="pl-10 border-gray-300"
+                                className="pl-10 border-slate-200"
                             />
                         </div>
-                        {searchQuery && (
-                            <Button
-                                variant="outline"
-                                onClick={handleClearSearch}
-                                className="border-gray-300"
-                            >
-                                <X className="h-4 w-4 mr-2" />
-                                Effacer
-                            </Button>
-                        )}
+                        <Select value={academicYearId} onValueChange={setAcademicYearId}>
+                            <SelectTrigger className="border-slate-200">
+                                <SelectValue placeholder="Année académique" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Toutes les années</SelectItem>
+                                {academicYears.map((year) => (
+                                    <SelectItem key={year.id} value={year.id}>{year.year}{year.active ? ' (active)' : ''}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Select value={feeCategoryId} onValueChange={setFeeCategoryId}>
+                            <SelectTrigger className="border-slate-200">
+                                <SelectValue placeholder="Catégorie" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Toutes les catégories</SelectItem>
+                                {feeCategories.map((category) => (
+                                    <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Select value={classId} onValueChange={setClassId}>
+                            <SelectTrigger className="border-slate-200">
+                                <SelectValue placeholder="Classe" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Toutes les classes</SelectItem>
+                                {classrooms.map((classroom) => (
+                                    <SelectItem key={classroom.id} value={classroom.id}>{classroom.name} ({classroom.code})</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Input
+                            type="number"
+                            min="0"
+                            placeholder="Montant min"
+                            value={minAmount}
+                            onChange={(e) => setMinAmount(e.target.value)}
+                            className="border-slate-200"
+                        />
+                        <Input
+                            type="number"
+                            min="0"
+                            placeholder="Montant max"
+                            value={maxAmount}
+                            onChange={(e) => setMaxAmount(e.target.value)}
+                            className="border-slate-200"
+                        />
+                    </div>
+                    <div className="flex flex-wrap gap-3 mt-3">
                         <Button 
                             onClick={handleSearch}
                             className="bg-blue-600 hover:bg-blue-700"
@@ -201,11 +328,22 @@ export default function Index({ feeStructures, message, filters }: Readonly<Inde
                             <Search className="h-4 w-4 mr-2" />
                             Rechercher
                         </Button>
+                        <Button
+                            variant="outline"
+                            onClick={handleClearSearch}
+                            className="border-slate-200"
+                        >
+                            <X className="h-4 w-4 mr-2" />
+                            Réinitialiser
+                        </Button>
+                        <div className="text-sm text-gray-600 self-center">
+                            {stats.count} structure(s) filtrée(s) | Max: {formatMoney(stats.amount_max)}
+                        </div>
                     </div>
                 </div>
 
                 {/* Tableau */}
-                <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                <div className="bg-white rounded-2xl ring-1 ring-slate-100 shadow-sm overflow-hidden">
                     <div className="overflow-x-auto">
                     <Table>
                         <TableHeader className="bg-gray-50">
@@ -259,7 +397,7 @@ export default function Index({ feeStructures, message, filters }: Readonly<Inde
                                                     variant="outline"
                                                     size="sm"
                                                     onClick={() => router.visit(route('fee-structures.show', feeStructure.id))}
-                                                    className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                                                    className="border-slate-200 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                                                 >
                                                     <Eye className="h-4 w-4" />
                                                 </Button>
@@ -267,7 +405,7 @@ export default function Index({ feeStructures, message, filters }: Readonly<Inde
                                                     variant="outline"
                                                     size="sm"
                                                     onClick={() => router.visit(route('fee-structures.edit', feeStructure.id))}
-                                                    className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                                                    className="border-slate-200 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                                                 >
                                                     <Pencil className="h-4 w-4" />
                                                 </Button>
@@ -301,9 +439,9 @@ export default function Index({ feeStructures, message, filters }: Readonly<Inde
                                     disabled={feeStructures.current_page === 1}
                                     onClick={() => router.get(route('fee-structures.index', { 
                                         page: feeStructures.current_page - 1,
-                                        search: searchQuery 
+                                        ...buildFilters()
                                     }))}
-                                    className="border-gray-300 text-gray-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="border-slate-200 text-gray-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <ChevronLeft className="h-4 w-4" />
                                 </Button>
@@ -313,9 +451,9 @@ export default function Index({ feeStructures, message, filters }: Readonly<Inde
                                     disabled={feeStructures.current_page === feeStructures.last_page}
                                     onClick={() => router.get(route('fee-structures.index', { 
                                         page: feeStructures.current_page + 1,
-                                        search: searchQuery 
+                                        ...buildFilters()
                                     }))}
-                                    className="border-gray-300 text-gray-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="border-slate-200 text-gray-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <ChevronRight className="h-4 w-4" />
                                 </Button>
