@@ -65,6 +65,7 @@ class FeeStructureController extends Controller
         }
 
         $stats = (clone $query)
+            ->reorder()
             ->selectRaw('COUNT(*) as count')
             ->selectRaw('COALESCE(SUM(amount), 0) as amount_total')
             ->selectRaw('COALESCE(AVG(amount), 0) as amount_avg')
