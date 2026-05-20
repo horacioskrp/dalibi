@@ -88,11 +88,6 @@ export const mainNavItems: NavItem[] = [
                 icon: Tag,
             },
             {
-                title: 'Évaluations',
-                href: route('evaluations.index'),
-                icon: ClipboardList,
-            },
-            {
                 title: 'Années académiques',
                 href: route('academic-years.index'),
                 icon: Calendar,
@@ -126,6 +121,18 @@ export const mainNavItems: NavItem[] = [
                 title: 'Bourses',
                 href: route('scholarships.index'),
                 icon: Percent,
+            },
+        ],
+    },
+    {
+        title: 'Examen',
+        href: '#',
+        icon: ClipboardList,
+        items: [
+            {
+                title: 'Planification',
+                href: route('evaluations.index'),
+                icon: ClipboardList,
             },
         ],
     },

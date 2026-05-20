@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { Eye, Pencil, Plus, Search, Trash2, X } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Clock3, Eye, Pencil, Plus, Search, Target, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import {
     AlertDialog,
@@ -40,27 +40,46 @@ interface PaginatedEvaluations {
 
 interface IndexProps {
     evaluations: PaginatedEvaluations;
+    classrooms: Array<{ id: string; name: string; code: string }>;
+    evaluationTypes: Array<{ id: string; name: string }>;
+    stats: {
+        total: number;
+        scheduled: number;
+        completed: number;
+        overdue: number;
+        upcoming_week: number;
+        class_coverage: number;
+        completion_rate: number;
+    };
     filters: {
         search?: string;
         status?: string;
+        class_id?: string;
+        evaluation_type_id?: string;
     };
 }
 
-export default function Index({ evaluations, filters }: Readonly<IndexProps>) {
+export default function Index({ evaluations, classrooms, evaluationTypes, stats, filters }: Readonly<IndexProps>) {
     const [search, setSearch] = useState(filters.search || '');
     const [status, setStatus] = useState(filters.status || 'all');
+    const [classId, setClassId] = useState(filters.class_id || 'all');
+    const [evaluationTypeId, setEvaluationTypeId] = useState(filters.evaluation_type_id || 'all');
     const [deleteId, setDeleteId] = useState<string | null>(null);
 
     const onSearch = () => {
         router.get(route('evaluations.index'), {
             search,
             status: status === 'all' ? '' : status,
+            class_id: classId === 'all' ? '' : classId,
+            evaluation_type_id: evaluationTypeId === 'all' ? '' : evaluationTypeId,
         }, { preserveScroll: true, replace: true });
     };
 
     const clearFilters = () => {
         setSearch('');
         setStatus('all');
+        setClassId('all');
+        setEvaluationTypeId('all');
         router.get(route('evaluations.index'), {}, { preserveScroll: true, replace: true });
     };
 
@@ -71,29 +90,35 @@ export default function Index({ evaluations, filters }: Readonly<IndexProps>) {
         });
     };
 
-    const completedCount = evaluations.data.filter((item) => item.status === 'completed').length;
-
     const statsCards = [
         {
-            title: 'Évaluations totales',
-            value: evaluations.total,
-            icon: Plus,
+            title: 'Évaluations en retard',
+            value: stats.overdue,
+            icon: AlertTriangle,
+            cardClass: 'bg-linear-to-br from-rose-50/70 to-white ring-1 ring-rose-100',
+            iconWrapClass: 'bg-rose-100',
+            textColor: 'text-rose-600',
+        },
+        {
+            title: 'À venir (7 jours)',
+            value: stats.upcoming_week,
+            icon: Clock3,
             cardClass: 'bg-linear-to-br from-blue-50/70 to-white ring-1 ring-blue-100',
             iconWrapClass: 'bg-blue-100',
             textColor: 'text-blue-600',
         },
         {
-            title: 'Terminées (page)',
-            value: completedCount,
-            icon: Eye,
+            title: 'Taux de réalisation',
+            value: `${stats.completion_rate}%`,
+            icon: Target,
             cardClass: 'bg-linear-to-br from-emerald-50/70 to-white ring-1 ring-emerald-100',
             iconWrapClass: 'bg-emerald-100',
             textColor: 'text-emerald-600',
         },
         {
-            title: 'Page',
-            value: `${evaluations.current_page}/${evaluations.last_page}`,
-            icon: Search,
+            title: 'Classes couvertes',
+            value: stats.class_coverage,
+            icon: CheckCircle2,
             cardClass: 'bg-linear-to-br from-violet-50/70 to-white ring-1 ring-violet-100',
             iconWrapClass: 'bg-violet-100',
             textColor: 'text-violet-600',
@@ -104,12 +129,12 @@ export default function Index({ evaluations, filters }: Readonly<IndexProps>) {
 
     return (
         <AppLayout>
-            <Head title="Évaluations" />
+            <Head title="Planification des Évaluations" />
 
             <div className="max-w-7xl space-y-6">
                 <div className="flex items-start justify-between">
                     <div>
-                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Évaluations</h1>
+                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Planification des Évaluations</h1>
                         <p className="mt-2 text-lg text-gray-600">Gérez les évaluations par classe et période</p>
                     </div>
                     <div className="flex gap-2">
@@ -124,7 +149,7 @@ export default function Index({ evaluations, filters }: Readonly<IndexProps>) {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                     {statsCards.map((stat) => {
                         const Icon = stat.icon;
                         return (
@@ -144,8 +169,8 @@ export default function Index({ evaluations, filters }: Readonly<IndexProps>) {
                 </div>
 
                 <div className="rounded-2xl bg-linear-to-br from-slate-50/70 to-white ring-1 ring-slate-200 shadow-sm p-4 space-y-3">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <div className="relative md:col-span-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+                        <div className="relative md:col-span-2 xl:col-span-1">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                             <Input
                                 value={search}
@@ -160,6 +185,30 @@ export default function Index({ evaluations, filters }: Readonly<IndexProps>) {
                                 </button>
                             )}
                         </div>
+                        <Select value={classId} onValueChange={setClassId}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Classe" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Toutes les classes</SelectItem>
+                                {classrooms.map((item) => (
+                                    <SelectItem key={item.id} value={item.id}>
+                                        {item.name} ({item.code})
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Select value={evaluationTypeId} onValueChange={setEvaluationTypeId}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Tous les types</SelectItem>
+                                {evaluationTypes.map((item) => (
+                                    <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                         <Select value={status} onValueChange={setStatus}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Statut" />
@@ -175,6 +224,9 @@ export default function Index({ evaluations, filters }: Readonly<IndexProps>) {
                         <Button onClick={onSearch} className="bg-blue-600 hover:bg-blue-700">Filtrer</Button>
                         <Button variant="outline" onClick={clearFilters}>Réinitialiser</Button>
                     </div>
+                    <p className="text-xs text-gray-500">
+                        Total: {stats.total} | Planifiées: {stats.scheduled} | Terminées: {stats.completed}
+                    </p>
                 </div>
 
                 <div className="bg-white rounded-2xl shadow-sm ring-1 ring-gray-100 overflow-hidden">
