@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, CalendarDays, ToggleLeft } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,14 +16,14 @@ export default function Create() {
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
         e.preventDefault();
         setIsSubmitting(true);
         setErrors({});
 
         router.post(route('academic-years.store'), formData, {
             onError: (errors) => {
-                setErrors(errors as Record<string, string>);
+                setErrors(errors);
                 setIsSubmitting(false);
             },
             onSuccess: () => {
@@ -52,11 +52,14 @@ export default function Create() {
                     </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="bg-white rounded-lg border p-6">
-                        <h2 className="text-lg font-semibold text-gray-900 mb-4">Informations de l'année académique</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="md:col-span-2">
+                <form onSubmit={handleSubmit} className="space-y-6 max-w-6xl">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="rounded-2xl bg-linear-to-br from-indigo-50 to-white ring-1 ring-indigo-100 p-6 shadow-sm space-y-4">
+                            <div className="flex items-center gap-2 text-indigo-700">
+                                <CalendarDays className="h-4 w-4" />
+                                <p className="text-sm font-semibold">Période académique</p>
+                            </div>
+                            <div>
                                 <label htmlFor="year" className="block text-sm font-medium text-gray-900 mb-2">
                                     Année *
                                 </label>
@@ -66,7 +69,7 @@ export default function Create() {
                                     value={formData.year}
                                     onChange={(e) => setFormData(prev => ({ ...prev, year: e.target.value }))}
                                     placeholder="Ex: 2025-2026"
-                                    className={errors.year ? 'border-red-500' : ''}
+                                    className={errors.year ? 'border-red-500 bg-white/90' : 'border-slate-200 bg-white/90'}
                                 />
                                 {errors.year && (
                                     <p className="text-red-600 text-sm mt-1">{errors.year}</p>
@@ -82,7 +85,7 @@ export default function Create() {
                                     type="date"
                                     value={formData.start_date}
                                     onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
-                                    className={errors.start_date ? 'border-red-500' : ''}
+                                    className={errors.start_date ? 'border-red-500 bg-white/90' : 'border-slate-200 bg-white/90'}
                                 />
                                 {errors.start_date && (
                                     <p className="text-red-600 text-sm mt-1">{errors.start_date}</p>
@@ -98,26 +101,32 @@ export default function Create() {
                                     type="date"
                                     value={formData.end_date}
                                     onChange={(e) => setFormData(prev => ({ ...prev, end_date: e.target.value }))}
-                                    className={errors.end_date ? 'border-red-500' : ''}
+                                    className={errors.end_date ? 'border-red-500 bg-white/90' : 'border-slate-200 bg-white/90'}
                                 />
                                 {errors.end_date && (
                                     <p className="text-red-600 text-sm mt-1">{errors.end_date}</p>
                                 )}
                             </div>
+                        </div>
 
-                            <div className="md:col-span-2">
+                        <div className="rounded-2xl bg-linear-to-br from-emerald-50 to-white ring-1 ring-emerald-100 p-6 shadow-sm space-y-4">
+                            <div className="flex items-center gap-2 text-emerald-700">
+                                <ToggleLeft className="h-4 w-4" />
+                                <p className="text-sm font-semibold">Activation</p>
+                            </div>
+                            <div>
                                 <label className="flex items-center gap-2 cursor-pointer">
                                     <input
                                         type="checkbox"
                                         checked={formData.active}
                                         onChange={(e) => setFormData(prev => ({ ...prev, active: e.target.checked }))}
-                                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                        className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
                                     />
                                     <span className="text-sm font-medium text-gray-900">
                                         Année active
                                     </span>
                                 </label>
-                                <p className="text-sm text-gray-500 mt-1 ml-6">
+                                <p className="text-sm text-gray-500 mt-3">
                                     Cochez cette case si c'est l'année académique en cours
                                 </p>
                             </div>
@@ -136,6 +145,7 @@ export default function Create() {
                         <Button
                             type="button"
                             variant="outline"
+                            className="border-slate-200"
                             onClick={() => router.get(route('academic-years.index'))}
                         >
                             Annuler
