@@ -1,0 +1,185 @@
+import { Head, router } from '@inertiajs/react';
+import { BookOpen, Eye, Pencil, Plus, Search, Trash2, X, Layers } from 'lucide-react';
+import { useState } from 'react';
+import {
+    AlertDialog, AlertDialogAction, AlertDialogCancel,
+    AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { route } from '@/helpers/route';
+import AppLayout from '@/layouts/app-layout';
+
+interface Template {
+    id: string;
+    name: string;
+    coefficient: number;
+    max_score: number;
+    date: string | null;
+    evaluations_count: number;
+    academic_period: { name: string };
+    evaluation_type: { name: string };
+}
+
+interface Period { id: string; name: string; }
+
+interface Props {
+    templates: { data: Template[]; total: number; current_page: number; last_page: number };
+    periods: Period[];
+    activeYear: { year: string } | null;
+    filters: { search: string; period_id: string };
+}
+
+export default function Index({ templates, periods, activeYear, filters }: Readonly<Props>) {
+    const [search, setSearch]     = useState(filters.search ?? '');
+    const [periodId, setPeriodId] = useState(filters.period_id ?? 'all');
+    const [deleteId, setDeleteId] = useState<string | null>(null);
+
+    const apply = (overrides: Record<string, string> = {}) => {
+        router.get(route('evaluation-templates.index'), {
+            search:    overrides.search    !== undefined ? overrides.search    : search,
+            period_id: (overrides.period_id ?? periodId) === 'all' ? '' : (overrides.period_id ?? periodId),
+        }, { preserveScroll: true, replace: true });
+    };
+
+    const onDelete = (id: string) => {
+        router.delete(route('evaluation-templates.destroy', id), {
+            preserveScroll: true,
+            onSuccess: () => setDeleteId(null),
+        });
+    };
+
+    return (
+        <AppLayout>
+            <Head title="Modèles d'évaluation" />
+
+            <div className="max-w-7xl space-y-6">
+
+                {/* Header */}
+                <div className="flex items-start justify-between">
+                    <div>
+                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Modèles d'évaluation</h1>
+                        <p className="mt-2 text-lg text-gray-600">
+                            {activeYear ? `Année : ${activeYear.year}` : 'Définissez les examens globaux avant de les déployer par classe'}
+                        </p>
+                    </div>
+                    <Button className="gap-2 bg-blue-600 hover:bg-blue-700" onClick={() => router.get(route('evaluation-templates.create'))}>
+                        <Plus className="w-5 h-5" /> Nouveau modèle
+                    </Button>
+                </div>
+
+                {/* Filters */}
+                <div className="rounded-2xl bg-slate-50/70 ring-1 ring-slate-200 shadow-sm p-4 flex flex-wrap gap-3 items-end">
+                    <div className="relative flex-1 min-w-48">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <Input
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && apply()}
+                            placeholder="Rechercher un modèle..."
+                            className="pl-9"
+                        />
+                        {search && (
+                            <button onClick={() => { setSearch(''); apply({ search: '' }); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                <X className="w-4 h-4" />
+                            </button>
+                        )}
+                    </div>
+                    <Select value={periodId} onValueChange={v => { setPeriodId(v); apply({ period_id: v }); }}>
+                        <SelectTrigger className="w-52">
+                            <SelectValue placeholder="Période" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Toutes les périodes</SelectItem>
+                            {periods.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                    <Button onClick={() => apply()} className="bg-blue-600 hover:bg-blue-700">Filtrer</Button>
+                </div>
+
+                {/* Table */}
+                <div className="bg-white rounded-2xl shadow-sm ring-1 ring-gray-100 overflow-hidden">
+                    <Table>
+                        <TableHeader className="bg-gray-50">
+                            <TableRow>
+                                <TableHead>Nom du modèle</TableHead>
+                                <TableHead>Type</TableHead>
+                                <TableHead>Période</TableHead>
+                                <TableHead className="text-center">Coeff.</TableHead>
+                                <TableHead className="text-center">Barème</TableHead>
+                                <TableHead>Date indicative</TableHead>
+                                <TableHead className="text-center">Déployé</TableHead>
+                                <TableHead className="text-center w-32">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {templates.data.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={8} className="py-16 text-center text-gray-400">
+                                        <Layers className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                                        Aucun modèle d'évaluation. Créez-en un pour commencer.
+                                    </TableCell>
+                                </TableRow>
+                            ) : templates.data.map(t => (
+                                <TableRow key={t.id} className="hover:bg-blue-50/30 transition-colors">
+                                    <TableCell className="font-semibold text-gray-900">{t.name}</TableCell>
+                                    <TableCell className="text-gray-600">{t.evaluation_type?.name}</TableCell>
+                                    <TableCell className="text-gray-600">{t.academic_period?.name}</TableCell>
+                                    <TableCell className="text-center font-mono">{Number(t.coefficient).toFixed(2)}</TableCell>
+                                    <TableCell className="text-center font-mono">/{Number(t.max_score).toFixed(0)}</TableCell>
+                                    <TableCell className="text-gray-500 text-sm">
+                                        {t.date ? new Date(t.date).toLocaleDateString('fr-FR') : '—'}
+                                    </TableCell>
+                                    <TableCell className="text-center">
+                                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                                            t.evaluations_count > 0
+                                                ? 'bg-emerald-100 text-emerald-700'
+                                                : 'bg-gray-100 text-gray-500'
+                                        }`}>
+                                            <Layers className="w-3 h-3" />
+                                            {t.evaluations_count} classe{t.evaluations_count > 1 ? 's' : ''}
+                                        </span>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex justify-center gap-1.5">
+                                            <Button variant="outline" size="sm" onClick={() => router.get(route('evaluation-templates.show', t.id))}>
+                                                <Eye className="w-4 h-4" />
+                                            </Button>
+                                            <Button variant="outline" size="sm" onClick={() => router.get(route('evaluation-templates.edit', t.id))}>
+                                                <Pencil className="w-4 h-4" />
+                                            </Button>
+                                            <Button variant="outline" size="sm" className="border-red-200 text-red-500 hover:bg-red-50" onClick={() => setDeleteId(t.id)}>
+                                                <Trash2 className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
+
+                <p className="text-sm text-gray-400 text-right">{templates.total} modèle(s) au total</p>
+            </div>
+
+            <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Supprimer ce modèle ?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Toutes les évaluations et notes associées seront supprimées. Action irréversible.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="flex justify-end gap-2">
+                        <AlertDialogCancel>Annuler</AlertDialogCancel>
+                        <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={() => deleteId && onDelete(deleteId)}>
+                            Supprimer
+                        </AlertDialogAction>
+                    </div>
+                </AlertDialogContent>
+            </AlertDialog>
+        </AppLayout>
+    );
+}
