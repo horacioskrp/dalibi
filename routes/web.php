@@ -12,7 +12,9 @@ use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\SituationController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\EvaluationController;
+use App\Http\Controllers\EvaluationTemplateController;
 use App\Http\Controllers\EvaluationTypeController;
+use App\Http\Controllers\MarkController;
 use App\Http\Controllers\FeeCategorieController;
 use App\Http\Controllers\FeeStructureController;
 use App\Http\Controllers\LevelController;
@@ -23,6 +25,8 @@ use App\Http\Controllers\SchoolingController;
 use App\Http\Controllers\ScholarshipController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\StudentScholarshipController;
+use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\GradeController;
 use App\Http\Controllers\SubjectAssignmentController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\UserController;
@@ -58,11 +62,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('levels', LevelController::class);
     Route::resource('subjects', SubjectController::class);
     Route::resource('evaluation-types', EvaluationTypeController::class);
-    Route::resource('evaluations', EvaluationController::class);
-    Route::get('evaluations/bulk/schedule', [EvaluationController::class, 'bulkScheduleForm'])
-        ->name('evaluations.bulk-schedule');
-    Route::post('evaluations/bulk/store', [EvaluationController::class, 'bulkStore'])
-        ->name('evaluations.bulk-store');
+
+    // Modèles d'évaluation (global)
+    Route::resource('evaluation-templates', EvaluationTemplateController::class);
+    Route::post('evaluation-templates/{evaluationTemplate}/generate', [EvaluationTemplateController::class, 'generate'])
+        ->name('evaluation-templates.generate');
+
+    // Évaluations par classe/matière
+    Route::resource('evaluations', EvaluationController::class)->only(['index', 'show', 'destroy']);
+    Route::patch('evaluations/{evaluation}/status', [EvaluationController::class, 'updateStatus'])
+        ->name('evaluations.update-status');
+
+    // Saisie des notes
+    Route::get('evaluations/{evaluation}/marks', [MarkController::class, 'index'])->name('marks.index');
+    Route::post('evaluations/{evaluation}/marks', [MarkController::class, 'store'])->name('marks.store');
     Route::resource('academic-years', AcademicYearController::class);
     Route::resource('academic-periods', AcademicPeriodController::class);
     Route::resource('schoolings', SchoolingController::class);
@@ -81,6 +94,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('accounting/transactions', [TransactionController::class, 'index'])->name('accounting.transactions');
     Route::get('accounting/situation', [SituationController::class, 'index'])->name('accounting.situation');
     Route::get('accounting/situation/export', [SituationController::class, 'export'])->name('accounting.situation.export');
+    Route::post('accounting/expenses', [ExpenseController::class, 'store'])->name('expenses.store');
+    Route::delete('accounting/expenses/{transaction}', [ExpenseController::class, 'destroy'])->name('expenses.destroy');
     Route::get('cash-accounts', [CashAccountController::class, 'index'])->name('cash-accounts.index');
     Route::post('cash-accounts', [CashAccountController::class, 'store'])->name('cash-accounts.store');
     Route::put('cash-accounts/{cashAccount}', [CashAccountController::class, 'update'])->name('cash-accounts.update');
@@ -90,6 +105,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('enrollments/{enrollment}/payments', [InvoiceController::class, 'storePayment'])->name('enrollments.payments.store');
     Route::get('payments/{payment}/receipt', [InvoiceController::class, 'receipt'])->name('payments.receipt');
     Route::resource('subject-assignments', SubjectAssignmentController::class);
+
+    // Grades Routes
+    Route::get('grades', [GradeController::class, 'index'])->name('grades.index');
+    Route::post('grades', [GradeController::class, 'store'])->name('grades.store');
+    Route::get('grades/student/{student}', [GradeController::class, 'student'])->name('grades.student');
 
     // Administration Routes
     Route::resource('roles', RoleController::class);
