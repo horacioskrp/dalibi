@@ -68,4 +68,39 @@ class ClassSubject extends Model
     {
         return $this->hasMany(Grade::class);
     }
+
+    /**
+     * Get all evaluations for this class-subject combination.
+     */
+    public function evaluations(): HasMany
+    {
+        return $this->hasMany(Evaluation::class);
+    }
+
+    /**
+     * Calcule la moyenne d'un élève pour cette matière sur une période donnée.
+     */
+    public function studentAverage(string $studentId, string $academicPeriodId): ?float
+    {
+        $evaluations = $this->evaluations()
+            ->whereHas('template', fn ($q) => $q->where('academic_period_id', $academicPeriodId))
+            ->with(['template:id,coefficient', 'marks' => fn ($q) => $q->where('student_id', $studentId)])
+            ->get();
+
+        $totalCoeff  = 0;
+        $weightedSum = 0;
+        $hasAny      = false;
+
+        foreach ($evaluations as $eval) {
+            $mark = $eval->marks->first();
+            if ($mark && ! $mark->absent && $mark->score !== null) {
+                $coeff        = (float) $eval->template->coefficient;
+                $totalCoeff  += $coeff;
+                $weightedSum += (float) $mark->score * $coeff;
+                $hasAny       = true;
+            }
+        }
+
+        return ($hasAny && $totalCoeff > 0) ? round($weightedSum / $totalCoeff, 2) : null;
+    }
 }

@@ -2,16 +2,7 @@
 
 /**
  * Projet : Système de Gestion Scolaire (SIGE) - Togo
- * Description : Gestion des élèves, des notes et des bulletins.
- * * Copyright (c) 2026 Kudayah Sassou Horacio Herve.
- * * Ce programme est un logiciel libre : vous pouvez le redistribuer et/ou le modifier 
- * selon les termes de la Licence Publique Générale GNU (GPL v3) telle que publiée 
- * par la Free Software Foundation.
- * * Ce programme est distribué dans l'espoir qu'il sera utile, mais SANS AUCUNE GARANTIE ; 
- * sans même la garantie implicite de COMMERCIALISATION ou d'ADÉQUATION À UN BUT PARTICULIER. 
- * Consultez la Licence Publique Générale GNU pour plus de détails.
- * * Vous devriez avoir reçu une copie de la Licence Publique Générale GNU 
- * avec ce programme. Sinon, voir <https://www.gnu.org/licenses/>.
+ * Copyright (c) 2026 Kudayah Sassou Horacio Herve. GPL v3.
  */
 
 namespace App\Models;
@@ -20,48 +11,45 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Evaluation extends Model
 {
     use HasFactory, HasUuids;
 
     protected $fillable = [
-        'academic_period_id',
-        'class_id',
-        'evaluation_type_id',
-        'name',
-        'description',
+        'evaluation_template_id',
+        'class_subject_id',
         'date',
-        'coefficient',
         'status',
     ];
 
     protected $casts = [
         'date' => 'date',
-        'coefficient' => 'decimal:2',
     ];
 
-    /**
-     * Get the academic period for this evaluation.
-     */
-    public function academicPeriod(): BelongsTo
+    public function template(): BelongsTo
     {
-        return $this->belongsTo(AcademicPeriod::class, 'academic_period_id');
+        return $this->belongsTo(EvaluationTemplate::class, 'evaluation_template_id');
+    }
+
+    public function classSubject(): BelongsTo
+    {
+        return $this->belongsTo(ClassSubject::class);
+    }
+
+    public function marks(): HasMany
+    {
+        return $this->hasMany(Mark::class);
     }
 
     /**
-     * Get the class for this evaluation.
+     * Moyenne de cet examen (pour stats).
      */
-    public function classroom(): BelongsTo
+    public function averageScore(): ?float
     {
-        return $this->belongsTo(Classroom::class, 'class_id');
-    }
+        $scores = $this->marks()->whereNotNull('score')->where('absent', false)->pluck('score');
 
-    /**
-     * Get the evaluation type.
-     */
-    public function evaluationType(): BelongsTo
-    {
-        return $this->belongsTo(EvaluationType::class, 'evaluation_type_id');
+        return $scores->count() > 0 ? round($scores->avg(), 2) : null;
     }
 }

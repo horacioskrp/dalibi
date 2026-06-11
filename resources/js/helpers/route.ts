@@ -216,6 +216,30 @@ export function route(name: string, params?: any): string {
         'cash-accounts.store':   '/cash-accounts',
         'cash-accounts.update':  `/cash-accounts/${params}`,
         'cash-accounts.destroy': `/cash-accounts/${params}`,
+
+        // Evaluation templates routes
+        'evaluation-templates.index':    '/evaluation-templates',
+        'evaluation-templates.create':   '/evaluation-templates/create',
+        'evaluation-templates.store':    '/evaluation-templates',
+        'evaluation-templates.show':     `/evaluation-templates/${params}`,
+        'evaluation-templates.edit':     `/evaluation-templates/${params}/edit`,
+        'evaluation-templates.update':   `/evaluation-templates/${params}`,
+        'evaluation-templates.destroy':  `/evaluation-templates/${params}`,
+        'evaluation-templates.generate': `/evaluation-templates/${params}/generate`,
+
+        // Evaluations routes (refactorisées)
+        'evaluations.index':         '/evaluations',
+        'evaluations.show':          `/evaluations/${params}`,
+        'evaluations.destroy':       `/evaluations/${params}`,
+        'evaluations.update-status': `/evaluations/${params}/status`,
+
+        // Marks routes
+        'marks.index': `/evaluations/${params}/marks`,
+        'marks.store': `/evaluations/${params}/marks`,
+
+        // Expenses routes
+        'expenses.store':   '/accounting/expenses',
+        'expenses.destroy': `/accounting/expenses/${params}`,
     };
 
     try {

@@ -1,4 +1,4 @@
-import { BookOpen, Calendar, Clock, ClipboardList, GraduationCap, LayoutGrid, Layers, Settings, Tag, Users, Shield, Lock, Wallet, Percent, DollarSign, UserCircle, TrendingUp, ArrowLeftRight, PieChart } from 'lucide-react';
+import { BookOpen, Calendar, Clock, ClipboardList, GraduationCap, LayoutGrid, Layers, Settings, Tag, Users, Shield, Lock, Wallet, Percent, DollarSign, UserCircle, TrendingUp, ArrowLeftRight, PieChart, FileText, ListChecks, NotebookPen } from 'lucide-react';
 import { route } from '@/helpers/route';
 import type { NavItem } from '@/types';
 
@@ -125,14 +125,19 @@ export const mainNavItems: NavItem[] = [
         ],
     },
     {
-        title: 'Examen',
+        title: 'Examens',
         href: '#',
-        icon: ClipboardList,
+        icon: NotebookPen,
         items: [
             {
-                title: 'Planification',
+                title: 'Modèles d\'évaluation',
+                href: route('evaluation-templates.index'),
+                icon: FileText,
+            },
+            {
+                title: 'Évaluations par classe',
                 href: route('evaluations.index'),
-                icon: ClipboardList,
+                icon: ListChecks,
             },
         ],
     },

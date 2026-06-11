@@ -3,10 +3,15 @@ import {
     ArrowLeftRight, TrendingUp, TrendingDown,
     ChevronLeft, ChevronRight, XCircle,
     Banknote, Smartphone, Building2, ArrowUpRight, ArrowDownRight,
-    CalendarDays, SlidersHorizontal,
+    CalendarDays, SlidersHorizontal, Plus, Trash2, X, AlertCircle,
 } from 'lucide-react';
 import { useState } from 'react';
+import {
+    AlertDialog, AlertDialogAction, AlertDialogCancel,
+    AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { route } from '@/helpers/route';
 import AppLayout from '@/layouts/app-layout';
 
@@ -56,9 +61,9 @@ interface Props {
 const fmt = (n: number) =>
     new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0 }).format(n ?? 0) + ' F';
 
-const today      = () => new Date().toISOString().slice(0, 10);
-const firstOfMonth = () => { const d = new Date(); d.setDate(1); return d.toISOString().slice(0, 10); };
-const firstOfYear  = () => { const d = new Date(); d.setMonth(0, 1); return d.toISOString().slice(0, 10); };
+const todayStr      = () => new Date().toISOString().slice(0, 10);
+const firstOfMonth  = () => { const d = new Date(); d.setDate(1); return d.toISOString().slice(0, 10); };
+const firstOfYear   = () => { const d = new Date(); d.setMonth(0, 1); return d.toISOString().slice(0, 10); };
 
 const txConfig: Record<TxType, { label: string; bg: string; text: string; icon: React.ReactNode }> = {
     INCOME:  { label: 'Entrée', bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-700 dark:text-green-400', icon: <ArrowUpRight className="w-3.5 h-3.5" /> },
@@ -78,8 +83,21 @@ const cashTypeIcon: Record<CashType, React.ReactNode> = {
     BANK:         <Building2 className="w-3.5 h-3.5" />,
 };
 
+const EXPENSE_CATEGORIES = [
+    { label: 'Loyer', emoji: '🏠' },
+    { label: 'Électricité', emoji: '⚡' },
+    { label: 'Eau', emoji: '💧' },
+    { label: 'Fournitures', emoji: '📦' },
+    { label: 'Personnel', emoji: '👤' },
+    { label: 'Entretien', emoji: '🔧' },
+    { label: 'Transport', emoji: '🚗' },
+    { label: 'Communication', emoji: '📞' },
+    { label: 'Santé', emoji: '💊' },
+    { label: 'Alimentation', emoji: '🍽️' },
+];
+
 /* ------------------------------------------------------------------ */
-/* StatCard — même design que les cards élèves                         */
+/* StatCard                                                             */
 /* ------------------------------------------------------------------ */
 function StatCard({ title, value, sub, icon: Icon, color }: {
     title: string; value: string; sub?: string;
@@ -107,7 +125,182 @@ function StatCard({ title, value, sub, icon: Icon, color }: {
 }
 
 /* ------------------------------------------------------------------ */
-/* Composant                                                           */
+/* Formulaire de dépense                                               */
+/* ------------------------------------------------------------------ */
+function ExpenseForm({
+    cashAccounts,
+    onClose,
+}: {
+    cashAccounts: { id: string; name: string; type: CashType }[];
+    onClose: () => void;
+}) {
+    const [description, setDescription]   = useState('');
+    const [amount, setAmount]             = useState('');
+    const [cashAccountId, setCashAccountId] = useState(cashAccounts[0]?.id ?? '');
+    const [date, setDate]                 = useState(todayStr());
+    const [submitting, setSubmitting]     = useState(false);
+    const [errors, setErrors]             = useState<Record<string, string>>({});
+
+    const applyCategory = (cat: { label: string; emoji: string }) => {
+        setDescription(prev => {
+            const base = prev.trim();
+            if (!base) return cat.label + ' - ';
+            // Replace existing category prefix or prepend
+            const alreadyHas = EXPENSE_CATEGORIES.some(c => base.startsWith(c.label));
+            if (alreadyHas) return cat.label + base.slice(base.indexOf(' - '));
+            return cat.label + ' - ' + base;
+        });
+    };
+
+    const handleSubmit = () => {
+        const errs: Record<string, string> = {};
+        if (!description.trim()) errs.description = 'La description est obligatoire.';
+        if (!amount || Number(amount) <= 0) errs.amount = 'Le montant doit être supérieur à 0.';
+        if (!cashAccountId) errs.cash_account_id = 'Sélectionnez une caisse.';
+        if (!date) errs.transaction_date = 'La date est obligatoire.';
+
+        if (Object.keys(errs).length > 0) { setErrors(errs); return; }
+        setErrors({});
+        setSubmitting(true);
+
+        router.post(
+            route('expenses.store'),
+            { description: description.trim(), amount: Number(amount), cash_account_id: cashAccountId, transaction_date: date },
+            {
+                preserveScroll: true,
+                onSuccess: () => { setSubmitting(false); onClose(); },
+                onError:   (e) => { setSubmitting(false); setErrors(e as Record<string, string>); },
+            },
+        );
+    };
+
+    const sel = "w-full h-9 px-3 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-card dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-400";
+
+    return (
+        <div className="bg-orange-50/60 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-900/40 rounded-xl p-5 space-y-4">
+
+            {/* Header */}
+            <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-orange-800 dark:text-orange-300 flex items-center gap-2">
+                    <TrendingDown className="w-4 h-4" />
+                    Enregistrer une dépense
+                </h3>
+                <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                    <X className="w-4 h-4" />
+                </button>
+            </div>
+
+            {/* Catégories rapides */}
+            <div className="space-y-1.5">
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Catégorie rapide</p>
+                <div className="flex flex-wrap gap-1.5">
+                    {EXPENSE_CATEGORIES.map(cat => (
+                        <button
+                            key={cat.label}
+                            type="button"
+                            onClick={() => applyCategory(cat)}
+                            className="text-xs px-2.5 py-1 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:border-orange-400 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+                        >
+                            {cat.emoji} {cat.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Champs principaux */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+
+                {/* Description */}
+                <div className="sm:col-span-2 space-y-1">
+                    <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Description *</label>
+                    <Input
+                        value={description}
+                        onChange={e => setDescription(e.target.value)}
+                        placeholder="Ex: Électricité - Facture octobre"
+                        className={errors.description ? 'border-red-400' : ''}
+                    />
+                    {errors.description && (
+                        <p className="text-xs text-red-500 flex items-center gap-1">
+                            <AlertCircle className="w-3 h-3" />{errors.description}
+                        </p>
+                    )}
+                </div>
+
+                {/* Montant */}
+                <div className="space-y-1">
+                    <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Montant (F) *</label>
+                    <Input
+                        type="number"
+                        min={1}
+                        value={amount}
+                        onChange={e => setAmount(e.target.value)}
+                        placeholder="Ex: 25000"
+                        className={errors.amount ? 'border-red-400' : ''}
+                    />
+                    {errors.amount && (
+                        <p className="text-xs text-red-500 flex items-center gap-1">
+                            <AlertCircle className="w-3 h-3" />{errors.amount}
+                        </p>
+                    )}
+                </div>
+
+                {/* Date */}
+                <div className="space-y-1">
+                    <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Date *</label>
+                    <input
+                        type="date"
+                        value={date}
+                        onChange={e => setDate(e.target.value)}
+                        className={`${sel} ${errors.transaction_date ? 'border-red-400' : ''}`}
+                    />
+                    {errors.transaction_date && (
+                        <p className="text-xs text-red-500 flex items-center gap-1">
+                            <AlertCircle className="w-3 h-3" />{errors.transaction_date}
+                        </p>
+                    )}
+                </div>
+
+                {/* Caisse */}
+                <div className="sm:col-span-2 space-y-1">
+                    <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Caisse *</label>
+                    <select
+                        value={cashAccountId}
+                        onChange={e => setCashAccountId(e.target.value)}
+                        className={`${sel} ${errors.cash_account_id ? 'border-red-400' : ''}`}
+                    >
+                        <option value="">— Sélectionner —</option>
+                        {cashAccounts.map(ca => (
+                            <option key={ca.id} value={ca.id}>{ca.name}</option>
+                        ))}
+                    </select>
+                    {errors.cash_account_id && (
+                        <p className="text-xs text-red-500 flex items-center gap-1">
+                            <AlertCircle className="w-3 h-3" />{errors.cash_account_id}
+                        </p>
+                    )}
+                </div>
+
+                {/* Actions */}
+                <div className="sm:col-span-2 flex items-end gap-2">
+                    <Button
+                        className="bg-orange-600 hover:bg-orange-700 text-white gap-2"
+                        onClick={handleSubmit}
+                        disabled={submitting}
+                    >
+                        <TrendingDown className="w-4 h-4" />
+                        {submitting ? 'Enregistrement...' : 'Enregistrer la dépense'}
+                    </Button>
+                    <Button variant="outline" onClick={onClose} disabled={submitting}>
+                        Annuler
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+/* ------------------------------------------------------------------ */
+/* Composant principal                                                  */
 /* ------------------------------------------------------------------ */
 const PER_PAGE_OPTIONS = [10, 25, 50, 100];
 
@@ -118,6 +311,8 @@ export default function Transactions({ transactions, cashAccounts, cashSummary, 
     const [cashAccountId, setCashAccountId] = useState(filters.cash_account_id ?? '');
     const [dateFrom,      setDateFrom]      = useState(filters.date_from ?? '');
     const [dateTo,        setDateTo]        = useState(filters.date_to ?? '');
+    const [showExpenseForm, setShowExpenseForm] = useState(false);
+    const [deletingId, setDeletingId]       = useState<string | null>(null);
 
     const push = (overrides: Record<string, string | undefined> = {}) => {
         const params = {
@@ -157,6 +352,14 @@ export default function Transactions({ transactions, cashAccounts, cashSummary, 
         push({ dateFrom: from, dateTo: to });
     };
 
+    const onDeleteExpense = (id: string) => {
+        router.delete(route('expenses.destroy', id), {
+            preserveScroll: true,
+            onSuccess: () => setDeletingId(null),
+            onError:   () => setDeletingId(null),
+        });
+    };
+
     const activeFilters = [
         type          && { key: 'type',          label: type === 'INCOME' ? 'Entrées' : 'Sorties',                       clear: () => { setType('');          push({ type: '' }); } },
         refType       && { key: 'refType',        label: refConfig[refType as ReferenceType]?.label ?? refType,            clear: () => { setRefType('');       push({ refType: '' }); } },
@@ -174,7 +377,7 @@ export default function Transactions({ transactions, cashAccounts, cashSummary, 
 
             <div className="space-y-5">
 
-                {/* ── En-tête + Stats sur une ligne ── */}
+                {/* ── En-tête ── */}
                 <div className="flex flex-col gap-4">
 
                     <div className="flex items-center justify-between flex-wrap gap-3">
@@ -187,7 +390,22 @@ export default function Transactions({ transactions, cashAccounts, cashSummary, 
                                 Historique de tous les mouvements financiers
                             </p>
                         </div>
+                        <Button
+                            className={`gap-2 transition-colors ${showExpenseForm ? 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200' : 'bg-orange-600 hover:bg-orange-700 text-white'}`}
+                            onClick={() => setShowExpenseForm(v => !v)}
+                        >
+                            {showExpenseForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                            {showExpenseForm ? 'Fermer' : 'Nouvelle dépense'}
+                        </Button>
                     </div>
+
+                    {/* ── Formulaire dépense (collapsible) ── */}
+                    {showExpenseForm && (
+                        <ExpenseForm
+                            cashAccounts={cashAccounts}
+                            onClose={() => setShowExpenseForm(false)}
+                        />
+                    )}
 
                     {/* ── Cards stats ── */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -228,7 +446,7 @@ export default function Transactions({ transactions, cashAccounts, cashSummary, 
                                 <div key={ca.id} className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700">
                                     <span className="text-gray-400">{cashTypeIcon[ca.type]}</span>
                                     <span className="text-sm text-gray-600 dark:text-gray-300">{ca.name}</span>
-                                    <span className="text-sm font-bold text-gray-900 dark:text-white">{fmt(ca.balance)}</span>
+                                    <span className={`text-sm font-bold ${ca.balance < 0 ? 'text-red-600' : 'text-gray-900 dark:text-white'}`}>{fmt(ca.balance)}</span>
                                 </div>
                             ))}
                         </div>
@@ -251,7 +469,6 @@ export default function Transactions({ transactions, cashAccounts, cashSummary, 
 
                     <div className="p-4 space-y-3">
 
-                        {/* Ligne 1 : Sélecteurs */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
 
                             <div className="flex flex-col gap-1">
@@ -284,7 +501,6 @@ export default function Transactions({ transactions, cashAccounts, cashSummary, 
                                 </select>
                             </div>
 
-                            {/* Période personnalisée */}
                             <div className="flex flex-col gap-1">
                                 <label className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1">
                                     <CalendarDays className="w-3 h-3" /> Période
@@ -309,13 +525,12 @@ export default function Transactions({ transactions, cashAccounts, cashSummary, 
                             </div>
                         </div>
 
-                        {/* Ligne 2 : Raccourcis dates */}
                         <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">Rapide :</span>
                             {[
-                                { label: "Aujourd'hui",  from: today(),        to: today() },
-                                { label: 'Ce mois',      from: firstOfMonth(), to: today() },
-                                { label: 'Cette année',  from: firstOfYear(),  to: today() },
+                                { label: "Aujourd'hui",  from: todayStr(),       to: todayStr() },
+                                { label: 'Ce mois',      from: firstOfMonth(),   to: todayStr() },
+                                { label: 'Cette année',  from: firstOfYear(),    to: todayStr() },
                             ].map(q => (
                                 <button
                                     key={q.label}
@@ -331,7 +546,6 @@ export default function Transactions({ transactions, cashAccounts, cashSummary, 
                             ))}
                         </div>
 
-                        {/* Ligne 3 : Filtres actifs sous forme de chips */}
                         {activeFilters.length > 0 && (
                             <div className="flex items-center gap-2 flex-wrap pt-1 border-t border-gray-100 dark:border-gray-700">
                                 <span className="text-xs text-gray-400 shrink-0">Actifs :</span>
@@ -391,14 +605,16 @@ export default function Transactions({ transactions, cashAccounts, cashSummary, 
                                         <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide w-36">Caisse</th>
                                         <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide w-36">Montant</th>
                                         <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide w-28">Date</th>
+                                        <th className="px-4 py-3 w-12"></th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50 dark:divide-gray-700/50">
                                     {transactions.data.map(tx => {
                                         const tc  = txConfig[tx.type];
                                         const ref = refConfig[tx.reference_type];
+                                        const isManualExpense = tx.reference_type === 'EXPENSE';
                                         return (
-                                            <tr key={tx.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-700/20 transition-colors">
+                                            <tr key={tx.id} className={`hover:bg-gray-50/50 dark:hover:bg-gray-700/20 transition-colors ${isManualExpense ? 'bg-orange-50/20 dark:bg-orange-900/5' : ''}`}>
                                                 <td className="px-5 py-3">
                                                     <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${tc.bg} ${tc.text}`}>
                                                         {tc.icon}{tc.label}
@@ -433,6 +649,17 @@ export default function Transactions({ transactions, cashAccounts, cashSummary, 
                                                 <td className="px-4 py-3 text-right text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
                                                     {new Date(tx.transaction_date).toLocaleDateString('fr-FR')}
                                                 </td>
+                                                <td className="px-4 py-3">
+                                                    {isManualExpense && (
+                                                        <button
+                                                            onClick={() => setDeletingId(tx.id)}
+                                                            className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                                            title="Supprimer cette dépense"
+                                                        >
+                                                            <Trash2 className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    )}
+                                                </td>
                                             </tr>
                                         );
                                     })}
@@ -441,42 +668,34 @@ export default function Transactions({ transactions, cashAccounts, cashSummary, 
                         </div>
                     )}
 
-                    {/* ── Pied de tableau : pagination ── */}
+                    {/* Pied de tableau : pagination */}
                     <div className="px-5 py-3.5 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between gap-4 flex-wrap">
 
-                        {/* Gauche : infos */}
                         {transactions.total > 0 && (
                             <p className="text-xs text-gray-400 dark:text-gray-500">
                                 {transactions.from}–{transactions.to} sur {transactions.total}
                             </p>
                         )}
 
-                        {/* Droite : navigation pages */}
                         {transactions.last_page > 1 && (
                             <div className="flex items-center gap-1.5">
-                                {/* Première page */}
                                 <Button size="sm" variant="outline" className="h-8 w-8 p-0"
                                     disabled={transactions.current_page === 1}
-                                    onClick={() => goToPage(1)}
-                                    title="Première page">
+                                    onClick={() => goToPage(1)} title="Première page">
                                     <ChevronLeft className="w-3.5 h-3.5 -mr-1" />
                                     <ChevronLeft className="w-3.5 h-3.5" />
                                 </Button>
-
-                                {/* Page précédente */}
                                 <Button size="sm" variant="outline" className="h-8 w-8 p-0"
                                     disabled={transactions.current_page === 1}
                                     onClick={() => goToPage(transactions.current_page - 1)}>
                                     <ChevronLeft className="w-4 h-4" />
                                 </Button>
-
-                                {/* Pages numérotées (fenêtre glissante de 5) */}
                                 {(() => {
                                     const total  = transactions.last_page;
                                     const cur    = transactions.current_page;
-                                    const window = 5;
-                                    const start  = Math.max(1, Math.min(cur - Math.floor(window / 2), total - window + 1));
-                                    const end    = Math.min(total, start + window - 1);
+                                    const win    = 5;
+                                    const start  = Math.max(1, Math.min(cur - Math.floor(win / 2), total - win + 1));
+                                    const end    = Math.min(total, start + win - 1);
                                     return Array.from({ length: end - start + 1 }, (_, i) => start + i).map(p => (
                                         <Button key={p} size="sm"
                                             variant={p === cur ? 'default' : 'outline'}
@@ -486,19 +705,14 @@ export default function Transactions({ transactions, cashAccounts, cashSummary, 
                                         </Button>
                                     ));
                                 })()}
-
-                                {/* Page suivante */}
                                 <Button size="sm" variant="outline" className="h-8 w-8 p-0"
                                     disabled={transactions.current_page === transactions.last_page}
                                     onClick={() => goToPage(transactions.current_page + 1)}>
                                     <ChevronRight className="w-4 h-4" />
                                 </Button>
-
-                                {/* Dernière page */}
                                 <Button size="sm" variant="outline" className="h-8 w-8 p-0"
                                     disabled={transactions.current_page === transactions.last_page}
-                                    onClick={() => goToPage(transactions.last_page)}
-                                    title="Dernière page">
+                                    onClick={() => goToPage(transactions.last_page)} title="Dernière page">
                                     <ChevronRight className="w-3.5 h-3.5 -mr-1" />
                                     <ChevronRight className="w-3.5 h-3.5" />
                                 </Button>
@@ -508,6 +722,27 @@ export default function Transactions({ transactions, cashAccounts, cashSummary, 
                 </div>
 
             </div>
+
+            {/* Confirmation suppression */}
+            <AlertDialog open={!!deletingId} onOpenChange={() => setDeletingId(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Supprimer cette dépense ?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Le montant sera recrédité sur la caisse concernée. Cette action est irréversible.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="flex justify-end gap-2">
+                        <AlertDialogCancel>Annuler</AlertDialogCancel>
+                        <AlertDialogAction
+                            className="bg-red-600 hover:bg-red-700"
+                            onClick={() => deletingId && onDeleteExpense(deletingId)}
+                        >
+                            Supprimer
+                        </AlertDialogAction>
+                    </div>
+                </AlertDialogContent>
+            </AlertDialog>
         </AppLayout>
     );
 }
