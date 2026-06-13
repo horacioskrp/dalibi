@@ -2,27 +2,27 @@
 
 namespace App\Http\Requests;
 
+use App\Constants\Roles;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreStudentScholarshipRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR, Roles::SECRETARIAT]);
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
         return [
-            'student_id' => ['required', 'uuid', 'exists:students,id'],
+            'student_id' => [
+                'required', 'uuid', 'exists:students,id',
+                Rule::unique('student_scholarships')->where(fn ($q) => $q
+                    ->where('scholarship_id', $this->scholarship_id)
+                    ->where('academic_year_id', $this->academic_year_id)
+                ),
+            ],
             'scholarship_id' => ['required', 'uuid', 'exists:scholarships,id'],
             'academic_year_id' => ['required', 'uuid', 'exists:academic_years,id'],
             'number_of_year' => ['nullable', 'integer', 'min:1'],
@@ -32,17 +32,13 @@ class StoreStudentScholarshipRequest extends FormRequest
         ];
     }
 
-    /**
-     * Get custom messages for validator errors.
-     *
-     * @return array<string, string>
-     */
     public function messages(): array
     {
         return [
             'student_id.required' => 'L\'élève est requis.',
             'student_id.uuid' => 'L\'élève doit être un UUID valide.',
             'student_id.exists' => 'L\'élève sélectionné n\'existe pas.',
+            'student_id.unique' => 'Cet élève bénéficie déjà de cette bourse pour cette année académique.',
             'scholarship_id.required' => 'La bourse d\'études est requise.',
             'scholarship_id.uuid' => 'La bourse d\'études doit être un UUID valide.',
             'scholarship_id.exists' => 'La bourse d\'études sélectionnée n\'existe pas.',

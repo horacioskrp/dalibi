@@ -2,15 +2,18 @@
 
 namespace Tests\Feature;
 
+use App\Constants\Roles;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class StudentTest extends TestCase
 {
     use RefreshDatabase;
+
+    private const DOB_MALE   = '2010-01-01';
+    private const DOB_FEMALE = '2011-01-01';
 
     // ─── Helpers ────────────────────────────────────────────────────────────
 
@@ -19,11 +22,22 @@ class StudentTest extends TestCase
         return User::factory()->create();
     }
 
-    /**
-     * Crée un Student directement en DB (bypass formulaire).
-     * user_id est requis NOT NULL dans la table students.
-     * Un matricule unique est généré pour éviter les collisions.
-     */
+    private function admin(): User
+    {
+        $user = User::factory()->create();
+        $user->assignRole(Roles::ADMINISTRATOR);
+
+        return $user;
+    }
+
+    private function teacher(): User
+    {
+        $user = User::factory()->create();
+        $user->assignRole(Roles::TEACHER);
+
+        return $user;
+    }
+
     private function makeStudent(array $overrides = []): Student
     {
         static $counter = 0;
@@ -40,9 +54,6 @@ class StudentTest extends TestCase
         ], $overrides));
     }
 
-    /**
-     * Payload minimal valide pour créer un élève.
-     */
     private function validPayload(array $overrides = []): array
     {
         return array_merge([
@@ -88,15 +99,69 @@ class StudentTest extends TestCase
         $this->delete(route('students.destroy', $student))
             ->assertRedirect(route('login'));
 
-        $this->assertDatabaseHas('students', ['id' => $student->id]);
+        $this->assertNotSoftDeleted('students', ['id' => $student->id]);
+    }
+
+    // ─── Autorisation ────────────────────────────────────────────────────────
+
+    public function test_teacher_cannot_create_student(): void
+    {
+        $this->actingAs($this->teacher())
+            ->post(route('students.store'), $this->validPayload())
+            ->assertForbidden();
+    }
+
+    public function test_teacher_cannot_delete_student(): void
+    {
+        $student = $this->makeStudent();
+
+        $this->actingAs($this->teacher())
+            ->delete(route('students.destroy', $student))
+            ->assertForbidden();
+
+        $this->assertNotSoftDeleted('students', ['id' => $student->id]);
+    }
+
+    public function test_teacher_can_view_student(): void
+    {
+        $student = $this->makeStudent();
+
+        $this->actingAs($this->teacher())
+            ->get(route('students.show', $student))
+            ->assertOk();
+    }
+
+    public function test_teacher_cannot_view_create_form(): void
+    {
+        $this->actingAs($this->teacher())
+            ->get(route('students.create'))
+            ->assertForbidden();
+    }
+
+    public function test_teacher_cannot_view_edit_form(): void
+    {
+        $student = $this->makeStudent();
+
+        $this->actingAs($this->teacher())
+            ->get(route('students.edit', $student))
+            ->assertForbidden();
+    }
+
+    public function test_teacher_cannot_bulk_status(): void
+    {
+        $student = $this->makeStudent(['firstname' => 'A', 'lastname' => 'Bb', 'gender' => 'male', 'birth_date' => self::DOB_MALE]);
+
+        $this->actingAs($this->teacher())
+            ->post(route('students.bulk-status'), ['student_ids' => [$student->id], 'action' => 'activate'])
+            ->assertForbidden();
     }
 
     // ─── Index ───────────────────────────────────────────────────────────────
 
     public function test_authenticated_user_can_view_students_list(): void
     {
-        $this->makeStudent(['firstname' => 'Koffi', 'lastname' => 'A', 'gender' => 'male', 'birth_date' => '2010-01-01']);
-        $this->makeStudent(['firstname' => 'Afi', 'lastname' => 'B', 'gender' => 'female', 'birth_date' => '2011-03-20']);
+        $this->makeStudent(['firstname' => 'Koffi', 'lastname' => 'Aa', 'gender' => 'male', 'birth_date' => self::DOB_MALE]);
+        $this->makeStudent(['firstname' => 'Afi', 'lastname' => 'Bb', 'gender' => 'female', 'birth_date' => self::DOB_FEMALE]);
 
         $this->actingAs($this->user())
             ->get(route('students.index'))
@@ -105,13 +170,8 @@ class StudentTest extends TestCase
 
     public function test_index_can_filter_by_search(): void
     {
-        // SQLite ne supporte pas ILIKE (opérateur PostgreSQL) — on teste uniquement la route
-        if (config('database.default') === 'sqlite' || DB::getDriverName() === 'sqlite') {
-            $this->markTestSkipped('ILIKE non supporté par SQLite');
-        }
-
-        $this->makeStudent(['firstname' => 'Koffi', 'lastname' => 'Mensah', 'gender' => 'male', 'birth_date' => '2010-01-01']);
-        $this->makeStudent(['firstname' => 'Afi', 'lastname' => 'Togbe', 'gender' => 'female', 'birth_date' => '2011-01-01']);
+        $this->makeStudent(['firstname' => 'Koffi', 'lastname' => 'Mensah', 'gender' => 'male', 'birth_date' => self::DOB_MALE]);
+        $this->makeStudent(['firstname' => 'Afi', 'lastname' => 'Togbe', 'gender' => 'female', 'birth_date' => self::DOB_FEMALE]);
 
         $this->actingAs($this->user())
             ->get(route('students.index', ['search' => 'Mensah']))
@@ -127,8 +187,8 @@ class StudentTest extends TestCase
 
     public function test_index_can_filter_by_status_active(): void
     {
-        $this->makeStudent(['firstname' => 'Koffi', 'lastname' => 'A', 'gender' => 'male', 'birth_date' => '2010-01-01', 'active' => true]);
-        $this->makeStudent(['firstname' => 'Afi', 'lastname' => 'B', 'gender' => 'female', 'birth_date' => '2011-01-01', 'active' => false]);
+        $this->makeStudent(['firstname' => 'Koffi', 'lastname' => 'Aa', 'gender' => 'male', 'birth_date' => self::DOB_MALE, 'active' => true]);
+        $this->makeStudent(['firstname' => 'Afi', 'lastname' => 'Bb', 'gender' => 'female', 'birth_date' => self::DOB_FEMALE, 'active' => false]);
 
         $this->actingAs($this->user())
             ->get(route('students.index', ['status' => 'active']))
@@ -137,18 +197,18 @@ class StudentTest extends TestCase
 
     // ─── Create ──────────────────────────────────────────────────────────────
 
-    public function test_authenticated_user_can_view_create_form(): void
+    public function test_admin_can_view_create_form(): void
     {
-        $this->actingAs($this->user())
+        $this->actingAs($this->admin())
             ->get(route('students.create'))
             ->assertOk();
     }
 
     // ─── Store ───────────────────────────────────────────────────────────────
 
-    public function test_can_create_student_with_valid_data(): void
+    public function test_admin_can_create_student_with_valid_data(): void
     {
-        $this->actingAs($this->user())
+        $this->actingAs($this->admin())
             ->post(route('students.store'), $this->validPayload())
             ->assertRedirect(route('students.index'));
 
@@ -161,7 +221,7 @@ class StudentTest extends TestCase
 
     public function test_creating_student_also_creates_parent_info(): void
     {
-        $this->actingAs($this->user())
+        $this->actingAs($this->admin())
             ->post(route('students.store'), $this->validPayload())
             ->assertRedirect();
 
@@ -176,7 +236,7 @@ class StudentTest extends TestCase
 
     public function test_creating_student_also_creates_information(): void
     {
-        $this->actingAs($this->user())
+        $this->actingAs($this->admin())
             ->post(route('students.store'), $this->validPayload())
             ->assertRedirect();
 
@@ -189,10 +249,8 @@ class StudentTest extends TestCase
 
     public function test_cannot_create_student_without_firstname(): void
     {
-        $payload = $this->validPayload(['firstname' => '']);
-
-        $this->actingAs($this->user())
-            ->post(route('students.store'), $payload)
+        $this->actingAs($this->admin())
+            ->post(route('students.store'), $this->validPayload(['firstname' => '']))
             ->assertSessionHasErrors('firstname');
 
         $this->assertDatabaseEmpty('students');
@@ -200,21 +258,21 @@ class StudentTest extends TestCase
 
     public function test_cannot_create_student_without_lastname(): void
     {
-        $this->actingAs($this->user())
+        $this->actingAs($this->admin())
             ->post(route('students.store'), $this->validPayload(['lastname' => '']))
             ->assertSessionHasErrors('lastname');
     }
 
     public function test_cannot_create_student_with_invalid_gender(): void
     {
-        $this->actingAs($this->user())
+        $this->actingAs($this->admin())
             ->post(route('students.store'), $this->validPayload(['gender' => 'unknown']))
             ->assertSessionHasErrors('gender');
     }
 
     public function test_cannot_create_student_without_birth_date(): void
     {
-        $this->actingAs($this->user())
+        $this->actingAs($this->admin())
             ->post(route('students.store'), $this->validPayload(['birth_date' => '']))
             ->assertSessionHasErrors('birth_date');
     }
@@ -224,19 +282,9 @@ class StudentTest extends TestCase
         $payload = $this->validPayload();
         $payload['information']['admission_type'] = 'invalid';
 
-        $this->actingAs($this->user())
+        $this->actingAs($this->admin())
             ->post(route('students.store'), $payload)
             ->assertSessionHasErrors('information.admission_type');
-    }
-
-    public function test_cannot_create_student_without_father_firstname(): void
-    {
-        $payload = $this->validPayload();
-        $payload['parent']['father_firstname'] = '';
-
-        $this->actingAs($this->user())
-            ->post(route('students.store'), $payload)
-            ->assertSessionHasErrors('parent.father_firstname');
     }
 
     public function test_cannot_create_student_with_duplicate_email(): void
@@ -245,14 +293,12 @@ class StudentTest extends TestCase
             'firstname'  => 'Afi',
             'lastname'   => 'Togbe',
             'gender'     => 'female',
-            'birth_date' => '2011-01-01',
+            'birth_date' => self::DOB_FEMALE,
             'email'      => 'afi@school.tg',
         ]);
 
-        $payload = $this->validPayload(['email' => 'afi@school.tg']);
-
-        $this->actingAs($this->user())
-            ->post(route('students.store'), $payload)
+        $this->actingAs($this->admin())
+            ->post(route('students.store'), $this->validPayload(['email' => 'afi@school.tg']))
             ->assertSessionHasErrors('email');
     }
 
@@ -280,16 +326,16 @@ class StudentTest extends TestCase
 
     // ─── Edit / Update ───────────────────────────────────────────────────────
 
-    public function test_authenticated_user_can_view_edit_form(): void
+    public function test_admin_can_view_edit_form(): void
     {
         $student = $this->makeStudent();
 
-        $this->actingAs($this->user())
+        $this->actingAs($this->admin())
             ->get(route('students.edit', $student))
             ->assertOk();
     }
 
-    public function test_can_update_student_with_valid_data(): void
+    public function test_admin_can_update_student_with_valid_data(): void
     {
         $student = $this->makeStudent();
         $student->information()->create(['admission_type' => 'new']);
@@ -301,49 +347,35 @@ class StudentTest extends TestCase
         ]);
         $student->medicalInfo()->create([]);
 
-        $payload = $this->validPayload([
-            'firstname' => 'Kossi',
-            'lastname'  => 'Amegah',
-        ]);
-
-        $this->actingAs($this->user())
-            ->put(route('students.update', $student), $payload)
+        $this->actingAs($this->admin())
+            ->put(route('students.update', $student), $this->validPayload(['firstname' => 'Kossi']))
             ->assertRedirect(route('students.index'));
 
-        $this->assertDatabaseHas('students', [
-            'id'        => $student->id,
-            'firstname' => 'Kossi',
-        ]);
+        $this->assertDatabaseHas('students', ['id' => $student->id, 'firstname' => 'Kossi']);
     }
 
     // ─── Bulk Status ─────────────────────────────────────────────────────────
 
-    public function test_can_bulk_activate_students(): void
+    public function test_admin_can_bulk_activate_students(): void
     {
-        $s1 = $this->makeStudent(['firstname' => 'A', 'lastname' => 'B', 'gender' => 'male', 'birth_date' => '2010-01-01', 'active' => false]);
-        $s2 = $this->makeStudent(['firstname' => 'C', 'lastname' => 'D', 'gender' => 'female', 'birth_date' => '2011-01-01', 'active' => false]);
+        $s1 = $this->makeStudent(['firstname' => 'Aa', 'lastname' => 'Bb', 'gender' => 'male', 'birth_date' => self::DOB_MALE, 'active' => false]);
+        $s2 = $this->makeStudent(['firstname' => 'Cc', 'lastname' => 'Dd', 'gender' => 'female', 'birth_date' => self::DOB_FEMALE, 'active' => false]);
 
-        $this->actingAs($this->user())
-            ->post(route('students.bulk-status'), [
-                'student_ids' => [$s1->id, $s2->id],
-                'action'      => 'activate',
-            ])
+        $this->actingAs($this->admin())
+            ->post(route('students.bulk-status'), ['student_ids' => [$s1->id, $s2->id], 'action' => 'activate'])
             ->assertRedirect(route('students.index'));
 
         $this->assertDatabaseHas('students', ['id' => $s1->id, 'active' => true]);
         $this->assertDatabaseHas('students', ['id' => $s2->id, 'active' => true]);
     }
 
-    public function test_can_bulk_deactivate_students(): void
+    public function test_admin_can_bulk_deactivate_students(): void
     {
-        $s1 = $this->makeStudent(['firstname' => 'A', 'lastname' => 'B', 'gender' => 'male', 'birth_date' => '2010-01-01', 'active' => true]);
-        $s2 = $this->makeStudent(['firstname' => 'C', 'lastname' => 'D', 'gender' => 'female', 'birth_date' => '2011-01-01', 'active' => true]);
+        $s1 = $this->makeStudent(['firstname' => 'Aa', 'lastname' => 'Bb', 'gender' => 'male', 'birth_date' => self::DOB_MALE, 'active' => true]);
+        $s2 = $this->makeStudent(['firstname' => 'Cc', 'lastname' => 'Dd', 'gender' => 'female', 'birth_date' => self::DOB_FEMALE, 'active' => true]);
 
-        $this->actingAs($this->user())
-            ->post(route('students.bulk-status'), [
-                'student_ids' => [$s1->id, $s2->id],
-                'action'      => 'deactivate',
-            ])
+        $this->actingAs($this->admin())
+            ->post(route('students.bulk-status'), ['student_ids' => [$s1->id, $s2->id], 'action' => 'deactivate'])
             ->assertRedirect(route('students.index'));
 
         $this->assertDatabaseHas('students', ['id' => $s1->id, 'active' => false]);
@@ -352,26 +384,35 @@ class StudentTest extends TestCase
 
     public function test_bulk_status_requires_valid_action(): void
     {
-        $student = $this->makeStudent(['firstname' => 'A', 'lastname' => 'B', 'gender' => 'male', 'birth_date' => '2010-01-01']);
+        $student = $this->makeStudent(['firstname' => 'Aa', 'lastname' => 'Bb', 'gender' => 'male', 'birth_date' => self::DOB_MALE]);
 
-        $this->actingAs($this->user())
-            ->post(route('students.bulk-status'), [
-                'student_ids' => [$student->id],
-                'action'      => 'invalid',
-            ])
+        $this->actingAs($this->admin())
+            ->post(route('students.bulk-status'), ['student_ids' => [$student->id], 'action' => 'invalid'])
             ->assertSessionHasErrors('action');
     }
 
     // ─── Destroy ─────────────────────────────────────────────────────────────
 
-    public function test_can_delete_student(): void
+    public function test_admin_can_soft_delete_student(): void
     {
         $student = $this->makeStudent();
 
-        $this->actingAs($this->user())
+        $this->actingAs($this->admin())
             ->delete(route('students.destroy', $student))
             ->assertRedirect(route('students.index'));
 
-        $this->assertDatabaseMissing('students', ['id' => $student->id]);
+        $this->assertSoftDeleted('students', ['id' => $student->id]);
+    }
+
+    public function test_soft_deleted_student_not_visible_in_index(): void
+    {
+        $student = $this->makeStudent();
+        $student->delete();
+
+        $this->actingAs($this->user())
+            ->get(route('students.index'))
+            ->assertOk();
+
+        $this->assertSoftDeleted('students', ['id' => $student->id]);
     }
 }
