@@ -14,11 +14,10 @@ class StudentObserver
     {
         if ($student->matricule) {
             MatriculeGenerated::dispatch(
-                $student->id, // matricule ID
+                $student->matricule,
                 'student',
                 $student->id,
                 'student',
-                $student->matricule
             );
         }
     }

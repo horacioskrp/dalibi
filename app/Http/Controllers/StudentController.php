@@ -21,16 +21,16 @@ class StudentController extends Controller
             ->latest();
 
         if ($request->filled('search')) {
-            $search = $request->string('search')->toString();
+            $search = strtolower($request->string('search')->toString());
             $query->where(function ($subQuery) use ($search): void {
-                $subQuery->where('firstname', 'ilike', "%{$search}%")
-                    ->orWhere('lastname', 'ilike', "%{$search}%")
-                    ->orWhere('matricule', 'ilike', "%{$search}%")
-                    ->orWhere('email', 'ilike', "%{$search}%")
+                $subQuery->whereRaw('LOWER(firstname) LIKE ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(lastname) LIKE ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(matricule) LIKE ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(email) LIKE ?', ["%{$search}%"])
                     ->orWhereHas('user', function ($userQuery) use ($search): void {
-                        $userQuery->where('firstname', 'ilike', "%{$search}%")
-                            ->orWhere('lastname', 'ilike', "%{$search}%")
-                            ->orWhere('email', 'ilike', "%{$search}%");
+                        $userQuery->whereRaw('LOWER(firstname) LIKE ?', ["%{$search}%"])
+                            ->orWhereRaw('LOWER(lastname) LIKE ?', ["%{$search}%"])
+                            ->orWhereRaw('LOWER(email) LIKE ?', ["%{$search}%"]);
                     });
             });
         }
@@ -40,7 +40,8 @@ class StudentController extends Controller
         }
 
         if ($request->filled('nationality')) {
-            $query->where('nationality', 'ilike', '%' . $request->string('nationality')->toString() . '%');
+            $search = strtolower($request->string('nationality')->toString());
+            $query->whereRaw('LOWER(nationality) LIKE ?', ["%{$search}%"]);
         }
 
         if ($request->filled('status')) {
@@ -62,19 +63,20 @@ class StudentController extends Controller
             'students' => $students,
             'perPage'  => $perPage,
             'filters' => $request->only(['search', 'gender', 'nationality', 'status', 'per_page']),
-            'stats' => [
-                'total' => Student::count(),
-                'active' => Student::where('active', true)->count(),
-                'inactive' => Student::where('active', false)->count(),
-                'male' => Student::where('gender', 'male')->count(),
-                'female' => Student::where('gender', 'female')->count(),
-                'other' => Student::whereNull('gender')->orWhere('gender', '')->count(),
-            ],
+            'stats' => Student::selectRaw("
+                COUNT(*) as total,
+                SUM(CASE WHEN active = 1 THEN 1 ELSE 0 END) as active,
+                SUM(CASE WHEN active = 0 THEN 1 ELSE 0 END) as inactive,
+                SUM(CASE WHEN gender = 'male' THEN 1 ELSE 0 END) as male,
+                SUM(CASE WHEN gender = 'female' THEN 1 ELSE 0 END) as female,
+                SUM(CASE WHEN gender IS NULL OR gender = '' THEN 1 ELSE 0 END) as other
+            ")->first(),
         ]);
     }
 
     public function bulkStatus(Request $request): RedirectResponse
     {
+        $this->authorize('bulkStatus', Student::class);
         $validated = $request->validate([
             'student_ids' => ['required', 'array', 'min:1'],
             'student_ids.*' => ['required', 'uuid', 'exists:students,id'],
@@ -94,6 +96,8 @@ class StudentController extends Controller
 
     public function create(): Response
     {
+        $this->authorize('create', Student::class);
+
         return Inertia::render('Students/Create');
     }
 
@@ -123,6 +127,8 @@ class StudentController extends Controller
 
     public function show(Student $student): Response
     {
+        $this->authorize('view', $student);
+
         $student->load(['user', 'information', 'parentInfo', 'medicalInfo']);
 
         return Inertia::render('Students/Show', [
@@ -132,6 +138,8 @@ class StudentController extends Controller
 
     public function history(Student $student): Response
     {
+        $this->authorize('view', $student);
+
         $enrollments = Enrollment::query()
             ->with([
                 'classroom:id,name,code',
@@ -167,6 +175,8 @@ class StudentController extends Controller
 
     public function edit(Student $student): Response
     {
+        $this->authorize('update', $student);
+
         $student->load(['user', 'information', 'parentInfo', 'medicalInfo']);
 
         return Inertia::render('Students/Edit', [
@@ -200,6 +210,8 @@ class StudentController extends Controller
 
     public function destroy(Student $student): RedirectResponse
     {
+        $this->authorize('delete', $student);
+
         $student->delete();
 
         return redirect()->route('students.index')
