@@ -2,16 +2,15 @@
 
 namespace App\Http\Requests;
 
+use App\Constants\Roles;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateSchoolRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]);
     }
 
     /**
@@ -20,9 +19,9 @@ class UpdateSchoolRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255', 'unique:schools,name,' . $this->school->id],
-            'code' => ['required', 'string', 'max:50', 'unique:schools,code,' . $this->school->id],
-            'logo' => ['nullable', 'url', 'max:500'],
+            'name' => ['required', 'string', 'max:255', Rule::unique('schools', 'name')->ignore($this->school)],
+            'code' => ['required', 'string', 'max:50', Rule::unique('schools', 'code')->ignore($this->school)],
+            'logo' => ['nullable', 'url:http,https', 'max:500'],
             'email' => ['nullable', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:20'],
             'address' => ['nullable', 'string', 'max:500'],
@@ -43,7 +42,7 @@ class UpdateSchoolRequest extends FormRequest
             'name.unique' => 'Ce nom d\'école existe déjà.',
             'code.required' => 'Le code de l\'école est requis.',
             'code.unique' => 'Ce code d\'école existe déjà.',
-            'logo.url' => 'Le logo doit être une URL valide.',
+            'logo.url' => 'Le logo doit être une URL valide (http ou https).',
             'email.email' => 'L\'email doit être une adresse valide.',
         ];
     }

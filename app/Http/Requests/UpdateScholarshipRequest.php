@@ -2,17 +2,15 @@
 
 namespace App\Http\Requests;
 
+use App\Constants\Roles;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class UpdateScholarshipRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]);
     }
 
     /**
@@ -23,18 +21,17 @@ class UpdateScholarshipRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255', 'unique:scholarships,name,' . $this->scholarship->id],
+            'name' => ['required', 'string', 'max:255', Rule::unique('scholarships', 'name')->ignore($this->scholarship)],
             'description' => ['nullable', 'string', 'max:1000'],
             'type' => ['required', Rule::in(['percentage', 'fixed'])],
             'value' => [
                 'required',
                 'numeric',
                 'min:0',
-                function ($attribute, $value, $fail) {
-                    if ($this->input('type') === 'percentage' && (float) $value > 100) {
-                        $fail('La valeur en pourcentage ne peut pas dépasser 100.');
-                    }
-                },
+                Rule::when(
+                    fn() => $this->input('type') === 'percentage',
+                    ['max:100']
+                ),
             ],
         ];
     }

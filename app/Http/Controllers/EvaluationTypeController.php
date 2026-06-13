@@ -2,16 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\Roles;
+use App\Http\Requests\StoreEvaluationTypeRequest;
+use App\Http\Requests\UpdateEvaluationTypeRequest;
 use App\Models\EvaluationType;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class EvaluationTypeController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request): Response
     {
         $search = $request->string('search')->toString();
@@ -32,43 +33,26 @@ class EvaluationTypeController extends Controller
 
         return Inertia::render('Administration/EvaluationTypes/Index', [
             'evaluationTypes' => $evaluationTypes,
-            'filters' => [
-                'search' => $search,
-            ],
+            'filters'         => ['search' => $search],
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create(): Response
     {
+        $this->authorize('create', EvaluationType::class);
+
         return Inertia::render('Administration/EvaluationTypes/Create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(StoreEvaluationTypeRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255', 'unique:evaluation_types,name'],
-            'description' => ['nullable', 'string'],
-        ], [
-            'name.required' => 'Le nom est obligatoire.',
-            'name.unique' => 'Ce type d\'évaluation existe déjà.',
-        ]);
-
-        EvaluationType::create($validated);
+        EvaluationType::create($request->validated());
 
         return redirect()
             ->route('evaluation-types.index')
             ->with('message', 'Type d\'évaluation créé avec succès.');
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(EvaluationType $evaluationType): Response
     {
         return Inertia::render('Administration/EvaluationTypes/Show', [
@@ -76,41 +60,28 @@ class EvaluationTypeController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(EvaluationType $evaluationType): Response
     {
+        $this->authorize('update', $evaluationType);
+
         return Inertia::render('Administration/EvaluationTypes/Edit', [
             'evaluationType' => $evaluationType,
         ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, EvaluationType $evaluationType)
+    public function update(UpdateEvaluationTypeRequest $request, EvaluationType $evaluationType): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255', 'unique:evaluation_types,name,' . $evaluationType->id],
-            'description' => ['nullable', 'string'],
-        ], [
-            'name.required' => 'Le nom est obligatoire.',
-            'name.unique' => 'Ce type d\'évaluation existe déjà.',
-        ]);
-
-        $evaluationType->update($validated);
+        $evaluationType->update($request->validated());
 
         return redirect()
             ->route('evaluation-types.index')
             ->with('message', 'Type d\'évaluation mis à jour avec succès.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(EvaluationType $evaluationType)
+    public function destroy(EvaluationType $evaluationType): RedirectResponse
     {
+        $this->authorize('delete', $evaluationType);
+
         $evaluationType->delete();
 
         return redirect()

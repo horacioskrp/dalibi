@@ -2,16 +2,15 @@
 
 namespace App\Http\Requests;
 
+use App\Constants\Roles;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreFeeCategorieRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR, Roles::ACCOUNTING]);
     }
 
     /**
@@ -20,7 +19,7 @@ class StoreFeeCategorieRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255', 'unique:fee_categories,name'],
+            'name' => ['required', 'string', 'max:255', Rule::unique('fee_categories', 'name')],
             'description' => ['nullable', 'string', 'max:1000'],
         ];
     }

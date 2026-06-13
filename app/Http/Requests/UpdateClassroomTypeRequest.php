@@ -2,17 +2,15 @@
 
 namespace App\Http\Requests;
 
+use App\Constants\Roles;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class UpdateClassroomTypeRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]);
     }
 
     /**
@@ -23,7 +21,7 @@ class UpdateClassroomTypeRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255', Rule::unique('classroom_types', 'name')->ignore($this->route('classroom_type'))],
             'description' => ['nullable', 'string', 'max:1000'],
-            'active' => ['boolean'],
+            'active' => ['sometimes', 'boolean'],
         ];
     }
 
