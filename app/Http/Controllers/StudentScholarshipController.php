@@ -23,18 +23,18 @@ class StudentScholarshipController extends Controller
 
         // Search functionality
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = strtolower($request->string('search')->toString());
             $query->where(function ($q) use ($search) {
                 $q->whereHas('student', function ($query) use ($search) {
-                    $query->where('firstname', 'ilike', "%{$search}%")
-                          ->orWhere('lastname', 'ilike', "%{$search}%")
-                          ->orWhere('matricule', 'ilike', "%{$search}%");
+                    $query->whereRaw('LOWER(firstname) LIKE ?', ["%{$search}%"])
+                          ->orWhereRaw('LOWER(lastname) LIKE ?', ["%{$search}%"])
+                          ->orWhereRaw('LOWER(matricule) LIKE ?', ["%{$search}%"]);
                 })
                 ->orWhereHas('scholarship', function ($query) use ($search) {
-                    $query->where('name', 'ilike', "%{$search}%");
+                    $query->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"]);
                 })
                 ->orWhereHas('academicYear', function ($query) use ($search) {
-                    $query->where('year', 'ilike', "%{$search}%");
+                    $query->whereRaw('LOWER(year) LIKE ?', ["%{$search}%"]);
                 });
             });
         }

@@ -18,6 +18,7 @@ class StudentScholarship extends Model
         'number_of_year',
         'start_date',
         'end_date',
+        'notes',
     ];
 
     protected $casts = [

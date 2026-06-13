@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Student;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -9,15 +10,15 @@ class StoreStudentRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->can('create', Student::class);
     }
 
     public function rules(): array
     {
         return [
             'matricule' => ['nullable', 'string', 'max:50', 'unique:students,matricule'],
-            'firstname' => ['required', 'string', 'max:255'],
-            'lastname' => ['required', 'string', 'max:255'],
+            'firstname' => ['required', 'string', 'min:2', 'max:255'],
+            'lastname' => ['required', 'string', 'min:2', 'max:255'],
             'gender' => ['required', Rule::in(['male', 'female'])],
             'birth_date' => ['required', 'date'],
             'place_of_birth' => ['nullable', 'string', 'max:255'],
@@ -34,12 +35,12 @@ class StoreStudentRequest extends FormRequest
             'information.birth_certificate_issue_place' => ['nullable', 'string', 'max:255'],
             'information.admission_type' => ['required', Rule::in(['new', 'transfer', 're_admission'])],
 
-            'parent.father_firstname' => ['required', 'string', 'max:255'],
-            'parent.father_lastname' => ['required', 'string', 'max:255'],
+            'parent.father_firstname' => ['nullable', 'string', 'min:2', 'max:255'],
+            'parent.father_lastname' => ['nullable', 'string', 'min:2', 'max:255'],
             'parent.father_profession' => ['nullable', 'string', 'max:255'],
             'parent.father_phone' => ['nullable', 'string', 'max:255'],
-            'parent.mother_firstname' => ['required', 'string', 'max:255'],
-            'parent.mother_lastname' => ['required', 'string', 'max:255'],
+            'parent.mother_firstname' => ['nullable', 'string', 'min:2', 'max:255'],
+            'parent.mother_lastname' => ['nullable', 'string', 'min:2', 'max:255'],
             'parent.mother_profession' => ['nullable', 'string', 'max:255'],
             'parent.mother_phone' => ['nullable', 'string', 'max:255'],
             'parent.email' => ['nullable', 'email', 'max:255'],
@@ -60,10 +61,10 @@ class StoreStudentRequest extends FormRequest
             'gender.required' => "Le genre est obligatoire.",
             'birth_date.required' => "La date de naissance est obligatoire.",
             'information.admission_type.required' => "Le type d'admission est obligatoire.",
-            'parent.father_firstname.required' => "Le prénom du père est obligatoire.",
-            'parent.father_lastname.required' => "Le nom du père est obligatoire.",
-            'parent.mother_firstname.required' => "Le prénom de la mère est obligatoire.",
-            'parent.mother_lastname.required' => "Le nom de la mère est obligatoire.",
+            'parent.father_firstname.min' => "Le prénom du père doit avoir au moins 2 caractères.",
+            'parent.father_lastname.min' => "Le nom du père doit avoir au moins 2 caractères.",
+            'parent.mother_firstname.min' => "Le prénom de la mère doit avoir au moins 2 caractères.",
+            'parent.mother_lastname.min' => "Le nom de la mère doit avoir au moins 2 caractères.",
             'matricule.unique' => "Ce matricule existe déjà.",
             'email.unique' => "Cet email existe déjà.",
         ];
