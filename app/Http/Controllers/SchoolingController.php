@@ -17,10 +17,10 @@ class SchoolingController extends Controller
         $query = Schooling::with('classroom');
 
         if ($request->filled('search')) {
-            $searchTerm = $request->search;
-            $query->whereHas('classroom', function ($classroomQuery) use ($searchTerm) {
-                $classroomQuery->where('name', 'ilike', "%{$searchTerm}%")
-                    ->orWhere('code', 'ilike', "%{$searchTerm}%");
+            $searchTerm = strtolower($request->string('search')->toString());
+            $query->whereHas('classroom', function ($classroomQuery) use ($searchTerm): void {
+                $classroomQuery->whereRaw('LOWER(name) LIKE ?', ["%{$searchTerm}%"])
+                    ->orWhereRaw('LOWER(code) LIKE ?', ["%{$searchTerm}%"]);
             });
         }
 

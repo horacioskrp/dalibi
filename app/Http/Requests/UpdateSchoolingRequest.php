@@ -2,21 +2,22 @@
 
 namespace App\Http\Requests;
 
+use App\Constants\Roles;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateSchoolingRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR, Roles::ACCOUNTING]);
     }
 
     public function rules(): array
     {
         return [
             'class_id' => ['required', 'uuid', 'exists:classes,id'],
-            'inscription_fee' => ['required', 'numeric', 'min:0'],
-            'school_fee' => ['required', 'numeric', 'min:0'],
+            'inscription_fee' => ['required', 'numeric', 'min:0', 'max:10000000'],
+            'school_fee' => ['required', 'numeric', 'min:0', 'max:10000000'],
         ];
     }
 

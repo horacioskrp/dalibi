@@ -2,16 +2,14 @@
 
 namespace App\Http\Requests;
 
+use App\Constants\Roles;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreSchoolRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]);
     }
 
     /**
@@ -22,7 +20,7 @@ class StoreSchoolRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255', 'unique:schools,name'],
             'code' => ['required', 'string', 'max:50', 'unique:schools,code'],
-            'logo' => ['nullable', 'url', 'max:500'],
+            'logo' => ['nullable', 'url:http,https', 'max:500'],
             'email' => ['nullable', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:20'],
             'address' => ['nullable', 'string', 'max:500'],

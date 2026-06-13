@@ -30,16 +30,17 @@ class FeeStructureController extends Controller
 
         // Search functionality
         if ($search !== '') {
-            $query->where(function ($q) use ($search) {
-                $q->whereHas('feeCategory', function ($query) use ($search) {
-                    $query->where('name', 'ilike', "%{$search}%");
+            $s = strtolower($search);
+            $query->where(function ($q) use ($s): void {
+                $q->whereHas('feeCategory', function ($query) use ($s): void {
+                    $query->whereRaw('LOWER(name) LIKE ?', ["%{$s}%"]);
                 })
-                ->orWhereHas('classroom', function ($query) use ($search) {
-                    $query->where('name', 'ilike', "%{$search}%")
-                          ->orWhere('code', 'ilike', "%{$search}%");
+                ->orWhereHas('classroom', function ($query) use ($s): void {
+                    $query->whereRaw('LOWER(name) LIKE ?', ["%{$s}%"])
+                          ->orWhereRaw('LOWER(code) LIKE ?', ["%{$s}%"]);
                 })
-                ->orWhereHas('academicYear', function ($query) use ($search) {
-                    $query->where('year', 'ilike', "%{$search}%");
+                ->orWhereHas('academicYear', function ($query) use ($s): void {
+                    $query->whereRaw('LOWER(year) LIKE ?', ["%{$s}%"]);
                 });
             });
         }

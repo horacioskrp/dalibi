@@ -2,17 +2,15 @@
 
 namespace App\Http\Requests;
 
+use App\Constants\Roles;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class StoreScholarshipRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]);
     }
 
     /**
@@ -30,11 +28,10 @@ class StoreScholarshipRequest extends FormRequest
                 'required',
                 'numeric',
                 'min:0',
-                function ($attribute, $value, $fail) {
-                    if ($this->input('type') === 'percentage' && (float) $value > 100) {
-                        $fail('La valeur en pourcentage ne peut pas dépasser 100.');
-                    }
-                },
+                Rule::when(
+                    fn() => $this->input('type') === 'percentage',
+                    ['max:100']
+                ),
             ],
         ];
     }
