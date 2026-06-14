@@ -2,16 +2,15 @@
 
 namespace App\Http\Requests;
 
+use App\Constants\Roles;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateSubjectRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]);
     }
 
     /**
@@ -23,7 +22,7 @@ class UpdateSubjectRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'code' => ['required', 'string', 'max:50', 'unique:subjects,code,' . $this->subject->id],
+            'code' => ['required', 'string', 'max:50', Rule::unique('subjects', 'code')->ignore($this->subject)],
             'description' => ['nullable', 'string', 'max:1000'],
         ];
     }

@@ -2,17 +2,15 @@
 
 namespace App\Http\Requests;
 
+use App\Constants\Roles;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class UpdateLevelRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]);
     }
 
     /**
@@ -28,7 +26,7 @@ class UpdateLevelRequest extends FormRequest
                 'string',
                 'max:255',
                 Rule::in(['maternelle', 'primaire', 'lycee', 'college']),
-                'unique:levels,name,' . $this->level->id,
+                Rule::unique('levels', 'name')->ignore($this->level),
             ],
             'description' => ['nullable', 'string', 'max:1000'],
         ];

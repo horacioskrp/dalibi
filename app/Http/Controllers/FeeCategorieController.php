@@ -17,9 +17,9 @@ class FeeCategorieController extends Controller
         $query = FeeCategorie::query();
 
         if ($request->filled('search')) {
-            $searchTerm = $request->string('search')->toString();
-            $query->where('name', 'ilike', "%{$searchTerm}%")
-                ->orWhere('description', 'ilike', "%{$searchTerm}%");
+            $searchTerm = strtolower($request->string('search')->toString());
+            $query->whereRaw('LOWER(name) LIKE ?', ["%{$searchTerm}%"])
+                ->orWhereRaw('LOWER(description) LIKE ?', ["%{$searchTerm}%"]);
         }
 
         $feeCategories = $query->latest()->paginate(10)->withQueryString();

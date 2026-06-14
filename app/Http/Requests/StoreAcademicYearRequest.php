@@ -2,16 +2,14 @@
 
 namespace App\Http\Requests;
 
+use App\Constants\Roles;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreAcademicYearRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]);
     }
 
     /**
@@ -22,7 +20,7 @@ class StoreAcademicYearRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'year' => ['required', 'string', 'max:255', 'unique:academic_years,year'],
+            'year' => ['required', 'string', 'max:9', 'regex:/^\d{4}-\d{4}$/', 'unique:academic_years,year'],
             'start_date' => ['required', 'date'],
             'end_date' => ['required', 'date', 'after:start_date'],
             'active' => ['nullable', 'boolean'],
@@ -36,7 +34,8 @@ class StoreAcademicYearRequest extends FormRequest
     {
         return [
             'year.required' => 'L\'année académique est requise.',
-            'year.max' => 'L\'année ne peut pas dépasser 255 caractères.',
+            'year.max' => 'L\'année ne peut pas dépasser 9 caractères.',
+            'year.regex' => 'L\'année doit être au format YYYY-YYYY (ex: 2024-2025).',
             'year.unique' => 'Cette année académique existe déjà.',
             'start_date.required' => 'La date de début est requise.',
             'start_date.date' => 'La date de début doit être une date valide.',

@@ -2,16 +2,15 @@
 
 namespace App\Http\Requests;
 
+use App\Constants\Roles;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreFeeStructureRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR, Roles::ACCOUNTING]);
     }
 
     /**
@@ -22,10 +21,19 @@ class StoreFeeStructureRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'academic_year_id' => ['required', 'uuid', 'exists:academic_years,id'],
+            'academic_year_id' => [
+                'required',
+                'uuid',
+                'exists:academic_years,id',
+                Rule::unique('fee_structures', 'academic_year_id')->where(
+                    fn($q) => $q
+                        ->where('fee_category_id', $this->fee_category_id)
+                        ->where('class_id', $this->class_id)
+                ),
+            ],
             'fee_category_id' => ['required', 'uuid', 'exists:fee_categories,id'],
             'class_id' => ['required', 'uuid', 'exists:classes,id'],
-            'amount' => ['required', 'numeric', 'min:0'],
+            'amount' => ['required', 'numeric', 'min:0', 'max:10000000'],
         ];
     }
 
@@ -40,6 +48,7 @@ class StoreFeeStructureRequest extends FormRequest
             'academic_year_id.required' => 'L\'année académique est requise.',
             'academic_year_id.uuid' => 'L\'année académique doit être un UUID valide.',
             'academic_year_id.exists' => 'L\'année académique sélectionnée n\'existe pas.',
+            'academic_year_id.unique' => 'Une structure de frais existe déjà pour cette combinaison année / catégorie / classe.',
             'fee_category_id.required' => 'La catégorie de frais est requise.',
             'fee_category_id.uuid' => 'La catégorie de frais doit être un UUID valide.',
             'fee_category_id.exists' => 'La catégorie de frais sélectionnée n\'existe pas.',
@@ -49,6 +58,7 @@ class StoreFeeStructureRequest extends FormRequest
             'amount.required' => 'Le montant est requis.',
             'amount.numeric' => 'Le montant doit être un nombre.',
             'amount.min' => 'Le montant doit être supérieur ou égal à 0.',
+            'amount.max' => 'Le montant ne peut pas dépasser 10 000 000.',
         ];
     }
 }

@@ -20,13 +20,13 @@ class AcademicPeriodController extends Controller
         $query = AcademicPeriod::with('academicYear');
 
         // Search by name, description or academic year
-        if ($request->has('search') && $request->search) {
-            $searchTerm = $request->search;
-            $query->where(function ($q) use ($searchTerm) {
-                $q->where('name', 'ilike', "%{$searchTerm}%")
-                    ->orWhere('description', 'ilike', "%{$searchTerm}%")
-                    ->orWhereHas('academicYear', function ($q) use ($searchTerm) {
-                        $q->where('year', 'ilike', "%{$searchTerm}%");
+        if ($request->filled('search')) {
+            $searchTerm = strtolower($request->string('search')->toString());
+            $query->where(function ($q) use ($searchTerm): void {
+                $q->whereRaw('LOWER(name) LIKE ?', ["%{$searchTerm}%"])
+                    ->orWhereRaw('LOWER(description) LIKE ?', ["%{$searchTerm}%"])
+                    ->orWhereHas('academicYear', function ($q) use ($searchTerm): void {
+                        $q->whereRaw('LOWER(year) LIKE ?', ["%{$searchTerm}%"]);
                     });
             });
         }
@@ -69,7 +69,15 @@ class AcademicPeriodController extends Controller
      */
     public function store(StoreAcademicPeriodRequest $request)
     {
-        AcademicPeriod::create($request->validated());
+        $validated = $request->validated();
+
+        if (!empty($validated['is_current'])) {
+            AcademicPeriod::where('academic_year_id', $validated['academic_year_id'])
+                ->where('is_current', true)
+                ->update(['is_current' => false]);
+        }
+
+        AcademicPeriod::create($validated);
 
         return redirect()->route('academic-periods.index')
             ->with('success', 'Période académique créée avec succès.');
@@ -106,7 +114,16 @@ class AcademicPeriodController extends Controller
      */
     public function update(UpdateAcademicPeriodRequest $request, AcademicPeriod $academicPeriod)
     {
-        $academicPeriod->update($request->validated());
+        $validated = $request->validated();
+
+        if (!empty($validated['is_current'])) {
+            AcademicPeriod::where('academic_year_id', $validated['academic_year_id'])
+                ->where('id', '!=', $academicPeriod->id)
+                ->where('is_current', true)
+                ->update(['is_current' => false]);
+        }
+
+        $academicPeriod->update($validated);
 
         return redirect()->route('academic-periods.index')
             ->with('success', 'Période académique mise à jour avec succès.');
