@@ -1,4 +1,4 @@
-import { BookOpen, Calendar, Clock, ClipboardList, GraduationCap, LayoutGrid, Layers, Settings, Tag, Users, Shield, Lock, Wallet, Percent, DollarSign, UserCircle, TrendingUp, ArrowLeftRight, PieChart, FileText, ListChecks, NotebookPen } from 'lucide-react';
+import { BookOpen, Calendar, Clock, ClipboardList, GraduationCap, LayoutGrid, Layers, Settings, Tag, Users, Shield, Lock, Wallet, Percent, DollarSign, UserCircle, TrendingUp, ArrowLeftRight, PieChart, FileText, ListChecks, NotebookPen, SlidersHorizontal, AlertCircle } from 'lucide-react';
 import { route } from '@/helpers/route';
 import type { NavItem } from '@/types';
 
@@ -117,10 +117,15 @@ export const mainNavItems: NavItem[] = [
                 href: route('scholarships.index'),
                 icon: Percent,
             },
+            {
+                title: 'Calcul des moyennes',
+                href: route('grading-configs.index'),
+                icon: SlidersHorizontal,
+            },
         ],
     },
     {
-        title: 'Examens',
+        title: 'Notes',
         href: '#',
         icon: NotebookPen,
         items: [
@@ -133,6 +138,16 @@ export const mainNavItems: NavItem[] = [
                 title: 'Évaluations par classe',
                 href: route('evaluations.index'),
                 icon: ListChecks,
+            },
+            {
+                title: 'Saisie par trimestre',
+                href: route('grades.index'),
+                icon: ClipboardList,
+            },
+            {
+                title: 'Réclamations',
+                href: route('note-reclamations.index'),
+                icon: AlertCircle,
             },
         ],
     },

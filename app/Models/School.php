@@ -18,6 +18,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\GradingConfig;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
@@ -51,5 +52,15 @@ class School extends Model
     public function subjects(): HasMany
     {
         return $this->hasMany(Subject::class);
+    }
+
+    public function gradingConfigs(): HasMany
+    {
+        return $this->hasMany(GradingConfig::class);
+    }
+
+    public function activeGradingConfig(): ?GradingConfig
+    {
+        return $this->gradingConfigs()->where('is_active', true)->first();
     }
 }

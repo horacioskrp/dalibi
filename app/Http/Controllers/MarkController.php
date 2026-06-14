@@ -86,6 +86,12 @@ class MarkController extends Controller
      */
     public function store(Request $request, Evaluation $evaluation)
     {
+        if ($evaluation->locked_at !== null) {
+            return back()->withErrors([
+                'locked' => 'Cette évaluation est clôturée. Veuillez déposer une réclamation pour modifier les notes.',
+            ]);
+        }
+
         $maxScore = (float) ($evaluation->template?->max_score ?? 20);
 
         $validated = $request->validate([
