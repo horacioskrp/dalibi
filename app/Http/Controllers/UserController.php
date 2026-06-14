@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\Roles;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\User;
@@ -16,27 +17,27 @@ class UserController extends Controller
      */
     public function index()
     {
-        $query = User::query()->with('roles');
-        $roles = Role::select('id', 'name')->orderBy('name')->get();
+        $query  = User::query()->with('roles');
+        $roles  = Role::select('id', 'name')->orderBy('name')->get();
 
         $search = request('search');
         $roleId = request('role');
         $gender = request('gender');
 
         $normalizedGender = match ($gender) {
-            'M' => 'male',
-            'F' => 'female',
-            'O' => 'other',
+            'M'     => 'male',
+            'F'     => 'female',
+            'O'     => 'other',
             default => $gender,
         };
 
-        // Recherche par nom, email ou matricule
         if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('firstname', 'like', "%{$search}%")
-                    ->orWhere('lastname', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('natricule', 'like', "%{$search}%");
+            $searchTerm = strtolower($search);
+            $query->where(function ($q) use ($searchTerm) {
+                $q->whereRaw('LOWER(firstname) LIKE ?', ["%{$searchTerm}%"])
+                    ->orWhereRaw('LOWER(lastname) LIKE ?', ["%{$searchTerm}%"])
+                    ->orWhereRaw('LOWER(email) LIKE ?', ["%{$searchTerm}%"])
+                    ->orWhereRaw('LOWER(natricule) LIKE ?', ["%{$searchTerm}%"]);
             });
         }
 
@@ -100,21 +101,21 @@ class UserController extends Controller
     public function store(StoreUserRequest $request)
     {
         $user = User::create([
-            'firstname' => $request->validated('firstname'),
-            'lastname' => $request->validated('lastname'),
-            'email' => $request->validated('email'),
-            'password' => Hash::make($request->validated('password')),
-            'gender' => $request->validated('gender'),
+            'firstname'  => $request->validated('firstname'),
+            'lastname'   => $request->validated('lastname'),
+            'email'      => $request->validated('email'),
+            'password'   => Hash::make($request->validated('password')),
+            'gender'     => $request->validated('gender'),
             'birth_date' => $request->validated('birth_date'),
-            'telephone' => $request->validated('telephone'),
-            'address' => $request->validated('address'),
-            'profile' => $request->validated('profile'),
+            'telephone'  => $request->validated('telephone'),
+            'address'    => $request->validated('address'),
+            'profile'    => $request->validated('profile'),
         ]);
 
-        // Attribuer les rôles à l'utilisateur
-        if ($request->has('roles')) {
+        // Seul un ADMINISTRATOR peut assigner des rôles
+        if ($request->has('roles') && auth()->user()->hasRole(Roles::ADMINISTRATOR)) {
             $roleIds = $request->validated('roles');
-            $roles = Role::whereIn('id', $roleIds)->pluck('name');
+            $roles   = Role::whereIn('id', $roleIds)->pluck('name');
             $user->syncRoles($roles);
         }
 
@@ -143,7 +144,7 @@ class UserController extends Controller
         $roles = Role::orderBy('name')->get();
 
         return Inertia::render('Administration/Users/Edit', [
-            'user' => $user,
+            'user'  => $user,
             'roles' => $roles,
         ]);
     }
@@ -154,30 +155,31 @@ class UserController extends Controller
     public function update(UpdateUserRequest $request, User $user)
     {
         $data = [
-            'firstname' => $request->validated('firstname'),
-            'lastname' => $request->validated('lastname'),
-            'email' => $request->validated('email'),
-            'gender' => $request->validated('gender'),
+            'firstname'  => $request->validated('firstname'),
+            'lastname'   => $request->validated('lastname'),
+            'email'      => $request->validated('email'),
+            'gender'     => $request->validated('gender'),
             'birth_date' => $request->validated('birth_date'),
-            'telephone' => $request->validated('telephone'),
-            'address' => $request->validated('address'),
-            'profile' => $request->validated('profile'),
+            'telephone'  => $request->validated('telephone'),
+            'address'    => $request->validated('address'),
+            'profile'    => $request->validated('profile'),
         ];
 
-        // Update password only if provided
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->validated('password'));
         }
 
         $user->update($data);
 
-        // Mettre à jour les rôles de l'utilisateur
-        if ($request->has('roles')) {
-            $roleIds = $request->validated('roles');
-            $roles = Role::whereIn('id', $roleIds)->pluck('name');
-            $user->syncRoles($roles);
-        } else {
-            $user->syncRoles([]);
+        // Seul un ADMINISTRATOR peut modifier les rôles
+        if (auth()->user()->hasRole(Roles::ADMINISTRATOR)) {
+            if ($request->has('roles')) {
+                $roleIds = $request->validated('roles');
+                $roles   = Role::whereIn('id', $roleIds)->pluck('name');
+                $user->syncRoles($roles);
+            } else {
+                $user->syncRoles([]);
+            }
         }
 
         return redirect()->route('users.index')

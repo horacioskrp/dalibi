@@ -2,16 +2,15 @@
 
 namespace App\Http\Requests;
 
+use App\Constants\Roles;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StorePermissionRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->hasAnyRole([Roles::ADMINISTRATOR]);
     }
 
     /**
@@ -20,7 +19,7 @@ class StorePermissionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255', 'unique:permissions,name'],
+            'name'        => ['required', 'string', 'max:255', Rule::unique('permissions', 'name')],
             'description' => ['nullable', 'string', 'max:500'],
         ];
     }
@@ -32,7 +31,7 @@ class StorePermissionRequest extends FormRequest
     {
         return [
             'name.required' => 'Le nom de la permission est requis.',
-            'name.unique' => 'Cette permission existe déjà.',
+            'name.unique'   => 'Cette permission existe déjà.',
         ];
     }
 }

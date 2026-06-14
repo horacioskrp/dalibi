@@ -15,14 +15,15 @@ class ScholarshipController extends Controller
      */
     public function index(): Response
     {
-        $query = Scholarship::query();
+        $query  = Scholarship::query();
         $search = request('search');
 
         if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'ilike', "%{$search}%")
-                    ->orWhere('description', 'ilike', "%{$search}%")
-                    ->orWhere('type', 'ilike', "%{$search}%");
+            $searchTerm = strtolower($search);
+            $query->where(function ($q) use ($searchTerm) {
+                $q->whereRaw('LOWER(name) LIKE ?', ["%{$searchTerm}%"])
+                    ->orWhereRaw('LOWER(description) LIKE ?', ["%{$searchTerm}%"])
+                    ->orWhereRaw('LOWER(type) LIKE ?', ["%{$searchTerm}%"]);
             });
         }
 
@@ -33,9 +34,7 @@ class ScholarshipController extends Controller
 
         return Inertia::render('Administration/Scholarships/Index', [
             'scholarships' => $scholarships,
-            'filters' => [
-                'search' => $search,
-            ],
+            'filters'      => ['search' => $search],
         ]);
     }
 
