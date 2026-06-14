@@ -2,16 +2,15 @@
 
 namespace App\Http\Requests;
 
+use App\Constants\Roles;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdatePermissionRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->hasAnyRole([Roles::ADMINISTRATOR]);
     }
 
     /**
@@ -19,10 +18,8 @@ class UpdatePermissionRequest extends FormRequest
      */
     public function rules(): array
     {
-        $permissionId = $this->route('permission')->id;
-
         return [
-            'name' => ['required', 'string', 'max:255', 'unique:permissions,name,' . $permissionId],
+            'name'        => ['required', 'string', 'max:255', Rule::unique('permissions', 'name')->ignore($this->route('permission'))],
             'description' => ['nullable', 'string', 'max:500'],
         ];
     }
@@ -34,7 +31,7 @@ class UpdatePermissionRequest extends FormRequest
     {
         return [
             'name.required' => 'Le nom de la permission est requis.',
-            'name.unique' => 'Cette permission existe déjà.',
+            'name.unique'   => 'Cette permission existe déjà.',
         ];
     }
 }
