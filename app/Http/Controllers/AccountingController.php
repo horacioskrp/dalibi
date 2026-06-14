@@ -7,6 +7,7 @@ use App\Models\AcademicYear;
 use App\Models\CashAccount;
 use App\Models\Classroom;
 use App\Models\Enrollment;
+use App\Models\Invoice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -16,7 +17,6 @@ class AccountingController extends Controller
 {
     public function index(Request $request): Response
     {
-        // Année sélectionnée (défaut : année active ou la plus récente)
         $yearId  = $request->string('academic_year_id')->toString() ?: null;
         $classId = $request->string('class_id')->toString() ?: null;
 
@@ -49,19 +49,32 @@ class AccountingController extends Controller
             ->first();
 
         /* -------------------------------------------------------------- */
-        /* Évolution mensuelle des paiements (année sélectionnée)         */
+        /* Évolution mensuelle des paiements — format portable multi-DB   */
         /* -------------------------------------------------------------- */
+        $driver = DB::getDriverName();
+
+        $monthExpr = match ($driver) {
+            'mysql'  => "DATE_FORMAT(payments.paid_at, '%Y-%m')",
+            'sqlite' => "strftime('%Y-%m', payments.paid_at)",
+            default  => "to_char(payments.paid_at, 'YYYY-MM')",   // pgsql
+        };
+        $monthLabelExpr = match ($driver) {
+            'mysql'  => "DATE_FORMAT(payments.paid_at, '%b %Y')",
+            'sqlite' => "strftime('%m/%Y', payments.paid_at)",
+            default  => "to_char(payments.paid_at, 'Mon YYYY')",   // pgsql
+        };
+
         $monthlyPayments = DB::table('payments')
             ->join('invoices', 'payments.invoice_id', '=', 'invoices.id')
             ->join('enrollments', 'invoices.enrollment_id', '=', 'enrollments.id')
             ->where('enrollments.academic_year_id', $yearId)
             ->when($classId, fn ($q) => $q->where('enrollments.class_id', $classId))
             ->selectRaw("
-                to_char(payments.paid_at, 'YYYY-MM') as month,
-                to_char(payments.paid_at, 'Mon YYYY') as month_label,
-                coalesce(sum(payments.amount), 0)   as total
+                {$monthExpr} as month,
+                {$monthLabelExpr} as month_label,
+                coalesce(sum(payments.amount), 0) as total
             ")
-            ->groupByRaw("to_char(payments.paid_at, 'YYYY-MM'), to_char(payments.paid_at, 'Mon YYYY')")
+            ->groupByRaw("{$monthExpr}, {$monthLabelExpr}")
             ->orderBy('month')
             ->get();
 
@@ -90,7 +103,7 @@ class AccountingController extends Controller
             ->get();
 
         /* -------------------------------------------------------------- */
-        /* Élèves avec solde impayé (à suivre / renvoyer)                 */
+        /* Élèves avec solde impayé — tri SQL via sous-requête corrélée   */
         /* -------------------------------------------------------------- */
         $studentsUnpaid = Enrollment::with([
                 'student:id,firstname,lastname,matricule',
@@ -103,9 +116,12 @@ class AccountingController extends Controller
                 $q->whereIn('status', ['ISSUED', 'PARTIALLY_PAID'])
                   ->where('amount_remaining', '>', 0)
             )
-            ->get()
-            ->sortByDesc(fn ($e) => $e->invoice?->amount_remaining)
-            ->values();
+            ->orderByDesc(
+                Invoice::select('amount_remaining')
+                    ->whereColumn('enrollment_id', 'enrollments.id')
+                    ->limit(1)
+            )
+            ->get();
 
         /* -------------------------------------------------------------- */
         /* Soldes des caisses + stats de transactions                      */
