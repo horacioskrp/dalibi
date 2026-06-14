@@ -28,6 +28,7 @@ use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\GradeController;
 use App\Http\Controllers\SubjectAssignmentController;
 use App\Http\Controllers\SubjectController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -39,9 +40,9 @@ Route::get('/', function () {
     ]);
 })->name('home');
 
-Route::get('dashboard', function () {
-    return Inertia::render('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
 
 // Schools Routes
 Route::middleware(['auth', 'verified'])->group(function () {
