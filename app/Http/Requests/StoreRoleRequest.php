@@ -2,16 +2,15 @@
 
 namespace App\Http\Requests;
 
+use App\Constants\Roles;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreRoleRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->hasAnyRole([Roles::ADMINISTRATOR]);
     }
 
     /**
@@ -20,9 +19,9 @@ class StoreRoleRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255', 'unique:roles,name'],
-            'description' => ['nullable', 'string', 'max:500'],
-            'permissions' => ['array'],
+            'name'          => ['required', 'string', 'max:255', Rule::unique('roles', 'name')],
+            'description'   => ['nullable', 'string', 'max:500'],
+            'permissions'   => ['nullable', 'array'],
             'permissions.*' => ['exists:permissions,id'],
         ];
     }
@@ -33,9 +32,9 @@ class StoreRoleRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required' => 'Le nom du rôle est requis.',
-            'name.unique' => 'Ce rôle existe déjà.',
-            'permissions.*.exists' => 'Une ou plusieurs permissions sélectionnées n\'existent pas.',
+            'name.required'         => 'Le nom du rôle est requis.',
+            'name.unique'           => 'Ce rôle existe déjà.',
+            'permissions.*.exists'  => 'Une ou plusieurs permissions sélectionnées n\'existent pas.',
         ];
     }
 }
