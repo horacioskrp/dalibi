@@ -103,11 +103,6 @@ export const mainNavItems: NavItem[] = [
                 icon: GraduationCap,
             },
             {
-                title: 'Ecolage',
-                href: route('schoolings.index'),
-                icon: Wallet,
-            },
-            {
                 title: 'Catégories de frais',
                 href: route('fee-categories.index'),
                 icon: Percent,
