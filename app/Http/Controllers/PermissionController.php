@@ -2,49 +2,49 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\Roles;
 use App\Http\Requests\StorePermissionRequest;
 use App\Http\Requests\UpdatePermissionRequest;
+use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
+use Inertia\Response;
 use Spatie\Permission\Models\Permission;
 
 class PermissionController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(): Response
     {
+        abort_unless(request()->user()->hasAnyRole([Roles::ADMINISTRATOR]), 403);
+
         $query = Permission::query();
 
-        // Recherche par nom ou description
         if (request('search')) {
-            $search = request('search');
-            $query->where('name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+            $searchTerm = strtolower(request('search'));
+            $query->where(function ($q) use ($searchTerm): void {
+                $q->whereRaw('LOWER(name) LIKE ?', ["%{$searchTerm}%"])
+                  ->orWhereRaw('LOWER(description) LIKE ?', ["%{$searchTerm}%"]);
+            });
         }
 
-        $permissions = $query->withCount('roles')->orderBy('created_at', 'desc')->paginate(10)->appends(request()->query());
+        $permissions = $query->withCount('roles')
+            ->orderBy('created_at', 'desc')
+            ->paginate(10)
+            ->withQueryString();
 
         return Inertia::render('Administration/Permissions/Index', [
             'permissions' => $permissions,
-            'filters' => [
-                'search' => request('search'),
-            ],
+            'filters'     => ['search' => request('search')],
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function create(): Response
     {
+        abort_unless(request()->user()->hasAnyRole([Roles::ADMINISTRATOR]), 403);
+
         return Inertia::render('Administration/Permissions/Create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(StorePermissionRequest $request)
+    public function store(StorePermissionRequest $request): RedirectResponse
     {
         Permission::create($request->validated());
 
@@ -52,11 +52,10 @@ class PermissionController extends Controller
             ->with('message', 'Permission créée avec succès.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Permission $permission)
+    public function show(Permission $permission): Response
     {
+        abort_unless(request()->user()->hasAnyRole([Roles::ADMINISTRATOR]), 403);
+
         $permission->load('roles');
 
         return Inertia::render('Administration/Permissions/Show', [
@@ -64,20 +63,16 @@ class PermissionController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Permission $permission)
+    public function edit(Permission $permission): Response
     {
+        abort_unless(request()->user()->hasAnyRole([Roles::ADMINISTRATOR]), 403);
+
         return Inertia::render('Administration/Permissions/Edit', [
             'permission' => $permission,
         ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdatePermissionRequest $request, Permission $permission)
+    public function update(UpdatePermissionRequest $request, Permission $permission): RedirectResponse
     {
         $permission->update($request->validated());
 
@@ -85,11 +80,16 @@ class PermissionController extends Controller
             ->with('message', 'Permission mise à jour avec succès.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Permission $permission)
+    public function destroy(Permission $permission): RedirectResponse
     {
+        abort_unless(request()->user()->hasAnyRole([Roles::ADMINISTRATOR]), 403);
+
+        if ($permission->roles()->exists()) {
+            return back()->withErrors([
+                'delete' => 'Impossible de supprimer une permission utilisée par des rôles.',
+            ]);
+        }
+
         $permission->delete();
 
         return redirect()->route('permissions.index')
