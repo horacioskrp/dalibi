@@ -51,7 +51,8 @@ class InvoiceService
                 ]);
             }
 
-            $studentScholarship = StudentScholarship::with('scholarship')
+            // Bourse éventuelle → ligne DISCOUNT + transaction comptable
+            $studentScholarship = StudentScholarship::with(['scholarship', 'student'])
                 ->where('student_id', $enrollment->student_id)
                 ->where('academic_year_id', $enrollment->academic_year_id)
                 ->first();
@@ -71,6 +72,8 @@ class InvoiceService
                     'amount'     => $discountAmount,
                     'sort_order' => $order,
                 ]);
+
+                $this->accountingService->recordScholarshipTransaction($studentScholarship, $discountAmount);
             }
 
             $invoice->recalculate();

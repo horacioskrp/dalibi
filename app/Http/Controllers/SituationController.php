@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\AcademicYear;
 use App\Models\Classroom;
 use App\Models\Enrollment;
+use App\Models\Invoice;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class SituationController extends Controller
@@ -18,67 +20,84 @@ class SituationController extends Controller
         $academicYears = AcademicYear::orderBy('year', 'desc')->get(['id', 'year', 'active']);
         $classrooms    = Classroom::orderBy('name')->get(['id', 'name', 'code']);
 
-        $enrollments = Enrollment::with(['student', 'classroom', 'invoice'])
-            ->when($yearId,  fn ($q) => $q->where('academic_year_id', $yearId))
-            ->when($classId, fn ($q) => $q->where('class_id', $classId))
+        /* ── Résumé par classe (SQL) ── */
+        $byClass = DB::table('enrollments')
+            ->join('classes', 'enrollments.class_id', '=', 'classes.id')
+            ->leftJoin('invoices', 'enrollments.id', '=', 'invoices.enrollment_id')
+            ->when($yearId,  fn ($q) => $q->where('enrollments.academic_year_id', $yearId))
+            ->when($classId, fn ($q) => $q->where('enrollments.class_id', $classId))
+            ->groupBy('classes.id', 'classes.name', 'classes.code')
+            ->selectRaw("
+                classes.id                                                                 AS class_id,
+                classes.name                                                               AS class_name,
+                classes.code                                                               AS class_code,
+                COUNT(enrollments.id)                                                      AS total_students,
+                COALESCE(SUM(invoices.total), 0)                                           AS total_amount,
+                COALESCE(SUM(invoices.amount_paid), 0)                                     AS amount_paid,
+                COALESCE(SUM(invoices.amount_remaining), 0)                                AS amount_remaining,
+                SUM(CASE WHEN invoices.status = 'PAID'           THEN 1 ELSE 0 END)        AS paid_count,
+                SUM(CASE WHEN invoices.status = 'PARTIALLY_PAID' THEN 1 ELSE 0 END)        AS partial_count,
+                SUM(CASE WHEN invoices.status = 'ISSUED'         THEN 1 ELSE 0 END)        AS issued_count,
+                SUM(CASE WHEN invoices.status = 'CANCELLED'      THEN 1 ELSE 0 END)        AS cancelled_count
+            ")
+            ->orderBy('classes.name')
             ->get();
 
-        /* ── Résumé par classe ── */
-        $byClass = $enrollments
-            ->groupBy('class_id')
-            ->map(function ($rows) {
-                $classroom = $rows->first()->classroom;
-                $invoices  = $rows->map->invoice->filter();
+        /* ── Stats globales (SQL) ── */
+        $globalStatsRaw = DB::table('enrollments')
+            ->leftJoin('invoices', 'enrollments.id', '=', 'invoices.enrollment_id')
+            ->when($yearId,  fn ($q) => $q->where('enrollments.academic_year_id', $yearId))
+            ->when($classId, fn ($q) => $q->where('enrollments.class_id', $classId))
+            ->selectRaw("
+                COUNT(enrollments.id)                                                       AS total_students,
+                COALESCE(SUM(invoices.total), 0)                                            AS total_amount,
+                COALESCE(SUM(invoices.amount_paid), 0)                                      AS amount_paid,
+                COALESCE(SUM(invoices.amount_remaining), 0)                                 AS amount_remaining,
+                SUM(CASE WHEN invoices.status = 'PAID'           THEN 1 ELSE 0 END)         AS paid_count,
+                SUM(CASE WHEN invoices.status = 'PARTIALLY_PAID' THEN 1 ELSE 0 END)         AS partial_count,
+                SUM(CASE WHEN invoices.status = 'ISSUED'         THEN 1 ELSE 0 END)         AS issued_count
+            ")
+            ->first();
 
-                return [
-                    'class_id'         => $classroom?->id,
-                    'class_name'       => $classroom?->name,
-                    'class_code'       => $classroom?->code,
-                    'total_students'   => $rows->count(),
-                    'total_amount'     => (float) $invoices->sum('total'),
-                    'amount_paid'      => (float) $invoices->sum('amount_paid'),
-                    'amount_remaining' => (float) $invoices->sum('amount_remaining'),
-                    'paid_count'       => $invoices->where('status', 'PAID')->count(),
-                    'partial_count'    => $invoices->where('status', 'PARTIALLY_PAID')->count(),
-                    'issued_count'     => $invoices->where('status', 'ISSUED')->count(),
-                    'cancelled_count'  => $invoices->where('status', 'CANCELLED')->count(),
-                ];
-            })
-            ->sortBy('class_name')
-            ->values();
-
-        /* ── Liste élèves (quand une classe est sélectionnée) ── */
-        $students = $classId
-            ? $enrollments->map(function ($enrollment) {
-                $inv = $enrollment->invoice;
-
-                return [
-                    'enrollment_id'    => $enrollment->id,
-                    'enrollment_code'  => $enrollment->enrollment_code,
-                    'student_id'       => $enrollment->student?->id,
-                    'firstname'        => $enrollment->student?->firstname,
-                    'lastname'         => $enrollment->student?->lastname,
-                    'matricule'        => $enrollment->student?->matricule,
-                    'invoice_number'   => $inv?->invoice_number,
-                    'total'            => (float) ($inv?->total ?? 0),
-                    'amount_paid'      => (float) ($inv?->amount_paid ?? 0),
-                    'amount_remaining' => (float) ($inv?->amount_remaining ?? 0),
-                    'status'           => $inv?->status ?? 'ISSUED',
-                ];
-            })->sortByDesc('amount_remaining')->values()
-            : collect();
-
-        /* ── Stats globales ── */
-        $allInvoices = $enrollments->map->invoice->filter();
         $globalStats = [
-            'total_students'   => $enrollments->count(),
-            'total_amount'     => (float) $allInvoices->sum('total'),
-            'amount_paid'      => (float) $allInvoices->sum('amount_paid'),
-            'amount_remaining' => (float) $allInvoices->sum('amount_remaining'),
-            'paid_count'       => $allInvoices->where('status', 'PAID')->count(),
-            'partial_count'    => $allInvoices->where('status', 'PARTIALLY_PAID')->count(),
-            'issued_count'     => $allInvoices->where('status', 'ISSUED')->count(),
+            'total_students'   => (int)   ($globalStatsRaw->total_students ?? 0),
+            'total_amount'     => (float) ($globalStatsRaw->total_amount ?? 0),
+            'amount_paid'      => (float) ($globalStatsRaw->amount_paid ?? 0),
+            'amount_remaining' => (float) ($globalStatsRaw->amount_remaining ?? 0),
+            'paid_count'       => (int)   ($globalStatsRaw->paid_count ?? 0),
+            'partial_count'    => (int)   ($globalStatsRaw->partial_count ?? 0),
+            'issued_count'     => (int)   ($globalStatsRaw->issued_count ?? 0),
         ];
+
+        /* ── Liste élèves (uniquement quand une classe est sélectionnée) ── */
+        $students = collect();
+        if ($classId) {
+            $students = Enrollment::with([
+                    'student:id,firstname,lastname,matricule',
+                    'invoice:id,enrollment_id,invoice_number,total,amount_paid,amount_remaining,status',
+                ])
+                ->where('class_id', $classId)
+                ->when($yearId, fn ($q) => $q->where('academic_year_id', $yearId))
+                ->orderByDesc(
+                    Invoice::select('amount_remaining')
+                        ->whereColumn('enrollment_id', 'enrollments.id')
+                        ->limit(1)
+                )
+                ->get()
+                ->map(fn ($e) => [
+                    'enrollment_id'    => $e->id,
+                    'enrollment_code'  => $e->enrollment_code,
+                    'student_id'       => $e->student?->id,
+                    'firstname'        => $e->student?->firstname,
+                    'lastname'         => $e->student?->lastname,
+                    'matricule'        => $e->student?->matricule,
+                    'invoice_number'   => $e->invoice?->invoice_number,
+                    'total'            => (float) ($e->invoice?->total ?? 0),
+                    'amount_paid'      => (float) ($e->invoice?->amount_paid ?? 0),
+                    'amount_remaining' => (float) ($e->invoice?->amount_remaining ?? 0),
+                    'status'           => $e->invoice?->status ?? 'ISSUED',
+                ]);
+        }
 
         return Inertia::render('Accounting/Situation', [
             'academicYears' => $academicYears,
@@ -100,17 +119,15 @@ class SituationController extends Controller
     {
         $yearId  = $request->academic_year_id;
         $classId = $request->class_id;
-        $type    = $request->get('type', 'all'); // all | unpaid
+        $type    = $request->get('type', 'all');
 
-        $query = Enrollment::with(['student', 'classroom', 'invoice'])
+        $query = Enrollment::with(['student:id,firstname,lastname,matricule', 'classroom:id,name', 'invoice:id,enrollment_id,invoice_number,total,amount_paid,amount_remaining,status'])
             ->when($yearId,  fn ($q) => $q->where('academic_year_id', $yearId))
             ->when($classId, fn ($q) => $q->where('class_id', $classId));
 
         if ($type === 'unpaid') {
             $query->whereHas('invoice', fn ($q) => $q->whereIn('status', ['ISSUED', 'PARTIALLY_PAID']));
         }
-
-        $enrollments = $query->orderBy('created_at')->get();
 
         $suffix   = $type === 'unpaid' ? 'impayes' : 'complet';
         $date     = now()->format('Y-m-d');
@@ -122,9 +139,10 @@ class SituationController extends Controller
             'Cache-Control'       => 'no-cache, no-store',
         ];
 
+        $enrollments = $query->orderBy('enrollments.created_at')->cursor();
+
         $callback = function () use ($enrollments) {
             $out = fopen('php://output', 'w');
-            // BOM UTF-8 pour Excel
             fwrite($out, "\xEF\xBB\xBF");
             fputcsv($out, [
                 'Matricule', 'Nom', 'Prénom', 'Classe',

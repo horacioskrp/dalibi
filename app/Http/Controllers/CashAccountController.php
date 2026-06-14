@@ -43,7 +43,7 @@ class CashAccountController extends Controller
             'name'        => ['required', 'string', 'max:100'],
             'type'        => ['required', Rule::in(['CASH', 'MOBILE_MONEY', 'BANK'])],
             'description' => ['nullable', 'string', 'max:255'],
-            'active'      => ['boolean'],
+            'active'      => ['sometimes', 'boolean'],
         ]);
 
         $cashAccount->update($data);
@@ -53,9 +53,17 @@ class CashAccountController extends Controller
 
     public function destroy(CashAccount $cashAccount): RedirectResponse
     {
-        // Refuser si des paiements sont liés
-        if ($cashAccount->payments()->exists()) {
-            return back()->withErrors(['delete' => 'Impossible de supprimer une caisse liée à des paiements.']);
+        if ($cashAccount->payments()->exists() || $cashAccount->transactions()->exists()) {
+            return back()->withErrors([
+                'delete' => 'Impossible de supprimer une caisse avec un historique de paiements ou de transactions.',
+            ]);
+        }
+
+        if ((float) $cashAccount->balance !== 0.0) {
+            return back()->withErrors([
+                'delete' => "Impossible de supprimer une caisse dont le solde n'est pas nul (" .
+                            number_format((float) $cashAccount->balance, 0, ',', ' ') . ' F).',
+            ]);
         }
 
         $cashAccount->delete();
