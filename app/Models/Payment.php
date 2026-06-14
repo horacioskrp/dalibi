@@ -14,6 +14,7 @@ class Payment extends Model
 
     protected $fillable = [
         'invoice_id',
+        'installment_id',
         'amount',
         'payment_method',    // CASH | MOBILE_MONEY | BANK_TRANSFER | CHEQUE
         'cash_account_id',
@@ -38,6 +39,11 @@ class Payment extends Model
         return $this->belongsTo(Invoice::class);
     }
 
+    public function installment(): BelongsTo
+    {
+        return $this->belongsTo(Installment::class);
+    }
+
     public function receipt(): HasOne
     {
         return $this->hasOne(Receipt::class);
@@ -53,7 +59,7 @@ class Payment extends Model
         return $this->belongsTo(CashAccount::class);
     }
 
-    public function accountingTransaction(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function accountingTransaction(): HasOne
     {
         return $this->hasOne(AccountingTransaction::class, 'reference_id');
     }

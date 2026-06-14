@@ -21,7 +21,6 @@ use App\Http\Controllers\LevelController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SchoolController;
-use App\Http\Controllers\SchoolingController;
 use App\Http\Controllers\ScholarshipController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\StudentScholarshipController;
@@ -78,7 +77,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('evaluations/{evaluation}/marks', [MarkController::class, 'store'])->name('marks.store');
     Route::resource('academic-years', AcademicYearController::class);
     Route::resource('academic-periods', AcademicPeriodController::class);
-    Route::resource('schoolings', SchoolingController::class);
     Route::resource('fee-categories', FeeCategorieController::class);
     Route::resource('fee-structures', FeeStructureController::class);
     Route::post('fee-structures/{feeStructure}/installments', [\App\Http\Controllers\InstallmentController::class, 'storeMultiple'])
