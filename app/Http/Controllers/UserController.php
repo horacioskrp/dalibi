@@ -6,16 +6,15 @@ use App\Constants\Roles;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
+use Inertia\Response;
 use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(): Response
     {
         $query  = User::query()->with('roles');
         $roles  = Role::select('id', 'name')->orderBy('name')->get();
@@ -33,36 +32,20 @@ class UserController extends Controller
 
         if ($search) {
             $searchTerm = strtolower($search);
-            $query->where(function ($q) use ($searchTerm) {
+            $query->where(function ($q) use ($searchTerm): void {
                 $q->whereRaw('LOWER(firstname) LIKE ?', ["%{$searchTerm}%"])
-                    ->orWhereRaw('LOWER(lastname) LIKE ?', ["%{$searchTerm}%"])
-                    ->orWhereRaw('LOWER(email) LIKE ?', ["%{$searchTerm}%"])
-                    ->orWhereRaw('LOWER(natricule) LIKE ?', ["%{$searchTerm}%"]);
+                  ->orWhereRaw('LOWER(lastname)  LIKE ?', ["%{$searchTerm}%"])
+                  ->orWhereRaw('LOWER(email)     LIKE ?', ["%{$searchTerm}%"])
+                  ->orWhereRaw('LOWER(natricule) LIKE ?', ["%{$searchTerm}%"]);
             });
         }
 
         if ($roleId) {
-            $query->whereHas('roles', function ($q) use ($roleId) {
-                $q->where('roles.id', $roleId);
-            });
+            $query->whereHas('roles', fn ($q) => $q->where('roles.id', $roleId));
         }
 
         if ($normalizedGender) {
-            $query->where(function ($q) use ($normalizedGender) {
-                $q->where('gender', $normalizedGender);
-
-                if ($normalizedGender === 'male') {
-                    $q->orWhere('gender', 'M');
-                }
-
-                if ($normalizedGender === 'female') {
-                    $q->orWhere('gender', 'F');
-                }
-
-                if ($normalizedGender === 'other') {
-                    $q->orWhere('gender', 'O');
-                }
-            });
+            $query->where('gender', $normalizedGender);
         }
 
         $perPage = in_array((int) request('per_page'), [10, 25, 50, 100], true)
@@ -83,10 +66,7 @@ class UserController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function create(): Response
     {
         $roles = Role::orderBy('name')->get();
 
@@ -95,10 +75,7 @@ class UserController extends Controller
         ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(StoreUserRequest $request)
+    public function store(StoreUserRequest $request): RedirectResponse
     {
         $user = User::create([
             'firstname'  => $request->validated('firstname'),
@@ -112,7 +89,6 @@ class UserController extends Controller
             'profile'    => $request->validated('profile'),
         ]);
 
-        // Seul un ADMINISTRATOR peut assigner des rôles
         if ($request->has('roles') && auth()->user()->hasRole(Roles::ADMINISTRATOR)) {
             $roleIds = $request->validated('roles');
             $roles   = Role::whereIn('id', $roleIds)->pluck('name');
@@ -123,10 +99,7 @@ class UserController extends Controller
             ->with('message', 'Utilisateur créé avec succès.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(User $user)
+    public function show(User $user): Response
     {
         $user->load('roles.permissions');
 
@@ -135,10 +108,7 @@ class UserController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(User $user)
+    public function edit(User $user): Response
     {
         $user->load('roles');
         $roles = Role::orderBy('name')->get();
@@ -149,10 +119,7 @@ class UserController extends Controller
         ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateUserRequest $request, User $user)
+    public function update(UpdateUserRequest $request, User $user): RedirectResponse
     {
         $data = [
             'firstname'  => $request->validated('firstname'),
@@ -171,26 +138,31 @@ class UserController extends Controller
 
         $user->update($data);
 
-        // Seul un ADMINISTRATOR peut modifier les rôles
         if (auth()->user()->hasRole(Roles::ADMINISTRATOR)) {
-            if ($request->has('roles')) {
-                $roleIds = $request->validated('roles');
-                $roles   = Role::whereIn('id', $roleIds)->pluck('name');
-                $user->syncRoles($roles);
-            } else {
-                $user->syncRoles([]);
-            }
+            $roleIds = $request->has('roles') ? ($request->validated('roles') ?? []) : [];
+            $roles   = Role::whereIn('id', $roleIds)->pluck('name');
+            $user->syncRoles($roles);
         }
 
         return redirect()->route('users.index')
             ->with('message', 'Utilisateur mis à jour avec succès.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(User $user)
+    public function destroy(User $user): RedirectResponse
     {
+        abort_unless(
+            auth()->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]),
+            403
+        );
+
+        if ($user->id === auth()->id()) {
+            return back()->withErrors(['delete' => 'Vous ne pouvez pas supprimer votre propre compte.']);
+        }
+
+        if ($user->hasRole(Roles::ADMINISTRATOR) && ! auth()->user()->hasRole(Roles::ADMINISTRATOR)) {
+            return back()->withErrors(['delete' => 'Seul un administrateur peut supprimer un compte administrateur.']);
+        }
+
         $user->delete();
 
         return redirect()->route('users.index')

@@ -24,6 +24,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Spatie\Permission\Traits\HasRoles;
+use App\Constants\Roles;
 use App\Traits\HasMatricule;
 use App\Services\MatriculeService;
 
@@ -87,52 +88,29 @@ class User extends Authenticatable
         );
     }
 
-    /**
-     * Check if user has a specific role among multiple roles.
-     */
-    public function hasAnyRole(array $roles): bool
-    {
-        return $this->hasAnyRole($roles);
-    }
-
-    /**
-     * Check if user is an administrator.
-     */
     public function isAdministrator(): bool
     {
-        return $this->hasRole('administrateur');
+        return $this->hasRole(Roles::ADMINISTRATOR);
     }
 
-    /**
-     * Check if user is a teacher.
-     */
-    public function isTeacher(): bool
-    {
-        return $this->hasRole('enseignant');
-    }
-
-    /**
-     * Check if user is accounting.
-     */
-    public function isAccounting(): bool
-    {
-        return $this->hasRole('comptabilité');
-    }
-
-    /**
-     * Check if user is secretariat.
-     */
-    public function isSecretariat(): bool
-    {
-        return $this->hasRole('secrétariat');
-    }
-
-    /**
-     * Check if user is a director.
-     */
     public function isDirector(): bool
     {
-        return $this->hasRole('directeur');
+        return $this->hasRole(Roles::DIRECTOR);
+    }
+
+    public function isTeacher(): bool
+    {
+        return $this->hasRole(Roles::TEACHER);
+    }
+
+    public function isAccounting(): bool
+    {
+        return $this->hasRole(Roles::ACCOUNTING);
+    }
+
+    public function isSecretariat(): bool
+    {
+        return $this->hasRole(Roles::SECRETARIAT);
     }
 
     /**
