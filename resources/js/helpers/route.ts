@@ -87,15 +87,10 @@ export function route(name: string, params?: any): string {
         'evaluation-types.destroy': `/evaluation-types/${params}`,
 
         // Evaluations routes
-        'evaluations.index': '/evaluations',
-        'evaluations.create': '/evaluations/create',
-        'evaluations.store': '/evaluations',
-        'evaluations.show': `/evaluations/${params}`,
-        'evaluations.edit': `/evaluations/${params}/edit`,
-        'evaluations.update': `/evaluations/${params}`,
-        'evaluations.destroy': `/evaluations/${params}`,
-        'evaluations.bulk-schedule': '/evaluations/bulk/schedule',
-        'evaluations.bulk-store': '/evaluations/bulk/store',
+        'evaluations.index':         '/evaluations',
+        'evaluations.show':          `/evaluations/${params}`,
+        'evaluations.destroy':       `/evaluations/${params}`,
+        'evaluations.update-status': `/evaluations/${params}/status`,
 
         // Academic Years routes
         'academic-years.index': '/academic-years',
@@ -132,15 +127,6 @@ export function route(name: string, params?: any): string {
         'subject-assignments.edit': `/subject-assignments/${params}/edit`,
         'subject-assignments.update': `/subject-assignments/${params}`,
         'subject-assignments.destroy': `/subject-assignments/${params}`,
-
-        // Schoolings routes
-        'schoolings.index': '/schoolings',
-        'schoolings.create': '/schoolings/create',
-        'schoolings.store': '/schoolings',
-        'schoolings.show': `/schoolings/${params}`,
-        'schoolings.edit': `/schoolings/${params}/edit`,
-        'schoolings.update': `/schoolings/${params}`,
-        'schoolings.destroy': `/schoolings/${params}`,
 
         // Fee Categories routes
         'fee-categories.index': '/fee-categories',
@@ -226,12 +212,6 @@ export function route(name: string, params?: any): string {
         'evaluation-templates.update':   `/evaluation-templates/${params}`,
         'evaluation-templates.destroy':  `/evaluation-templates/${params}`,
         'evaluation-templates.generate': `/evaluation-templates/${params}/generate`,
-
-        // Evaluations routes (refactorisées)
-        'evaluations.index':         '/evaluations',
-        'evaluations.show':          `/evaluations/${params}`,
-        'evaluations.destroy':       `/evaluations/${params}`,
-        'evaluations.update-status': `/evaluations/${params}/status`,
 
         // Marks routes
         'marks.index': `/evaluations/${params}/marks`,

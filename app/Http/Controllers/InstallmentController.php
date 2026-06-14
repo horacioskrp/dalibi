@@ -2,40 +2,49 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\Roles;
 use App\Models\FeeStructure;
 use App\Models\Installment;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class InstallmentController extends Controller
 {
     /**
-     * Store multiple installments for a fee structure.
+     * Save (replace) all installments for a given fee structure.
      */
-    public function storeMultiple(Request $request, FeeStructure $feeStructure)
+    public function storeMultiple(Request $request, FeeStructure $feeStructure): RedirectResponse
     {
+        abort_unless(
+            $request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]),
+            403
+        );
+
         $request->validate([
-            'installments' => 'required|array|min:1',
-            'installments.*.name' => 'required|string|max:255',
-            'installments.*.installment_number' => 'required|integer|min:1',
-            'installments.*.amount' => 'required|numeric|min:0',
+            'installments'                          => ['required', 'array', 'min:1'],
+            'installments.*.name'                   => ['required', 'string', 'max:255'],
+            'installments.*.installment_number'     => ['required', 'integer', 'min:1'],
+            'installments.*.amount'                 => ['required', 'numeric', 'min:0', 'max:99999999'],
+            'installments.*.due_date'               => ['nullable', 'date'],
+            'installments.*.academic_period_id'     => ['nullable', 'uuid', 'exists:academic_periods,id'],
         ]);
 
-        DB::transaction(function () use ($request, $feeStructure) {
-            // Delete existing installments
+        DB::transaction(function () use ($request, $feeStructure): void {
             $feeStructure->installments()->delete();
 
-            // Create new installments
-            foreach ($request->installments as $installmentData) {
+            foreach ($request->installments as $data) {
                 Installment::create([
-                    'fee_structure_id' => $feeStructure->id,
-                    'name' => $installmentData['name'],
-                    'installment_number' => $installmentData['installment_number'],
-                    'amount' => $installmentData['amount'],
+                    'fee_structure_id'   => $feeStructure->id,
+                    'name'               => $data['name'],
+                    'installment_number' => $data['installment_number'],
+                    'amount'             => $data['amount'],
+                    'due_date'           => $data['due_date'] ?? null,
+                    'academic_period_id' => $data['academic_period_id'] ?? null,
                 ]);
             }
         });
 
-        return redirect()->back()->with('message', 'Tranches mises à jour avec succès.');
+        return back()->with('success', 'Tranches mises à jour avec succès.');
     }
 }
