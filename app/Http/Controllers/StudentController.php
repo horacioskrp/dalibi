@@ -65,9 +65,9 @@ class StudentController extends Controller
             'filters' => $request->only(['search', 'gender', 'nationality', 'status', 'per_page']),
             'stats' => Student::selectRaw("
                 COUNT(*) as total,
-                SUM(CASE WHEN active = 1 THEN 1 ELSE 0 END) as active,
-                SUM(CASE WHEN active = 0 THEN 1 ELSE 0 END) as inactive,
-                SUM(CASE WHEN gender = 'male' THEN 1 ELSE 0 END) as male,
+                SUM(CASE WHEN active = true  THEN 1 ELSE 0 END) as active,
+                SUM(CASE WHEN active = false THEN 1 ELSE 0 END) as inactive,
+                SUM(CASE WHEN gender = 'male'   THEN 1 ELSE 0 END) as male,
                 SUM(CASE WHEN gender = 'female' THEN 1 ELSE 0 END) as female,
                 SUM(CASE WHEN gender IS NULL OR gender = '' THEN 1 ELSE 0 END) as other
             ")->first(),
