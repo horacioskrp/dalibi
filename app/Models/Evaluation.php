@@ -22,10 +22,13 @@ class Evaluation extends Model
         'class_subject_id',
         'date',
         'status',
+        'locked_at',
+        'locked_by',
     ];
 
     protected $casts = [
-        'date' => 'date',
+        'date'      => 'date',
+        'locked_at' => 'datetime',
     ];
 
     public function template(): BelongsTo

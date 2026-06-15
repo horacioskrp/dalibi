@@ -1,4 +1,4 @@
-import { BookOpen, Calendar, Clock, ClipboardList, GraduationCap, LayoutGrid, Layers, Settings, Tag, Users, Shield, Lock, Wallet, Percent, DollarSign, UserCircle, TrendingUp, ArrowLeftRight, PieChart, FileText, ListChecks, NotebookPen } from 'lucide-react';
+import { BookOpen, Calendar, Clock, ClipboardList, GraduationCap, LayoutGrid, Layers, Settings, Tag, Users, Shield, Lock, Wallet, Percent, DollarSign, UserCircle, TrendingUp, ArrowLeftRight, PieChart, FileText, ListChecks, NotebookPen, SlidersHorizontal, AlertCircle, CalendarRange } from 'lucide-react';
 import { route } from '@/helpers/route';
 import type { NavItem } from '@/types';
 
@@ -117,22 +117,49 @@ export const mainNavItems: NavItem[] = [
                 href: route('scholarships.index'),
                 icon: Percent,
             },
+            {
+                title: 'Calcul des moyennes',
+                href: route('grading-configs.index'),
+                icon: SlidersHorizontal,
+            },
         ],
     },
     {
         title: 'Examens',
         href: '#',
-        icon: NotebookPen,
+        icon: FileText,
         items: [
             {
                 title: 'Modèles d\'évaluation',
                 href: route('evaluation-templates.index'),
-                icon: FileText,
+                icon: ListChecks,
             },
             {
                 title: 'Évaluations par classe',
                 href: route('evaluations.index'),
-                icon: ListChecks,
+                icon: ClipboardList,
+            },
+            {
+                title: 'Planning des examens',
+                href: route('evaluations.planning'),
+                icon: CalendarRange,
+            },
+        ],
+    },
+    {
+        title: 'Notes',
+        href: '#',
+        icon: NotebookPen,
+        items: [
+            {
+                title: 'Saisie par trimestre',
+                href: route('grades.index'),
+                icon: ClipboardList,
+            },
+            {
+                title: 'Réclamations',
+                href: route('note-reclamations.index'),
+                icon: AlertCircle,
             },
         ],
     },

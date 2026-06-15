@@ -217,6 +217,33 @@ export function route(name: string, params?: any): string {
         'marks.index': `/evaluations/${params}/marks`,
         'marks.store': `/evaluations/${params}/marks`,
 
+        // Grades routes
+        'grades.index':   '/grades',
+        'grades.store':   '/grades',
+        'grades.student': `/grades/student/${params}`,
+
+        // Evaluations lock / date / planning
+        'evaluations.toggle-lock':    `/evaluations/${params}/lock`,
+        'evaluations.update-date':    `/evaluations/${params}/date`,
+        'evaluations.planning':       '/evaluations-planning',
+        'evaluations.export-planning': `/evaluations-planning/${params}/export`,
+
+        // Note Reclamations routes
+        'note-reclamations.index':  '/note-reclamations',
+        'note-reclamations.create': '/note-reclamations/create',
+        'note-reclamations.store':  '/note-reclamations',
+        'note-reclamations.show':   `/note-reclamations/${params}`,
+        'note-reclamations.review': `/note-reclamations/${params}/review`,
+
+        // Grading Configs routes
+        'grading-configs.index':    '/grading-configs',
+        'grading-configs.create':   '/grading-configs/create',
+        'grading-configs.store':    '/grading-configs',
+        'grading-configs.edit':     `/grading-configs/${params}/edit`,
+        'grading-configs.update':   `/grading-configs/${params}`,
+        'grading-configs.destroy':  `/grading-configs/${params}`,
+        'grading-configs.activate': `/grading-configs/${params}/activate`,
+
         // Expenses routes
         'expenses.store':   '/accounting/expenses',
         'expenses.destroy': `/accounting/expenses/${params}`,

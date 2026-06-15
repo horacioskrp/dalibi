@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { CheckCircle2, ClipboardList, ListChecks, Search, Trash2, X } from 'lucide-react';
+import { CheckCircle2, ClipboardList, ListChecks, Lock, LockOpen, Search, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import {
     AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -15,6 +15,7 @@ import AppLayout from '@/layouts/app-layout';
 interface EvalRow {
     id: string;
     status: 'scheduled' | 'completed';
+    locked_at: string | null;
     date: string | null;
     marks_count: number;
     graded_count: number;
@@ -33,29 +34,21 @@ interface EvalRow {
 }
 
 interface Props {
-    evaluations: {
-        data: EvalRow[];
-        total: number;
-        current_page: number;
-        last_page: number;
-    };
-    filters: {
-        search: string;
-        status: string;
-        periodId: string;
-        templateId: string;
-    };
+    evaluations: { data: EvalRow[]; total: number; current_page: number; last_page: number };
+    filters: { search: string; status: string; periodId: string; templateId: string };
+    canLock: boolean;
 }
 
-export default function Index({ evaluations, filters }: Readonly<Props>) {
-    const [search, setSearch]   = useState(filters.search ?? '');
-    const [status, setStatus]   = useState(filters.status ?? 'all');
+export default function Index({ evaluations, filters, canLock }: Readonly<Props>) {
+    const [search, setSearch]     = useState(filters.search ?? '');
+    const [status, setStatus]     = useState(filters.status ?? 'all');
     const [deleteId, setDeleteId] = useState<string | null>(null);
 
     const apply = (overrides: Record<string, string> = {}) => {
+        const resolvedStatus = overrides.status ?? status;
         router.get(route('evaluations.index'), {
-            search: overrides.search  !== undefined ? overrides.search  : search,
-            status: (overrides.status ?? status) === 'all' ? '' : (overrides.status ?? status),
+            search: overrides.search ?? search,
+            status: resolvedStatus === 'all' ? '' : resolvedStatus,
         }, { preserveScroll: true, replace: true });
     };
 
@@ -64,6 +57,10 @@ export default function Index({ evaluations, filters }: Readonly<Props>) {
             preserveScroll: true,
             onSuccess: () => setDeleteId(null),
         });
+    };
+
+    const onToggleLock = (id: string) => {
+        router.patch(route('evaluations.toggle-lock', id), {}, { preserveScroll: true });
     };
 
     const statusLabel = (s: string) => s === 'completed' ? 'Terminée' : 'Planifiée';
@@ -131,11 +128,11 @@ export default function Index({ evaluations, filters }: Readonly<Props>) {
                                 <TableHead>Classe</TableHead>
                                 <TableHead>Matière</TableHead>
                                 <TableHead>Période</TableHead>
-                                <TableHead className="text-center">Coeff. exam.</TableHead>
+                                <TableHead className="text-center">Coeff.</TableHead>
                                 <TableHead>Date</TableHead>
                                 <TableHead>Statut</TableHead>
                                 <TableHead className="text-center">Progression</TableHead>
-                                <TableHead className="text-center w-28">Actions</TableHead>
+                                <TableHead className="text-center w-36">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -147,10 +144,18 @@ export default function Index({ evaluations, filters }: Readonly<Props>) {
                                     </TableCell>
                                 </TableRow>
                             ) : evaluations.data.map(ev => {
-                                const pct = ev.marks_count > 0 ? Math.round((ev.graded_count / ev.marks_count) * 100) : 0;
+                                const pct      = ev.marks_count > 0 ? Math.round((ev.graded_count / ev.marks_count) * 100) : 0;
+                                const isLocked = !!ev.locked_at;
                                 return (
-                                    <TableRow key={ev.id} className="hover:bg-blue-50/20 transition-colors">
-                                        <TableCell className="font-semibold text-gray-900">{ev.template?.name}</TableCell>
+                                    <TableRow key={ev.id} className={`transition-colors ${isLocked ? 'bg-red-50/30' : 'hover:bg-blue-50/20'}`}>
+                                        <TableCell className="font-semibold text-gray-900">
+                                            {ev.template?.name}
+                                            {isLocked && (
+                                                <span className="ml-2 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs bg-red-100 text-red-600">
+                                                    <Lock className="w-3 h-3" /> Clôturée
+                                                </span>
+                                            )}
+                                        </TableCell>
                                         <TableCell className="text-gray-700">
                                             {ev.class_subject?.class?.name}
                                             <span className="ml-1 text-xs text-gray-400">({ev.class_subject?.class?.code})</span>
@@ -192,6 +197,19 @@ export default function Index({ evaluations, filters }: Readonly<Props>) {
                                                 >
                                                     <ClipboardList className="w-3.5 h-3.5" /> Notes
                                                 </Button>
+                                                {canLock && (
+                                                    <Button
+                                                        variant="outline" size="sm"
+                                                        title={isLocked ? 'Déclôturer' : 'Clôturer'}
+                                                        className={isLocked
+                                                            ? 'border-red-200 text-red-500 hover:bg-red-50'
+                                                            : 'border-gray-200 text-gray-500 hover:bg-gray-50'
+                                                        }
+                                                        onClick={() => onToggleLock(ev.id)}
+                                                    >
+                                                        {isLocked ? <Lock className="w-3.5 h-3.5" /> : <LockOpen className="w-3.5 h-3.5" />}
+                                                    </Button>
+                                                )}
                                                 <Button
                                                     variant="outline" size="sm"
                                                     className="border-red-200 text-red-500 hover:bg-red-50"

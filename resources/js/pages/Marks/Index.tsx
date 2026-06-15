@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { ArrowLeft, CheckCircle2, Save, TrendingUp, Users, UserX } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, CheckCircle2, Lock, MessageSquareWarning, Save, TrendingUp, Users, UserX } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,6 +21,7 @@ interface StudentMark {
 interface Evaluation {
     id: string;
     status: 'scheduled' | 'completed';
+    locked_at: string | null;
     date: string | null;
     template: {
         name: string; coefficient: number; max_score: number;
@@ -57,6 +58,7 @@ function scoreColor(score: number | null, max: number): string {
 
 export default function Index({ evaluation, studentsWithMarks, stats }: Readonly<Props>) {
     const maxScore = Number(evaluation.template.max_score);
+    const isLocked = !!evaluation.locked_at;
 
     const [marks, setMarks] = useState<Record<string, MarkState>>({});
     const [saving, setSaving] = useState(false);
@@ -80,6 +82,7 @@ export default function Index({ evaluation, studentsWithMarks, stats }: Readonly
     const setComment = (id: string, v: string) => { setMarks(p => ({ ...p, [id]: { ...p[id], comments: v } })); setSaved(false); };
 
     const onSave = () => {
+        if (isLocked) return;
         const payload = studentsWithMarks.map(sm => ({
             student_id: sm.student_id,
             score:      marks[sm.student_id]?.score !== '' ? marks[sm.student_id]?.score : null,
@@ -91,6 +94,13 @@ export default function Index({ evaluation, studentsWithMarks, stats }: Readonly
             preserveScroll: true,
             onSuccess: () => { setSaved(true); setSaving(false); },
             onError:   () => setSaving(false),
+        });
+    };
+
+    const onReclamation = (studentId: string) => {
+        router.get(route('note-reclamations.create'), {
+            evaluation_id: evaluation.id,
+            student_id:    studentId,
         });
     };
 
@@ -139,15 +149,31 @@ export default function Index({ evaluation, studentsWithMarks, stats }: Readonly
                             </div>
                         </div>
                     </div>
-                    <Button
-                        className={`gap-2 ${saved ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-blue-600 hover:bg-blue-700'}`}
-                        onClick={onSave}
-                        disabled={saving}
-                    >
-                        {saved ? <CheckCircle2 className="w-4 h-4" /> : <Save className="w-4 h-4" />}
-                        {saving ? 'Enregistrement...' : saved ? 'Enregistré !' : 'Enregistrer'}
-                    </Button>
+                    {!isLocked && (
+                        <Button
+                            className={`gap-2 ${saved ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+                            onClick={onSave}
+                            disabled={saving}
+                        >
+                            {saved ? <CheckCircle2 className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+                            {saving ? 'Enregistrement...' : saved ? 'Enregistré !' : 'Enregistrer'}
+                        </Button>
+                    )}
                 </div>
+
+                {/* Lock banner */}
+                {isLocked && (
+                    <div className="flex items-center gap-3 bg-red-50 ring-1 ring-red-200 rounded-2xl px-5 py-4">
+                        <Lock className="w-5 h-5 text-red-500 shrink-0" />
+                        <div>
+                            <p className="font-semibold text-red-800">Évaluation clôturée</p>
+                            <p className="text-sm text-red-600 mt-0.5">
+                                La saisie de notes est désactivée depuis le {new Date(evaluation.locked_at!).toLocaleDateString('fr-FR')}.
+                                Utilisez le bouton "Réclamation" pour demander une correction de note.
+                            </p>
+                        </div>
+                    </div>
+                )}
 
                 {/* Stats */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -167,10 +193,12 @@ export default function Index({ evaluation, studentsWithMarks, stats }: Readonly
                     })}
                 </div>
 
-                {/* Grille de saisie */}
+                {/* Grille */}
                 <div className="bg-white rounded-2xl shadow-sm ring-1 ring-gray-100 overflow-hidden">
                     <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                        <h2 className="font-semibold text-gray-900">Saisie des notes</h2>
+                        <h2 className="font-semibold text-gray-900">
+                            {isLocked ? 'Notes enregistrées (lecture seule)' : 'Saisie des notes'}
+                        </h2>
                         <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${evaluation.status === 'completed' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
                             {evaluation.status === 'completed' ? 'Terminée' : 'Planifiée'}
                         </span>
@@ -190,8 +218,9 @@ export default function Index({ evaluation, studentsWithMarks, stats }: Readonly
                                         <TableHead>Matricule</TableHead>
                                         <TableHead>Élève</TableHead>
                                         <TableHead className="w-40">Note /{maxScore}</TableHead>
-                                        <TableHead className="w-24 text-center">Absent</TableHead>
+                                        {!isLocked && <TableHead className="w-24 text-center">Absent</TableHead>}
                                         <TableHead>Appréciation</TableHead>
+                                        {isLocked && <TableHead className="w-36 text-center">Réclamation</TableHead>}
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -212,6 +241,10 @@ export default function Index({ evaluation, studentsWithMarks, stats }: Readonly
                                                 <TableCell>
                                                     {isAbs ? (
                                                         <span className="text-xs text-orange-500 italic">Absent</span>
+                                                    ) : isLocked ? (
+                                                        <span className={`font-mono text-sm ${scoreColor(score, maxScore)}`}>
+                                                            {score !== null ? score : <span className="text-gray-300">—</span>}
+                                                        </span>
                                                     ) : (
                                                         <div className="relative w-32">
                                                             <Input
@@ -228,43 +261,70 @@ export default function Index({ evaluation, studentsWithMarks, stats }: Readonly
                                                         </div>
                                                     )}
                                                 </TableCell>
-                                                <TableCell className="text-center">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={isAbs}
-                                                        onChange={e => setAbsent(sm.student_id, e.target.checked)}
-                                                        className="w-4 h-4 rounded border-gray-300 text-orange-500 cursor-pointer"
-                                                    />
-                                                </TableCell>
+                                                {!isLocked && (
+                                                    <TableCell className="text-center">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={isAbs}
+                                                            onChange={e => setAbsent(sm.student_id, e.target.checked)}
+                                                            className="w-4 h-4 rounded border-gray-300 text-orange-500 cursor-pointer"
+                                                        />
+                                                    </TableCell>
+                                                )}
                                                 <TableCell>
-                                                    <Input
-                                                        value={m?.comments ?? ''}
-                                                        onChange={e => setComment(sm.student_id, e.target.value)}
-                                                        placeholder="Appréciation..."
-                                                        className="max-w-xs text-sm"
-                                                        disabled={isAbs}
-                                                    />
+                                                    {isLocked ? (
+                                                        <span className="text-sm text-gray-500 italic">{m?.comments || '—'}</span>
+                                                    ) : (
+                                                        <Input
+                                                            value={m?.comments ?? ''}
+                                                            onChange={e => setComment(sm.student_id, e.target.value)}
+                                                            placeholder="Appréciation..."
+                                                            className="max-w-xs text-sm"
+                                                            disabled={isAbs}
+                                                        />
+                                                    )}
                                                 </TableCell>
+                                                {isLocked && (
+                                                    <TableCell className="text-center">
+                                                        <Button
+                                                            variant="outline" size="sm"
+                                                            className="gap-1 text-xs border-orange-200 text-orange-600 hover:bg-orange-50"
+                                                            onClick={() => onReclamation(sm.student_id)}
+                                                        >
+                                                            <MessageSquareWarning className="w-3.5 h-3.5" />
+                                                            Réclamation
+                                                        </Button>
+                                                    </TableCell>
+                                                )}
                                             </TableRow>
                                         );
                                     })}
                                 </TableBody>
                             </Table>
-                            <div className="px-6 py-4 bg-gray-50 flex justify-between items-center border-t border-gray-100">
-                                <p className="text-sm text-gray-500">
-                                    {gradedNow} note{gradedNow > 1 ? 's' : ''} saisie{gradedNow > 1 ? 's' : ''}
-                                    {absentNow > 0 && ` · ${absentNow} absent${absentNow > 1 ? 's' : ''}`}
-                                    {' '}/ {studentsWithMarks.length} élèves
-                                </p>
-                                <Button
-                                    className={`gap-2 ${saved ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-blue-600 hover:bg-blue-700'}`}
-                                    onClick={onSave}
-                                    disabled={saving}
-                                >
-                                    {saved ? <CheckCircle2 className="w-4 h-4" /> : <Save className="w-4 h-4" />}
-                                    {saving ? 'Enregistrement...' : saved ? 'Enregistré !' : 'Enregistrer les notes'}
-                                </Button>
-                            </div>
+                            {isLocked ? (
+                                <div className="px-6 py-4 bg-red-50/50 flex items-center gap-3 border-t border-red-100">
+                                    <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+                                    <p className="text-sm text-red-600">
+                                        Évaluation clôturée — la saisie est désactivée. Cliquez sur "Réclamation" pour demander une correction.
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="px-6 py-4 bg-gray-50 flex justify-between items-center border-t border-gray-100">
+                                    <p className="text-sm text-gray-500">
+                                        {gradedNow} note{gradedNow > 1 ? 's' : ''} saisie{gradedNow > 1 ? 's' : ''}
+                                        {absentNow > 0 && ` · ${absentNow} absent${absentNow > 1 ? 's' : ''}`}
+                                        {' '}/ {studentsWithMarks.length} élèves
+                                    </p>
+                                    <Button
+                                        className={`gap-2 ${saved ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+                                        onClick={onSave}
+                                        disabled={saving}
+                                    >
+                                        {saved ? <CheckCircle2 className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+                                        {saving ? 'Enregistrement...' : saved ? 'Enregistré !' : 'Enregistrer les notes'}
+                                    </Button>
+                                </div>
+                            )}
                         </>
                     )}
                 </div>
