@@ -1,11 +1,12 @@
 import { Head, router } from '@inertiajs/react';
-import { ArrowLeft, BookOpen, CheckCircle2, ClipboardList, Layers, Pencil, Play, Plus, Trash2 } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, BookOpen, Calendar, CheckCircle2, ClipboardList, Layers, Pencil, Play, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import {
     AlertDialog, AlertDialogAction, AlertDialogCancel,
     AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { route } from '@/helpers/route';
 import AppLayout from '@/layouts/app-layout';
@@ -41,29 +42,48 @@ interface Props {
     template: Template;
     evaluations: EvalRow[];
     availableClassSubjects: ClassSubject[];
+    activeYear: { id: string } | null;
 }
 
-export default function Show({ template, evaluations, availableClassSubjects }: Readonly<Props>) {
-    const [selected, setSelected]       = useState<string[]>([]);
-    const [generating, setGenerating]   = useState(false);
-    const [deleteId, setDeleteId]       = useState<string | null>(null);
+export default function Show({ template, evaluations, availableClassSubjects, activeYear }: Readonly<Props>) {
+    const [selected, setSelected]         = useState<string[]>([]);
+    const [dates, setDates]               = useState<Record<string, string>>({});
+    const [generating, setGenerating]     = useState(false);
+    const [deleteId, setDeleteId]         = useState<string | null>(null);
     const [showSelector, setShowSelector] = useState(false);
 
-    const toggleSelect = (id: string) =>
-        setSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+    const defaultDate = template.date ? template.date.substring(0, 10) : '';
 
-    const selectAll = () =>
-        setSelected(prev => prev.length === availableClassSubjects.length ? [] : availableClassSubjects.map(cs => cs.id));
+    const toggleSelect = (id: string) => {
+        setSelected(prev => {
+            if (prev.includes(id)) return prev.filter(x => x !== id);
+            if (!dates[id]) setDates(d => ({ ...d, [id]: defaultDate }));
+            return [...prev, id];
+        });
+    };
+
+    const selectAll = () => {
+        if (selected.length === availableClassSubjects.length) {
+            setSelected([]);
+        } else {
+            const allIds = availableClassSubjects.map(cs => cs.id);
+            setSelected(allIds);
+            const init: Record<string, string> = {};
+            allIds.forEach(id => { if (!dates[id]) init[id] = defaultDate; });
+            setDates(d => ({ ...d, ...init }));
+        }
+    };
 
     const handleGenerate = () => {
         if (selected.length === 0) return;
         setGenerating(true);
+        const payload = selected.map(id => ({ id, date: dates[id] || null }));
         router.post(
             route('evaluation-templates.generate', template.id),
-            { class_subject_ids: selected },
+            { class_subjects: payload },
             {
                 preserveScroll: true,
-                onSuccess: () => { setGenerating(false); setSelected([]); setShowSelector(false); },
+                onSuccess: () => { setGenerating(false); setSelected([]); setDates({}); setShowSelector(false); },
                 onError:   () => setGenerating(false),
             },
         );
@@ -119,6 +139,44 @@ export default function Show({ template, evaluations, availableClassSubjects }: 
                     </div>
                 </div>
 
+                {/* Messages de diagnostic quand le déploiement est impossible */}
+                {!activeYear && (
+                    <div className="bg-amber-50 ring-1 ring-amber-200 rounded-2xl p-4 flex gap-3">
+                        <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                        <div>
+                            <p className="font-semibold text-amber-800">Aucune année académique active</p>
+                            <p className="text-sm text-amber-600 mt-0.5">
+                                Activez une année académique pour pouvoir déployer ce modèle.{' '}
+                                <button onClick={() => router.get(route('academic-years.index'))} className="underline font-medium">
+                                    Gérer les années académiques
+                                </button>
+                            </p>
+                        </div>
+                    </div>
+                )}
+                {activeYear && availableClassSubjects.length === 0 && evaluations.length === 0 && (
+                    <div className="bg-amber-50 ring-1 ring-amber-200 rounded-2xl p-4 flex gap-3">
+                        <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                        <div>
+                            <p className="font-semibold text-amber-800">Aucune classe/matière disponible</p>
+                            <p className="text-sm text-amber-600 mt-0.5">
+                                Aucune affectation classe/matière n'existe pour l'année académique active.{' '}
+                                <button onClick={() => router.get(route('classrooms.index'))} className="underline font-medium">
+                                    Configurer les classes
+                                </button>
+                            </p>
+                        </div>
+                    </div>
+                )}
+                {activeYear && availableClassSubjects.length === 0 && evaluations.length > 0 && (
+                    <div className="bg-emerald-50 ring-1 ring-emerald-200 rounded-2xl p-4 flex gap-2 items-center">
+                        <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                        <p className="text-sm text-emerald-700 font-medium">
+                            Toutes les classes/matières de l'année active ont déjà été déployées pour ce modèle.
+                        </p>
+                    </div>
+                )}
+
                 {/* Sélecteur de déploiement */}
                 {showSelector && availableClassSubjects.length > 0 && (
                     <div className="bg-blue-50/60 border border-blue-200 rounded-2xl p-5 space-y-4">
@@ -131,28 +189,56 @@ export default function Show({ template, evaluations, availableClassSubjects }: 
                                 {selected.length === availableClassSubjects.length ? 'Tout désélectionner' : 'Tout sélectionner'}
                             </button>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-64 overflow-y-auto">
-                            {availableClassSubjects.map(cs => (
-                                <label key={cs.id} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
-                                    selected.includes(cs.id)
-                                        ? 'bg-blue-600 text-white border-blue-600'
-                                        : 'bg-white border-gray-200 hover:border-blue-400'
-                                }`}>
-                                    <input
-                                        type="checkbox"
-                                        checked={selected.includes(cs.id)}
-                                        onChange={() => toggleSelect(cs.id)}
-                                        className="sr-only"
-                                    />
-                                    <div className="min-w-0">
-                                        <p className="font-medium text-sm truncate">{cs.class.name} ({cs.class.code})</p>
-                                        <p className={`text-xs truncate ${selected.includes(cs.id) ? 'text-blue-100' : 'text-gray-500'}`}>
-                                            {cs.subject.name} · coeff. matière {cs.coefficient}
-                                        </p>
-                                    </div>
-                                </label>
-                            ))}
+
+                        {/* En-tête colonnes */}
+                        <div className="hidden sm:grid grid-cols-[1fr_1fr_160px] gap-2 px-3 text-xs font-semibold text-blue-700 uppercase tracking-wide">
+                            <span>Classe</span>
+                            <span>Matière · coeff.</span>
+                            <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> Date planifiée</span>
                         </div>
+
+                        <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                            {availableClassSubjects.map(cs => {
+                                const isChecked = selected.includes(cs.id);
+                                return (
+                                    <div key={cs.id} className={`grid grid-cols-1 sm:grid-cols-[1fr_1fr_160px] gap-2 items-center p-3 rounded-xl border transition-colors ${
+                                        isChecked ? 'bg-blue-600/5 border-blue-400' : 'bg-white border-gray-200'
+                                    }`}>
+                                        <label className="flex items-center gap-3 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={isChecked}
+                                                onChange={() => toggleSelect(cs.id)}
+                                                className="w-4 h-4 rounded border-gray-300 text-blue-600 cursor-pointer"
+                                            />
+                                            <span className="font-medium text-sm text-gray-900">
+                                                {cs.class.name}
+                                                <span className="ml-1 text-xs text-gray-400">({cs.class.code})</span>
+                                            </span>
+                                        </label>
+                                        <span className="text-sm text-gray-600 pl-7 sm:pl-0">
+                                            {cs.subject.name}
+                                            <span className="ml-1 text-xs text-gray-400">· coeff. {cs.coefficient}</span>
+                                        </span>
+                                        <Input
+                                            type="date"
+                                            value={dates[cs.id] ?? defaultDate}
+                                            onChange={e => setDates(d => ({ ...d, [cs.id]: e.target.value }))}
+                                            disabled={!isChecked}
+                                            className={`text-sm h-8 ${!isChecked ? 'opacity-40' : ''}`}
+                                        />
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {selected.length > 0 && (
+                            <p className="text-xs text-blue-700 font-medium">
+                                {selected.length} classe{selected.length > 1 ? 's' : ''} sélectionnée{selected.length > 1 ? 's' : ''}
+                                {selected.filter(id => dates[id]).length > 0 && ` · ${selected.filter(id => dates[id]).length} avec date planifiée`}
+                            </p>
+                        )}
+
                         <div className="flex gap-3">
                             <Button
                                 className="bg-blue-600 hover:bg-blue-700 gap-2"
@@ -162,7 +248,7 @@ export default function Show({ template, evaluations, availableClassSubjects }: 
                                 <Play className="w-4 h-4" />
                                 {generating ? 'Génération...' : `Générer ${selected.length} évaluation${selected.length > 1 ? 's' : ''}`}
                             </Button>
-                            <Button variant="outline" onClick={() => { setShowSelector(false); setSelected([]); }}>Annuler</Button>
+                            <Button variant="outline" onClick={() => { setShowSelector(false); setSelected([]); setDates({}); }}>Annuler</Button>
                         </div>
                     </div>
                 )}

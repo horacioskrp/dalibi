@@ -14,7 +14,9 @@ use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\EvaluationController;
 use App\Http\Controllers\EvaluationTemplateController;
 use App\Http\Controllers\EvaluationTypeController;
+use App\Http\Controllers\GradingConfigController;
 use App\Http\Controllers\MarkController;
+use App\Http\Controllers\NoteReclamationController;
 use App\Http\Controllers\FeeCategorieController;
 use App\Http\Controllers\FeeStructureController;
 use App\Http\Controllers\LevelController;
@@ -72,10 +74,30 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('evaluations', EvaluationController::class)->only(['index', 'show', 'destroy']);
     Route::patch('evaluations/{evaluation}/status', [EvaluationController::class, 'updateStatus'])
         ->name('evaluations.update-status');
+    Route::patch('evaluations/{evaluation}/lock', [EvaluationController::class, 'toggleLock'])
+        ->name('evaluations.toggle-lock');
+    Route::patch('evaluations/{evaluation}/date', [EvaluationController::class, 'updateDate'])
+        ->name('evaluations.update-date');
+
+    // Planning des examens
+    Route::get('evaluations-planning', [EvaluationController::class, 'planning'])
+        ->name('evaluations.planning');
+    Route::get('evaluations-planning/{classroomId}/export', [EvaluationController::class, 'exportPlanning'])
+        ->name('evaluations.export-planning');
 
     // Saisie des notes
     Route::get('evaluations/{evaluation}/marks', [MarkController::class, 'index'])->name('marks.index');
     Route::post('evaluations/{evaluation}/marks', [MarkController::class, 'store'])->name('marks.store');
+
+    // Réclamations de notes
+    Route::resource('note-reclamations', NoteReclamationController::class)->only(['index', 'create', 'store', 'show']);
+    Route::patch('note-reclamations/{noteReclamation}/review', [NoteReclamationController::class, 'review'])
+        ->name('note-reclamations.review');
+
+    // Configurations de calcul des moyennes
+    Route::resource('grading-configs', GradingConfigController::class)->except(['show']);
+    Route::patch('grading-configs/{gradingConfig}/activate', [GradingConfigController::class, 'activate'])
+        ->name('grading-configs.activate');
     Route::resource('academic-years', AcademicYearController::class);
     Route::resource('academic-periods', AcademicPeriodController::class);
     Route::resource('fee-categories', FeeCategorieController::class);
