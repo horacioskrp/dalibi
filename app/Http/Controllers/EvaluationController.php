@@ -3,7 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Constants\Roles;
+use App\Models\AcademicPeriod;
+use App\Models\AcademicYear;
+use App\Models\Classroom;
 use App\Models\Evaluation;
+use App\Models\School;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -102,5 +106,87 @@ class EvaluationController extends Controller
         $evaluation->delete();
 
         return back()->with('message', 'Évaluation supprimée.');
+    }
+
+    public function planning(Request $request): Response
+    {
+        $classroomId = $request->string('classroom_id')->toString();
+        $periodId    = $request->string('period_id')->toString();
+
+        $activeYear = AcademicYear::where('active', true)->first(['id', 'year']);
+
+        // Classes qui ont au moins une évaluation (via class_subjects de l'année active)
+        $classrooms = Classroom::whereHas('classSubjects', function ($q) use ($activeYear): void {
+            $q->where('academic_year_id', $activeYear?->id)->whereHas('evaluations');
+        })->orderBy('name')->get(['id', 'name', 'code']);
+
+        $evaluations = collect();
+        $periods     = collect();
+
+        if ($classroomId) {
+            $evaluations = Evaluation::query()
+                ->with([
+                    'template:id,name,coefficient,max_score,academic_period_id,evaluation_type_id',
+                    'template.academicPeriod:id,name',
+                    'template.evaluationType:id,name',
+                    'classSubject:id,class_id,subject_id,coefficient',
+                    'classSubject.subject:id,name',
+                ])
+                ->withCount(['marks', 'marks as graded_count' => fn ($q) => $q->whereNotNull('score')->where('absent', false)])
+                ->whereHas('classSubject', fn ($q) => $q->where('class_id', $classroomId))
+                ->when($periodId, fn ($q) => $q->whereHas('template', fn ($tq) => $tq->where('academic_period_id', $periodId)))
+                ->orderByRaw('date IS NULL, date ASC')
+                ->get();
+
+            $periods = AcademicPeriod::when(
+                $activeYear,
+                fn ($q) => $q->where('academic_year_id', $activeYear->id)
+            )->orderBy('start_date')->get(['id', 'name']);
+        }
+
+        return Inertia::render('Planning/Index', [
+            'classrooms'  => $classrooms,
+            'evaluations' => $evaluations,
+            'periods'     => $periods,
+            'filters'     => ['classroomId' => $classroomId, 'periodId' => $periodId],
+            'activeYear'  => $activeYear,
+        ]);
+    }
+
+    public function updateDate(Request $request, Evaluation $evaluation): RedirectResponse
+    {
+        $validated = $request->validate([
+            'date' => ['nullable', 'date'],
+        ]);
+
+        $evaluation->update(['date' => $validated['date']]);
+
+        return back()->with('message', 'Date mise à jour.');
+    }
+
+    public function exportPlanning(Request $request, string $classroomId): \Illuminate\Http\Response
+    {
+        $classroom  = Classroom::findOrFail($classroomId);
+        $periodId   = $request->string('period_id')->toString();
+        $activeYear = AcademicYear::where('active', true)->first(['id', 'year']);
+
+        $evaluations = Evaluation::query()
+            ->with([
+                'template:id,name,coefficient,max_score,academic_period_id,evaluation_type_id',
+                'template.academicPeriod:id,name',
+                'template.evaluationType:id,name',
+                'classSubject:id,class_id,subject_id,coefficient',
+                'classSubject.subject:id,name',
+            ])
+            ->whereHas('classSubject', fn ($q) => $q->where('class_id', $classroomId))
+            ->when($periodId, fn ($q) => $q->whereHas('template', fn ($tq) => $tq->where('academic_period_id', $periodId)))
+            ->orderByRaw('date IS NULL, date ASC')
+            ->get();
+
+        $school = School::where('active', true)->first();
+
+        $html = view('exports.planning', compact('classroom', 'evaluations', 'school', 'activeYear'))->render();
+
+        return response($html)->header('Content-Type', 'text/html');
     }
 }

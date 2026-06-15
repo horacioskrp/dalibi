@@ -113,6 +113,7 @@ class EvaluationTemplateController extends Controller
             'template'               => $evaluationTemplate,
             'evaluations'            => $evaluations,
             'availableClassSubjects' => $availableClassSubjects,
+            'activeYear'             => $activeYear,
         ]);
     }
 
@@ -159,26 +160,29 @@ class EvaluationTemplateController extends Controller
 
     /**
      * Génère les évaluations pour les class_subjects sélectionnées.
+     * Accepte un tableau d'objets { id: uuid, date: date|null }.
      */
     public function generate(Request $request, EvaluationTemplate $evaluationTemplate)
     {
         $validated = $request->validate([
-            'class_subject_ids'   => ['required', 'array', 'min:1'],
-            'class_subject_ids.*' => ['uuid', 'exists:class_subjects,id'],
+            'class_subjects'        => ['required', 'array', 'min:1'],
+            'class_subjects.*.id'   => ['required', 'uuid', 'exists:class_subjects,id'],
+            'class_subjects.*.date' => ['nullable', 'date'],
         ], [
-            'class_subject_ids.required' => 'Sélectionnez au moins une classe/matière.',
+            'class_subjects.required' => 'Sélectionnez au moins une classe/matière.',
         ]);
 
         $created = 0;
         DB::transaction(function () use ($evaluationTemplate, $validated, &$created): void {
-            foreach ($validated['class_subject_ids'] as $csId) {
+            foreach ($validated['class_subjects'] as $item) {
+                $date = $item['date'] ?? $evaluationTemplate->date;
                 Evaluation::firstOrCreate(
                     [
                         'evaluation_template_id' => $evaluationTemplate->id,
-                        'class_subject_id'       => $csId,
+                        'class_subject_id'       => $item['id'],
                     ],
                     [
-                        'date'   => $evaluationTemplate->date,
+                        'date'   => $date,
                         'status' => 'scheduled',
                     ]
                 );

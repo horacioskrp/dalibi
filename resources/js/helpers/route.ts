@@ -222,8 +222,11 @@ export function route(name: string, params?: any): string {
         'grades.store':   '/grades',
         'grades.student': `/grades/student/${params}`,
 
-        // Evaluations lock
-        'evaluations.toggle-lock': `/evaluations/${params}/lock`,
+        // Evaluations lock / date / planning
+        'evaluations.toggle-lock':    `/evaluations/${params}/lock`,
+        'evaluations.update-date':    `/evaluations/${params}/date`,
+        'evaluations.planning':       '/evaluations-planning',
+        'evaluations.export-planning': `/evaluations-planning/${params}/export`,
 
         // Note Reclamations routes
         'note-reclamations.index':  '/note-reclamations',

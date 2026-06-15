@@ -76,6 +76,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('evaluations.update-status');
     Route::patch('evaluations/{evaluation}/lock', [EvaluationController::class, 'toggleLock'])
         ->name('evaluations.toggle-lock');
+    Route::patch('evaluations/{evaluation}/date', [EvaluationController::class, 'updateDate'])
+        ->name('evaluations.update-date');
+
+    // Planning des examens
+    Route::get('evaluations-planning', [EvaluationController::class, 'planning'])
+        ->name('evaluations.planning');
+    Route::get('evaluations-planning/{classroomId}/export', [EvaluationController::class, 'exportPlanning'])
+        ->name('evaluations.export-planning');
 
     // Saisie des notes
     Route::get('evaluations/{evaluation}/marks', [MarkController::class, 'index'])->name('marks.index');
