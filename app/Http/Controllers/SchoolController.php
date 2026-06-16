@@ -63,7 +63,7 @@ class SchoolController extends Controller
         $data = $request->validated();
 
         if ($request->hasFile('logo')) {
-            $data['logo'] = $request->file('logo')->store('schools/logos', 'public');
+            $data['logo'] = $request->file('logo')->store('schools/logos', 'media');
         }
 
         School::create($data);
@@ -101,9 +101,9 @@ class SchoolController extends Controller
 
         if ($request->hasFile('logo')) {
             if ($school->logo) {
-                Storage::disk('public')->delete($school->logo);
+                Storage::disk('media')->delete($school->logo);
             }
-            $data['logo'] = $request->file('logo')->store('schools/logos', 'public');
+            $data['logo'] = $request->file('logo')->store('schools/logos', 'media');
         } else {
             unset($data['logo']);
         }
