@@ -7,7 +7,9 @@ import AppLayout from '@/layouts/app-layout';
 const initialValues: SchoolFormData = {
     name: '',
     code: '',
-    logo: '',
+    logo: null,
+    devise: '',
+    terme: 'République Togolaise',
     email: '',
     phone: '',
     address: '',
@@ -20,9 +22,9 @@ const initialValues: SchoolFormData = {
 export default function Create() {
     const { data, setData, post, processing, errors } = useForm<SchoolFormData>(initialValues);
 
-    const handleSubmit = (event: React.SubmitEvent<HTMLFormElement>) => {
+    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        post(route('schools.store'));
+        post(route('schools.store'), { forceFormData: true });
     };
 
     return (
@@ -31,11 +33,7 @@ export default function Create() {
 
             <div className="max-w-4xl space-y-6">
                 <div className="flex items-center gap-4">
-                    <button
-                        type="button"
-                        onClick={() => router.get(route('schools.index'))}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition"
-                    >
+                    <button type="button" onClick={() => router.get(route('schools.index'))} className="p-2 hover:bg-gray-100 rounded-lg transition">
                         <ArrowLeft className="w-5 h-5 text-gray-600" />
                     </button>
                     <div>
