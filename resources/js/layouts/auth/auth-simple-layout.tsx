@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import AppLogoIcon from '@/components/app-logo-icon';
+import DalibiLogo from '@/components/dalibi-logo';
 import { home } from '@/routes';
 import type { AuthLayoutProps } from '@/types';
 
@@ -19,7 +19,7 @@ export default function AuthSimpleLayout({
                 />
                 <div className="absolute inset-0 bg-black/30" />
                 <div className="absolute bottom-10 left-10 right-10 text-white">
-                    <h2 className="text-3xl font-bold mb-2">Bienvenue sur Ecolio</h2>
+                    <h2 className="text-3xl font-bold mb-2">Bienvenue sur Dalibi</h2>
                     <p className="text-blue-100 text-lg">
                         Gérez votre établissement scolaire de manière efficace
                     </p>
@@ -31,13 +31,8 @@ export default function AuthSimpleLayout({
                 <div className="w-full max-w-sm">
                     <div className="flex flex-col gap-8">
                         <div className="flex flex-col items-center gap-4">
-                            <Link
-                                href={home()}
-                                className="flex flex-col items-center gap-2 font-medium"
-                            >
-                                <div className="mb-1 flex h-9 w-9 items-center justify-center rounded-md bg-blue-600">
-                                    <AppLogoIcon className="size-9 fill-current text-white" />
-                                </div>
+                            <Link href={home()} className="flex flex-col items-center gap-2 font-medium">
+                                <DalibiLogo className="h-10 w-auto" />
                                 <span className="sr-only">{title}</span>
                             </Link>
 
