@@ -1,41 +1,79 @@
-# Ecolio - Système de Gestion Scolaire
+# Dalibi - Système de Gestion Scolaire
 
 Un système de gestion scolaire open-source pour les écoles primaires, collèges et lycées du Togo et d'Afrique.
 
+## 🛠️ Stack technique
+
+- **Backend** : Laravel 12, PHP 8.3+
+- **Frontend** : React 19, TypeScript, Tailwind CSS 4
+- **Pont** : Inertia.js (SPA sans API REST séparée)
+- **Base de données** : PostgreSQL 12+
+- **Auth** : Laravel Sanctum + 2FA, Spatie Laravel Permission
+
 ## 🎓 Fonctionnalités
 
-### Gestion des écoles
+### Gestion des établissements
 
 - Support multi-écoles (primaire, collège, lycée)
 - Paramétrage par établissement
-- Gestion des années académiques
+- Années académiques et périodes (trimestres)
+- Types de classes et niveaux configurables
 
-### Gestion des utilisateurs
+### Gestion des utilisateurs & rôles
 
-- **Rôles disponibles**: Admin, Enseignant, Comptable, Secrétaire, Directeur
-- Authentification sécurisée
+- **Rôles** : Administrateur, Directeur, Enseignant, Comptable, Secrétariat
+- Authentification email/mot de passe
 - Two-Factor Authentication (2FA)
-- Profils utilisateur complets
+- Affectation des enseignants aux classes et matières
 
 ### Gestion académique
 
 - Création et gestion des classes
-- Inscription des élèves
-- Gestion des matières (sujets)
-- Attribution des enseignants aux classes et matières
-- Système de notation (3 trimestres)
+- Inscription des élèves avec statut (actif/transféré/retiré)
+- Gestion des matières et attribution aux classes
+- Calcul des moyennes configurable par établissement (coefficients, seuils)
+
+### Examens & évaluations
+
+- **Modèles d'évaluation** : création d'un template (nom, type, barème, date) une seule fois
+- **Déploiement vers les classes** : sélection des classes + date individuelle par matière
+- **Planning des examens** : vue par classe avec édition de date en ligne, export PDF imprimable (A4 paysage)
+- **Saisie des notes** : grille pleine largeur par classe/matière, tri alphabétique des élèves
 
 ### Gestion des présences
 
-- Suivi quotidien des présences
-- États: Présent, Absent, Retard, Excusé
-- Notes et justifications
+- **Saisie de l'appel** : grille par classe / date / session (journée, matin, après-midi)
+- **Statuts** : Présent, Absent, Retard (avec minutes), Excusé
+- Actions groupées "Tous présents / Tous absents"
+- Affichage automatique du badge permission quand un élève a une permission approuvée couvrant la date
+- Enregistrement idempotent (la même saisie peut être soumise plusieurs fois sans doublon)
 
-### Gestion des notes
+### Demandes de permission d'absence
 
-- Saisie des notes par matière et trimestre
-- Commentaires sur les résultats scolaires
-- Suivi des performances
+- Création d'une demande (élève, période, motif : médical / familial / autre, justification)
+- Révision par Directeur ou Administrateur (approbation / rejet + commentaire)
+- **Auto-excusement** : à l'approbation, toutes les absences enregistrées sur la période sont automatiquement marquées comme excusées
+- Cards de statistiques (total / en attente / approuvées / rejetées)
+- Suppression bloquée pour les permissions approuvées
+
+### Statistiques des présences
+
+- Tableau de bord par classe et période
+- Taux d'absence par élève avec barre colorée (vert < 10 %, orange < 20 %, rouge ≥ 20 %)
+- Résumé journalier (présents / absents / retards / excusés par séance)
+
+### Comptabilité
+
+- Journal des transactions
+- Situation financière par classe
+- Gestion des caisses
+- Frais scolaires avec catégories, structures et bourses étudiantes
+
+### Notes et réclamations
+
+- Saisie des notes par trimestre
+- Système de réclamations sur les notes
+- Suivi des performances et commentaires
 
 ## 📋 Prérequis
 
@@ -43,45 +81,31 @@ Un système de gestion scolaire open-source pour les écoles primaires, collège
 - PostgreSQL 12+
 - Composer
 - Node.js & npm
-- Laravel 11+
 
 ## 🚀 Installation
 
 ### 1. Cloner le projet
 
 ```bash
-git clone https://github.com/horacioskrp/ecolio.git
-cd ecolio
+git clone https://github.com/horacioskrp/dalibi.git
+cd dalibi
 ```
 
-### 2. Installer les dépendances PHP
+### 2. Installer les dépendances
 
 ```bash
 composer install
-```
-
-### 3. Installer les dépendances Node.js
-
-```bash
 npm install
 ```
 
-### 4. Configuration de l'environnement
+### 3. Configuration de l'environnement
 
 ```bash
 cp .env.example .env
 php artisan key:generate
 ```
 
-### 5. Configurer la base de données PostgreSQL
-
-Créez une base de données PostgreSQL:
-
-```sql
-CREATE DATABASE ecolio;
-```
-
-Mettez à jour le fichier `.env`:
+Mettre à jour le fichier `.env` :
 
 ```env
 DB_CONNECTION=pgsql
@@ -92,41 +116,27 @@ DB_USERNAME=postgres
 DB_PASSWORD=votre_mot_de_passe
 ```
 
-### 6. Exécuter les migrations
+### 4. Base de données
 
 ```bash
 php artisan migrate
+php artisan db:seed --class=SchoolDemoSeeder  # optionnel
 ```
 
-### 7. Charger les données de démonstration (optionnel)
+### 5. Lancer le serveur
 
 ```bash
-php artisan db:seed --class=SchoolDemoSeeder
-```
-
-### 8. Compiler les assets
-
-```bash
+# Développement
 npm run dev
-```
+php artisan serve
 
-ou pour la production:
-
-```bash
+# Production
 npm run build
 ```
 
-### 9. Démarrer le serveur
+L'application est accessible sur `http://localhost:8000`.
 
-```bash
-php artisan serve
-```
-
-L'application sera accessible à `http://localhost:8000`
-
-## 👥 Utilisateurs par défaut
-
-Après avoir exécuté le seeder, les utilisateurs suivants sont disponibles:
+## 👥 Utilisateurs par défaut (seeder)
 
 | Rôle       | Email                       | Mot de passe |
 | ---------- | --------------------------- | ------------ |
@@ -135,74 +145,46 @@ Après avoir exécuté le seeder, les utilisateurs suivants sont disponibles:
 | Comptable  | claire@ecoliotogo.tg        | password     |
 | Secrétaire | isabelle@ecoliotogo.tg      | password     |
 
-> **Sécurité**: Changez ces mots de passe en production!
+> **Sécurité** : Changez ces mots de passe en production.
 
 ## 🏗️ Structure de la base de données
 
-### Tables principales
-
-#### `schools`
-
-École ou établissement scolaire
-
-- Niveaux: primaire, collège, lycée
-- Informations de contact et de direction
-
-#### `academic_years`
-
-Années académiques liées à chaque école
-
-- Dates de début et fin
-- Statut actif/inactif
-
-#### `classes`
-
-Classes ou sections
-
-- Liées à une école et une année académique
-- Capacité
-- Enseignant principal
-
-#### `users`
-
-Utilisateurs du système
-
-- Rôles: admin, enseignant, comptable, secrétaire, directeur
-- UUID comme clé primaire
-- Authentification 2FA supportée
-
-#### `students`
-
-Élèves inscrits
-
-- Liés à un utilisateur et une classe
-- Numéro d'enregistrement unique
-- Coordonnées des parents
-
-#### `subjects`
-
-Matières ou disciplines enseignées
-
-#### `class_subjects`
-
-Attribution de matières aux classes avec enseignants
-
-#### `grades`
-
-Résultats scolaires par trimestre
-
-#### `attendances`
-
-Registre des présences
+| Table                 | Description                                                    |
+| --------------------- | -------------------------------------------------------------- |
+| `schools`             | Établissements scolaires                                       |
+| `academic_years`      | Années académiques par école                                   |
+| `academic_periods`    | Périodes / trimestres                                          |
+| `classes`             | Classes ou sections                                            |
+| `classroom_types`     | Types de classes                                               |
+| `levels`              | Niveaux scolaires                                              |
+| `students`            | Élèves avec matricule unique                                   |
+| `enrollments`         | Inscriptions élève ↔ classe ↔ année                           |
+| `subjects`            | Matières                                                       |
+| `class_subjects`      | Attribution matières/enseignants aux classes                   |
+| `evaluation_types`    | Types d'évaluation (devoir, examen…)                          |
+| `evaluation_templates`| Modèles d'évaluation globaux                                  |
+| `evaluations`         | Évaluation planifiée par classe/matière avec date             |
+| `marks`               | Notes par élève et évaluation                                  |
+| `attendances`         | Séance d'appel (classe / date / session)                       |
+| `attendance_records`  | Statut de présence par élève et séance                         |
+| `absence_permissions` | Demandes de permission d'absence avec cycle de révision        |
+| `grading_configs`     | Configuration du calcul des moyennes                           |
+| `fee_categories`      | Catégories de frais scolaires                                  |
+| `fee_structures`      | Structures de frais par classe                                 |
+| `scholarships`        | Bourses                                                        |
+| `student_scholarships`| Bourses attribuées aux élèves                                  |
+| `cash_accounts`       | Caisses                                                        |
+| `transactions`        | Journal comptable                                              |
+| `note_reclamations`   | Réclamations sur les notes                                     |
 
 ## 🔐 Sécurité
 
-- Authentification par email/mot de passe
+- Authentification email / mot de passe
 - Two-Factor Authentication (2FA)
-- Hachage des mots de passe avec Bcrypt
-- UUIDs pour les clés primaires
-- Protection CSRF
-- Validation des données
+- UUIDs pour toutes les clés primaires
+- Gestion des rôles et permissions via Spatie Laravel Permission
+- Protection CSRF (Inertia)
+- Validation stricte de toutes les entrées
 
 ## 📦 Structure du projet
 
@@ -210,26 +192,33 @@ Registre des présences
 ecolio/
 ├── app/
 │   ├── Models/          # Modèles Eloquent
-│   ├── Http/
-│   │   ├── Controllers/ # Contrôleurs
-│   │   ├── Middleware/  # Middlewares
-│   │   └── Requests/    # Form Requests
-│   └── Providers/       # Service Providers
+│   ├── Http/Controllers/# Contrôleurs
+│   └── Constants/       # Constantes (rôles…)
 ├── database/
 │   ├── migrations/      # Migrations
 │   └── seeders/         # Seeders
 ├── resources/
-│   ├── js/             # Composants React
-│   ├── css/            # Styles
-│   └── views/          # Vues Blade
-├── routes/             # Routes
-├── tests/              # Tests
-└── config/             # Configurations
+│   ├── js/
+│   │   ├── pages/       # Pages React (Inertia)
+│   │   ├── components/  # Composants UI réutilisables
+│   │   ├── helpers/     # route.ts, etc.
+│   │   └── types/       # Types TypeScript & menu
+│   └── views/
+│       └── exports/     # Vues Blade pour export PDF (planning)
+└── routes/web.php       # Toutes les routes
 ```
 
-## 🧪 Tests
+## 🗺️ Roadmap
 
-Exécuter les tests:
+- [ ] Portail des parents
+- [ ] Application mobile
+- [ ] Bulletins électroniques (PDF)
+- [ ] Système de communication école-parents
+- [ ] Calendrier académique interactif
+- [ ] Rapports et statistiques avancées
+- [ ] Intégration avec le système éducatif togolais
+
+## 🧪 Tests
 
 ```bash
 php artisan test
@@ -241,40 +230,16 @@ Ce projet est sous licence MIT. Voir le fichier [LICENSE](LICENSE) pour plus de 
 
 ## 🤝 Contribution
 
-Les contributions sont bienvenues! Veuillez:
-
 1. Fork le projet
-2. Créer une branche pour votre fonctionnalité (`git checkout -b feature/AmazingFeature`)
-3. Commiter vos changements (`git commit -m 'Add some AmazingFeature'`)
-4. Pusher la branche (`git push origin feature/AmazingFeature`)
+2. Créer une branche (`git checkout -b feature/ma-feature`)
+3. Commiter (`git commit -m 'feat: description'`)
+4. Pusher (`git push origin feature/ma-feature`)
 5. Ouvrir une Pull Request
 
 ## 👨‍💻 Développé par
 
-**Horacio Skrp** - [GitHub](https://github.com/horacioskrp)
-
-## 📧 Support
-
-Pour le support, contactez: support@ecoliotogo.tg
-
-## 🗺️ Roadmap
-
-- [ ] Portail des parents
-- [ ] Application mobile
-- [ ] Bulletins électroniques
-- [ ] Système de communication école-parents
-- [ ] Gestion des ressources (livres, équipements)
-- [ ] Calendrier académique interactif
-- [ ] Gestion financière (frais scolaires)
-- [ ] Rapports et statistiques avancées
-- [ ] Intégration avec le système éducatif togolais
-
-## 💡 Ressources
-
-- [Documentation Laravel](https://laravel.com/docs)
-- [PostgreSQL Documentation](https://www.postgresql.org/docs/)
-- [React Documentation](https://react.dev)
+**Horacio Skrp** — [GitHub](https://github.com/horacioskrp)
 
 ---
 
-**Important**: Ce logiciel est en développement actif. Veuillez signaler les bugs via les GitHub Issues.
+**Note** : Ce logiciel est en développement actif. Signalez les bugs via les [GitHub Issues](https://github.com/horacioskrp/dalibi/issues).
