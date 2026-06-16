@@ -11,6 +11,8 @@ use App\Http\Controllers\CashAccountController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\SituationController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\AbsencePermissionController;
+use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\EvaluationController;
 use App\Http\Controllers\EvaluationTemplateController;
 use App\Http\Controllers\EvaluationTypeController;
@@ -126,6 +128,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('enrollments/{enrollment}/payments', [InvoiceController::class, 'storePayment'])->name('enrollments.payments.store');
     Route::get('payments/{payment}/receipt', [InvoiceController::class, 'receipt'])->name('payments.receipt');
     Route::resource('subject-assignments', SubjectAssignmentController::class);
+
+    // Présences & Permissions
+    Route::get('attendances', [AttendanceController::class, 'index'])->name('attendances.index');
+    Route::post('attendances', [AttendanceController::class, 'store'])->name('attendances.store');
+    Route::get('attendances/stats', [AttendanceController::class, 'stats'])->name('attendances.stats');
+    Route::resource('absence-permissions', AbsencePermissionController::class)->only(['index', 'create', 'store', 'show', 'destroy']);
+    Route::patch('absence-permissions/{absencePermission}/review', [AbsencePermissionController::class, 'review'])
+        ->name('absence-permissions.review');
 
     // Grades Routes
     Route::get('grades', [GradeController::class, 'index'])->name('grades.index');

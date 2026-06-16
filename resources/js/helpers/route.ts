@@ -244,6 +244,19 @@ export function route(name: string, params?: any): string {
         'grading-configs.destroy':  `/grading-configs/${params}`,
         'grading-configs.activate': `/grading-configs/${params}/activate`,
 
+        // Attendances routes
+        'attendances.index': '/attendances',
+        'attendances.store': '/attendances',
+        'attendances.stats': '/attendances/stats',
+
+        // Absence Permissions routes
+        'absence-permissions.index':   '/absence-permissions',
+        'absence-permissions.create':  '/absence-permissions/create',
+        'absence-permissions.store':   '/absence-permissions',
+        'absence-permissions.show':    `/absence-permissions/${params}`,
+        'absence-permissions.destroy': `/absence-permissions/${params}`,
+        'absence-permissions.review':  `/absence-permissions/${params}/review`,
+
         // Expenses routes
         'expenses.store':   '/accounting/expenses',
         'expenses.destroy': `/accounting/expenses/${params}`,

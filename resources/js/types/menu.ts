@@ -1,4 +1,4 @@
-import { BookOpen, Calendar, Clock, ClipboardList, GraduationCap, LayoutGrid, Layers, Settings, Tag, Users, Shield, Lock, Wallet, Percent, DollarSign, UserCircle, TrendingUp, ArrowLeftRight, PieChart, FileText, ListChecks, NotebookPen, SlidersHorizontal, AlertCircle, CalendarRange } from 'lucide-react';
+import { BookOpen, Calendar, Clock, ClipboardList, GraduationCap, LayoutGrid, Layers, Settings, Tag, Users, Shield, Lock, Wallet, Percent, DollarSign, UserCircle, TrendingUp, ArrowLeftRight, PieChart, FileText, ListChecks, NotebookPen, SlidersHorizontal, AlertCircle, CalendarRange, UserCheck, BarChart3, ShieldCheck } from 'lucide-react';
 import { route } from '@/helpers/route';
 import type { NavItem } from '@/types';
 
@@ -160,6 +160,28 @@ export const mainNavItems: NavItem[] = [
                 title: 'Réclamations',
                 href: route('note-reclamations.index'),
                 icon: AlertCircle,
+            },
+        ],
+    },
+    {
+        title: 'Présences',
+        href: '#',
+        icon: UserCheck,
+        items: [
+            {
+                title: 'Saisie de l\'appel',
+                href: route('attendances.index'),
+                icon: ClipboardList,
+            },
+            {
+                title: 'Statistiques',
+                href: route('attendances.stats'),
+                icon: BarChart3,
+            },
+            {
+                title: 'Demandes de permission',
+                href: route('absence-permissions.index'),
+                icon: ShieldCheck,
             },
         ],
     },
