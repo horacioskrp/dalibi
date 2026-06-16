@@ -36,6 +36,9 @@ class DatabaseSeeder extends Seeder
         // Seed scholarships
         $this->call(ScholarshipSeeder::class);
 
+        // Seed default document templates (certificats, attestations)
+        $this->call(DocumentTemplateSeeder::class);
+
         // Seed test students (dev only)
         $this->call(StudentTestSeeder::class);
     }

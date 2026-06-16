@@ -1,0 +1,235 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Constants\Roles;
+use App\Models\DocumentIssuance;
+use App\Models\DocumentTemplate;
+use App\Models\School;
+use App\Models\Student;
+use App\Services\DocumentRenderer;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class DocumentTemplateController extends Controller
+{
+    public function __construct(private readonly DocumentRenderer $renderer)
+    {
+    }
+
+    public function index(Request $request): Response
+    {
+        abort_unless($request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]), 403);
+
+        $templates = DocumentTemplate::orderBy('category')->orderBy('name')->get();
+
+        return Inertia::render('settings/Documents/Index', [
+            'templatesByCategory' => $templates->groupBy('category')->map(
+                fn ($group) => $group->map(fn ($t) => [
+                    'id'         => $t->id,
+                    'name'       => $t->name,
+                    'type'       => $t->type,
+                    'type_label' => $t->typeLabel(),
+                    'is_default' => $t->is_default,
+                    'is_active'  => $t->is_active,
+                ])->values()
+            ),
+            'categories' => DocumentTemplate::CATEGORIES,
+        ]);
+    }
+
+    public function create(Request $request): Response
+    {
+        abort_unless($request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]), 403);
+
+        return Inertia::render('settings/Documents/Edit', [
+            'template'   => null,
+            'categories' => DocumentTemplate::CATEGORIES,
+            'types'      => DocumentTemplate::TYPES,
+            'variables'  => DocumentRenderer::variableCatalog(),
+        ]);
+    }
+
+    public function edit(Request $request, DocumentTemplate $documentTemplate): Response
+    {
+        abort_unless($request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]), 403);
+
+        return Inertia::render('settings/Documents/Edit', [
+            'template'   => $documentTemplate,
+            'categories' => DocumentTemplate::CATEGORIES,
+            'types'      => DocumentTemplate::TYPES,
+            'variables'  => DocumentRenderer::variableCatalog(),
+        ]);
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        abort_unless($request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]), 403);
+
+        $data = $this->validateData($request);
+        $this->applyDefault($data);
+
+        DocumentTemplate::create($data);
+
+        return redirect()->route('document-templates.index')
+            ->with('message', 'Modèle de document créé avec succès.');
+    }
+
+    public function update(Request $request, DocumentTemplate $documentTemplate): RedirectResponse
+    {
+        abort_unless($request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]), 403);
+
+        $data = $this->validateData($request);
+        $this->applyDefault($data, $documentTemplate->id);
+
+        $documentTemplate->update($data);
+
+        return redirect()->route('document-templates.index')
+            ->with('message', 'Modèle mis à jour avec succès.');
+    }
+
+    public function destroy(Request $request, DocumentTemplate $documentTemplate): RedirectResponse
+    {
+        abort_unless($request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]), 403);
+
+        $documentTemplate->delete();
+
+        return redirect()->route('document-templates.index')
+            ->with('message', 'Modèle supprimé.');
+    }
+
+    /** Prévisualisation HTML live avec données d'exemple. */
+    public function preview(Request $request): \Illuminate\Http\JsonResponse
+    {
+        abort_unless($request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]), 403);
+
+        $validated = $request->validate([
+            'content'         => ['nullable', 'string'],
+            'header_enabled'  => ['boolean'],
+            'show_signature'  => ['boolean'],
+            'signatory_title' => ['nullable', 'string'],
+        ]);
+
+        $school = School::query()->first() ?? new School();
+
+        $template = new DocumentTemplate([
+            'content'         => $validated['content'] ?? '',
+            'header_enabled'  => $validated['header_enabled'] ?? true,
+            'show_signature'  => $validated['show_signature'] ?? true,
+            'signatory_title' => $validated['signatory_title'] ?? 'Le Directeur',
+        ]);
+        $template->setRelation('school', $school);
+
+        $variables = $this->renderer->resolveVariables($school, $this->sampleStudent(), [
+            'classe.nom'         => '3ème A',
+            'annee_scolaire'     => '2025-2026',
+            'document.reference' => 'APERÇU-0000',
+            'signataire.titre'   => $template->signatory_title,
+        ]);
+
+        return response()->json(['html' => $this->renderer->render($template, $variables)]);
+    }
+
+    /** Génère le PDF officiel pour un élève + enregistre dans le registre. */
+    public function generate(Request $request, DocumentTemplate $documentTemplate)
+    {
+        abort_unless($request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR, Roles::SECRETARIAT]), 403);
+
+        $validated = $request->validate([
+            'student_id'     => ['required', 'uuid', 'exists:students,id'],
+            'classe'         => ['nullable', 'string'],
+            'annee_scolaire' => ['nullable', 'string'],
+        ]);
+
+        $student = Student::findOrFail($validated['student_id']);
+        $school  = $documentTemplate->school ?? School::query()->first() ?? new School();
+
+        $reference = $this->generateReference($documentTemplate);
+
+        $variables = $this->renderer->resolveVariables($school, $student, [
+            'classe.nom'         => $validated['classe'] ?? '',
+            'annee_scolaire'     => $validated['annee_scolaire'] ?? '',
+            'document.reference' => $reference,
+            'signataire.titre'   => $documentTemplate->signatory_title ?? 'Le Directeur',
+        ]);
+
+        $html = $this->renderer->render($documentTemplate, $variables);
+
+        DocumentIssuance::create([
+            'template_id'      => $documentTemplate->id,
+            'student_id'       => $student->id,
+            'reference_number' => $reference,
+            'issued_by'        => $request->user()->id,
+            'payload'          => $variables,
+            'issued_at'        => now(),
+        ]);
+
+        $pdf = Pdf::loadHTML($html)->setPaper('a4', $documentTemplate->orientation);
+
+        $filename = Str::slug($documentTemplate->typeLabel() . '-' . $student->lastname . '-' . $student->firstname) . '.pdf';
+
+        return $pdf->download($filename);
+    }
+
+    /** Numéro de référence : CS-2026-0001 */
+    private function generateReference(DocumentTemplate $template): string
+    {
+        $prefix = strtoupper(implode('', array_map(
+            fn ($w) => $w[0] ?? '',
+            explode('_', $template->type)
+        )));
+        $year  = Carbon::now()->year;
+        $count = DocumentIssuance::whereYear('issued_at', $year)
+            ->where('template_id', $template->id)
+            ->count() + 1;
+
+        return sprintf('%s-%d-%04d', $prefix, $year, $count);
+    }
+
+    private function validateData(Request $request): array
+    {
+        return $request->validate([
+            'category'        => ['required', 'string', 'in:certificat,attestation,bulletin'],
+            'type'            => ['required', 'string', 'max:100'],
+            'name'            => ['required', 'string', 'max:150'],
+            'description'     => ['nullable', 'string', 'max:500'],
+            'content'         => ['nullable', 'string'],
+            'header_enabled'  => ['boolean'],
+            'footer_enabled'  => ['boolean'],
+            'show_signature'  => ['boolean'],
+            'signatory_title' => ['nullable', 'string', 'max:100'],
+            'orientation'     => ['required', 'in:portrait,landscape'],
+            'is_default'      => ['boolean'],
+            'is_active'       => ['boolean'],
+            'school_id'       => ['nullable', 'uuid', 'exists:schools,id'],
+        ]);
+    }
+
+    /** Un seul modèle par défaut par type. */
+    private function applyDefault(array &$data, ?string $ignoreId = null): void
+    {
+        if (!empty($data['is_default'])) {
+            DocumentTemplate::where('type', $data['type'])
+                ->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))
+                ->update(['is_default' => false]);
+        }
+    }
+
+    private function sampleStudent(): Student
+    {
+        return new Student([
+            'firstname'      => 'Koffi',
+            'lastname'       => 'MENSAH',
+            'matricule'      => 'TEST-001',
+            'birth_date'     => '2010-05-12',
+            'place_of_birth' => 'Lomé',
+            'gender'         => 'male',
+            'nationality'    => 'Togolaise',
+        ]);
+    }
+}

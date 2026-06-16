@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AcademicPeriodController;
+use App\Http\Controllers\DocumentTemplateController;
 use App\Http\Controllers\FileStorageController;
 use App\Http\Controllers\AcademicYearController;
 use App\Http\Controllers\ClassroomController;
@@ -152,6 +153,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('settings/file-storage', [FileStorageController::class, 'index'])->name('file-storage.index');
     Route::post('settings/file-storage', [FileStorageController::class, 'update'])->name('file-storage.update');
     Route::post('settings/file-storage/test', [FileStorageController::class, 'test'])->name('file-storage.test');
+
+    // Document Templates (Settings)
+    Route::get('settings/documents', [DocumentTemplateController::class, 'index'])->name('document-templates.index');
+    Route::get('settings/documents/create', [DocumentTemplateController::class, 'create'])->name('document-templates.create');
+    Route::post('settings/documents', [DocumentTemplateController::class, 'store'])->name('document-templates.store');
+    Route::get('settings/documents/{documentTemplate}/edit', [DocumentTemplateController::class, 'edit'])->name('document-templates.edit');
+    Route::put('settings/documents/{documentTemplate}', [DocumentTemplateController::class, 'update'])->name('document-templates.update');
+    Route::delete('settings/documents/{documentTemplate}', [DocumentTemplateController::class, 'destroy'])->name('document-templates.destroy');
+    Route::post('settings/documents/preview', [DocumentTemplateController::class, 'preview'])->name('document-templates.preview');
+    Route::post('settings/documents/{documentTemplate}/generate', [DocumentTemplateController::class, 'generate'])->name('document-templates.generate');
 });
 
 require __DIR__.'/settings.php';

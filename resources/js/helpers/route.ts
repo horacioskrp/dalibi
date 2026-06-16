@@ -262,6 +262,16 @@ export function route(name: string, params?: any): string {
         'file-storage.update': '/settings/file-storage',
         'file-storage.test':   '/settings/file-storage/test',
 
+        // Document Templates
+        'document-templates.index':    '/settings/documents',
+        'document-templates.create':   '/settings/documents/create',
+        'document-templates.store':    '/settings/documents',
+        'document-templates.edit':     `/settings/documents/${params}/edit`,
+        'document-templates.update':   `/settings/documents/${params}`,
+        'document-templates.destroy':  `/settings/documents/${params}`,
+        'document-templates.preview':  '/settings/documents/preview',
+        'document-templates.generate': `/settings/documents/${params}/generate`,
+
         // Expenses routes
         'expenses.store':   '/accounting/expenses',
         'expenses.destroy': `/accounting/expenses/${params}`,
