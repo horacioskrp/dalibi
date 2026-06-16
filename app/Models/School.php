@@ -31,6 +31,8 @@ class School extends Model
         'level',
         'code',
         'logo',
+        'devise',
+        'terme',
         'address',
         'region',
         'city',

@@ -6,6 +6,7 @@ use App\Models\School;
 use App\Http\Requests\StoreSchoolRequest;
 use App\Http\Requests\UpdateSchoolRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class SchoolController extends Controller
@@ -59,7 +60,13 @@ class SchoolController extends Controller
      */
     public function store(StoreSchoolRequest $request)
     {
-        School::create($request->validated());
+        $data = $request->validated();
+
+        if ($request->hasFile('logo')) {
+            $data['logo'] = $request->file('logo')->store('schools/logos', 'media');
+        }
+
+        School::create($data);
 
         return redirect()->route('schools.index')
             ->with('message', 'École créée avec succès.');
@@ -90,7 +97,18 @@ class SchoolController extends Controller
      */
     public function update(UpdateSchoolRequest $request, School $school)
     {
-        $school->update($request->validated());
+        $data = $request->validated();
+
+        if ($request->hasFile('logo')) {
+            if ($school->logo) {
+                Storage::disk('media')->delete($school->logo);
+            }
+            $data['logo'] = $request->file('logo')->store('schools/logos', 'media');
+        } else {
+            unset($data['logo']);
+        }
+
+        $school->update($data);
 
         return redirect()->route('schools.index')
             ->with('message', 'École mise à jour avec succès.');

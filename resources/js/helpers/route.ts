@@ -257,6 +257,11 @@ export function route(name: string, params?: any): string {
         'absence-permissions.destroy': `/absence-permissions/${params}`,
         'absence-permissions.review':  `/absence-permissions/${params}/review`,
 
+        // File Storage Settings
+        'file-storage.index':  '/settings/file-storage',
+        'file-storage.update': '/settings/file-storage',
+        'file-storage.test':   '/settings/file-storage/test',
+
         // Expenses routes
         'expenses.store':   '/accounting/expenses',
         'expenses.destroy': `/accounting/expenses/${params}`,
