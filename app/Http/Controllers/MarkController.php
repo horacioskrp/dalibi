@@ -35,11 +35,14 @@ class MarkController extends Controller
         $activeYear = AcademicYear::where('active', true)->first(['id']);
 
         // Élèves inscrits dans cette classe pour l'année active
-        $enrollments = Enrollment::where('class_id', $evaluation->classSubject->class_id)
-            ->where('academic_year_id', $activeYear?->id)
-            ->where('status', 'active')
+        $enrollments = Enrollment::where('enrollments.class_id', $evaluation->classSubject->class_id)
+            ->where('enrollments.academic_year_id', $activeYear?->id)
+            ->where('enrollments.status', 'active')
+            ->join('students', 'students.id', '=', 'enrollments.student_id')
+            ->orderBy('students.lastname')
+            ->orderBy('students.firstname')
+            ->select('enrollments.*')
             ->with('student:id,firstname,lastname,matricule')
-            ->orderByHas('student', fn ($q) => $q->orderBy('lastname'))
             ->get();
 
         // Notes existantes indexées par student_id

@@ -122,7 +122,7 @@ export default function Index({ evaluation, studentsWithMarks, stats }: Readonly
         <AppLayout>
             <Head title={`Notes — ${evaluation.template.name}`} />
 
-            <div className="max-w-5xl space-y-6">
+            <div className="w-full space-y-6">
 
                 {/* Header */}
                 <div className="flex items-start justify-between gap-4 flex-wrap">
