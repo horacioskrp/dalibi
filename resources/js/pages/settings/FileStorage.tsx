@@ -20,11 +20,18 @@ interface Settings {
 
 interface Props {
     settings:  Settings;
+    hasKey:    boolean;
     hasSecret: boolean;
 }
 
-export default function FileStorage({ settings, hasSecret }: Readonly<Props>) {
-    const { data, setData, post, processing, errors } = useForm<Settings>(settings);
+export default function FileStorage({ settings, hasKey, hasSecret }: Readonly<Props>) {
+    // Les credentials arrivent masqués : on part de champs vides pour ne pas
+    // renvoyer la valeur masquée au serveur (qui la conserverait telle quelle).
+    const { data, setData, post, processing, errors } = useForm<Settings>({
+        ...settings,
+        s3_key:    '',
+        s3_secret: '',
+    });
     const { toast } = useToast();
     const [testing, setTesting] = useState(false);
 
@@ -110,8 +117,10 @@ export default function FileStorage({ settings, hasSecret }: Readonly<Props>) {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
-                                    <label className="text-sm font-medium text-gray-700">Access Key *</label>
-                                    <Input value={data.s3_key} onChange={e => setData('s3_key', e.target.value)} placeholder="AKIAIOSFODNN7EXAMPLE" className={errors.s3_key ? 'border-red-400' : ''} />
+                                    <label className="text-sm font-medium text-gray-700">
+                                        Access Key {hasKey ? <span className="text-gray-400 font-normal">(laisser vide pour conserver)</span> : '*'}
+                                    </label>
+                                    <Input value={data.s3_key} onChange={e => setData('s3_key', e.target.value)} placeholder={hasKey ? (settings.s3_key || '••••••••') : 'AKIAIOSFODNN7EXAMPLE'} className={errors.s3_key ? 'border-red-400' : ''} />
                                     {errors.s3_key && <p className="text-xs text-red-500">{errors.s3_key}</p>}
                                 </div>
 

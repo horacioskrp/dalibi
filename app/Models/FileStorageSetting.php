@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Contracts\Encryption\DecryptException;
 
 class FileStorageSetting extends Model
 {
@@ -13,22 +15,64 @@ class FileStorageSetting extends Model
 
     protected $fillable = ['key', 'value'];
 
+    /** Toutes les clés gérées (sert au nettoyage ciblé du cache). */
+    public const KEYS = [
+        'driver', 's3_key', 's3_secret', 's3_region', 's3_bucket', 's3_endpoint', 's3_url',
+    ];
+
+    /** Clés chiffrées au repos (credentials). */
+    public const ENCRYPTED_KEYS = ['s3_key', 's3_secret'];
+
     public static function get(string $key, mixed $default = null): mixed
     {
-        return Cache::remember("file_storage_{$key}", 3600, function () use ($key, $default) {
-            return static::find($key)?->value ?? $default;
+        // Le cache conserve la valeur brute (chiffrée pour les credentials).
+        $raw = Cache::remember("file_storage_{$key}", 3600, function () use ($key) {
+            return static::find($key)?->value;
         });
+
+        if ($raw === null) {
+            return $default;
+        }
+
+        if (in_array($key, self::ENCRYPTED_KEYS, true)) {
+            try {
+                return Crypt::decryptString($raw);
+            } catch (DecryptException) {
+                return $default;
+            }
+        }
+
+        return $raw;
     }
 
     public static function set(string $key, mixed $value): void
     {
-        static::updateOrCreate(['key' => $key], ['value' => $value]);
+        $stored = $value;
+
+        if ($value !== null && in_array($key, self::ENCRYPTED_KEYS, true)) {
+            $stored = Crypt::encryptString($value);
+        }
+
+        static::updateOrCreate(['key' => $key], ['value' => $stored]);
         Cache::forget("file_storage_{$key}");
     }
 
+    /** Vide uniquement le cache du module stockage. */
+    public static function flushCache(): void
+    {
+        foreach (self::KEYS as $key) {
+            Cache::forget("file_storage_{$key}");
+        }
+    }
+
+    /** Valeurs déchiffrées, indexées par clé. */
     public static function allSettings(): array
     {
-        return static::all()->pluck('value', 'key')->toArray();
+        $settings = [];
+        foreach (self::KEYS as $key) {
+            $settings[$key] = static::get($key);
+        }
+        return $settings;
     }
 
     public static function s3Config(): array
