@@ -116,8 +116,9 @@ export default function Profile({
                                                     <SelectValue placeholder="Sélectionner" />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="M">Masculin</SelectItem>
-                                                    <SelectItem value="F">Féminin</SelectItem>
+                                                    <SelectItem value="male">Masculin</SelectItem>
+                                                    <SelectItem value="female">Féminin</SelectItem>
+                                                    <SelectItem value="other">Autre</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             <InputError message={errors.gender} />

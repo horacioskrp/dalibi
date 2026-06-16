@@ -21,14 +21,16 @@ class UpdateSchoolRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255', Rule::unique('schools', 'name')->ignore($this->school)],
             'code' => ['required', 'string', 'max:50', Rule::unique('schools', 'code')->ignore($this->school)],
-            'logo' => ['nullable', 'url:http,https', 'max:500'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:20'],
+            'logo'   => ['nullable', 'image', 'mimes:jpg,jpeg,png,svg,webp', 'max:2048'],
+            'devise' => ['nullable', 'string', 'max:500'],
+            'terme'  => ['nullable', 'string', 'max:255'],
+            'email'  => ['nullable', 'email', 'max:255'],
+            'phone'  => ['nullable', 'string', 'max:20'],
             'address' => ['nullable', 'string', 'max:500'],
-            'region' => ['nullable', 'string', 'max:150'],
-            'city' => ['nullable', 'string', 'max:150'],
-            'po_box' => ['nullable', 'string', 'max:120'],
-            'active' => ['sometimes', 'boolean'],
+            'region'  => ['nullable', 'string', 'max:150'],
+            'city'    => ['nullable', 'string', 'max:150'],
+            'po_box'  => ['nullable', 'string', 'max:120'],
+            'active'  => ['sometimes', 'boolean'],
         ];
     }
 

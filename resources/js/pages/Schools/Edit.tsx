@@ -9,6 +9,8 @@ interface School {
     name: string;
     code: string;
     logo: string | null;
+    devise: string | null;
+    terme: string | null;
     email: string | null;
     phone: string | null;
     address: string | null;
@@ -23,10 +25,14 @@ interface EditProps {
 }
 
 export default function Edit({ school }: Readonly<EditProps>) {
+    const currentLogoUrl = school.logo ? `/storage/${school.logo}` : null;
+
     const { data, setData, put, processing, errors } = useForm<SchoolFormData>({
         name: school.name,
         code: school.code,
-        logo: school.logo || '',
+        logo: null,
+        devise: school.devise || '',
+        terme: school.terme || 'République Togolaise',
         email: school.email || '',
         phone: school.phone || '',
         address: school.address || '',
@@ -36,9 +42,9 @@ export default function Edit({ school }: Readonly<EditProps>) {
         active: school.active,
     });
 
-    const handleSubmit = (event: React.SubmitEvent<HTMLFormElement>) => {
+    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        put(route('schools.update', school.id));
+        put(route('schools.update', school.id), { forceFormData: true });
     };
 
     return (
@@ -47,11 +53,7 @@ export default function Edit({ school }: Readonly<EditProps>) {
 
             <div className="max-w-4xl space-y-6">
                 <div className="flex items-center gap-4">
-                    <button
-                        type="button"
-                        onClick={() => router.get(route('schools.index'))}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition"
-                    >
+                    <button type="button" onClick={() => router.get(route('schools.index'))} className="p-2 hover:bg-gray-100 rounded-lg transition">
                         <ArrowLeft className="w-5 h-5 text-gray-600" />
                     </button>
                     <div>
@@ -65,6 +67,7 @@ export default function Edit({ school }: Readonly<EditProps>) {
                     data={data}
                     errors={errors}
                     processing={processing}
+                    currentLogoUrl={currentLogoUrl}
                     onCancel={() => router.get(route('schools.index'))}
                     onSubmit={handleSubmit}
                     setData={setData}

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AcademicPeriodController;
+use App\Http\Controllers\FileStorageController;
 use App\Http\Controllers\AcademicYearController;
 use App\Http\Controllers\ClassroomController;
 use App\Http\Controllers\ClassroomSubjectAssignmentController;
@@ -146,6 +147,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('roles', RoleController::class);
     Route::resource('permissions', PermissionController::class);
     Route::resource('users', UserController::class);
+
+    // File Storage Settings
+    Route::get('settings/file-storage', [FileStorageController::class, 'index'])->name('file-storage.index');
+    Route::post('settings/file-storage', [FileStorageController::class, 'update'])->name('file-storage.update');
+    Route::post('settings/file-storage/test', [FileStorageController::class, 'test'])->name('file-storage.test');
 });
 
 require __DIR__.'/settings.php';
