@@ -17,7 +17,7 @@ class FileStorageController extends Controller
     {
         $settings = FileStorageSetting::allSettings();
 
-        return Inertia::render('Settings/FileStorage', [
+        return Inertia::render('settings/FileStorage', [
             'settings' => [
                 'driver'      => $settings['driver']      ?? 'local',
                 's3_key'      => $settings['s3_key']      ?? '',
