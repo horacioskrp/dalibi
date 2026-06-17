@@ -55,6 +55,39 @@ class DocumentTemplateController extends Controller
         ]);
     }
 
+    public function show(Request $request, DocumentTemplate $documentTemplate): Response
+    {
+        abort_unless($request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]), 403);
+
+        $school = $documentTemplate->school ?? School::query()->first() ?? new School();
+        $documentTemplate->setRelation('school', $school);
+
+        $variables = $this->renderer->resolveVariables($school, $this->sampleStudent(), [
+            'classe.nom'         => '3ème A',
+            'annee_scolaire'     => '2025-2026',
+            'document.reference' => 'APERÇU-0000',
+            'signataire.titre'   => $documentTemplate->signatory_title ?? 'Le Directeur',
+        ]);
+
+        return Inertia::render('settings/Documents/Show', [
+            'template' => [
+                'id'              => $documentTemplate->id,
+                'name'            => $documentTemplate->name,
+                'description'     => $documentTemplate->description,
+                'category'        => $documentTemplate->category,
+                'type'            => $documentTemplate->type,
+                'type_label'      => $documentTemplate->typeLabel(),
+                'orientation'     => $documentTemplate->orientation,
+                'header_enabled'  => $documentTemplate->header_enabled,
+                'show_signature'  => $documentTemplate->show_signature,
+                'signatory_title' => $documentTemplate->signatory_title,
+                'is_default'      => $documentTemplate->is_default,
+                'is_active'       => $documentTemplate->is_active,
+            ],
+            'html' => $this->renderer->render($documentTemplate, $variables),
+        ]);
+    }
+
     public function edit(Request $request, DocumentTemplate $documentTemplate): Response
     {
         abort_unless($request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]), 403);

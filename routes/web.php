@@ -157,6 +157,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Document Templates (Settings)
     Route::get('settings/documents', [DocumentTemplateController::class, 'index'])->name('document-templates.index');
     Route::get('settings/documents/create', [DocumentTemplateController::class, 'create'])->name('document-templates.create');
+    Route::get('settings/documents/{documentTemplate}', [DocumentTemplateController::class, 'show'])->name('document-templates.show');
     Route::post('settings/documents', [DocumentTemplateController::class, 'store'])->name('document-templates.store');
     Route::get('settings/documents/{documentTemplate}/edit', [DocumentTemplateController::class, 'edit'])->name('document-templates.edit');
     Route::put('settings/documents/{documentTemplate}', [DocumentTemplateController::class, 'update'])->name('document-templates.update');

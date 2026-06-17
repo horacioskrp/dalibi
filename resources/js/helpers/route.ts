@@ -265,6 +265,7 @@ export function route(name: string, params?: any): string {
         // Document Templates
         'document-templates.index':    '/settings/documents',
         'document-templates.create':   '/settings/documents/create',
+        'document-templates.show':     `/settings/documents/${params}`,
         'document-templates.store':    '/settings/documents',
         'document-templates.edit':     `/settings/documents/${params}/edit`,
         'document-templates.update':   `/settings/documents/${params}`,

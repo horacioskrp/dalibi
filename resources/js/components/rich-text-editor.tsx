@@ -28,12 +28,18 @@ function ToolbarButton({ active, onClick, title, children }: Readonly<{ active?:
 }
 
 export function RichTextEditor({ value, onChange, onReady }: Readonly<Props>) {
+    // TipTap `useEditor` est incompatible avec le React Compiler (refs mutables) :
+    // cette directive désactive sa mémoïsation pour ce composant.
+    'use no memo';
+
     const editor = useEditor({
         extensions: [
             StarterKit,
             TextAlign.configure({ types: ['heading', 'paragraph'] }),
         ],
         content: value,
+        immediatelyRender: false,
+        shouldRerenderOnTransaction: false,
         onUpdate: ({ editor }) => onChange(editor.getHTML()),
         editorProps: {
             attributes: {

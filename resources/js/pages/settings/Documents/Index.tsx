@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { Award, FileBadge, FileText, GraduationCap, Pencil, Plus, Star, Trash2 } from 'lucide-react';
+import { Award, Eye, FileBadge, FileText, GraduationCap, Pencil, Plus, Star, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import {
     AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -97,6 +97,9 @@ export default function Index({ templatesByCategory, categories }: Readonly<Prop
                                             </div>
 
                                             <div className="flex gap-2 mt-4 pt-4 border-t border-gray-50">
+                                                <Button variant="outline" size="sm" className="flex-1 gap-1.5" onClick={() => router.get(route('document-templates.show', t.id))}>
+                                                    <Eye className="w-3.5 h-3.5" /> Voir
+                                                </Button>
                                                 <Button variant="outline" size="sm" className="flex-1 gap-1.5" onClick={() => router.get(route('document-templates.edit', t.id))}>
                                                     <Pencil className="w-3.5 h-3.5" /> Modifier
                                                 </Button>
