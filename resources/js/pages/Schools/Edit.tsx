@@ -20,11 +20,15 @@ interface School {
     active: boolean;
 }
 
+interface ClassroomTypeOption { id: string; name: string; period_system: string; }
+
 interface EditProps {
     school: School;
+    classroomTypes?: ClassroomTypeOption[];
+    selectedClassTypes?: string[];
 }
 
-export default function Edit({ school }: Readonly<EditProps>) {
+export default function Edit({ school, classroomTypes = [], selectedClassTypes = [] }: Readonly<EditProps>) {
     const currentLogoUrl = school.logo ? `/storage/${school.logo}` : null;
 
     const { data, setData, put, processing, errors } = useForm<SchoolFormData>({
@@ -40,6 +44,7 @@ export default function Edit({ school }: Readonly<EditProps>) {
         city: school.city || '',
         po_box: school.po_box || '',
         active: school.active,
+        class_type_ids: selectedClassTypes,
     });
 
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -68,6 +73,7 @@ export default function Edit({ school }: Readonly<EditProps>) {
                     errors={errors}
                     processing={processing}
                     currentLogoUrl={currentLogoUrl}
+                    classroomTypes={classroomTypes}
                     onCancel={() => router.get(route('schools.index'))}
                     onSubmit={handleSubmit}
                     setData={setData}

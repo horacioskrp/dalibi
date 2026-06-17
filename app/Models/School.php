@@ -19,6 +19,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\GradingConfig;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
@@ -59,6 +60,12 @@ class School extends Model
     public function gradingConfigs(): HasMany
     {
         return $this->hasMany(GradingConfig::class);
+    }
+
+    /** Types de classe proposés par l'école. */
+    public function classTypes(): BelongsToMany
+    {
+        return $this->belongsToMany(ClassroomType::class, 'class_type_school');
     }
 
     public function activeGradingConfig(): ?GradingConfig

@@ -17,9 +17,12 @@ const initialValues: SchoolFormData = {
     city: '',
     po_box: '',
     active: true,
+    class_type_ids: [],
 };
 
-export default function Create() {
+interface ClassroomTypeOption { id: string; name: string; period_system: string; }
+
+export default function Create({ classroomTypes = [] }: Readonly<{ classroomTypes?: ClassroomTypeOption[] }>) {
     const { data, setData, post, processing, errors } = useForm<SchoolFormData>(initialValues);
 
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -47,6 +50,7 @@ export default function Create() {
                     data={data}
                     errors={errors}
                     processing={processing}
+                    classroomTypes={classroomTypes}
                     onCancel={() => router.get(route('schools.index'))}
                     onSubmit={handleSubmit}
                     setData={setData}

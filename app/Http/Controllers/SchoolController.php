@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ClassroomType;
 use App\Models\School;
 use App\Http\Requests\StoreSchoolRequest;
 use App\Http\Requests\UpdateSchoolRequest;
@@ -52,7 +53,9 @@ class SchoolController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Schools/Create');
+        return Inertia::render('Schools/Create', [
+            'classroomTypes' => ClassroomType::where('active', true)->orderBy('name')->get(['id', 'name', 'period_system']),
+        ]);
     }
 
     /**
@@ -66,7 +69,11 @@ class SchoolController extends Controller
             $data['logo'] = $request->file('logo')->store('schools/logos', 'media');
         }
 
-        School::create($data);
+        $classTypeIds = $data['class_type_ids'] ?? [];
+        unset($data['class_type_ids']);
+
+        $school = School::create($data);
+        $school->classTypes()->sync($classTypeIds);
 
         return redirect()->route('schools.index')
             ->with('message', 'École créée avec succès.');
@@ -89,6 +96,8 @@ class SchoolController extends Controller
     {
         return Inertia::render('Schools/Edit', [
             'school' => $school,
+            'classroomTypes' => ClassroomType::where('active', true)->orderBy('name')->get(['id', 'name', 'period_system']),
+            'selectedClassTypes' => $school->classTypes()->pluck('classroom_types.id'),
         ]);
     }
 
@@ -108,7 +117,14 @@ class SchoolController extends Controller
             unset($data['logo']);
         }
 
+        $classTypeIds = $data['class_type_ids'] ?? null;
+        unset($data['class_type_ids']);
+
         $school->update($data);
+
+        if ($classTypeIds !== null) {
+            $school->classTypes()->sync($classTypeIds);
+        }
 
         return redirect()->route('schools.index')
             ->with('message', 'École mise à jour avec succès.');

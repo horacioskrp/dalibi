@@ -10,6 +10,7 @@ import AppLayout from '@/layouts/app-layout';
 const initialValues: ClassroomTypeFormData = {
     name: '',
     description: '',
+    period_system: 'trimestre',
     active: true,
 };
 

@@ -1,12 +1,14 @@
-import { CheckCircle2, Save, Tag } from 'lucide-react';
+import { CalendarRange, CheckCircle2, Save, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 
 export interface ClassroomTypeFormData {
     name: string;
     description: string;
+    period_system: 'trimestre' | 'semestre';
     active: boolean;
 }
 
@@ -75,6 +77,22 @@ export function ClassroomTypeForm({
                             placeholder="Description du type de classe..."
                         />
                         {errors.description && <p className="text-sm text-red-600 mt-1">{errors.description}</p>}
+                    </div>
+
+                    <div>
+                        <label className="flex items-center gap-2 text-sm font-medium text-gray-900 mb-2">
+                            <CalendarRange className="w-4 h-4 text-blue-600" />
+                            Système de périodes *
+                        </label>
+                        <Select value={data.period_system} onValueChange={(v) => setData('period_system', v as 'trimestre' | 'semestre')} disabled={processing}>
+                            <SelectTrigger className={errors.period_system ? 'border-red-500' : ''}><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="trimestre">Trimestre (3 périodes)</SelectItem>
+                                <SelectItem value="semestre">Semestre (2 périodes)</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <p className="text-xs text-gray-400 mt-1">Détermine le découpage de l'année (bulletins, évaluations) pour ce type de classe.</p>
+                        {errors.period_system && <p className="text-sm text-red-600 mt-1">{errors.period_system}</p>}
                     </div>
                 </div>
             </div>
