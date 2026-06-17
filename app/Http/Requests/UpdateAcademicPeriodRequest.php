@@ -27,8 +27,10 @@ class UpdateAcademicPeriodRequest extends FormRequest
             'end_date' => ['required', 'date', 'after:start_date'],
             'type' => ['required', Rule::in(['trimestre', 'semestre'])],
             'order' => ['nullable', 'integer', 'min:1'],
+            'weight' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'is_current' => ['nullable', 'boolean'],
             'academic_year_id' => ['required', 'uuid', 'exists:academic_years,id'],
+            'class_type_id' => ['nullable', 'uuid', 'exists:classroom_types,id'],
         ];
     }
 
