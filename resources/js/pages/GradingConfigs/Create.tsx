@@ -44,7 +44,7 @@ export default function Create({ schools, preselectedSchoolId }: Readonly<Props>
         <AppLayout>
             <Head title="Nouvelle configuration de calcul" />
 
-            <div className="max-w-2xl space-y-6">
+            <div className="w-full space-y-6">
 
                 <div className="flex items-center gap-4">
                     <Button variant="outline" size="sm" onClick={() => router.get(route('grading-configs.index'))}>
