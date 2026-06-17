@@ -15,7 +15,8 @@ Un système de gestion scolaire open-source pour les écoles primaires, collège
 ### Gestion des établissements
 
 - Support multi-écoles (primaire, collège, lycée)
-- Paramétrage par établissement
+- Paramétrage par établissement : nom, code, devise, terme (ex. « République Togolaise »)
+- Upload du logo de l'école (image, avec prévisualisation)
 - Années académiques et périodes (trimestres)
 - Types de classes et niveaux configurables
 
@@ -75,6 +76,14 @@ Un système de gestion scolaire open-source pour les écoles primaires, collège
 - Système de réclamations sur les notes
 - Suivi des performances et commentaires
 
+### Fichiers & Stockage
+
+- Choix du backend de stockage des fichiers depuis l'interface : **local** (serveur Laravel) ou **cloud S3** (AWS S3, Cloudflare R2, MinIO, compatible S3)
+- Bascule local ↔ cloud sans toucher au `.env`, ni redéploiement
+- Bouton « Tester la connexion » qui valide l'accès au stockage en temps réel (toast de résultat)
+- **Sécurité** : credentials S3 chiffrés au repos (`APP_KEY`), clé d'accès masquée à l'affichage, page réservée aux administrateurs
+- Recommandation Cloudflare R2 (S3-compatible, sans frais de bande passante sortante)
+
 ## 📋 Prérequis
 
 - PHP 8.3+
@@ -121,6 +130,12 @@ DB_PASSWORD=votre_mot_de_passe
 ```bash
 php artisan migrate
 php artisan db:seed --class=SchoolDemoSeeder  # optionnel
+```
+
+### 4 bis. Lien de stockage des fichiers
+
+```bash
+php artisan storage:link   # requis pour servir les fichiers uploadés (logos…)
 ```
 
 ### 5. Lancer le serveur
@@ -176,6 +191,7 @@ L'application est accessible sur `http://localhost:8000`.
 | `cash_accounts`       | Caisses                                                        |
 | `transactions`        | Journal comptable                                              |
 | `note_reclamations`   | Réclamations sur les notes                                     |
+| `file_storage_settings`| Configuration du stockage des fichiers (local / S3, chiffrée) |
 
 ## 🔐 Sécurité
 
@@ -185,11 +201,12 @@ L'application est accessible sur `http://localhost:8000`.
 - Gestion des rôles et permissions via Spatie Laravel Permission
 - Protection CSRF (Inertia)
 - Validation stricte de toutes les entrées
+- Credentials de stockage S3 chiffrés au repos (`APP_KEY`)
 
 ## 📦 Structure du projet
 
 ```
-ecolio/
+dalibi/
 ├── app/
 │   ├── Models/          # Modèles Eloquent
 │   ├── Http/Controllers/# Contrôleurs
