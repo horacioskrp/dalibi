@@ -64,6 +64,15 @@ class User extends Authenticatable
     ];
 
     /**
+     * Accesseurs ajoutés à la sérialisation (le nom complet est calculé).
+     *
+     * @var list<string>
+     */
+    protected $appends = [
+        'name',
+    ];
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

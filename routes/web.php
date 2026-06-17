@@ -158,6 +158,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Timetable (emploi du temps)
     Route::get('timetable', [TimetableController::class, 'index'])->name('timetable.index');
+    Route::get('timetable/{classId}/export', [TimetableController::class, 'export'])->name('timetable.export');
     Route::post('timetable', [TimetableController::class, 'store'])->name('timetable.store');
     Route::put('timetable/{timetableSlot}', [TimetableController::class, 'update'])->name('timetable.update');
     Route::delete('timetable/{timetableSlot}', [TimetableController::class, 'destroy'])->name('timetable.destroy');

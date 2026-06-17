@@ -2,9 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Constants\Roles;
 use App\Models\Classroom;
 use App\Models\ClassroomType;
 use App\Models\User;
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -12,11 +14,20 @@ class ClassroomTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(RolesAndPermissionsSeeder::class);
+    }
+
     // ─── Helpers ────────────────────────────────────────────────────────────
 
     private function user(): User
     {
-        return User::factory()->create();
+        $user = User::factory()->create();
+        $user->assignRole(Roles::ADMINISTRATOR);
+
+        return $user;
     }
 
     private function classroomType(): ClassroomType

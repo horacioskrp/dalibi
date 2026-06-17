@@ -28,6 +28,11 @@ export const mainNavItems: NavItem[] = [
                 href: route('student-scholarships.index'),
                 icon: Percent,
             },
+            {
+                title: 'Emploi du temps',
+                href: route('timetable.index'),
+                icon: CalendarRange,
+            },
         ],
     },
     {
@@ -158,11 +163,6 @@ export const mainNavItems: NavItem[] = [
                 title: 'Examens officiels',
                 href: route('official-exams.index'),
                 icon: GraduationCap,
-            },
-            {
-                title: 'Emploi du temps',
-                href: route('timetable.index'),
-                icon: CalendarRange,
             },
         ],
     },

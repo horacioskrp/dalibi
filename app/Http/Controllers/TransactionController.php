@@ -14,7 +14,7 @@ class TransactionController extends Controller
     public function index(Request $request): Response
     {
         $query = AccountingTransaction::query()
-            ->with(['cashAccount:id,name,type', 'createdBy:id,name'])
+            ->with(['cashAccount:id,name,type', 'createdBy:id,firstname,lastname'])
             ->when($request->type, fn ($q) => $q->where('type', $request->type))
             ->when($request->reference_type, fn ($q) => $q->where('reference_type', $request->reference_type))
             ->when($request->cash_account_id, fn ($q) => $q->where('cash_account_id', $request->cash_account_id))

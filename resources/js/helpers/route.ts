@@ -264,6 +264,7 @@ export function route(name: string, params?: any): string {
 
         // Timetable
         'timetable.index':   '/timetable',
+        'timetable.export':  `/timetable/${params}/export`,
         'timetable.store':   '/timetable',
         'timetable.update':  `/timetable/${params}`,
         'timetable.destroy': `/timetable/${params}`,
