@@ -11,6 +11,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AcademicPeriod;
 use App\Models\AcademicYear;
 use App\Models\ClassSubject;
 use App\Models\Classroom;
@@ -31,13 +32,22 @@ class GradeController extends Controller
     {
         $classId = $request->string('class_id')->toString();
         $classSubjectId = $request->string('class_subject_id')->toString();
-        $term = $request->string('term')->toString();
+        $periodId = $request->string('academic_period_id')->toString();
 
         $activeYear = AcademicYear::where('active', true)->first(['id', 'year']);
 
         $classrooms = Classroom::where('active', true)
             ->orderBy('name')
             ->get(['id', 'name', 'code']);
+
+        // Périodes applicables au type de la classe sélectionnée
+        $periods = [];
+        if ($classId !== '') {
+            $class = Classroom::find($classId, ['id', 'classroom_type_id']);
+            $periods = AcademicPeriod::forClassType($activeYear?->id, $class?->classroom_type_id)
+                ->map(fn ($p) => ['id' => $p->id, 'name' => $p->name, 'is_current' => (bool) $p->is_current])
+                ->values();
+        }
 
         $classSubjects = [];
         if ($classId !== '') {
@@ -55,7 +65,7 @@ class GradeController extends Controller
         $studentsWithGrades = [];
         $stats = ['total' => 0, 'graded' => 0, 'average' => null];
 
-        if ($classSubjectId !== '' && in_array($term, ['term1', 'term2', 'term3'], true)) {
+        if ($classSubjectId !== '' && $periodId !== '') {
             $enrollments = Enrollment::where('class_id', $classId)
                 ->when($activeYear, fn ($q) => $q->where('academic_year_id', $activeYear->id))
                 ->where('status', 'active')
@@ -63,7 +73,7 @@ class GradeController extends Controller
                 ->get();
 
             $existingGrades = Grade::where('class_subject_id', $classSubjectId)
-                ->where('term', $term)
+                ->where('academic_period_id', $periodId)
                 ->get()
                 ->keyBy('student_id');
 
@@ -93,13 +103,14 @@ class GradeController extends Controller
         return Inertia::render('Grades/Index', [
             'classrooms' => $classrooms,
             'classSubjects' => $classSubjects,
+            'periods' => $periods,
             'studentsWithGrades' => $studentsWithGrades,
             'activeYear' => $activeYear,
             'stats' => $stats,
             'filters' => [
                 'class_id' => $classId,
                 'class_subject_id' => $classSubjectId,
-                'term' => $term,
+                'academic_period_id' => $periodId,
             ],
         ]);
     }
@@ -111,14 +122,14 @@ class GradeController extends Controller
     {
         $validated = $request->validate([
             'class_subject_id' => ['required', 'uuid', 'exists:class_subjects,id'],
-            'term' => ['required', 'in:term1,term2,term3'],
+            'academic_period_id' => ['required', 'uuid', 'exists:academic_periods,id'],
             'grades' => ['required', 'array', 'min:1'],
             'grades.*.student_id' => ['required', 'uuid', 'exists:students,id'],
             'grades.*.score' => ['nullable', 'numeric', 'min:0', 'max:20'],
             'grades.*.comments' => ['nullable', 'string', 'max:500'],
         ], [
             'class_subject_id.required' => 'La matière est obligatoire.',
-            'term.required' => 'Le trimestre est obligatoire.',
+            'academic_period_id.required' => 'La période est obligatoire.',
             'grades.required' => 'Aucune note à enregistrer.',
             'grades.*.score.min' => 'La note minimale est 0.',
             'grades.*.score.max' => 'La note maximale est 20.',
@@ -130,7 +141,7 @@ class GradeController extends Controller
                     [
                         'student_id' => $gradeData['student_id'],
                         'class_subject_id' => $validated['class_subject_id'],
-                        'term' => $validated['term'],
+                        'academic_period_id' => $validated['academic_period_id'],
                     ],
                     [
                         'score' => $gradeData['score'] ?? null,
@@ -148,28 +159,40 @@ class GradeController extends Controller
      */
     public function student(Student $student, Request $request): Response
     {
-        $term = $request->string('term', 'term1')->toString();
-        if (! in_array($term, ['term1', 'term2', 'term3'], true)) {
-            $term = 'term1';
-        }
+        $periodId = $request->string('academic_period_id')->toString();
 
         $activeYear = AcademicYear::where('active', true)->first(['id', 'year']);
 
         $enrollment = Enrollment::where('student_id', $student->id)
             ->when($activeYear, fn ($q) => $q->where('academic_year_id', $activeYear->id))
             ->where('status', 'active')
-            ->with('classroom:id,name,code')
+            ->with('classroom:id,name,code,classroom_type_id')
             ->first();
+
+        // Périodes applicables au type de la classe de l'élève
+        $periods = collect();
+        if ($enrollment) {
+            $periods = AcademicPeriod::forClassType($activeYear?->id, $enrollment->classroom?->classroom_type_id)
+                ->map(fn ($p) => ['id' => $p->id, 'name' => $p->name, 'is_current' => (bool) $p->is_current])
+                ->values();
+        }
+
+        // Période par défaut : celle demandée, sinon la période en cours, sinon la première
+        if ($periodId === '') {
+            $periodId = collect($periods)->firstWhere('is_current', true)['id']
+                ?? collect($periods)->first()['id']
+                ?? '';
+        }
 
         $grades = collect();
         $average = null;
 
-        if ($enrollment) {
+        if ($enrollment && $periodId !== '') {
             $classSubjects = ClassSubject::where('class_id', $enrollment->class_id)
                 ->when($activeYear, fn ($q) => $q->where('academic_year_id', $activeYear->id))
                 ->with([
                     'subject:id,name,code',
-                    'grades' => fn ($q) => $q->where('student_id', $student->id)->where('term', $term),
+                    'grades' => fn ($q) => $q->where('student_id', $student->id)->where('academic_period_id', $periodId),
                 ])
                 ->get();
 
@@ -193,8 +216,9 @@ class GradeController extends Controller
             'student' => $student->only(['id', 'firstname', 'lastname', 'matricule']),
             'enrollment' => $enrollment,
             'grades' => $grades->values(),
+            'periods' => $periods,
             'average' => $average,
-            'term' => $term,
+            'academic_period_id' => $periodId,
             'activeYear' => $activeYear,
         ]);
     }
