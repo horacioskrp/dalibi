@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Constants\Roles;
 use App\Models\Student;
 use App\Models\User;
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -14,6 +15,12 @@ class StudentTest extends TestCase
 
     private const DOB_MALE   = '2010-01-01';
     private const DOB_FEMALE = '2011-01-01';
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(RolesAndPermissionsSeeder::class);
+    }
 
     // ─── Helpers ────────────────────────────────────────────────────────────
 

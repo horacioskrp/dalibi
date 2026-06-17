@@ -79,15 +79,24 @@ class MatriculeService
 
     public function getRoleFromMatricule(string $matricule): ?string
     {
-        $prefix = substr($matricule, 0, 3);
-
-        foreach (self::ROLE_PREFIXES as $role => $rolePrefix) {
-            if ($rolePrefix === $prefix) {
-                return $role;
-            }
+        // Extrait la partie alphabétique (préfixe) — gère PROF, COMPT, etc.
+        if (! preg_match('/^([A-Z]+)/', $matricule, $matches)) {
+            return null;
         }
 
-        return null;
+        $role = array_search($matches[1], self::ROLE_PREFIXES, true);
+
+        return $role !== false ? $role : null;
+    }
+
+    public function matriculeExists(string $matricule): bool
+    {
+        return User::where('natricule', $matricule)->exists();
+    }
+
+    public function isValidMatriculeFormat(string $matricule): bool
+    {
+        return (bool) preg_match('/^[A-Z]{3,5}\d{2}\d{3}$/', $matricule);
     }
 
     public static function getPrefixes(): array

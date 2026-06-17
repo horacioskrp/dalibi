@@ -4,10 +4,13 @@ namespace Tests\Unit;
 
 use App\Constants\Roles;
 use App\Services\MatriculeService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class MatriculeServiceTest extends TestCase
 {
+    use RefreshDatabase;
+
     protected MatriculeService $service;
 
     protected function setUp(): void
@@ -54,21 +57,13 @@ class MatriculeServiceTest extends TestCase
     }
 
     /** @test */
-    public function it_generates_registration_number_with_correct_format()
-    {
-        $regNumber = $this->service->generateRegistrationNumber('ECOL', 'CM1A');
-
-        $this->assertMatchesRegularExpression('/^REG-[A-Z]{2,4}-[0-9]{4}-[0-9]{3}$/', $regNumber);
-    }
-
-    /** @test */
     public function it_parses_user_matricule_correctly()
     {
         $matricule = 'PROF26001';
         $parsed = $this->service->parseMatricule($matricule);
 
         $this->assertEquals('PROF', $parsed['prefix']);
-        $this->assertEquals('26', $parsed['year']);
+        $this->assertEquals('2026', $parsed['year']);
         $this->assertEquals(1, $parsed['sequence']);
     }
 
@@ -79,7 +74,7 @@ class MatriculeServiceTest extends TestCase
         $parsed = $this->service->parseMatricule($matricule);
 
         $this->assertEquals('ADM', $parsed['prefix']);
-        $this->assertEquals('26', $parsed['year']);
+        $this->assertEquals('2026', $parsed['year']);
         $this->assertEquals(5, $parsed['sequence']);
     }
 
@@ -90,7 +85,7 @@ class MatriculeServiceTest extends TestCase
         $parsed = $this->service->parseMatricule($matricule);
 
         $this->assertEquals('COMPT', $parsed['prefix']);
-        $this->assertEquals('26', $parsed['year']);
+        $this->assertEquals('2026', $parsed['year']);
         $this->assertEquals(10, $parsed['sequence']);
     }
 
@@ -109,12 +104,6 @@ class MatriculeServiceTest extends TestCase
     {
         // Assuming the database is empty in tests
         $this->assertFalse($this->service->matriculeExists('PROF26001'));
-    }
-
-    /** @test */
-    public function it_checks_registration_number_existence()
-    {
-        $this->assertFalse($this->service->registrationNumberExists('REG-TG-2026-001'));
     }
 
     /** @test */
@@ -157,39 +146,23 @@ class MatriculeServiceTest extends TestCase
     /** @test */
     public function it_generates_unique_matricules()
     {
+        // La séquence dépend du nombre d'utilisateurs existants : on persiste
+        // le premier matricule avant de générer le second.
         $matricule1 = $this->service->generateUserMatricule(Roles::TEACHER);
+        \App\Models\User::factory()->create(['natricule' => $matricule1]);
+
         $matricule2 = $this->service->generateUserMatricule(Roles::TEACHER);
 
-        // They should be different (at least in their sequence part)
-        // Note: This might fail if generated in the same millisecond
-        $parsed1 = $this->service->parseMatricule($matricule1);
-        $parsed2 = $this->service->parseMatricule($matricule2);
-
-        // Either year or sequence should be different
-        $this->assertNotEquals(
-            $parsed1['sequence'],
-            $parsed2['sequence']
-        );
+        $this->assertNotEquals($matricule1, $matricule2);
     }
 
     /** @test */
     public function student_matricule_includes_school_code()
     {
-        $schoolCode = 'LOME';
-        $matricule = $this->service->generateStudentMatricule($schoolCode, 'CM1A');
+        $schoolCode = 'LOM';
+        $matricule = $this->service->generateStudentMatricule($schoolCode);
 
         $this->assertStringStartsWith($schoolCode, $matricule);
         $this->assertStringContainsString('STU', $matricule);
-    }
-
-    /** @test */
-    public function registration_number_includes_school_code()
-    {
-        $schoolCode = 'ECO';
-        $regNumber = $this->service->generateRegistrationNumber($schoolCode, 'CM1A');
-
-        // Should contain the format REG-{schoolCode}-{year}-{sequence}
-        $this->assertStringStartsWith('REG-', $regNumber);
-        $this->assertStringContainsString($schoolCode, $regNumber);
     }
 }

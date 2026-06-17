@@ -63,7 +63,7 @@ class DocumentTemplateController extends Controller
         $search = $request->string('search')->toString();
 
         $issuances = DocumentIssuance::query()
-            ->with(['template:id,name', 'student:id,firstname,lastname,matricule', 'issuedBy:id,name'])
+            ->with(['template:id,name', 'student:id,firstname,lastname,matricule', 'issuedBy:id,firstname,lastname'])
             ->when($search, function ($q) use ($search) {
                 $like = '%' . strtolower($search) . '%';
                 $q->whereRaw('LOWER(reference_number) LIKE ?', [$like])

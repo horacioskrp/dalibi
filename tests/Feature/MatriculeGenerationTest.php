@@ -25,12 +25,11 @@ class MatriculeGenerationTest extends TestCase
         $school = School::factory()->create();
 
         $user = User::factory()->create([
-            'school_id' => $school->id,
             'natricule' => null,
         ]);
 
         $user->assignRole(Roles::TEACHER);
-        $user->generateMatricule();
+        $user->natricule = $user->generateMatricule();
         $user->save();
 
         $this->assertNotNull($user->natricule);
@@ -43,12 +42,11 @@ class MatriculeGenerationTest extends TestCase
         $school = School::factory()->create();
 
         $user = User::factory()->create([
-            'school_id' => $school->id,
             'natricule' => null,
         ]);
 
         $user->assignRole(Roles::ADMINISTRATOR);
-        $user->generateMatricule();
+        $user->natricule = $user->generateMatricule();
         $user->save();
 
         $this->assertStringStartsWith('ADM', $user->natricule);
@@ -60,12 +58,11 @@ class MatriculeGenerationTest extends TestCase
         $school = School::factory()->create();
 
         $user = User::factory()->create([
-            'school_id' => $school->id,
             'natricule' => null,
         ]);
 
         $user->assignRole(Roles::DIRECTOR);
-        $user->generateMatricule();
+        $user->natricule = $user->generateMatricule();
         $user->save();
 
         $this->assertStringStartsWith('DIR', $user->natricule);
@@ -77,12 +74,11 @@ class MatriculeGenerationTest extends TestCase
         $school = School::factory()->create();
 
         $user = User::factory()->create([
-            'school_id' => $school->id,
             'natricule' => null,
         ]);
 
         $user->assignRole(Roles::ACCOUNTING);
-        $user->generateMatricule();
+        $user->natricule = $user->generateMatricule();
         $user->save();
 
         $this->assertStringStartsWith('COMPT', $user->natricule);
@@ -94,12 +90,11 @@ class MatriculeGenerationTest extends TestCase
         $school = School::factory()->create();
 
         $user = User::factory()->create([
-            'school_id' => $school->id,
             'natricule' => null,
         ]);
 
         $user->assignRole(Roles::SECRETARIAT);
-        $user->generateMatricule();
+        $user->natricule = $user->generateMatricule();
         $user->save();
 
         $this->assertStringStartsWith('SEC', $user->natricule);
@@ -111,12 +106,11 @@ class MatriculeGenerationTest extends TestCase
         $school = School::factory()->create();
 
         $user = User::factory()->create([
-            'school_id' => $school->id,
             'natricule' => null,
         ]);
 
         // Should default to administrator
-        $user->generateMatricule();
+        $user->natricule = $user->generateMatricule();
         
         $this->assertNotNull($user->natricule);
     }
@@ -128,12 +122,11 @@ class MatriculeGenerationTest extends TestCase
         $currentYear = date('y');
 
         $user = User::factory()->create([
-            'school_id' => $school->id,
             'natricule' => null,
         ]);
 
         $user->assignRole(Roles::TEACHER);
-        $user->generateMatricule();
+        $user->natricule = $user->generateMatricule();
 
         $this->assertStringContainsString($currentYear, $user->natricule);
     }
@@ -144,21 +137,19 @@ class MatriculeGenerationTest extends TestCase
         $school = School::factory()->create();
 
         $user1 = User::factory()->create([
-            'school_id' => $school->id,
             'natricule' => null,
         ]);
         
         $user2 = User::factory()->create([
-            'school_id' => $school->id,
             'natricule' => null,
         ]);
 
         $user1->assignRole(Roles::TEACHER);
-        $user1->generateMatricule();
+        $user1->natricule = $user1->generateMatricule();
         $user1->save();
 
         $user2->assignRole(Roles::TEACHER);
-        $user2->generateMatricule();
+        $user2->natricule = $user2->generateMatricule();
         $user2->save();
 
         $this->assertNotEquals($user1->natricule, $user2->natricule);
@@ -170,12 +161,11 @@ class MatriculeGenerationTest extends TestCase
         $school = School::factory()->create();
 
         $user = User::factory()->create([
-            'school_id' => $school->id,
             'natricule' => null,
         ]);
 
         $user->assignRole(Roles::TEACHER);
-        $user->generateMatricule();
+        $user->natricule = $user->generateMatricule();
         $user->save();
 
         // Verify the matricule contains the teacher prefix
