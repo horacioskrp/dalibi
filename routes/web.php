@@ -155,6 +155,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('settings/file-storage/test', [FileStorageController::class, 'test'])->name('file-storage.test');
 
     // Document Templates (Settings)
+    Route::get('settings/documents-registry', [DocumentTemplateController::class, 'registry'])->name('document-templates.registry');
     Route::get('settings/documents', [DocumentTemplateController::class, 'index'])->name('document-templates.index');
     Route::get('settings/documents/create', [DocumentTemplateController::class, 'create'])->name('document-templates.create');
     Route::get('settings/documents/{documentTemplate}', [DocumentTemplateController::class, 'show'])->name('document-templates.show');

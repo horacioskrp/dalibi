@@ -49,9 +49,14 @@ export default function Index({ templatesByCategory, categories }: Readonly<Prop
                         <h1 className="text-4xl font-bold tracking-tight text-gray-900">Modèles de documents</h1>
                         <p className="mt-2 text-gray-500">Gérez les modèles de certificats, attestations et bulletins exportables en PDF.</p>
                     </div>
-                    <Button className="gap-2 bg-blue-600 hover:bg-blue-700" onClick={() => router.get(route('document-templates.create'))}>
-                        <Plus className="w-4 h-4" /> Nouveau modèle
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" className="gap-2" onClick={() => router.get(route('document-templates.registry'))}>
+                            <FileText className="w-4 h-4" /> Registre
+                        </Button>
+                        <Button className="gap-2 bg-blue-600 hover:bg-blue-700" onClick={() => router.get(route('document-templates.create'))}>
+                            <Plus className="w-4 h-4" /> Nouveau modèle
+                        </Button>
+                    </div>
                 </div>
 
                 {Object.entries(categories).map(([key, label]) => {
