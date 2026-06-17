@@ -10,12 +10,14 @@ import AppLayout from '@/layouts/app-layout';
 interface Props {
     periods: { id: string; name: string; is_current: boolean }[];
     evaluationTypes: { id: string; name: string }[];
+    classroomTypes: { id: string; name: string }[];
     activeYear: { year: string } | null;
 }
 
 interface FormData {
     academic_period_id: string;
     evaluation_type_id: string;
+    class_type_id: string;
     name: string;
     description: string;
     coefficient: string;
@@ -23,12 +25,13 @@ interface FormData {
     date: string;
 }
 
-export default function Create({ periods, evaluationTypes, activeYear }: Readonly<Props>) {
+export default function Create({ periods, evaluationTypes, classroomTypes, activeYear }: Readonly<Props>) {
     const defaultPeriod = periods.find(p => p.is_current)?.id ?? periods[0]?.id ?? '';
 
     const [form, setForm]       = useState<FormData>({
         academic_period_id: defaultPeriod,
         evaluation_type_id: evaluationTypes[0]?.id ?? '',
+        class_type_id:      'all',
         name:               '',
         description:        '',
         coefficient:        '1',
@@ -43,7 +46,8 @@ export default function Create({ periods, evaluationTypes, activeYear }: Readonl
 
     const handleSubmit = () => {
         setSubmitting(true);
-        router.post(route('evaluation-templates.store'), form, {
+        const payload = { ...form, class_type_id: form.class_type_id === 'all' ? '' : form.class_type_id };
+        router.post(route('evaluation-templates.store'), payload, {
             onError:   e => { setErrors(e as typeof errors); setSubmitting(false); },
             onSuccess: () => setSubmitting(false),
         });
@@ -91,6 +95,15 @@ export default function Create({ periods, evaluationTypes, activeYear }: Readonl
                             <Select value={form.evaluation_type_id} onValueChange={v => setForm(p => ({ ...p, evaluation_type_id: v }))}>
                                 <SelectTrigger className={errors.evaluation_type_id ? 'border-red-400' : ''}><SelectValue /></SelectTrigger>
                                 <SelectContent>{evaluationTypes.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent>
+                            </Select>
+                        )}
+                        {field('Type de classe', 'class_type_id',
+                            <Select value={form.class_type_id} onValueChange={v => setForm(p => ({ ...p, class_type_id: v }))}>
+                                <SelectTrigger className={errors.class_type_id ? 'border-red-400' : ''}><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Tous les types</SelectItem>
+                                    {classroomTypes.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                                </SelectContent>
                             </Select>
                         )}
                         {field('Coefficient *', 'coefficient',
