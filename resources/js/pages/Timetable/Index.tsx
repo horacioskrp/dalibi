@@ -1,5 +1,5 @@
 import { Head, router, useForm } from '@inertiajs/react';
-import { CalendarRange, Clock, MapPin, Pencil, Plus, Trash2, User } from 'lucide-react';
+import { CalendarRange, Clock, Download, MapPin, Pencil, Plus, Trash2, User } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -101,15 +101,22 @@ export default function Index({ classrooms, subjects, teachers, slots, days, fil
                     </div>
                 </div>
 
-                {/* Sélecteur de classe */}
-                <div className="rounded-2xl bg-slate-50/70 ring-1 ring-slate-200 shadow-sm p-4 flex items-center gap-3 max-w-md">
-                    <CalendarRange className="w-5 h-5 text-gray-400" />
-                    <Select value={classId} onValueChange={selectClass}>
-                        <SelectTrigger className="bg-white"><SelectValue placeholder="Choisir une classe" /></SelectTrigger>
-                        <SelectContent>
-                            {classrooms.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
+                {/* Sélecteur de classe + export */}
+                <div className="flex items-center gap-3 flex-wrap">
+                    <div className="rounded-2xl bg-slate-50/70 ring-1 ring-slate-200 shadow-sm p-4 flex items-center gap-3 flex-1 min-w-64 max-w-md">
+                        <CalendarRange className="w-5 h-5 text-gray-400" />
+                        <Select value={classId} onValueChange={selectClass}>
+                            <SelectTrigger className="bg-white"><SelectValue placeholder="Choisir une classe" /></SelectTrigger>
+                            <SelectContent>
+                                {classrooms.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    {classId && (
+                        <Button variant="outline" className="gap-2" onClick={() => window.open(route('timetable.export', classId), '_blank')}>
+                            <Download className="w-4 h-4" /> Exporter en PDF
+                        </Button>
+                    )}
                 </div>
 
                 {!classId ? (

@@ -9,8 +9,10 @@ use App\Models\School;
 use App\Models\Subject;
 use App\Models\TimetableSlot;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -58,6 +60,41 @@ class TimetableController extends Controller
             'filters'    => ['class_id' => $classId],
             'canManage'  => $request->user()->hasAnyRole(self::MANAGE_ROLES),
         ]);
+    }
+
+    public function export(Request $request, string $classId)
+    {
+        $classroom = Classroom::findOrFail($classId);
+        $school    = School::query()->first();
+
+        $slots = TimetableSlot::with(['subject:id,name', 'teacher:id,firstname,lastname'])
+            ->where('class_id', $classId)
+            ->orderBy('start_time')
+            ->get();
+
+        // Lignes = plages horaires distinctes (triées), colonnes = jours
+        $timeRanges = $slots
+            ->map(fn ($s) => substr($s->start_time, 0, 5) . '-' . substr($s->end_time, 0, 5))
+            ->unique()
+            ->sort()
+            ->values();
+
+        // Index : [plage][jour] => slot
+        $grid = [];
+        foreach ($slots as $slot) {
+            $range = substr($slot->start_time, 0, 5) . '-' . substr($slot->end_time, 0, 5);
+            $grid[$range][$slot->day_of_week] = $slot;
+        }
+
+        $pdf = Pdf::loadView('exports.timetable', [
+            'school'     => $school,
+            'classroom'  => $classroom,
+            'days'       => TimetableSlot::DAYS,
+            'timeRanges' => $timeRanges,
+            'grid'       => $grid,
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->stream('emploi-du-temps-' . Str::slug($classroom->name) . '.pdf');
     }
 
     public function store(Request $request): RedirectResponse
