@@ -262,6 +262,12 @@ export function route(name: string, params?: any): string {
         'file-storage.update': '/settings/file-storage',
         'file-storage.test':   '/settings/file-storage/test',
 
+        // Timetable
+        'timetable.index':   '/timetable',
+        'timetable.store':   '/timetable',
+        'timetable.update':  `/timetable/${params}`,
+        'timetable.destroy': `/timetable/${params}`,
+
         // Official Exams
         'official-exams.index':   '/official-exams',
         'official-exams.store':   '/official-exams',
