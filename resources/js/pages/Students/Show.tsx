@@ -11,12 +11,20 @@ import {
     MapPin,
     Globe,
     FileText,
+    FileBadge,
+    Download,
     Users,
     HeartPulse,
     ShieldAlert,
     Clock3,
 } from 'lucide-react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { route } from '@/helpers/route';
 import AppLayout from '@/layouts/app-layout';
 
@@ -70,8 +78,17 @@ interface Student {
     } | null;
 }
 
+interface DocTemplate { id: string; name: string; type_label: string; category: string; }
+interface IssuedDoc { id: string; reference_number: string; template_name: string | null; issued_by: string | null; issued_at: string | null; }
+
 interface ShowProps {
     student: Student;
+    documentContext: {
+        templates: DocTemplate[];
+        classe: string | null;
+        annee_scolaire: string | null;
+    };
+    issuedDocuments: IssuedDoc[];
 }
 
 const formatDate = (value?: string | null): string => {
@@ -85,9 +102,43 @@ const admissionTypeLabel: Record<string, string> = {
     re_admission: 'Ré-admission',
 };
 
-export default function Show({ student }: Readonly<ShowProps>) {
+export default function Show({ student, documentContext, issuedDocuments }: Readonly<ShowProps>) {
     const userLabel = `${student.user?.firstname ?? ''} ${student.user?.lastname ?? ''}`.trim() || student.user?.name || '—';
     const hasEmergencyContact = Boolean(student.medical_info?.emergency_contact_name || student.medical_info?.emergency_contact_phone);
+
+    const [deliverOpen, setDeliverOpen] = useState(false);
+    const [templateId, setTemplateId] = useState('');
+    const [classe, setClasse] = useState(documentContext?.classe ?? '');
+    const [annee, setAnnee] = useState(documentContext?.annee_scolaire ?? '');
+
+    // Génère et télécharge le PDF via une soumission de formulaire native (download).
+    const handleGenerate = () => {
+        if (!templateId) return;
+        const csrf = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content ?? '';
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = route('document-templates.generate', templateId);
+        form.target = '_blank';
+        const fields: Record<string, string> = {
+            _token: csrf,
+            student_id: student.id,
+            classe,
+            annee_scolaire: annee,
+        };
+        Object.entries(fields).forEach(([name, value]) => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = name;
+            input.value = value;
+            form.appendChild(input);
+        });
+        document.body.appendChild(form);
+        form.submit();
+        form.remove();
+        setDeliverOpen(false);
+        // Recharge pour rafraîchir la traçabilité
+        setTimeout(() => router.reload({ only: ['issuedDocuments'] }), 800);
+    };
 
     return (
         <AppLayout>
@@ -108,10 +159,16 @@ export default function Show({ student }: Readonly<ShowProps>) {
                             <p className="mt-2 text-gray-600">Consultez toutes les informations de l'élève</p>
                         </div>
                     </div>
-                    <Button onClick={() => router.get(route('students.edit', student.id))} className="bg-blue-600 hover:bg-blue-700 gap-2">
-                        <Pencil className="w-4 h-4" />
-                        Modifier
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" onClick={() => setDeliverOpen(true)} className="gap-2" disabled={!documentContext?.templates?.length}>
+                            <FileBadge className="w-4 h-4" />
+                            Délivrer un document
+                        </Button>
+                        <Button onClick={() => router.get(route('students.edit', student.id))} className="bg-blue-600 hover:bg-blue-700 gap-2">
+                            <Pencil className="w-4 h-4" />
+                            Modifier
+                        </Button>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -290,11 +347,85 @@ export default function Show({ student }: Readonly<ShowProps>) {
                     </div>
                 </div>
 
+                {/* Traçabilité des documents délivrés */}
+                <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                    <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2 mb-3">
+                        <FileBadge className="w-4 h-4 text-blue-600" />
+                        Documents délivrés
+                        <span className="text-gray-400 font-normal">({issuedDocuments.length})</span>
+                    </h2>
+                    {issuedDocuments.length === 0 ? (
+                        <p className="text-sm text-gray-400 py-4 text-center">Aucun document délivré pour cet élève.</p>
+                    ) : (
+                        <div className="divide-y divide-gray-50">
+                            {issuedDocuments.map(doc => (
+                                <div key={doc.id} className="flex items-center justify-between py-2.5 text-sm">
+                                    <div className="flex items-center gap-3">
+                                        <FileText className="w-4 h-4 text-gray-400 shrink-0" />
+                                        <div>
+                                            <p className="font-medium text-gray-900">{doc.template_name ?? '—'}</p>
+                                            <p className="text-xs text-gray-400 font-mono">{doc.reference_number}</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right text-xs text-gray-500">
+                                        <p>{doc.issued_at}</p>
+                                        {doc.issued_by && <p className="text-gray-400">par {doc.issued_by}</p>}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-sm text-sm text-slate-600 flex items-center justify-between">
                     <span className="inline-flex items-center gap-2"><Clock3 className="w-4 h-4" />Créé le {new Date(student.created_at).toLocaleString('fr-FR')}</span>
                     <span className="inline-flex items-center gap-2"><Clock3 className="w-4 h-4" />Mis à jour le {new Date(student.updated_at).toLocaleString('fr-FR')}</span>
                 </div>
             </div>
+
+            {/* Dialog : délivrer un document */}
+            <Dialog open={deliverOpen} onOpenChange={setDeliverOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Délivrer un document</DialogTitle>
+                        <DialogDescription>
+                            Générez un certificat ou une attestation pour {student.firstname} {student.lastname}.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4 py-2">
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-medium text-gray-700">Type de document *</label>
+                            <Select value={templateId} onValueChange={setTemplateId}>
+                                <SelectTrigger><SelectValue placeholder="Choisir un modèle" /></SelectTrigger>
+                                <SelectContent>
+                                    {documentContext?.templates?.map(t => (
+                                        <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-medium text-gray-700">Classe</label>
+                                <Input value={classe} onChange={e => setClasse(e.target.value)} placeholder="Ex: 3ème A" />
+                            </div>
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-medium text-gray-700">Année scolaire</label>
+                                <Input value={annee} onChange={e => setAnnee(e.target.value)} placeholder="2025-2026" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex justify-end gap-2">
+                        <Button variant="outline" onClick={() => setDeliverOpen(false)}>Annuler</Button>
+                        <Button onClick={handleGenerate} disabled={!templateId} className="bg-blue-600 hover:bg-blue-700 gap-2">
+                            <Download className="w-4 h-4" /> Générer le PDF
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }

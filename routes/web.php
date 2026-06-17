@@ -3,6 +3,8 @@
 use App\Http\Controllers\AcademicPeriodController;
 use App\Http\Controllers\DocumentTemplateController;
 use App\Http\Controllers\FileStorageController;
+use App\Http\Controllers\OfficialExamController;
+use App\Http\Controllers\TimetableController;
 use App\Http\Controllers\AcademicYearController;
 use App\Http\Controllers\ClassroomController;
 use App\Http\Controllers\ClassroomSubjectAssignmentController;
@@ -154,7 +156,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('settings/file-storage', [FileStorageController::class, 'update'])->name('file-storage.update');
     Route::post('settings/file-storage/test', [FileStorageController::class, 'test'])->name('file-storage.test');
 
+    // Timetable (emploi du temps)
+    Route::get('timetable', [TimetableController::class, 'index'])->name('timetable.index');
+    Route::post('timetable', [TimetableController::class, 'store'])->name('timetable.store');
+    Route::put('timetable/{timetableSlot}', [TimetableController::class, 'update'])->name('timetable.update');
+    Route::delete('timetable/{timetableSlot}', [TimetableController::class, 'destroy'])->name('timetable.destroy');
+
+    // Official Exams (CEPD, BEPC, BAC)
+    Route::get('official-exams', [OfficialExamController::class, 'index'])->name('official-exams.index');
+    Route::post('official-exams', [OfficialExamController::class, 'store'])->name('official-exams.store');
+    Route::get('official-exams/{officialExam}', [OfficialExamController::class, 'show'])->name('official-exams.show');
+    Route::put('official-exams/{officialExam}', [OfficialExamController::class, 'update'])->name('official-exams.update');
+    Route::delete('official-exams/{officialExam}', [OfficialExamController::class, 'destroy'])->name('official-exams.destroy');
+    Route::post('official-exams/{officialExam}/register', [OfficialExamController::class, 'registerStudents'])->name('official-exams.register');
+    Route::put('official-exams/{officialExam}/results', [OfficialExamController::class, 'updateResults'])->name('official-exams.results');
+    Route::delete('official-exams/{officialExam}/registrations/{registration}', [OfficialExamController::class, 'removeRegistration'])->name('official-exams.registrations.destroy');
+
     // Document Templates (Settings)
+    Route::get('settings/documents-registry', [DocumentTemplateController::class, 'registry'])->name('document-templates.registry');
     Route::get('settings/documents', [DocumentTemplateController::class, 'index'])->name('document-templates.index');
     Route::get('settings/documents/create', [DocumentTemplateController::class, 'create'])->name('document-templates.create');
     Route::get('settings/documents/{documentTemplate}', [DocumentTemplateController::class, 'show'])->name('document-templates.show');
