@@ -151,7 +151,7 @@ class StudentController extends Controller
             ]);
 
         // Documents déjà délivrés (traçabilité)
-        $issued = \App\Models\DocumentIssuance::with(['template:id,name', 'issuedBy:id,name'])
+        $issued = \App\Models\DocumentIssuance::with(['template:id,name', 'issuedBy:id,firstname,lastname'])
             ->where('student_id', $student->id)
             ->orderByDesc('issued_at')
             ->get()

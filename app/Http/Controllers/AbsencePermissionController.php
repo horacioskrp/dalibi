@@ -22,8 +22,8 @@ class AbsencePermissionController extends Controller
         $permissions = AbsencePermission::query()
             ->with([
                 'student:id,firstname,lastname,matricule',
-                'requestedBy:id,name',
-                'reviewedBy:id,name',
+                'requestedBy:id,firstname,lastname',
+                'reviewedBy:id,firstname,lastname',
             ])
             ->when($status && in_array($status, ['pending', 'approved', 'rejected'], true), fn ($q) => $q->where('status', $status))
             ->when($studentId, fn ($q) => $q->where('student_id', $studentId))
@@ -101,8 +101,8 @@ class AbsencePermissionController extends Controller
     {
         $absencePermission->load([
             'student:id,firstname,lastname,matricule',
-            'requestedBy:id,name',
-            'reviewedBy:id,name',
+            'requestedBy:id,firstname,lastname',
+            'reviewedBy:id,firstname,lastname',
             'attendanceRecords.attendance:id,date,session,class_id',
             'attendanceRecords.attendance.classroom:id,name,code',
         ]);

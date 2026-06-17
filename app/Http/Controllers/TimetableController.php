@@ -24,11 +24,14 @@ class TimetableController extends Controller
 
         $classrooms = Classroom::orderBy('name')->get(['id', 'name', 'code']);
         $subjects   = Subject::orderBy('name')->get(['id', 'name']);
-        $teachers   = User::role(Roles::TEACHER)->orderBy('name')->get(['id', 'name']);
+        $teachers   = User::role(Roles::TEACHER)
+            ->orderBy('lastname')->orderBy('firstname')
+            ->get(['id', 'firstname', 'lastname'])
+            ->map(fn ($u) => ['id' => $u->id, 'name' => $u->name]);
 
         $slots = collect();
         if ($classId) {
-            $slots = TimetableSlot::with(['subject:id,name', 'teacher:id,name'])
+            $slots = TimetableSlot::with(['subject:id,name', 'teacher:id,firstname,lastname'])
                 ->where('class_id', $classId)
                 ->orderBy('day_of_week')
                 ->orderBy('start_time')
