@@ -154,6 +154,16 @@ export const mainNavItems: NavItem[] = [
                 href: route('evaluations.planning'),
                 icon: CalendarRange,
             },
+            {
+                title: 'Examens officiels',
+                href: route('official-exams.index'),
+                icon: GraduationCap,
+            },
+            {
+                title: 'Emploi du temps',
+                href: route('timetable.index'),
+                icon: CalendarRange,
+            },
         ],
     },
     {

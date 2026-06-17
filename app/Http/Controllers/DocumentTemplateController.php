@@ -55,6 +55,42 @@ class DocumentTemplateController extends Controller
         ]);
     }
 
+    /** Registre central des documents délivrés (traçabilité). */
+    public function registry(Request $request): Response
+    {
+        abort_unless($request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR, Roles::SECRETARIAT]), 403);
+
+        $search = $request->string('search')->toString();
+
+        $issuances = DocumentIssuance::query()
+            ->with(['template:id,name', 'student:id,firstname,lastname,matricule', 'issuedBy:id,name'])
+            ->when($search, function ($q) use ($search) {
+                $like = '%' . strtolower($search) . '%';
+                $q->whereRaw('LOWER(reference_number) LIKE ?', [$like])
+                  ->orWhereHas('student', fn ($sq) =>
+                      $sq->whereRaw("LOWER(lastname || ' ' || firstname) LIKE ?", [$like])
+                         ->orWhereRaw('LOWER(matricule) LIKE ?', [$like])
+                  );
+            })
+            ->orderByDesc('issued_at')
+            ->paginate(25)
+            ->withQueryString()
+            ->through(fn ($i) => [
+                'id'               => $i->id,
+                'reference_number' => $i->reference_number,
+                'template_name'    => $i->template?->name,
+                'student_name'     => $i->student ? $i->student->lastname . ' ' . $i->student->firstname : '—',
+                'student_matricule'=> $i->student?->matricule,
+                'issued_by'        => $i->issuedBy?->name,
+                'issued_at'        => $i->issued_at?->format('d/m/Y H:i'),
+            ]);
+
+        return Inertia::render('settings/Documents/Registry', [
+            'issuances' => $issuances,
+            'filters'   => ['search' => $search],
+        ]);
+    }
+
     public function show(Request $request, DocumentTemplate $documentTemplate): Response
     {
         abort_unless($request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]), 403);

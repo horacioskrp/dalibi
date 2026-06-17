@@ -262,8 +262,24 @@ export function route(name: string, params?: any): string {
         'file-storage.update': '/settings/file-storage',
         'file-storage.test':   '/settings/file-storage/test',
 
+        // Timetable
+        'timetable.index':   '/timetable',
+        'timetable.store':   '/timetable',
+        'timetable.update':  `/timetable/${params}`,
+        'timetable.destroy': `/timetable/${params}`,
+
+        // Official Exams
+        'official-exams.index':   '/official-exams',
+        'official-exams.store':   '/official-exams',
+        'official-exams.show':    `/official-exams/${params}`,
+        'official-exams.update':  `/official-exams/${params}`,
+        'official-exams.destroy': `/official-exams/${params}`,
+        'official-exams.register': `/official-exams/${params}/register`,
+        'official-exams.results':  `/official-exams/${params}/results`,
+
         // Document Templates
         'document-templates.index':    '/settings/documents',
+        'document-templates.registry': '/settings/documents-registry',
         'document-templates.create':   '/settings/documents/create',
         'document-templates.show':     `/settings/documents/${params}`,
         'document-templates.store':    '/settings/documents',

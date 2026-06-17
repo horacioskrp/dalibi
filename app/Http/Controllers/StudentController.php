@@ -131,8 +131,46 @@ class StudentController extends Controller
 
         $student->load(['user', 'information', 'parentInfo', 'medicalInfo']);
 
+        // Inscription la plus récente (pour pré-remplir classe + année)
+        $latestEnrollment = Enrollment::with(['classroom:id,name', 'academicYear:id,year'])
+            ->where('student_id', $student->id)
+            ->orderByDesc('enrollment_date')
+            ->orderByDesc('created_at')
+            ->first();
+
+        // Modèles de documents actifs (hors bulletins, générés séparément)
+        $templates = \App\Models\DocumentTemplate::where('is_active', true)
+            ->whereIn('category', ['certificat', 'attestation'])
+            ->orderBy('category')->orderBy('name')
+            ->get()
+            ->map(fn ($t) => [
+                'id'         => $t->id,
+                'name'       => $t->name,
+                'type_label' => $t->typeLabel(),
+                'category'   => $t->category,
+            ]);
+
+        // Documents déjà délivrés (traçabilité)
+        $issued = \App\Models\DocumentIssuance::with(['template:id,name', 'issuedBy:id,name'])
+            ->where('student_id', $student->id)
+            ->orderByDesc('issued_at')
+            ->get()
+            ->map(fn ($i) => [
+                'id'               => $i->id,
+                'reference_number' => $i->reference_number,
+                'template_name'    => $i->template?->name,
+                'issued_by'        => $i->issuedBy?->name,
+                'issued_at'        => $i->issued_at?->format('d/m/Y H:i'),
+            ]);
+
         return Inertia::render('Students/Show', [
             'student' => $student,
+            'documentContext' => [
+                'templates'      => $templates,
+                'classe'         => $latestEnrollment?->classroom?->name,
+                'annee_scolaire' => $latestEnrollment?->academicYear?->year,
+            ],
+            'issuedDocuments' => $issued,
         ]);
     }
 
