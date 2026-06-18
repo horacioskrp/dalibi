@@ -13,14 +13,12 @@ return new class extends Migration
             $table->string('period_system')->default('trimestre')->after('description');
         });
 
-        // Association école ↔ types de classe proposés
+        // Association école ↔ types de classe proposés (pivot : clé composite, pas d'id)
         Schema::create('class_type_school', function (Blueprint $table) {
-            $table->uuid('id')->primary();
             $table->foreignUuid('school_id')->constrained('schools')->cascadeOnDelete();
             $table->foreignUuid('classroom_type_id')->constrained('classroom_types')->cascadeOnDelete();
-            $table->timestamps();
 
-            $table->unique(['school_id', 'classroom_type_id']);
+            $table->primary(['school_id', 'classroom_type_id']);
         });
     }
 
