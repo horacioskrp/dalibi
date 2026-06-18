@@ -26,6 +26,7 @@ class Grade extends Model
     protected $fillable = [
         'student_id',
         'class_subject_id',
+        'academic_period_id',
         'term',
         'score',
         'comments',
@@ -49,5 +50,13 @@ class Grade extends Model
     public function classSubject(): BelongsTo
     {
         return $this->belongsTo(ClassSubject::class);
+    }
+
+    /**
+     * Get the academic period for this grade.
+     */
+    public function academicPeriod(): BelongsTo
+    {
+        return $this->belongsTo(AcademicPeriod::class);
     }
 }

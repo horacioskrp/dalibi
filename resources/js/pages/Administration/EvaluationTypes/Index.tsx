@@ -91,7 +91,7 @@ export default function Index({ evaluationTypes, filters }: Readonly<IndexProps>
         <AppLayout>
             <Head title="Types d'évaluation" />
 
-            <div className="max-w-6xl space-y-6">
+            <div className="w-full space-y-6">
                 <div className="flex items-start justify-between">
                     <div>
                         <h1 className="text-4xl font-bold tracking-tight text-gray-900">Types d'évaluation</h1>

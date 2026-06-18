@@ -131,7 +131,7 @@ export default function Index({ evaluations, classrooms, evaluationTypes, stats,
         <AppLayout>
             <Head title="Planification des Évaluations" />
 
-            <div className="max-w-7xl space-y-6">
+            <div className="w-full space-y-6">
                 <div className="flex items-start justify-between">
                     <div>
                         <h1 className="text-4xl font-bold tracking-tight text-gray-900">Planification des Évaluations</h1>

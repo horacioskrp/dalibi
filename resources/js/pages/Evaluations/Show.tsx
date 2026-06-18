@@ -59,7 +59,7 @@ export default function Show({ evaluation }: Readonly<Props>) {
         <AppLayout>
             <Head title={`${evaluation.template.name} — ${evaluation.class_subject.class.name}`} />
 
-            <div className="max-w-5xl space-y-6">
+            <div className="w-full space-y-6">
 
                 <div className="flex items-start gap-4">
                     <Button variant="outline" size="sm" className="gap-2 mt-1" onClick={() => router.get(route('evaluations.index'))}>

@@ -29,7 +29,7 @@ export default function Show({ evaluationType }: Readonly<ShowProps>) {
         <AppLayout>
             <Head title={evaluationType.name} />
 
-            <div className="max-w-5xl space-y-6">
+            <div className="w-full space-y-6">
                 <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                     <div className="flex items-center gap-4">
                         <Button variant="outline" size="sm" className="border-gray-300" onClick={() => router.visit(route('evaluation-types.index'))}>

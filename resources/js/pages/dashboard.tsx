@@ -3,7 +3,7 @@ import {
     Users, Banknote, TrendingUp, TrendingDown, Wallet,
     CheckCircle2, AlertCircle, XCircle, AlertTriangle,
     BookOpen, ClipboardList, ArrowRight, CalendarDays,
-    GraduationCap,
+    GraduationCap, UserCheck, ShieldCheck, FileBadge,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { route } from '@/helpers/route';
@@ -67,6 +67,23 @@ interface Assignment {
     class_code: string;
 }
 
+interface PendingPermission {
+    id: string;
+    student_name: string;
+    reason: string;
+    start_date: string | null;
+    end_date: string | null;
+}
+
+interface UpcomingExam {
+    id: string;
+    name: string;
+    type: string;
+    exam_date: string | null;
+    center: string | null;
+    registrations: number;
+}
+
 interface DashboardProps {
     activeYear:          ActiveYear | null;
     userRole:            string | null;
@@ -86,6 +103,16 @@ interface DashboardProps {
     };
     teaching?: {
         assignments: Assignment[];
+    };
+    academic?: {
+        present_today:       number;
+        absent_today:        number;
+        pending_permissions: number;
+        documents_month:     number;
+        exams_open:          number;
+        exam_registrations:  number;
+        pendingPermissions:  PendingPermission[];
+        upcomingExams:       UpcomingExam[];
     };
 }
 
@@ -199,7 +226,7 @@ function SectionCard({ title, icon, count, children, action }: {
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Tableau de bord', href: '/dashboard' }];
 
-export default function Dashboard({ activeYear, userRole, financial, enrollments, teaching }: Readonly<DashboardProps>) {
+export default function Dashboard({ activeYear, userRole, financial, enrollments, teaching, academic }: Readonly<DashboardProps>) {
 
     const stats      = financial?.stats;
     const collectedPct = pct(Number(stats?.total_paid ?? 0), Number(stats?.total_amount ?? 0));
@@ -208,6 +235,8 @@ export default function Dashboard({ activeYear, userRole, financial, enrollments
     const isFinancial  = !!financial;
     const isEnrollment = !!enrollments;
     const isTeacher    = !!teaching;
+    const isAcademic   = !!academic;
+    const reasonLabel: Record<string, string> = { medical: 'Médical', familial: 'Familial', autre: 'Autre' };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -311,6 +340,95 @@ export default function Dashboard({ activeYear, userRole, financial, enrollments
                                 />
                             </div>
                         )}
+                    </div>
+                )}
+
+                {/* ── KPIs vie scolaire & pédagogie ─────────────────────── */}
+                {isAcademic && (
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <KpiCard
+                            title="Présences du jour"
+                            value={academic.present_today}
+                            sub={`${academic.absent_today} absence${academic.absent_today > 1 ? 's' : ''} aujourd'hui`}
+                            icon={UserCheck}
+                            color="green"
+                        />
+                        <KpiCard
+                            title="Permissions en attente"
+                            value={academic.pending_permissions}
+                            sub="À traiter"
+                            icon={ShieldCheck}
+                            color="orange"
+                        />
+                        <KpiCard
+                            title="Documents délivrés"
+                            value={academic.documents_month}
+                            sub="Ce mois-ci"
+                            icon={FileBadge}
+                            color="purple"
+                        />
+                        <KpiCard
+                            title="Examens officiels"
+                            value={academic.exams_open}
+                            sub={`${academic.exam_registrations} inscription${academic.exam_registrations > 1 ? 's' : ''}`}
+                            icon={GraduationCap}
+                            color="blue"
+                        />
+                    </div>
+                )}
+
+                {/* ── Permissions en attente + Prochains examens ────────── */}
+                {isAcademic && (
+                    <div className="grid lg:grid-cols-2 gap-5">
+                        <SectionCard
+                            title="Permissions en attente"
+                            icon={<ShieldCheck className="w-4 h-4" />}
+                            count={academic.pendingPermissions.length}
+                            action={{ label: 'Permissions', href: route('absence-permissions.index') }}
+                        >
+                            {academic.pendingPermissions.length === 0 ? (
+                                <p className="text-sm text-gray-400 text-center py-6 px-5">Aucune demande en attente</p>
+                            ) : (
+                                <div className="divide-y divide-gray-50 dark:divide-gray-700/50">
+                                    {academic.pendingPermissions.map(p => (
+                                        <div key={p.id} className="flex items-center justify-between px-5 py-3 hover:bg-gray-50/50 dark:hover:bg-gray-700/20">
+                                            <div className="min-w-0">
+                                                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{p.student_name}</p>
+                                                <p className="text-xs text-gray-400">{reasonLabel[p.reason] ?? p.reason} · {p.start_date} → {p.end_date}</p>
+                                            </div>
+                                            <span className="shrink-0 ml-3 text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                                                En attente
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </SectionCard>
+
+                        <SectionCard
+                            title="Prochains examens officiels"
+                            icon={<GraduationCap className="w-4 h-4" />}
+                            count={academic.upcomingExams.length}
+                            action={{ label: 'Examens', href: route('official-exams.index') }}
+                        >
+                            {academic.upcomingExams.length === 0 ? (
+                                <p className="text-sm text-gray-400 text-center py-6 px-5">Aucun examen planifié</p>
+                            ) : (
+                                <div className="divide-y divide-gray-50 dark:divide-gray-700/50">
+                                    {academic.upcomingExams.map(e => (
+                                        <div key={e.id} className="flex items-center justify-between px-5 py-3 hover:bg-gray-50/50 dark:hover:bg-gray-700/20">
+                                            <div className="min-w-0">
+                                                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                                    <span className="uppercase text-blue-600 dark:text-blue-400 font-bold mr-1.5">{e.type}</span>{e.name}
+                                                </p>
+                                                <p className="text-xs text-gray-400">{e.center ?? '—'} · {e.registrations} inscrit{e.registrations > 1 ? 's' : ''}</p>
+                                            </div>
+                                            <span className="shrink-0 ml-3 text-xs text-gray-500">{e.exam_date}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </SectionCard>
                     </div>
                 )}
 

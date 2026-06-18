@@ -9,6 +9,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AcademicPeriod;
 use App\Models\AcademicYear;
+use App\Models\ClassroomType;
 use App\Models\ClassSubject;
 use App\Models\Evaluation;
 use App\Models\EvaluationTemplate;
@@ -58,6 +59,7 @@ class EvaluationTemplateController extends Controller
         return Inertia::render('EvaluationTemplates/Create', [
             'periods'         => $periods,
             'evaluationTypes' => EvaluationType::orderBy('name')->get(['id', 'name']),
+            'classroomTypes'  => ClassroomType::where('active', true)->orderBy('name')->get(['id', 'name']),
             'activeYear'      => $activeYear,
         ]);
     }
@@ -67,6 +69,7 @@ class EvaluationTemplateController extends Controller
         $validated = $request->validate([
             'academic_period_id'  => ['required', 'uuid', 'exists:academic_periods,id'],
             'evaluation_type_id'  => ['required', 'uuid', 'exists:evaluation_types,id'],
+            'class_type_id'       => ['nullable', 'uuid', 'exists:classroom_types,id'],
             'name'                => ['required', 'string', 'max:255'],
             'description'         => ['nullable', 'string'],
             'coefficient'         => ['required', 'numeric', 'gt:0', 'max:99.99'],
@@ -106,6 +109,11 @@ class EvaluationTemplateController extends Controller
 
         $availableClassSubjects = ClassSubject::where('academic_year_id', $activeYear?->id)
             ->whereNotIn('id', $alreadyDoneIds)
+            // Si le modèle est rattaché à un type de classe, ne proposer que les classes de ce type
+            ->when($evaluationTemplate->class_type_id, fn ($q) => $q->whereHas(
+                'class',
+                fn ($cq) => $cq->where('classroom_type_id', $evaluationTemplate->class_type_id)
+            ))
             ->with(['class:id,name,code', 'subject:id,name'])
             ->get(['id', 'class_id', 'subject_id', 'coefficient']);
 
@@ -129,6 +137,7 @@ class EvaluationTemplateController extends Controller
             'template'        => $evaluationTemplate->load(['academicPeriod:id,name', 'evaluationType:id,name']),
             'periods'         => $periods,
             'evaluationTypes' => EvaluationType::orderBy('name')->get(['id', 'name']),
+            'classroomTypes'  => ClassroomType::where('active', true)->orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -137,6 +146,7 @@ class EvaluationTemplateController extends Controller
         $validated = $request->validate([
             'academic_period_id'  => ['required', 'uuid', 'exists:academic_periods,id'],
             'evaluation_type_id'  => ['required', 'uuid', 'exists:evaluation_types,id'],
+            'class_type_id'       => ['nullable', 'uuid', 'exists:classroom_types,id'],
             'name'                => ['required', 'string', 'max:255'],
             'description'         => ['nullable', 'string'],
             'coefficient'         => ['required', 'numeric', 'gt:0', 'max:99.99'],

@@ -21,6 +21,7 @@ class UpdateClassroomTypeRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255', Rule::unique('classroom_types', 'name')->ignore($this->route('classroom_type'))],
             'description' => ['nullable', 'string', 'max:1000'],
+            'period_system' => ['required', 'in:trimestre,semestre'],
             'active' => ['sometimes', 'boolean'],
         ];
     }

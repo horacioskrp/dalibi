@@ -102,7 +102,7 @@ export default function Show({ template, evaluations, availableClassSubjects, ac
         <AppLayout>
             <Head title={`Modèle : ${template.name}`} />
 
-            <div className="max-w-7xl space-y-6">
+            <div className="w-full space-y-6">
 
                 {/* Header */}
                 <div className="flex items-start justify-between gap-4 flex-wrap">

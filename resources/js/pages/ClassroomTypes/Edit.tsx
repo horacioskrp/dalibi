@@ -11,6 +11,7 @@ interface ClassroomType {
     id: string;
     name: string;
     description: string | null;
+    period_system: 'trimestre' | 'semestre';
     active: boolean;
 }
 
@@ -22,6 +23,7 @@ export default function Edit({ classroomType }: Readonly<EditProps>) {
     const { data, setData, put, processing, errors } = useForm<ClassroomTypeFormData>({
         name: classroomType.name,
         description: classroomType.description || '',
+        period_system: classroomType.period_system ?? 'trimestre',
         active: classroomType.active,
     });
 
@@ -34,7 +36,7 @@ export default function Edit({ classroomType }: Readonly<EditProps>) {
         <AppLayout>
             <Head title={`Éditer ${classroomType.name}`} />
 
-            <div className="max-w-4xl space-y-6">
+            <div className="w-full space-y-6">
                 <div className="flex items-center gap-4">
                     <button
                         type="button"

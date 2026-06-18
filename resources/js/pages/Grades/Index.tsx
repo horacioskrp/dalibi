@@ -35,24 +35,22 @@ interface Classroom {
     code: string;
 }
 
+interface Period { id: string; name: string; is_current: boolean }
+
 interface IndexProps {
     classrooms: Classroom[];
     classSubjects: ClassSubject[];
+    periods: Period[];
     studentsWithGrades: StudentGrade[];
     activeYear: { id: string; name: string } | null;
     stats: { total: number; graded: number; average: number | null };
-    filters: { class_id: string; class_subject_id: string; term: string };
+    filters: { class_id: string; class_subject_id: string; academic_period_id: string };
 }
-
-const TERMS = [
-    { value: 'term1', label: 'Trimestre 1' },
-    { value: 'term2', label: 'Trimestre 2' },
-    { value: 'term3', label: 'Trimestre 3' },
-];
 
 export default function Index({
     classrooms,
     classSubjects,
+    periods,
     studentsWithGrades,
     activeYear,
     stats,
@@ -60,7 +58,7 @@ export default function Index({
 }: Readonly<IndexProps>) {
     const [classId, setClassId] = useState(filters.class_id || 'none');
     const [classSubjectId, setClassSubjectId] = useState(filters.class_subject_id || 'none');
-    const [term, setTerm] = useState(filters.term || 'none');
+    const [term, setTerm] = useState(filters.academic_period_id || 'none');
     const [grades, setGrades] = useState<Record<string, { score: string; comments: string }>>({});
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
@@ -87,7 +85,7 @@ export default function Index({
         if (newSubjectId !== 'none' && newTerm !== 'none') {
             router.get(
                 route('grades.index'),
-                { class_id: classId, class_subject_id: newSubjectId, term: newTerm },
+                { class_id: classId, class_subject_id: newSubjectId, academic_period_id: newTerm },
                 { preserveScroll: true, replace: true },
             );
         }
@@ -123,7 +121,7 @@ export default function Index({
         setSaving(true);
         router.post(
             route('grades.store'),
-            { class_subject_id: classSubjectId, term, grades: payload },
+            { class_subject_id: classSubjectId, academic_period_id: term, grades: payload },
             {
                 preserveScroll: true,
                 onSuccess: () => { setSaved(true); setSaving(false); },
@@ -170,13 +168,13 @@ export default function Index({
         },
     ];
 
-    const termLabel = TERMS.find((t) => t.value === term)?.label ?? '';
+    const termLabel = periods.find((t) => t.id === term)?.name ?? '';
 
     return (
         <AppLayout>
             <Head title="Saisie des Notes" />
 
-            <div className="max-w-7xl space-y-6">
+            <div className="w-full space-y-6">
                 <div className="flex items-start justify-between">
                     <div>
                         <h1 className="text-4xl font-bold tracking-tight text-gray-900">Saisie des Notes</h1>
@@ -234,15 +232,15 @@ export default function Index({
                         <Select
                             value={term}
                             onValueChange={onTermChange}
-                            disabled={classSubjectId === 'none'}
+                            disabled={classSubjectId === 'none' || periods.length === 0}
                         >
                             <SelectTrigger>
-                                <SelectValue placeholder="Sélectionner un trimestre" />
+                                <SelectValue placeholder="Sélectionner une période" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="none" disabled>Sélectionner un trimestre</SelectItem>
-                                {TERMS.map((t) => (
-                                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                                <SelectItem value="none" disabled>Sélectionner une période</SelectItem>
+                                {periods.map((p) => (
+                                    <SelectItem key={p.id} value={p.id}>{p.name}{p.is_current ? ' (en cours)' : ''}</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
@@ -346,7 +344,7 @@ export default function Index({
                                                     variant="outline"
                                                     size="sm"
                                                     className="border-gray-300 text-xs"
-                                                    onClick={() => router.get(route('grades.student', sg.student_id), { term })}
+                                                    onClick={() => router.get(route('grades.student', sg.student_id), { academic_period_id: term })}
                                                 >
                                                     Bulletin
                                                 </Button>

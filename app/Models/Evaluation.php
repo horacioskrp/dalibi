@@ -21,6 +21,7 @@ class Evaluation extends Model
         'evaluation_template_id',
         'class_subject_id',
         'date',
+        'start_time',
         'status',
         'locked_at',
         'locked_by',

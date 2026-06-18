@@ -20,14 +20,18 @@ interface School {
     active: boolean;
 }
 
+interface ClassroomTypeOption { id: string; name: string; period_system: string; }
+
 interface EditProps {
     school: School;
+    classroomTypes?: ClassroomTypeOption[];
+    selectedClassTypes?: string[];
 }
 
-export default function Edit({ school }: Readonly<EditProps>) {
+export default function Edit({ school, classroomTypes = [], selectedClassTypes = [] }: Readonly<EditProps>) {
     const currentLogoUrl = school.logo ? `/storage/${school.logo}` : null;
 
-    const { data, setData, put, processing, errors } = useForm<SchoolFormData>({
+    const { data, setData, post, transform, processing, errors } = useForm<SchoolFormData>({
         name: school.name,
         code: school.code,
         logo: null,
@@ -40,18 +44,21 @@ export default function Edit({ school }: Readonly<EditProps>) {
         city: school.city || '',
         po_box: school.po_box || '',
         active: school.active,
+        class_type_ids: selectedClassTypes,
     });
 
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        put(route('schools.update', school.id), { forceFormData: true });
+        // POST + _method=put : un PUT multipart n'est pas parsé par PHP, on passe par le spoofing.
+        transform((d) => ({ ...d, _method: 'put' }));
+        post(route('schools.update', school.id), { forceFormData: true });
     };
 
     return (
         <AppLayout>
             <Head title={`Éditer ${school.name}`} />
 
-            <div className="max-w-4xl space-y-6">
+            <div className="w-full space-y-6">
                 <div className="flex items-center gap-4">
                     <button type="button" onClick={() => router.get(route('schools.index'))} className="p-2 hover:bg-gray-100 rounded-lg transition">
                         <ArrowLeft className="w-5 h-5 text-gray-600" />
@@ -68,6 +75,7 @@ export default function Edit({ school }: Readonly<EditProps>) {
                     errors={errors}
                     processing={processing}
                     currentLogoUrl={currentLogoUrl}
+                    classroomTypes={classroomTypes}
                     onCancel={() => router.get(route('schools.index'))}
                     onSubmit={handleSubmit}
                     setData={setData}
