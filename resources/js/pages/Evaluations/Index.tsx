@@ -69,7 +69,7 @@ export default function Index({ evaluations, filters, canLock }: Readonly<Props>
         <AppLayout>
             <Head title="Évaluations par classe" />
 
-            <div className="max-w-7xl space-y-6">
+            <div className="w-full space-y-6">
 
                 {/* Header */}
                 <div className="flex items-start justify-between">

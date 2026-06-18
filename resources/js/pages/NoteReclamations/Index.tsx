@@ -55,7 +55,7 @@ export default function Index({ reclamations, filters, canReview }: Readonly<Pro
         <AppLayout>
             <Head title="Réclamations de notes" />
 
-            <div className="max-w-7xl space-y-6">
+            <div className="w-full space-y-6">
 
                 {/* Header */}
                 <div className="flex items-start justify-between">

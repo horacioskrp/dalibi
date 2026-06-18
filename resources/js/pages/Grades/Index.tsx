@@ -174,7 +174,7 @@ export default function Index({
         <AppLayout>
             <Head title="Saisie des Notes" />
 
-            <div className="max-w-7xl space-y-6">
+            <div className="w-full space-y-6">
                 <div className="flex items-start justify-between">
                     <div>
                         <h1 className="text-4xl font-bold tracking-tight text-gray-900">Saisie des Notes</h1>

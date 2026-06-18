@@ -92,7 +92,7 @@ export default function Index({ classrooms, evaluations, periods, filters, activ
         <AppLayout>
             <Head title="Planning des examens" />
 
-            <div className="max-w-7xl space-y-6">
+            <div className="w-full space-y-6">
 
                 {/* Header */}
                 <div className="flex items-start justify-between gap-4 flex-wrap">
