@@ -31,7 +31,7 @@ interface EditProps {
 export default function Edit({ school, classroomTypes = [], selectedClassTypes = [] }: Readonly<EditProps>) {
     const currentLogoUrl = school.logo ? `/storage/${school.logo}` : null;
 
-    const { data, setData, put, processing, errors } = useForm<SchoolFormData>({
+    const { data, setData, post, transform, processing, errors } = useForm<SchoolFormData>({
         name: school.name,
         code: school.code,
         logo: null,
@@ -49,7 +49,9 @@ export default function Edit({ school, classroomTypes = [], selectedClassTypes =
 
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        put(route('schools.update', school.id), { forceFormData: true });
+        // POST + _method=put : un PUT multipart n'est pas parsé par PHP, on passe par le spoofing.
+        transform((d) => ({ ...d, _method: 'put' }));
+        post(route('schools.update', school.id), { forceFormData: true });
     };
 
     return (
