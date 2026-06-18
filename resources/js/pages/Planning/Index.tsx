@@ -1,6 +1,10 @@
 import { Head, router } from '@inertiajs/react';
-import { AlertTriangle, Calendar, CheckCircle2, ClipboardList, Download, ListChecks, Pencil, X } from 'lucide-react';
+import { AlertTriangle, Calendar, CheckCircle2, Clock, ClipboardList, Download, ListChecks, Pencil, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
+import {
+    AlertDialog, AlertDialogAction, AlertDialogCancel,
+    AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -16,6 +20,7 @@ interface EvalRow {
     status: 'scheduled' | 'completed';
     locked_at: string | null;
     date: string | null;
+    start_time: string | null;
     marks_count: number;
     graded_count: number;
     template: {
@@ -44,6 +49,8 @@ export default function Index({ classrooms, evaluations, periods, filters, activ
     const [periodId, setPeriodId]       = useState(filters.periodId ?? '');
     const [editingId, setEditingId]     = useState<string | null>(null);
     const [editDate, setEditDate]       = useState('');
+    const [editTime, setEditTime]       = useState('');
+    const [deleteTarget, setDeleteTarget] = useState<EvalRow | null>(null);
 
     const apply = (overrides: Record<string, string> = {}) => {
         router.get(route('evaluations.planning'), {
@@ -68,14 +75,26 @@ export default function Index({ classrooms, evaluations, periods, filters, activ
     const startEdit = (ev: EvalRow) => {
         setEditingId(ev.id);
         setEditDate(ev.date ? ev.date.substring(0, 10) : '');
+        setEditTime(ev.start_time ? ev.start_time.substring(0, 5) : '');
     };
 
-    const cancelEdit = () => { setEditingId(null); setEditDate(''); };
+    const cancelEdit = () => { setEditingId(null); setEditDate(''); setEditTime(''); };
 
     const saveDate = (id: string) => {
-        router.patch(route('evaluations.update-date', id), { date: editDate || null }, {
+        router.patch(route('evaluations.update-date', id), {
+            date: editDate || null,
+            start_time: editDate && editTime ? editTime : null,
+        }, {
             preserveScroll: true,
-            onSuccess: () => setEditingId(null),
+            onSuccess: () => cancelEdit(),
+        });
+    };
+
+    const confirmDelete = () => {
+        if (!deleteTarget) return;
+        router.delete(route('evaluations.destroy', deleteTarget.id), {
+            preserveScroll: true,
+            onSuccess: () => setDeleteTarget(null),
         });
     };
 
@@ -196,9 +215,10 @@ export default function Index({ classrooms, evaluations, periods, filters, activ
                                         <TableHead>Période</TableHead>
                                         <TableHead>Type</TableHead>
                                         <TableHead className="text-center">Coeff.</TableHead>
-                                        <TableHead className="w-48">Date planifiée</TableHead>
+                                        <TableHead className="w-64">Date &amp; heure</TableHead>
                                         <TableHead>Statut</TableHead>
                                         <TableHead className="text-center">Progression</TableHead>
+                                        <TableHead className="text-center w-24">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -226,8 +246,16 @@ export default function Index({ classrooms, evaluations, periods, filters, activ
                                                                 type="date"
                                                                 value={editDate}
                                                                 onChange={e => setEditDate(e.target.value)}
-                                                                className="h-7 text-xs w-36"
+                                                                className="h-7 text-xs w-32"
                                                                 autoFocus
+                                                            />
+                                                            <Input
+                                                                type="time"
+                                                                value={editTime}
+                                                                onChange={e => setEditTime(e.target.value)}
+                                                                disabled={!editDate}
+                                                                className="h-7 text-xs w-24"
+                                                                title={editDate ? 'Heure' : 'Renseignez d\'abord la date'}
                                                             />
                                                             <button
                                                                 onClick={() => saveDate(ev.id)}
@@ -251,10 +279,22 @@ export default function Index({ classrooms, evaluations, periods, filters, activ
                                                                 ev.date ? 'text-gray-700' : 'text-amber-500'
                                                             }`}
                                                         >
-                                                            {ev.date
-                                                                ? new Date(ev.date).toLocaleDateString('fr-FR')
-                                                                : <span className="italic text-xs">Non planifiée</span>
-                                                            }
+                                                            {ev.date ? (
+                                                                <span className="flex items-center gap-2">
+                                                                    <span className="inline-flex items-center gap-1">
+                                                                        <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                                                                        {new Date(ev.date).toLocaleDateString('fr-FR')}
+                                                                    </span>
+                                                                    {ev.start_time && (
+                                                                        <span className="inline-flex items-center gap-1 text-blue-600 font-medium">
+                                                                            <Clock className="w-3.5 h-3.5" />
+                                                                            {ev.start_time.substring(0, 5)}
+                                                                        </span>
+                                                                    )}
+                                                                </span>
+                                                            ) : (
+                                                                <span className="italic text-xs">Non planifiée</span>
+                                                            )}
                                                             <Pencil className="w-3 h-3 opacity-0 group-hover:opacity-60 transition-opacity" />
                                                         </button>
                                                     )}
@@ -280,6 +320,24 @@ export default function Index({ classrooms, evaluations, periods, filters, activ
                                                         <span className="text-xs text-gray-400 whitespace-nowrap">{ev.graded_count}/{ev.marks_count}</span>
                                                     </div>
                                                 </TableCell>
+                                                <TableCell>
+                                                    <div className="flex items-center justify-center gap-1">
+                                                        <button
+                                                            onClick={() => startEdit(ev)}
+                                                            className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition"
+                                                            title="Modifier / reporter"
+                                                        >
+                                                            <Pencil className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setDeleteTarget(ev)}
+                                                            className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition"
+                                                            title="Supprimer"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </TableCell>
                                             </TableRow>
                                         );
                                     })}
@@ -289,6 +347,33 @@ export default function Index({ classrooms, evaluations, periods, filters, activ
                     </div>
                 )}
             </div>
+
+            {/* Confirmation de suppression */}
+            <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Supprimer cette planification ?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {deleteTarget && (
+                                <>
+                                    L'évaluation « {deleteTarget.template.name} » en {deleteTarget.class_subject.subject.name} sera retirée du planning.
+                                    {deleteTarget.marks_count > 0 && (
+                                        <span className="block mt-2 text-red-600 font-medium">
+                                            ⚠ {deleteTarget.graded_count} note(s) saisie(s) seront également supprimées. Cette action est irréversible.
+                                        </span>
+                                    )}
+                                </>
+                            )}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="flex justify-end gap-2">
+                        <AlertDialogCancel>Annuler</AlertDialogCancel>
+                        <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={confirmDelete}>
+                            Supprimer
+                        </AlertDialogAction>
+                    </div>
+                </AlertDialogContent>
+            </AlertDialog>
         </AppLayout>
     );
 }

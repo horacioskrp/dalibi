@@ -97,6 +97,7 @@
             <th class="center">Coeff.</th>
             <th class="center">Barème</th>
             <th class="center">Date planifiée</th>
+            <th class="center">Heure</th>
             <th class="center">Statut</th>
         </tr>
     </thead>
@@ -113,6 +114,9 @@
             <td class="center {{ $ev->date ? 'date' : 'no-date' }}">
                 {{ $ev->date ? \Carbon\Carbon::parse($ev->date)->format('d/m/Y') : 'Non planifiée' }}
             </td>
+            <td class="center" style="color:#475569;">
+                {{ $ev->start_time ? \Carbon\Carbon::parse($ev->start_time)->format('H\hi') : '—' }}
+            </td>
             <td class="center">
                 <span class="badge {{ $ev->status === 'completed' ? 'badge-done' : 'badge-scheduled' }}">
                     {{ $ev->status === 'completed' ? 'Terminée' : 'Planifiée' }}
@@ -121,7 +125,7 @@
         </tr>
         @empty
         <tr>
-            <td colspan="9" style="text-align:center; padding:24px; color:#94a3b8;">Aucune évaluation.</td>
+            <td colspan="10" style="text-align:center; padding:24px; color:#94a3b8;">Aucune évaluation.</td>
         </tr>
         @endforelse
     </tbody>

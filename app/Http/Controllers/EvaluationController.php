@@ -135,7 +135,7 @@ class EvaluationController extends Controller
                 ->withCount(['marks', 'marks as graded_count' => fn ($q) => $q->whereNotNull('score')->where('absent', false)])
                 ->whereHas('classSubject', fn ($q) => $q->where('class_id', $classroomId))
                 ->when($periodId, fn ($q) => $q->whereHas('template', fn ($tq) => $tq->where('academic_period_id', $periodId)))
-                ->orderByRaw('date IS NULL, date ASC')
+                ->orderByRaw('date IS NULL, date ASC')->orderByRaw('start_time IS NULL, start_time ASC')
                 ->get();
 
             $periods = AcademicPeriod::when(
@@ -156,12 +156,17 @@ class EvaluationController extends Controller
     public function updateDate(Request $request, Evaluation $evaluation): RedirectResponse
     {
         $validated = $request->validate([
-            'date' => ['nullable', 'date'],
+            'date'       => ['nullable', 'date'],
+            'start_time' => ['nullable', 'date_format:H:i'],
         ]);
 
-        $evaluation->update(['date' => $validated['date']]);
+        $evaluation->update([
+            'date'       => $validated['date'] ?? null,
+            // L'heure n'a de sens qu'avec une date
+            'start_time' => ($validated['date'] ?? null) ? ($validated['start_time'] ?? null) : null,
+        ]);
 
-        return back()->with('message', 'Date mise à jour.');
+        return back()->with('message', 'Planification mise à jour.');
     }
 
     public function exportPlanning(Request $request, string $classroomId): \Illuminate\Http\Response
@@ -180,7 +185,7 @@ class EvaluationController extends Controller
             ])
             ->whereHas('classSubject', fn ($q) => $q->where('class_id', $classroomId))
             ->when($periodId, fn ($q) => $q->whereHas('template', fn ($tq) => $tq->where('academic_period_id', $periodId)))
-            ->orderByRaw('date IS NULL, date ASC')
+            ->orderByRaw('date IS NULL, date ASC')->orderByRaw('start_time IS NULL, start_time ASC')
             ->get();
 
         $school = School::where('active', true)->first();
