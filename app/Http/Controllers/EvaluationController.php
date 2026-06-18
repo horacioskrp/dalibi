@@ -17,11 +17,17 @@ class EvaluationController extends Controller
 {
     public function index(Request $request): Response
     {
-        $search     = $request->string('search')->toString();
-        $status     = $request->string('status')->toString();
-        $periodId   = $request->string('period_id')->toString();
-        $templateId = $request->string('template_id')->toString();
-        $user       = $request->user();
+        $search       = $request->string('search')->toString();
+        $status       = $request->string('status')->toString();
+        $periodId     = $request->string('period_id')->toString();
+        $templateId   = $request->string('template_id')->toString();
+        $classId      = $request->string('class_id')->toString();
+        $subjectId    = $request->string('subject_id')->toString();
+        $evalTypeId   = $request->string('evaluation_type_id')->toString();
+        $scheduling   = $request->string('scheduling')->toString(); // with | without
+        $user         = $request->user();
+
+        $activeYear = AcademicYear::where('active', true)->first(['id', 'year']);
 
         $query = Evaluation::query()
             ->with([
@@ -36,6 +42,11 @@ class EvaluationController extends Controller
             ->when($status && in_array($status, ['scheduled', 'completed'], true), fn ($q) => $q->where('status', $status))
             ->when($templateId, fn ($q) => $q->where('evaluation_template_id', $templateId))
             ->when($periodId, fn ($q) => $q->whereHas('template', fn ($tq) => $tq->where('academic_period_id', $periodId)))
+            ->when($evalTypeId, fn ($q) => $q->whereHas('template', fn ($tq) => $tq->where('evaluation_type_id', $evalTypeId)))
+            ->when($classId, fn ($q) => $q->whereHas('classSubject', fn ($cq) => $cq->where('class_id', $classId)))
+            ->when($subjectId, fn ($q) => $q->whereHas('classSubject', fn ($cq) => $cq->where('subject_id', $subjectId)))
+            ->when($scheduling === 'with', fn ($q) => $q->whereNotNull('date'))
+            ->when($scheduling === 'without', fn ($q) => $q->whereNull('date'))
             ->when($search, function ($q) use ($search): void {
                 $like = ['%'.strtolower($search).'%'];
                 $expr = 'LOWER(name) LIKE ?';
@@ -48,7 +59,23 @@ class EvaluationController extends Controller
 
         return Inertia::render('Evaluations/Index', [
             'evaluations' => $evaluations,
-            'filters'     => compact('search', 'status', 'periodId', 'templateId'),
+            'filters'     => [
+                'search'             => $search,
+                'status'             => $status,
+                'period_id'          => $periodId,
+                'template_id'        => $templateId,
+                'class_id'           => $classId,
+                'subject_id'         => $subjectId,
+                'evaluation_type_id' => $evalTypeId,
+                'scheduling'         => $scheduling,
+            ],
+            'options' => [
+                'classrooms'      => Classroom::where('active', true)->orderBy('name')->get(['id', 'name', 'code']),
+                'subjects'        => \App\Models\Subject::orderBy('name')->get(['id', 'name']),
+                'evaluationTypes' => \App\Models\EvaluationType::orderBy('name')->get(['id', 'name']),
+                'periods'         => AcademicPeriod::when($activeYear, fn ($q) => $q->where('academic_year_id', $activeYear->id))
+                    ->orderBy('start_date')->get(['id', 'name']),
+            ],
             'canLock'     => $user->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]),
         ]);
     }
