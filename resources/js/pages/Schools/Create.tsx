@@ -34,7 +34,7 @@ export default function Create({ classroomTypes = [] }: Readonly<{ classroomType
         <AppLayout>
             <Head title="Nouvelle école" />
 
-            <div className="max-w-4xl space-y-6">
+            <div className="w-full space-y-6">
                 <div className="flex items-center gap-4">
                     <button type="button" onClick={() => router.get(route('schools.index'))} className="p-2 hover:bg-gray-100 rounded-lg transition">
                         <ArrowLeft className="w-5 h-5 text-gray-600" />

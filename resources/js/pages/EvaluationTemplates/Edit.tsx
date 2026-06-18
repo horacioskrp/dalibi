@@ -57,7 +57,7 @@ export default function Edit({ template, periods, evaluationTypes, classroomType
         <AppLayout>
             <Head title={`Modifier : ${template.name}`} />
 
-            <div className="max-w-2xl space-y-6">
+            <div className="w-full space-y-6">
                 <div className="flex items-center gap-4">
                     <Button variant="outline" size="sm" className="gap-2" onClick={() => router.get(route('evaluation-templates.show', template.id))}>
                         <ArrowLeft className="w-4 h-4" /> Retour

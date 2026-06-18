@@ -61,7 +61,7 @@ export default function Show({ permission }: Readonly<Props>) {
     return (
         <AppLayout>
             <Head title={`Permission — ${permission.student.lastname}`} />
-            <div className="max-w-3xl space-y-6">
+            <div className="w-full space-y-6">
 
                 {/* Header */}
                 <div className="flex items-center gap-4">

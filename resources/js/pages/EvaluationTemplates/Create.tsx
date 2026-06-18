@@ -65,7 +65,7 @@ export default function Create({ periods, evaluationTypes, classroomTypes, activ
         <AppLayout>
             <Head title="Nouveau modèle d'évaluation" />
 
-            <div className="max-w-2xl space-y-6">
+            <div className="w-full space-y-6">
                 <div className="flex items-center gap-4">
                     <Button variant="outline" size="sm" className="gap-2" onClick={() => router.get(route('evaluation-templates.index'))}>
                         <ArrowLeft className="w-4 h-4" /> Retour
