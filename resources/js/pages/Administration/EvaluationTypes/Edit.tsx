@@ -32,7 +32,7 @@ export default function Edit({ evaluationType }: Readonly<EditProps>) {
         <AppLayout>
             <Head title="Modifier type d'évaluation" />
 
-            <div className="max-w-4xl space-y-6">
+            <div className="w-full space-y-6">
                 <div className="flex items-center gap-4">
                     <button type="button" onClick={() => router.get(route('evaluation-types.index'))} className="p-2 hover:bg-gray-100 rounded-lg transition">
                         <ArrowLeft className="w-5 h-5 text-gray-600" />

@@ -62,7 +62,7 @@ export default function Show({ reclamation, canReview }: Readonly<Props>) {
         <AppLayout>
             <Head title={`Réclamation — ${reclamation.student.lastname} ${reclamation.student.firstname}`} />
 
-            <div className="max-w-3xl space-y-6">
+            <div className="w-full space-y-6">
 
                 {/* Header */}
                 <div className="flex items-center gap-4">

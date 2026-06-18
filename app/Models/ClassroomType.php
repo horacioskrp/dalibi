@@ -19,6 +19,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ClassroomType extends Model
@@ -28,6 +29,7 @@ class ClassroomType extends Model
     protected $fillable = [
         'name',
         'description',
+        'period_system',
         'active',
     ];
 
@@ -35,11 +37,33 @@ class ClassroomType extends Model
         'active' => 'boolean',
     ];
 
+    /** Systèmes de périodes disponibles + nombre de périodes. */
+    public const PERIOD_SYSTEMS = [
+        'trimestre' => 'Trimestre (3 périodes)',
+        'semestre'  => 'Semestre (2 périodes)',
+    ];
+
+    public const PERIOD_COUNT = [
+        'trimestre' => 3,
+        'semestre'  => 2,
+    ];
+
+    public function periodsCount(): int
+    {
+        return self::PERIOD_COUNT[$this->period_system] ?? 3;
+    }
+
     /**
      * Get all classrooms with this type.
      */
     public function classrooms(): HasMany
     {
         return $this->hasMany(Classroom::class, 'classroom_type_id');
+    }
+
+    /** Écoles qui proposent ce type de classe. */
+    public function schools(): BelongsToMany
+    {
+        return $this->belongsToMany(School::class, 'class_type_school');
     }
 }

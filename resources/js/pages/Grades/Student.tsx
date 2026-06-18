@@ -14,20 +14,17 @@ interface GradeRow {
     comments: string | null;
 }
 
+interface Period { id: string; name: string; is_current: boolean }
+
 interface StudentProps {
     student: { id: string; firstname: string; lastname: string; matricule: string };
     enrollment: { class_id: string; classroom: { name: string; code: string } } | null;
     grades: GradeRow[];
+    periods: Period[];
     average: number | null;
-    term: string;
+    academic_period_id: string;
     activeYear: { id: string; name: string } | null;
 }
-
-const TERMS = [
-    { value: 'term1', label: 'Trimestre 1' },
-    { value: 'term2', label: 'Trimestre 2' },
-    { value: 'term3', label: 'Trimestre 3' },
-];
 
 function mention(average: number | null): { label: string; color: string } {
     if (average === null) return { label: '—', color: 'text-gray-400' };
@@ -49,15 +46,16 @@ export default function Student({
     student,
     enrollment,
     grades,
+    periods,
     average,
-    term,
+    academic_period_id: term,
     activeYear,
 }: Readonly<StudentProps>) {
     const onTermChange = (value: string) => {
-        router.get(route('grades.student', student.id), { term: value }, { preserveScroll: true, replace: true });
+        router.get(route('grades.student', student.id), { academic_period_id: value }, { preserveScroll: true, replace: true });
     };
 
-    const termLabel = TERMS.find((t) => t.value === term)?.label ?? '';
+    const termLabel = periods.find((t) => t.id === term)?.name ?? '';
     const { label: mentionLabel, color: mentionColor } = mention(average);
 
     const totalCoef = grades.filter((g) => g.score !== null).reduce((sum, g) => sum + g.coefficient, 0);
@@ -67,7 +65,7 @@ export default function Student({
         <AppLayout>
             <Head title={`Bulletin — ${student.lastname} ${student.firstname}`} />
 
-            <div className="max-w-4xl space-y-6">
+            <div className="w-full space-y-6">
                 {/* Header */}
                 <div className="flex items-start justify-between">
                     <div className="flex items-center gap-4">
@@ -95,16 +93,18 @@ export default function Student({
                             </p>
                         </div>
                     </div>
-                    <Select value={term} onValueChange={onTermChange}>
-                        <SelectTrigger className="w-44">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {TERMS.map((t) => (
-                                <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    {periods.length > 0 && (
+                        <Select value={term} onValueChange={onTermChange}>
+                            <SelectTrigger className="w-44">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {periods.map((t) => (
+                                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    )}
                 </div>
 
                 {/* Summary cards */}

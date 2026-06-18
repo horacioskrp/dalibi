@@ -30,6 +30,8 @@ class StoreSchoolRequest extends FormRequest
             'city'    => ['nullable', 'string', 'max:150'],
             'po_box'  => ['nullable', 'string', 'max:120'],
             'active'  => ['sometimes', 'boolean'],
+            'class_type_ids'   => ['nullable', 'array'],
+            'class_type_ids.*' => ['uuid', 'exists:classroom_types,id'],
         ];
     }
 

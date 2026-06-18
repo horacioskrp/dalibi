@@ -20,6 +20,7 @@ class StoreClassroomTypeRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255', 'unique:classroom_types,name'],
             'description' => ['nullable', 'string', 'max:1000'],
+            'period_system' => ['required', 'in:trimestre,semestre'],
             'active' => ['sometimes', 'boolean'],
         ];
     }

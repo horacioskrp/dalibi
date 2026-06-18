@@ -10,18 +10,20 @@ import AppLayout from '@/layouts/app-layout';
 interface Template {
     id: string; name: string; description: string | null;
     coefficient: number; max_score: number; date: string | null;
-    academic_period_id: string; evaluation_type_id: string;
+    academic_period_id: string; evaluation_type_id: string; class_type_id: string | null;
 }
 interface Props {
     template: Template;
     periods: { id: string; name: string }[];
     evaluationTypes: { id: string; name: string }[];
+    classroomTypes: { id: string; name: string }[];
 }
 
-export default function Edit({ template, periods, evaluationTypes }: Readonly<Props>) {
+export default function Edit({ template, periods, evaluationTypes, classroomTypes }: Readonly<Props>) {
     const [form, setForm] = useState({
         academic_period_id: template.academic_period_id,
         evaluation_type_id: template.evaluation_type_id,
+        class_type_id:      template.class_type_id ?? 'all',
         name:               template.name,
         description:        template.description ?? '',
         coefficient:        String(template.coefficient),
@@ -36,7 +38,8 @@ export default function Edit({ template, periods, evaluationTypes }: Readonly<Pr
 
     const handleSubmit = () => {
         setSubmitting(true);
-        router.put(route('evaluation-templates.update', template.id), form, {
+        const payload = { ...form, class_type_id: form.class_type_id === 'all' ? '' : form.class_type_id };
+        router.put(route('evaluation-templates.update', template.id), payload, {
             onError:   e => { setErrors(e as typeof errors); setSubmitting(false); },
             onSuccess: () => setSubmitting(false),
         });
@@ -54,7 +57,7 @@ export default function Edit({ template, periods, evaluationTypes }: Readonly<Pr
         <AppLayout>
             <Head title={`Modifier : ${template.name}`} />
 
-            <div className="max-w-2xl space-y-6">
+            <div className="w-full space-y-6">
                 <div className="flex items-center gap-4">
                     <Button variant="outline" size="sm" className="gap-2" onClick={() => router.get(route('evaluation-templates.show', template.id))}>
                         <ArrowLeft className="w-4 h-4" /> Retour
@@ -77,6 +80,15 @@ export default function Edit({ template, periods, evaluationTypes }: Readonly<Pr
                             <Select value={form.evaluation_type_id} onValueChange={v => setForm(p => ({ ...p, evaluation_type_id: v }))}>
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>{evaluationTypes.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent>
+                            </Select>
+                        )}
+                        {field('Type de classe', 'class_type_id',
+                            <Select value={form.class_type_id} onValueChange={v => setForm(p => ({ ...p, class_type_id: v }))}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Tous les types</SelectItem>
+                                    {classroomTypes.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                                </SelectContent>
                             </Select>
                         )}
                         {field('Coefficient *', 'coefficient',

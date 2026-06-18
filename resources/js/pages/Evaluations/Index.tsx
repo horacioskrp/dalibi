@@ -33,24 +33,53 @@ interface EvalRow {
     };
 }
 
+interface Option { id: string; name: string; code?: string }
+
 interface Props {
     evaluations: { data: EvalRow[]; total: number; current_page: number; last_page: number };
-    filters: { search: string; status: string; periodId: string; templateId: string };
+    filters: {
+        search: string; status: string; period_id: string; template_id: string;
+        class_id: string; subject_id: string; evaluation_type_id: string; scheduling: string;
+    };
+    options: { classrooms: Option[]; subjects: Option[]; evaluationTypes: Option[]; periods: Option[] };
     canLock: boolean;
 }
 
-export default function Index({ evaluations, filters, canLock }: Readonly<Props>) {
-    const [search, setSearch]     = useState(filters.search ?? '');
-    const [status, setStatus]     = useState(filters.status ?? 'all');
+const ALL = 'all';
+
+export default function Index({ evaluations, filters, options, canLock }: Readonly<Props>) {
+    const [search, setSearch]   = useState(filters.search ?? '');
+    const [status, setStatus]   = useState(filters.status || ALL);
+    const [classId, setClassId] = useState(filters.class_id || ALL);
+    const [subjectId, setSubjectId] = useState(filters.subject_id || ALL);
+    const [evalTypeId, setEvalTypeId] = useState(filters.evaluation_type_id || ALL);
+    const [periodId, setPeriodId] = useState(filters.period_id || ALL);
+    const [scheduling, setScheduling] = useState(filters.scheduling || ALL);
     const [deleteId, setDeleteId] = useState<string | null>(null);
 
     const apply = (overrides: Record<string, string> = {}) => {
-        const resolvedStatus = overrides.status ?? status;
+        const v = (key: string, fallback: string) => overrides[key] ?? fallback;
+        const clean = (val: string) => (val === ALL ? '' : val);
         router.get(route('evaluations.index'), {
-            search: overrides.search ?? search,
-            status: resolvedStatus === 'all' ? '' : resolvedStatus,
+            search:             v('search', search),
+            status:             clean(v('status', status)),
+            class_id:           clean(v('class_id', classId)),
+            subject_id:         clean(v('subject_id', subjectId)),
+            evaluation_type_id: clean(v('evaluation_type_id', evalTypeId)),
+            period_id:          clean(v('period_id', periodId)),
+            scheduling:         clean(v('scheduling', scheduling)),
         }, { preserveScroll: true, replace: true });
     };
+
+    const resetFilters = () => {
+        setSearch(''); setStatus(ALL); setClassId(ALL); setSubjectId(ALL);
+        setEvalTypeId(ALL); setPeriodId(ALL); setScheduling(ALL);
+        router.get(route('evaluations.index'), {}, { preserveScroll: true, replace: true });
+    };
+
+    const activeFilterCount = [
+        status, classId, subjectId, evalTypeId, periodId, scheduling,
+    ].filter(v => v && v !== ALL).length + (search ? 1 : 0);
 
     const onDelete = (id: string) => {
         router.delete(route('evaluations.destroy', id), {
@@ -69,7 +98,7 @@ export default function Index({ evaluations, filters, canLock }: Readonly<Props>
         <AppLayout>
             <Head title="Évaluations par classe" />
 
-            <div className="max-w-7xl space-y-6">
+            <div className="w-full space-y-6">
 
                 {/* Header */}
                 <div className="flex items-start justify-between">
@@ -90,33 +119,87 @@ export default function Index({ evaluations, filters, canLock }: Readonly<Props>
                 </div>
 
                 {/* Filtres */}
-                <div className="rounded-2xl bg-slate-50/70 ring-1 ring-slate-200 shadow-sm p-4 flex flex-wrap gap-3 items-end">
-                    <div className="relative flex-1 min-w-48">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <Input
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                            onKeyDown={e => e.key === 'Enter' && apply()}
-                            placeholder="Classe, matière, modèle..."
-                            className="pl-9"
-                        />
-                        {search && (
-                            <button onClick={() => { setSearch(''); apply({ search: '' }); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                                <X className="w-4 h-4" />
-                            </button>
+                <div className="rounded-2xl bg-slate-50/70 ring-1 ring-slate-200 shadow-sm p-4 space-y-3">
+                    <div className="flex flex-wrap gap-3 items-end">
+                        <div className="relative flex-1 min-w-56">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                            <Input
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                                onKeyDown={e => e.key === 'Enter' && apply()}
+                                placeholder="Classe, matière, modèle..."
+                                className="pl-9"
+                            />
+                            {search && (
+                                <button onClick={() => { setSearch(''); apply({ search: '' }); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                    <X className="w-4 h-4" />
+                                </button>
+                            )}
+                        </div>
+
+                        <Select value={classId} onValueChange={v => { setClassId(v); apply({ class_id: v }); }}>
+                            <SelectTrigger className="w-44"><SelectValue placeholder="Classe" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value={ALL}>Toutes les classes</SelectItem>
+                                {options.classrooms.map(c => <SelectItem key={c.id} value={c.id}>{c.name}{c.code ? ` (${c.code})` : ''}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+
+                        <Select value={subjectId} onValueChange={v => { setSubjectId(v); apply({ subject_id: v }); }}>
+                            <SelectTrigger className="w-44"><SelectValue placeholder="Matière" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value={ALL}>Toutes les matières</SelectItem>
+                                {options.subjects.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+
+                        <Select value={evalTypeId} onValueChange={v => { setEvalTypeId(v); apply({ evaluation_type_id: v }); }}>
+                            <SelectTrigger className="w-44"><SelectValue placeholder="Type" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value={ALL}>Tous les types</SelectItem>
+                                {options.evaluationTypes.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+
+                        {options.periods.length > 0 && (
+                            <Select value={periodId} onValueChange={v => { setPeriodId(v); apply({ period_id: v }); }}>
+                                <SelectTrigger className="w-40"><SelectValue placeholder="Période" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value={ALL}>Toutes les périodes</SelectItem>
+                                    {options.periods.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
                         )}
+
+                        <Select value={status} onValueChange={v => { setStatus(v); apply({ status: v }); }}>
+                            <SelectTrigger className="w-40"><SelectValue placeholder="Statut" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value={ALL}>Tous les statuts</SelectItem>
+                                <SelectItem value="scheduled">Planifiée</SelectItem>
+                                <SelectItem value="completed">Terminée</SelectItem>
+                            </SelectContent>
+                        </Select>
+
+                        <Select value={scheduling} onValueChange={v => { setScheduling(v); apply({ scheduling: v }); }}>
+                            <SelectTrigger className="w-40"><SelectValue placeholder="Planification" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value={ALL}>Toutes</SelectItem>
+                                <SelectItem value="with">Avec date</SelectItem>
+                                <SelectItem value="without">Sans date</SelectItem>
+                            </SelectContent>
+                        </Select>
+
+                        <Button onClick={() => apply()} className="bg-blue-600 hover:bg-blue-700">Filtrer</Button>
                     </div>
-                    <Select value={status} onValueChange={v => { setStatus(v); apply({ status: v }); }}>
-                        <SelectTrigger className="w-44">
-                            <SelectValue placeholder="Statut" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">Tous les statuts</SelectItem>
-                            <SelectItem value="scheduled">Planifiée</SelectItem>
-                            <SelectItem value="completed">Terminée</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <Button onClick={() => apply()} className="bg-blue-600 hover:bg-blue-700">Filtrer</Button>
+
+                    {activeFilterCount > 0 && (
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-500">{activeFilterCount} filtre(s) actif(s)</span>
+                            <button onClick={resetFilters} className="text-xs text-blue-600 hover:text-blue-700 inline-flex items-center gap-1">
+                                <X className="w-3 h-3" /> Réinitialiser
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Table */}

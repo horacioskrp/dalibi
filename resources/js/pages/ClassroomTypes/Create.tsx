@@ -10,6 +10,7 @@ import AppLayout from '@/layouts/app-layout';
 const initialValues: ClassroomTypeFormData = {
     name: '',
     description: '',
+    period_system: 'trimestre',
     active: true,
 };
 
@@ -25,7 +26,7 @@ export default function Create() {
         <AppLayout>
             <Head title="Nouveau type de classe" />
 
-            <div className="max-w-4xl space-y-6">
+            <div className="w-full space-y-6">
                 <div className="flex items-center gap-4">
                     <button
                         type="button"

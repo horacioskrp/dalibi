@@ -20,6 +20,7 @@ class EvaluationTemplate extends Model
     protected $fillable = [
         'academic_period_id',
         'evaluation_type_id',
+        'class_type_id',
         'name',
         'description',
         'coefficient',
@@ -36,6 +37,11 @@ class EvaluationTemplate extends Model
     public function academicPeriod(): BelongsTo
     {
         return $this->belongsTo(AcademicPeriod::class);
+    }
+
+    public function classType(): BelongsTo
+    {
+        return $this->belongsTo(ClassroomType::class, 'class_type_id');
     }
 
     public function evaluationType(): BelongsTo

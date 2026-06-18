@@ -5,6 +5,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
+export interface ClassroomTypeOption { id: string; name: string; period_system: string; }
+
 export interface SchoolFormData {
     name: string;
     code: string;
@@ -18,6 +20,7 @@ export interface SchoolFormData {
     city: string;
     po_box: string;
     active: boolean;
+    class_type_ids: string[];
 }
 
 interface SchoolFormProps {
@@ -26,12 +29,17 @@ interface SchoolFormProps {
     errors: Record<string, string>;
     processing: boolean;
     currentLogoUrl?: string | null;
+    classroomTypes?: ClassroomTypeOption[];
     onCancel: () => void;
     onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
     setData: <K extends keyof SchoolFormData>(key: K, value: SchoolFormData[K]) => void;
 }
 
-export function SchoolForm({ mode, data, errors, processing, currentLogoUrl, onCancel, onSubmit, setData }: Readonly<SchoolFormProps>) {
+export function SchoolForm({ mode, data, errors, processing, currentLogoUrl, classroomTypes = [], onCancel, onSubmit, setData }: Readonly<SchoolFormProps>) {
+    const toggleClassType = (id: string) => {
+        const current = data.class_type_ids ?? [];
+        setData('class_type_ids', current.includes(id) ? current.filter(x => x !== id) : [...current, id]);
+    };
     const fileRef = useRef<HTMLInputElement>(null);
     const [preview, setPreview] = useState<string | null>(currentLogoUrl ?? null);
 
@@ -244,6 +252,34 @@ export function SchoolForm({ mode, data, errors, processing, currentLogoUrl, onC
                         {errors.address && <p className="text-sm text-red-600 mt-1">{errors.address}</p>}
                     </div>
                 </div>
+            </div>
+
+            {/* Types de classe proposés */}
+            <div className="rounded-2xl p-5 bg-linear-to-br from-indigo-50/60 to-white ring-1 ring-indigo-100 shadow-sm space-y-4">
+                <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center">
+                        <Building2 className="w-5 h-5 text-indigo-600" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900">Types de classe proposés</h3>
+                </div>
+                {classroomTypes.length === 0 ? (
+                    <p className="text-sm text-gray-400">Aucun type de classe disponible. Créez-en d'abord dans Paramètres → Types de classes.</p>
+                ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {classroomTypes.map(ct => {
+                            const checked = (data.class_type_ids ?? []).includes(ct.id);
+                            return (
+                                <label key={ct.id} className={`flex items-center gap-3 rounded-xl ring-1 px-3 py-2.5 cursor-pointer transition ${checked ? 'ring-indigo-300 bg-indigo-50/60' : 'ring-gray-200 bg-white hover:ring-gray-300'}`}>
+                                    <Checkbox checked={checked} onCheckedChange={() => toggleClassType(ct.id)} disabled={processing} />
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-900">{ct.name}</p>
+                                        <p className="text-xs text-gray-400">{ct.period_system === 'semestre' ? 'Semestre (2 périodes)' : 'Trimestre (3 périodes)'}</p>
+                                    </div>
+                                </label>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
 
             {/* Statut */}

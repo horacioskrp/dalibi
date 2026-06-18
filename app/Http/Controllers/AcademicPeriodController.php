@@ -6,6 +6,7 @@ use App\Http\Requests\StoreAcademicPeriodRequest;
 use App\Http\Requests\UpdateAcademicPeriodRequest;
 use App\Models\AcademicPeriod;
 use App\Models\AcademicYear;
+use App\Models\ClassroomType;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -60,7 +61,8 @@ class AcademicPeriodController extends Controller
         $academicYears = AcademicYear::orderBy('start_date', 'desc')->get();
 
         return Inertia::render('Administration/AcademicPeriods/Create', [
-            'academicYears' => $academicYears,
+            'academicYears'  => $academicYears,
+            'classroomTypes' => ClassroomType::where('active', true)->orderBy('name')->get(['id', 'name', 'period_system']),
         ]);
     }
 
@@ -106,6 +108,7 @@ class AcademicPeriodController extends Controller
         return Inertia::render('Administration/AcademicPeriods/Edit', [
             'academicPeriod' => $academicPeriod,
             'academicYears' => $academicYears,
+            'classroomTypes' => ClassroomType::where('active', true)->orderBy('name')->get(['id', 'name', 'period_system']),
         ]);
     }
 

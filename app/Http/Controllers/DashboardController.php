@@ -3,10 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Constants\Roles;
+use App\Models\AbsencePermission;
 use App\Models\AcademicYear;
+use App\Models\AttendanceRecord;
 use App\Models\CashAccount;
+use App\Models\DocumentIssuance;
 use App\Models\Enrollment;
 use App\Models\Invoice;
+use App\Models\OfficialExam;
+use App\Models\OfficialExamRegistration;
 use App\Models\Payment;
 use App\Models\Student;
 use App\Models\SubjectAssignment;
@@ -154,6 +159,58 @@ class DashboardController extends Controller
                     ->where('enrollment_date', '>=', now()->startOfWeek())
                     ->count(),
                 'recentEnrollments' => $recentEnrollments,
+            ];
+        }
+
+        /* ── Section vie scolaire & pédagogie : ADMIN, DIRECTEUR, SECRÉTARIAT ─ */
+        if ($user->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR, Roles::SECRETARIAT])) {
+            $today = now()->toDateString();
+
+            $presentToday = AttendanceRecord::whereHas('attendance', fn ($q) => $q->where('date', $today))
+                ->where('status', 'present')->count();
+            $absentToday = AttendanceRecord::whereHas('attendance', fn ($q) => $q->where('date', $today))
+                ->where('status', 'absent')->count();
+
+            /* Demandes de permission en attente */
+            $pendingPermissions = AbsencePermission::with('student:id,firstname,lastname')
+                ->where('status', 'pending')
+                ->latest()
+                ->limit(5)
+                ->get()
+                ->map(fn ($p) => [
+                    'id'           => $p->id,
+                    'student_name' => $p->student ? $p->student->lastname . ' ' . $p->student->firstname : '—',
+                    'reason'       => $p->reason,
+                    'start_date'   => $p->start_date?->format('d/m/Y'),
+                    'end_date'     => $p->end_date?->format('d/m/Y'),
+                ]);
+
+            /* Prochains examens officiels */
+            $upcomingExams = OfficialExam::withCount('registrations')
+                ->whereNotNull('exam_date')
+                ->where('exam_date', '>=', $today)
+                ->orderBy('exam_date')
+                ->limit(5)
+                ->get()
+                ->map(fn ($e) => [
+                    'id'         => $e->id,
+                    'name'       => $e->name,
+                    'type'       => $e->type,
+                    'exam_date'  => $e->exam_date?->format('d/m/Y'),
+                    'center'     => $e->center,
+                    'registrations' => $e->registrations_count,
+                ]);
+
+            $data['academic'] = [
+                'present_today'        => $presentToday,
+                'absent_today'         => $absentToday,
+                'pending_permissions'  => AbsencePermission::where('status', 'pending')->count(),
+                'documents_month'      => DocumentIssuance::whereYear('issued_at', now()->year)
+                    ->whereMonth('issued_at', now()->month)->count(),
+                'exams_open'           => OfficialExam::where('status', 'ouvert')->count(),
+                'exam_registrations'   => OfficialExamRegistration::count(),
+                'pendingPermissions'   => $pendingPermissions,
+                'upcomingExams'        => $upcomingExams,
             ];
         }
 

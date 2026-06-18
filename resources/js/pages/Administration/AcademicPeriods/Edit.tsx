@@ -26,6 +26,8 @@ interface AcademicYear {
     year: string;
 }
 
+interface ClassroomType { id: string; name: string; period_system: string; }
+
 interface AcademicPeriod {
     id: string;
     name: string;
@@ -34,17 +36,20 @@ interface AcademicPeriod {
     end_date: string;
     type: 'trimestre' | 'semestre';
     order: number | null;
+    weight: number | string | null;
     is_current: boolean;
     academic_year_id: string;
+    class_type_id: string | null;
     academic_year: AcademicYear;
 }
 
 interface EditProps {
     academicPeriod: AcademicPeriod;
     academicYears: AcademicYear[];
+    classroomTypes?: ClassroomType[];
 }
 
-export default function Edit({ academicPeriod, academicYears }: Readonly<EditProps>) {
+export default function Edit({ academicPeriod, academicYears, classroomTypes = [] }: Readonly<EditProps>) {
     const [formData, setFormData] = useState({
         name: academicPeriod.name,
         description: academicPeriod.description || '',
@@ -52,8 +57,10 @@ export default function Edit({ academicPeriod, academicYears }: Readonly<EditPro
         end_date: academicPeriod.end_date,
         type: academicPeriod.type,
         order: academicPeriod.order?.toString() || '',
+        weight: academicPeriod.weight?.toString() || '1',
         is_current: academicPeriod.is_current,
         academic_year_id: academicPeriod.academic_year_id,
+        class_type_id: academicPeriod.class_type_id ?? 'all',
     });
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -63,7 +70,8 @@ export default function Edit({ academicPeriod, academicYears }: Readonly<EditPro
         setIsSubmitting(true);
         setErrors({});
 
-        router.put(route('academic-periods.update', academicPeriod.id), formData, {
+        const payload = { ...formData, class_type_id: formData.class_type_id === 'all' ? '' : formData.class_type_id };
+        router.put(route('academic-periods.update', academicPeriod.id), payload, {
             onError: (validationErrors) => {
                 setErrors(validationErrors as Record<string, string>);
                 setIsSubmitting(false);
@@ -198,6 +206,47 @@ export default function Edit({ academicPeriod, academicYears }: Readonly<EditPro
                                     className={errors.order ? 'border-red-400 bg-red-50/40 ring-1 ring-red-300' : 'border-violet-200 bg-white focus-visible:ring-violet-400'}
                                 />
                                 {errors.order && <p className="text-red-600 text-xs flex items-center gap-1"><X className="w-3 h-3" />{errors.order}</p>}
+                            </div>
+
+                            {/* Type de classe */}
+                            <div className="space-y-1.5">
+                                <label htmlFor="class_type_id" className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
+                                    <GraduationCap className="w-4 h-4 text-violet-400" />
+                                    Type de classe
+                                </label>
+                                <Select
+                                    value={formData.class_type_id}
+                                    onValueChange={(value) => setFormData((prev) => ({ ...prev, class_type_id: value }))}
+                                >
+                                    <SelectTrigger id="class_type_id" className="bg-white border-violet-200">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Toutes les classes (global)</SelectItem>
+                                        {classroomTypes.map((ct) => (
+                                            <SelectItem key={ct.id} value={ct.id}>{ct.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <p className="text-xs text-gray-400">Laisser « global » pour appliquer à tous les types de classe.</p>
+                            </div>
+
+                            {/* Poids (moyenne annuelle) */}
+                            <div className="space-y-1.5">
+                                <label htmlFor="weight" className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
+                                    <Hash className="w-4 h-4 text-violet-400" />
+                                    Poids (moyenne annuelle)
+                                </label>
+                                <Input
+                                    id="weight"
+                                    type="number"
+                                    step="0.5"
+                                    min="0"
+                                    value={formData.weight}
+                                    onChange={(e) => setFormData((prev) => ({ ...prev, weight: e.target.value }))}
+                                    className={errors.weight ? 'border-red-400 bg-red-50/40 ring-1 ring-red-300' : 'border-violet-200 bg-white focus-visible:ring-violet-400'}
+                                />
+                                {errors.weight && <p className="text-red-600 text-xs flex items-center gap-1"><X className="w-3 h-3" />{errors.weight}</p>}
                             </div>
                         </div>
                     </div>
