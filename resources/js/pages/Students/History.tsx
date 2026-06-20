@@ -37,7 +37,18 @@ interface EnrollmentHistoryItem {
     enrollment_date?: string | null;
     enrollment_code?: string | null;
     status?: string | null;
+    academic_status?: string | null;
+    academic_status_label?: string | null;
+    status_reason?: string | null;
 }
+
+const ACADEMIC_BADGE: Record<string, string> = {
+    en_cours:   'bg-blue-100 text-blue-700 border border-blue-200',
+    valide:     'bg-emerald-100 text-emerald-700 border border-emerald-200',
+    non_valide: 'bg-amber-100 text-amber-700 border border-amber-200',
+    abandon:    'bg-red-100 text-red-700 border border-red-200',
+    transfere:  'bg-gray-100 text-gray-600 border border-gray-200',
+};
 
 interface HistoryProps {
     student: StudentSummary;
@@ -53,30 +64,15 @@ function formatDate(value?: string | null): string {
 }
 
 function getStatusLabel(status?: string | null): string {
-    if (!status) {
-        return '—';
-    }
-
-    if (status === 'active') {
-        return 'Actif';
-    }
-
-    if (status === 'cancelled') {
-        return 'Annulé';
-    }
-
+    if (!status) return '—';
+    if (status === 'paid') return 'Payé';
+    if (status === 'unpaid') return 'Impayé';
     return status;
 }
 
 function getStatusClass(status?: string | null): string {
-    if (status === 'active') {
-        return 'bg-emerald-100 text-emerald-700 border border-emerald-200';
-    }
-
-    if (status === 'cancelled') {
-        return 'bg-rose-100 text-rose-700 border border-rose-200';
-    }
-
+    if (status === 'paid') return 'bg-emerald-100 text-emerald-700 border border-emerald-200';
+    if (status === 'unpaid') return 'bg-rose-100 text-rose-700 border border-rose-200';
     return 'bg-gray-100 text-gray-700 border border-gray-200';
 }
 
@@ -159,13 +155,14 @@ export default function HistoryPage({ student, enrollments }: Readonly<HistoryPr
                                     <TableHead className="font-semibold text-gray-900">Année scolaire</TableHead>
                                     <TableHead className="font-semibold text-gray-900">Date d'inscription</TableHead>
                                     <TableHead className="font-semibold text-gray-900">Code inscription</TableHead>
-                                    <TableHead className="font-semibold text-gray-900">Statut</TableHead>
+                                    <TableHead className="font-semibold text-gray-900">Paiement</TableHead>
+                                    <TableHead className="font-semibold text-gray-900">Scolarité</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {enrollments.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={5} className="text-center py-12 text-gray-500">
+                                        <TableCell colSpan={6} className="text-center py-12 text-gray-500">
                                             <div className="flex flex-col items-center gap-2">
                                                 <CalendarDays className="w-10 h-10 text-gray-300" />
                                                 <p>Aucune inscription trouvée pour cet élève.</p>
@@ -188,6 +185,14 @@ export default function HistoryPage({ student, enrollments }: Readonly<HistoryPr
                                                 <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusClass(enrollment.status)}`}>
                                                     {getStatusLabel(enrollment.status)}
                                                 </span>
+                                            </TableCell>
+                                            <TableCell>
+                                                <span className={`px-2 py-1 rounded text-xs font-medium ${ACADEMIC_BADGE[enrollment.academic_status ?? 'en_cours'] ?? 'bg-gray-100 text-gray-600'}`}>
+                                                    {enrollment.academic_status_label ?? '—'}
+                                                </span>
+                                                {enrollment.status_reason && (
+                                                    <span className="block text-xs text-gray-400 italic mt-0.5">{enrollment.status_reason}</span>
+                                                )}
                                             </TableCell>
                                         </TableRow>
                                     ))

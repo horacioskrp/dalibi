@@ -35,11 +35,27 @@ class Enrollment extends Model
         'enrolled_by',
         'enrollment_date',
         'status',
+        'academic_status',
+        'status_reason',
+        'status_changed_at',
     ];
 
     protected $casts = [
-        'enrollment_date' => 'date',
+        'enrollment_date'   => 'date',
+        'status_changed_at' => 'datetime',
     ];
+
+    /** Statuts académiques (distincts du statut de paiement). */
+    public const ACADEMIC_STATUSES = [
+        'en_cours'   => 'En cours',
+        'valide'     => 'Validé',
+        'non_valide' => 'Non validé',
+        'abandon'    => 'Abandon',
+        'transfere'  => 'Transféré',
+    ];
+
+    /** Statuts considérés comme « scolarité active » (présents à l'appel). */
+    public const ACTIVE_ACADEMIC_STATUSES = ['en_cours', 'valide', 'non_valide'];
 
     public function school(): BelongsTo
     {
