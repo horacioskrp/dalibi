@@ -262,6 +262,25 @@ export function route(name: string, params?: any): string {
         'file-storage.update': '/settings/file-storage',
         'file-storage.test':   '/settings/file-storage/test',
 
+        // Student stats
+        'students.stats': '/students-stats',
+
+        // Student import
+        'students.import':          '/students-import',
+        'students.import.template': '/students-import/template',
+        'students.import.store':    '/students-import',
+
+        // Student class change
+        'students.change-class': `/students/${params}/change-class`,
+
+        // Student photo
+        'students.photo.upload': `/students/${params}/photo`,
+        'students.photo.delete': `/students/${params}/photo`,
+
+        // Promotion / Passage de classe
+        'promotion.index': '/promotion',
+        'promotion.store': '/promotion',
+
         // Roster / Effectifs
         'roster.index':         '/roster',
         'roster.update-status': `/roster/${params}/status`,

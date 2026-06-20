@@ -18,7 +18,8 @@ import {
     ShieldAlert,
     Clock3,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { Camera, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
@@ -81,6 +82,9 @@ interface Student {
 interface DocTemplate { id: string; name: string; type_label: string; category: string; }
 interface IssuedDoc { id: string; reference_number: string; template_name: string | null; issued_by: string | null; issued_at: string | null; }
 
+interface ClassroomOption { id: string; name: string; code: string; }
+interface CurrentEnrollment { id: string; class_id: string; class_name: string | null; class_code: string | null; year: string | null; }
+
 interface ShowProps {
     student: Student;
     documentContext: {
@@ -89,6 +93,8 @@ interface ShowProps {
         annee_scolaire: string | null;
     };
     issuedDocuments: IssuedDoc[];
+    currentEnrollment: CurrentEnrollment | null;
+    classrooms: ClassroomOption[];
 }
 
 const formatDate = (value?: string | null): string => {
@@ -102,7 +108,7 @@ const admissionTypeLabel: Record<string, string> = {
     re_admission: 'Ré-admission',
 };
 
-export default function Show({ student, documentContext, issuedDocuments }: Readonly<ShowProps>) {
+export default function Show({ student, documentContext, issuedDocuments, currentEnrollment, classrooms }: Readonly<ShowProps>) {
     const userLabel = `${student.user?.firstname ?? ''} ${student.user?.lastname ?? ''}`.trim() || student.user?.name || '—';
     const hasEmergencyContact = Boolean(student.medical_info?.emergency_contact_name || student.medical_info?.emergency_contact_phone);
 
@@ -110,6 +116,35 @@ export default function Show({ student, documentContext, issuedDocuments }: Read
     const [templateId, setTemplateId] = useState('');
     const [classe, setClasse] = useState(documentContext?.classe ?? '');
     const [annee, setAnnee] = useState(documentContext?.annee_scolaire ?? '');
+
+    const photoRef = useRef<HTMLInputElement>(null);
+    const photoUrl = student.profile_photo ? `/storage/${student.profile_photo}` : null;
+    const initials = `${student.firstname?.[0] ?? ''}${student.lastname?.[0] ?? ''}`.toUpperCase();
+
+    const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        router.post(route('students.photo.upload', student.id), { photo: file }, {
+            forceFormData: true,
+            preserveScroll: true,
+            onFinish: () => { if (photoRef.current) photoRef.current.value = ''; },
+        });
+    };
+
+    const handlePhotoDelete = () => {
+        router.delete(route('students.photo.delete', student.id), { preserveScroll: true });
+    };
+
+    const [classOpen, setClassOpen] = useState(false);
+    const [targetClass, setTargetClass] = useState(currentEnrollment?.class_id ?? '');
+
+    const handleChangeClass = () => {
+        if (!targetClass) return;
+        router.post(route('students.change-class', student.id), { class_id: targetClass }, {
+            preserveScroll: true,
+            onSuccess: () => setClassOpen(false),
+        });
+    };
 
     // Génère et télécharge le PDF via une soumission de formulaire native (download).
     const handleGenerate = () => {
@@ -170,6 +205,59 @@ export default function Show({ student, documentContext, issuedDocuments }: Read
                         </Button>
                     </div>
                 </div>
+
+                {/* Photo + identité */}
+                <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm flex items-center gap-5">
+                    <div className="relative group shrink-0">
+                        {photoUrl ? (
+                            <img src={photoUrl} alt={`${student.firstname} ${student.lastname}`} className="w-24 h-24 rounded-2xl object-cover ring-1 ring-gray-200" />
+                        ) : (
+                            <div className="w-24 h-24 rounded-2xl bg-blue-100 flex items-center justify-center text-2xl font-bold text-blue-600 ring-1 ring-blue-200">
+                                {initials || <UserCircle2 className="w-10 h-10" />}
+                            </div>
+                        )}
+                        <button
+                            type="button"
+                            onClick={() => photoRef.current?.click()}
+                            className="absolute -bottom-2 -right-2 w-9 h-9 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center shadow-md ring-2 ring-white"
+                            title="Changer la photo"
+                        >
+                            <Camera className="w-4 h-4" />
+                        </button>
+                        <input ref={photoRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handlePhotoChange} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <h2 className="text-2xl font-bold text-gray-900 truncate">{student.firstname} {student.lastname}</h2>
+                        <p className="text-sm text-gray-500 font-mono mt-0.5">{student.matricule ?? '—'}</p>
+                        <div className="flex items-center gap-2 mt-2">
+                            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => photoRef.current?.click()}>
+                                <Camera className="w-3.5 h-3.5" /> {photoUrl ? 'Changer' : 'Ajouter une photo'}
+                            </Button>
+                            {photoUrl && (
+                                <Button variant="outline" size="sm" className="gap-1.5 border-red-200 text-red-500 hover:bg-red-50" onClick={handlePhotoDelete}>
+                                    <Trash2 className="w-3.5 h-3.5" /> Retirer
+                                </Button>
+                            )}
+                        </div>
+                        <p className="text-xs text-gray-400 mt-1">JPG, PNG ou WebP — max 2 Mo</p>
+                    </div>
+                </div>
+
+                {/* Scolarité actuelle + réaffectation */}
+                {currentEnrollment && (
+                    <div className="rounded-2xl border border-indigo-200 bg-indigo-50/50 p-4 shadow-sm flex items-center justify-between gap-4">
+                        <div>
+                            <p className="text-xs uppercase tracking-wide text-indigo-700 font-semibold">Scolarité actuelle ({currentEnrollment.year})</p>
+                            <p className="mt-1 text-lg font-bold text-indigo-900">
+                                {currentEnrollment.class_name ?? '—'}
+                                {currentEnrollment.class_code && <span className="ml-2 text-sm font-normal text-indigo-500">({currentEnrollment.class_code})</span>}
+                            </p>
+                        </div>
+                        <Button variant="outline" className="gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-100" onClick={() => { setTargetClass(currentEnrollment.class_id); setClassOpen(true); }}>
+                            <Building2 className="w-4 h-4" /> Changer de classe
+                        </Button>
+                    </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 shadow-sm">
@@ -422,6 +510,38 @@ export default function Show({ student, documentContext, issuedDocuments }: Read
                         <Button variant="outline" onClick={() => setDeliverOpen(false)}>Annuler</Button>
                         <Button onClick={handleGenerate} disabled={!templateId} className="bg-blue-600 hover:bg-blue-700 gap-2">
                             <Download className="w-4 h-4" /> Générer le PDF
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialog : changement de classe */}
+            <Dialog open={classOpen} onOpenChange={setClassOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Changer de classe</DialogTitle>
+                        <DialogDescription>
+                            Réaffecter {student.firstname} {student.lastname} pour l'année {currentEnrollment?.year}.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-2">
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-medium text-gray-700">Nouvelle classe</label>
+                            <Select value={targetClass} onValueChange={setTargetClass}>
+                                <SelectTrigger><SelectValue placeholder="Choisir une classe" /></SelectTrigger>
+                                <SelectContent>
+                                    {classrooms.map(c => (
+                                        <SelectItem key={c.id} value={c.id}>{c.name} ({c.code})</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <p className="text-xs text-gray-400">Les frais déjà facturés ne sont pas recalculés automatiquement.</p>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                        <Button variant="outline" onClick={() => setClassOpen(false)}>Annuler</Button>
+                        <Button className="bg-blue-600 hover:bg-blue-700" disabled={!targetClass || targetClass === currentEnrollment?.class_id} onClick={handleChangeClass}>
+                            Réaffecter
                         </Button>
                     </div>
                 </DialogContent>
