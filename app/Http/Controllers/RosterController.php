@@ -1,0 +1,127 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Constants\Roles;
+use App\Models\AcademicYear;
+use App\Models\Classroom;
+use App\Models\Enrollment;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class RosterController extends Controller
+{
+    private const MANAGE_ROLES = [Roles::ADMINISTRATOR, Roles::DIRECTOR, Roles::SECRETARIAT];
+
+    public function index(Request $request): Response
+    {
+        $yearId  = $request->string('academic_year_id')->toString();
+        $classId = $request->string('class_id')->toString();
+        $statusF = $request->string('academic_status')->toString();
+        $search  = $request->string('search')->toString();
+
+        $activeYear = AcademicYear::where('active', true)->first(['id', 'year']);
+        $years      = AcademicYear::orderByDesc('start_date')->get(['id', 'year', 'active']);
+
+        // Année par défaut : celle demandée, sinon l'année active
+        if ($yearId === '') {
+            $yearId = $activeYear?->id ?? '';
+        }
+
+        $classrooms = Classroom::where('active', true)->orderBy('name')->get(['id', 'name', 'code']);
+
+        $enrollments = collect();
+        $stats = ['total' => 0, 'en_cours' => 0, 'valide' => 0, 'non_valide' => 0, 'abandon' => 0, 'transfere' => 0];
+
+        if ($yearId && $classId) {
+            $rows = Enrollment::query()
+                ->with('student:id,firstname,lastname,matricule,gender')
+                ->where('academic_year_id', $yearId)
+                ->where('class_id', $classId)
+                ->when($statusF && array_key_exists($statusF, Enrollment::ACADEMIC_STATUSES), fn ($q) => $q->where('academic_status', $statusF))
+                ->when($search, function ($q) use ($search) {
+                    $like = '%' . strtolower($search) . '%';
+                    $q->whereHas('student', fn ($sq) =>
+                        $sq->whereRaw("LOWER(lastname || ' ' || firstname) LIKE ?", [$like])
+                           ->orWhereRaw('LOWER(matricule) LIKE ?', [$like]));
+                })
+                ->get();
+
+            $enrollments = $rows
+                ->sortBy(fn ($e) => $e->student?->lastname)
+                ->map(fn ($e) => [
+                    'id'              => $e->id,
+                    'student_id'      => $e->student_id,
+                    'student_name'    => $e->student ? $e->student->lastname . ' ' . $e->student->firstname : '—',
+                    'matricule'       => $e->student?->matricule,
+                    'gender'          => $e->student?->gender,
+                    'payment_status'  => $e->status,
+                    'academic_status' => $e->academic_status ?? 'en_cours',
+                    'status_reason'   => $e->status_reason,
+                ])->values();
+
+            // Stats (sur l'ensemble de la classe/année, sans filtre statut)
+            $all = Enrollment::where('academic_year_id', $yearId)->where('class_id', $classId)->get(['academic_status']);
+            $stats['total'] = $all->count();
+            foreach (array_keys(Enrollment::ACADEMIC_STATUSES) as $k) {
+                $stats[$k] = $all->where('academic_status', $k)->count();
+            }
+        }
+
+        return Inertia::render('Roster/Index', [
+            'years'        => $years,
+            'classrooms'   => $classrooms,
+            'enrollments'  => $enrollments,
+            'stats'        => $stats,
+            'statuses'     => Enrollment::ACADEMIC_STATUSES,
+            'filters'      => [
+                'academic_year_id' => $yearId,
+                'class_id'         => $classId,
+                'academic_status'  => $statusF,
+                'search'           => $search,
+            ],
+            'canManage'    => $request->user()->hasAnyRole(self::MANAGE_ROLES),
+        ]);
+    }
+
+    public function updateStatus(Request $request, Enrollment $enrollment): RedirectResponse
+    {
+        abort_unless($request->user()->hasAnyRole(self::MANAGE_ROLES), 403);
+
+        $validated = $request->validate([
+            'academic_status' => ['required', 'in:en_cours,valide,non_valide,abandon,transfere'],
+            'status_reason'   => ['nullable', 'string', 'max:300'],
+        ]);
+
+        $enrollment->update([
+            'academic_status'   => $validated['academic_status'],
+            'status_reason'     => $validated['status_reason'] ?? null,
+            'status_changed_at' => now(),
+        ]);
+
+        return back()->with('message', 'Statut de scolarité mis à jour.');
+    }
+
+    public function bulkStatus(Request $request): RedirectResponse
+    {
+        abort_unless($request->user()->hasAnyRole(self::MANAGE_ROLES), 403);
+
+        $validated = $request->validate([
+            'enrollment_ids'   => ['required', 'array', 'min:1'],
+            'enrollment_ids.*' => ['uuid', 'exists:enrollments,id'],
+            'academic_status'  => ['required', 'in:en_cours,valide,non_valide,abandon,transfere'],
+        ]);
+
+        DB::transaction(function () use ($validated): void {
+            Enrollment::whereIn('id', $validated['enrollment_ids'])->update([
+                'academic_status'   => $validated['academic_status'],
+                'status_changed_at' => now(),
+            ]);
+        });
+
+        return back()->with('message', count($validated['enrollment_ids']) . ' inscription(s) mise(s) à jour.');
+    }
+}

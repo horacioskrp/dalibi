@@ -197,6 +197,9 @@ class StudentController extends Controller
                 'enrollment_date' => $enrollment->enrollment_date?->format('Y-m-d'),
                 'enrollment_code' => $enrollment->enrollment_code,
                 'status' => $enrollment->status,
+                'academic_status' => $enrollment->academic_status ?? 'en_cours',
+                'academic_status_label' => Enrollment::ACADEMIC_STATUSES[$enrollment->academic_status ?? 'en_cours'] ?? '—',
+                'status_reason' => $enrollment->status_reason,
             ])
             ->values();
 
