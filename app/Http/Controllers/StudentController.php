@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -163,6 +164,15 @@ class StudentController extends Controller
                 'issued_at'        => $i->issued_at?->format('d/m/Y H:i'),
             ]);
 
+        // Inscription de l'année active (pour la réaffectation de classe)
+        $activeYear = \App\Models\AcademicYear::where('active', true)->first(['id', 'year']);
+        $currentEnrollment = $activeYear
+            ? Enrollment::with('classroom:id,name,code')
+                ->where('student_id', $student->id)
+                ->where('academic_year_id', $activeYear->id)
+                ->first()
+            : null;
+
         return Inertia::render('Students/Show', [
             'student' => $student,
             'documentContext' => [
@@ -171,7 +181,40 @@ class StudentController extends Controller
                 'annee_scolaire' => $latestEnrollment?->academicYear?->year,
             ],
             'issuedDocuments' => $issued,
+            'currentEnrollment' => $currentEnrollment ? [
+                'id'         => $currentEnrollment->id,
+                'class_id'   => $currentEnrollment->class_id,
+                'class_name' => $currentEnrollment->classroom?->name,
+                'class_code' => $currentEnrollment->classroom?->code,
+                'year'       => $activeYear?->year,
+            ] : null,
+            'classrooms' => \App\Models\Classroom::where('active', true)->orderBy('name')->get(['id', 'name', 'code']),
         ]);
+    }
+
+    /**
+     * Réaffecte l'élève à une autre classe pour l'année active.
+     */
+    public function changeClass(Request $request, Student $student): RedirectResponse
+    {
+        $this->authorize('update', $student);
+
+        $validated = $request->validate([
+            'class_id' => ['required', 'uuid', 'exists:classes,id'],
+        ]);
+
+        $activeYear = \App\Models\AcademicYear::where('active', true)->first(['id']);
+        abort_unless($activeYear, 422, 'Aucune année académique active.');
+
+        $enrollment = Enrollment::where('student_id', $student->id)
+            ->where('academic_year_id', $activeYear->id)
+            ->first();
+
+        abort_unless($enrollment, 422, 'Cet élève n\'a pas d\'inscription pour l\'année active.');
+
+        $enrollment->update(['class_id' => $validated['class_id']]);
+
+        return back()->with('success', 'Élève réaffecté à la nouvelle classe.');
     }
 
     public function history(Student $student): Response
@@ -257,5 +300,43 @@ class StudentController extends Controller
 
         return redirect()->route('students.index')
             ->with('success', 'Élève supprimé avec succès.');
+    }
+
+    /**
+     * Téléverse / remplace la photo de profil de l'élève.
+     */
+    public function uploadPhoto(Request $request, Student $student): RedirectResponse
+    {
+        $this->authorize('update', $student);
+
+        $request->validate([
+            'photo' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+        ]);
+
+        // Supprime l'ancienne photo si présente
+        if ($student->profile_photo) {
+            Storage::disk('media')->delete($student->profile_photo);
+        }
+
+        $student->update([
+            'profile_photo' => $request->file('photo')->store('students/photos', 'media'),
+        ]);
+
+        return back()->with('success', 'Photo mise à jour.');
+    }
+
+    /**
+     * Supprime la photo de profil de l'élève.
+     */
+    public function deletePhoto(Student $student): RedirectResponse
+    {
+        $this->authorize('update', $student);
+
+        if ($student->profile_photo) {
+            Storage::disk('media')->delete($student->profile_photo);
+            $student->update(['profile_photo' => null]);
+        }
+
+        return back()->with('success', 'Photo supprimée.');
     }
 }

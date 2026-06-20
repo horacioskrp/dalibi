@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { Plus, Pencil, Trash2, Search, Users, UserCheck, Eye, Mars, Venus, CircleHelp, Phone, History } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Users, UserCheck, Eye, Mars, Venus, CircleHelp, Phone, History, Upload } from 'lucide-react';
 import { useState } from 'react';
 import {
     AlertDialog,
@@ -33,6 +33,7 @@ interface Student {
     nationality?: string | null;
     phone?: string | null;
     email?: string | null;
+    profile_photo?: string | null;
     active: boolean;
     user?: {
         id: string;
@@ -251,13 +252,23 @@ export default function Index({ students, perPage, stats, filters }: Readonly<In
                         <h1 className="text-4xl font-bold tracking-tight text-gray-900">Élèves</h1>
                         <p className="mt-2 text-lg text-gray-600">Gérez les profils élèves de votre établissement</p>
                     </div>
-                    <Button
-                        onClick={() => router.get(route('students.create'))}
-                        className="gap-2 bg-blue-600 hover:bg-blue-700"
-                    >
-                        <Plus className="w-5 h-5" />
-                        Nouvel élève
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            onClick={() => router.get(route('students.import'))}
+                            className="gap-2"
+                        >
+                            <Upload className="w-4 h-4" />
+                            Importer
+                        </Button>
+                        <Button
+                            onClick={() => router.get(route('students.create'))}
+                            className="gap-2 bg-blue-600 hover:bg-blue-700"
+                        >
+                            <Plus className="w-5 h-5" />
+                            Nouvel élève
+                        </Button>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -412,9 +423,17 @@ export default function Index({ students, perPage, stats, filters }: Readonly<In
                                             </TableCell>
                                             <TableCell className="font-semibold text-gray-900">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
-                                                        <Users className="h-5 w-5 text-blue-600" />
-                                                    </div>
+                                                    {student.profile_photo ? (
+                                                        <img
+                                                            src={`/storage/${student.profile_photo}`}
+                                                            alt={`${student.firstname} ${student.lastname}`}
+                                                            className="h-10 w-10 rounded-full object-cover ring-1 ring-gray-200"
+                                                        />
+                                                    ) : (
+                                                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
+                                                            <Users className="h-5 w-5 text-blue-600" />
+                                                        </div>
+                                                    )}
                                                     <span>{student.firstname} {student.lastname}</span>
                                                 </div>
                                             </TableCell>

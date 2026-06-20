@@ -4,6 +4,7 @@ use App\Http\Controllers\AcademicPeriodController;
 use App\Http\Controllers\DocumentTemplateController;
 use App\Http\Controllers\FileStorageController;
 use App\Http\Controllers\OfficialExamController;
+use App\Http\Controllers\PromotionController;
 use App\Http\Controllers\RosterController;
 use App\Http\Controllers\TimetableController;
 use App\Http\Controllers\AcademicYearController;
@@ -115,8 +116,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('student-scholarships', StudentScholarshipController::class);
     Route::post('students/bulk-status', [StudentController::class, 'bulkStatus'])
         ->name('students.bulk-status');
+    // Statistiques élèves
+    Route::get('students-stats', [\App\Http\Controllers\StudentStatsController::class, 'index'])->name('students.stats');
+
+    // Import d'élèves (CSV)
+    Route::get('students-import', [\App\Http\Controllers\StudentImportController::class, 'index'])->name('students.import');
+    Route::get('students-import/template', [\App\Http\Controllers\StudentImportController::class, 'template'])->name('students.import.template');
+    Route::post('students-import', [\App\Http\Controllers\StudentImportController::class, 'store'])->name('students.import.store');
+
     Route::get('students/{student}/history', [StudentController::class, 'history'])
         ->name('students.history');
+    Route::post('students/{student}/change-class', [StudentController::class, 'changeClass'])
+        ->name('students.change-class');
+    Route::post('students/{student}/photo', [StudentController::class, 'uploadPhoto'])
+        ->name('students.photo.upload');
+    Route::delete('students/{student}/photo', [StudentController::class, 'deletePhoto'])
+        ->name('students.photo.delete');
     Route::resource('students', StudentController::class);
     Route::get('accounting', [AccountingController::class, 'index'])->name('accounting.index');
     Route::get('accounting/transactions', [TransactionController::class, 'index'])->name('accounting.transactions');
@@ -156,6 +171,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('settings/file-storage', [FileStorageController::class, 'index'])->name('file-storage.index');
     Route::post('settings/file-storage', [FileStorageController::class, 'update'])->name('file-storage.update');
     Route::post('settings/file-storage/test', [FileStorageController::class, 'test'])->name('file-storage.test');
+
+    // Passage de classe / réinscription en masse
+    Route::get('promotion', [PromotionController::class, 'index'])->name('promotion.index');
+    Route::post('promotion', [PromotionController::class, 'store'])->name('promotion.store');
 
     // Effectifs / Listes de classe
     Route::get('roster', [RosterController::class, 'index'])->name('roster.index');
