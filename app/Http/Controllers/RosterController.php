@@ -41,7 +41,7 @@ class RosterController extends Controller
 
         if ($yearId && $classId) {
             $rows = Enrollment::query()
-                ->with('student:id,firstname,lastname,matricule,gender')
+                ->with(['student:id,firstname,lastname,matricule,gender', 'invoice:id,enrollment_id,status'])
                 ->where('academic_year_id', $yearId)
                 ->where('class_id', $classId)
                 ->when($statusF && array_key_exists($statusF, Enrollment::ACADEMIC_STATUSES), fn ($q) => $q->where('academic_status', $statusF))
@@ -61,7 +61,7 @@ class RosterController extends Controller
                     'student_name'    => $e->student ? $e->student->lastname . ' ' . $e->student->firstname : '—',
                     'matricule'       => $e->student?->matricule,
                     'gender'          => $e->student?->gender,
-                    'payment_status'  => $e->status,
+                    'payment_status'  => $e->invoice?->status ?? 'NONE',
                     'academic_status' => $e->academic_status ?? 'en_cours',
                     'status_reason'   => $e->status_reason,
                 ])->values();

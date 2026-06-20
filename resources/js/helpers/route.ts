@@ -190,6 +190,7 @@ export function route(name: string, params?: any): string {
 
         // Payments routes
         'payments.receipt': `/payments/${params}/receipt`,
+        'receipts.verify':  '/receipts/verify',
 
         // Accounting routes
         'accounting.index':        '/accounting',

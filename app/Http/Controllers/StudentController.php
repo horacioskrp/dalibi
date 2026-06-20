@@ -225,6 +225,7 @@ class StudentController extends Controller
             ->with([
                 'classroom:id,name,code',
                 'academicYear:id,year',
+                'invoice:id,enrollment_id,status',
             ])
             ->where('student_id', $student->id)
             ->orderByDesc('enrollment_date')
@@ -239,7 +240,7 @@ class StudentController extends Controller
                 'academic_year' => $enrollment->academicYear?->year,
                 'enrollment_date' => $enrollment->enrollment_date?->format('Y-m-d'),
                 'enrollment_code' => $enrollment->enrollment_code,
-                'status' => $enrollment->status,
+                'status' => $enrollment->invoice?->status ?? 'NONE',
                 'academic_status' => $enrollment->academic_status ?? 'en_cours',
                 'academic_status_label' => Enrollment::ACADEMIC_STATUSES[$enrollment->academic_status ?? 'en_cours'] ?? '—',
                 'status_reason' => $enrollment->status_reason,

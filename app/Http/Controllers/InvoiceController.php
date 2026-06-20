@@ -9,6 +9,7 @@ use App\Models\Payment;
 use App\Services\InvoiceService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -56,6 +57,14 @@ class InvoiceController extends Controller
         $data = $request->validated();
         $data['created_by'] = auth()->id();
 
+        // Garde anti trop-perçu : le paiement ne peut excéder le reste dû
+        $remaining = (float) $invoice->amount_remaining;
+        if ((float) $data['amount'] > $remaining + 0.001) {
+            return back()->withErrors([
+                'amount' => 'Le montant dépasse le reste à payer (' . number_format($remaining, 0, ',', ' ') . ' F).',
+            ]);
+        }
+
         DB::transaction(function () use ($data, $invoice): void {
             $this->invoiceService->recordPayment($invoice, $data);
         });
@@ -81,6 +90,41 @@ class InvoiceController extends Controller
 
         return Inertia::render('Payments/Receipt', [
             'payment' => $payment,
+        ]);
+    }
+
+    /**
+     * Vérifie l'authenticité d'un reçu via son code unique (code-barres).
+     */
+    public function verifyReceipt(Request $request): Response
+    {
+        $code = trim($request->string('code')->toString());
+        $result = null;
+
+        if ($code !== '') {
+            $receipt = \App\Models\Receipt::with([
+                'payment.invoice.enrollment.student:id,firstname,lastname,matricule',
+                'payment.invoice.enrollment.classroom:id,name',
+                'payment.invoice.enrollment.academicYear:id,year',
+            ])->where('verification_code', $code)->first();
+
+            $result = $receipt && $receipt->payment ? [
+                'valid'          => true,
+                'receipt_number' => $receipt->receipt_number,
+                'amount'         => (float) $receipt->payment->amount,
+                'paid_at'        => $receipt->payment->paid_at?->format('d/m/Y'),
+                'student'        => $receipt->payment->invoice?->enrollment?->student
+                    ? $receipt->payment->invoice->enrollment->student->lastname . ' ' . $receipt->payment->invoice->enrollment->student->firstname
+                    : null,
+                'matricule'      => $receipt->payment->invoice?->enrollment?->student?->matricule,
+                'class_name'     => $receipt->payment->invoice?->enrollment?->classroom?->name,
+                'year'           => $receipt->payment->invoice?->enrollment?->academicYear?->year,
+            ] : ['valid' => false];
+        }
+
+        return Inertia::render('Payments/Verify', [
+            'code'   => $code,
+            'result' => $result,
         ]);
     }
 }

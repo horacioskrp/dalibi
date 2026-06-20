@@ -65,14 +65,15 @@ function formatDate(value?: string | null): string {
 
 function getStatusLabel(status?: string | null): string {
     if (!status) return '—';
-    if (status === 'paid') return 'Payé';
-    if (status === 'unpaid') return 'Impayé';
-    return status;
+    return ({
+        PAID: 'Payé', PARTIALLY_PAID: 'Partiel', ISSUED: 'Impayé', NONE: 'Sans facture',
+    } as Record<string, string>)[status] ?? status;
 }
 
 function getStatusClass(status?: string | null): string {
-    if (status === 'paid') return 'bg-emerald-100 text-emerald-700 border border-emerald-200';
-    if (status === 'unpaid') return 'bg-rose-100 text-rose-700 border border-rose-200';
+    if (status === 'PAID') return 'bg-emerald-100 text-emerald-700 border border-emerald-200';
+    if (status === 'PARTIALLY_PAID') return 'bg-amber-100 text-amber-700 border border-amber-200';
+    if (status === 'ISSUED') return 'bg-rose-100 text-rose-700 border border-rose-200';
     return 'bg-gray-100 text-gray-700 border border-gray-200';
 }
 
