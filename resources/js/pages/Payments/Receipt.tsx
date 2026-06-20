@@ -1,4 +1,5 @@
 import { Head } from '@inertiajs/react';
+import Barcode from 'react-barcode';
 
 type PaymentMethod = 'CASH' | 'MOBILE_MONEY' | 'BANK_TRANSFER' | 'CHEQUE';
 
@@ -28,7 +29,7 @@ interface Invoice {
     items: InvoiceItem[];
 }
 
-interface ReceiptRef { receipt_number: string; }
+interface ReceiptRef { receipt_number: string; verification_code?: string | null; }
 
 interface CreatedBy { firstname?: string | null; lastname?: string | null; email?: string | null; }
 
@@ -183,6 +184,22 @@ export default function PaymentReceipt({ payment }: Readonly<Props>) {
                                 </div>
                             )}
                         </div>
+                        {/* Code-barres anti-falsification */}
+                        {payment.receipt?.verification_code && (
+                            <div className="border-t border-dashed border-gray-200 pt-4 flex flex-col items-center">
+                                <Barcode
+                                    value={payment.receipt.verification_code}
+                                    format="CODE128"
+                                    height={48}
+                                    width={1.4}
+                                    fontSize={12}
+                                    margin={0}
+                                />
+                                <p className="text-[10px] text-gray-400 mt-1 text-center">
+                                    Code de vérification — scannez pour authentifier ce reçu
+                                </p>
+                            </div>
+                        )}
                     </div>
 
                     {/* Pied */}

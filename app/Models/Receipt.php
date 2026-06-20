@@ -14,6 +14,7 @@ class Receipt extends Model
     protected $fillable = [
         'payment_id',
         'receipt_number',
+        'verification_code',
         'printed_at',
         'printed_by',
     ];

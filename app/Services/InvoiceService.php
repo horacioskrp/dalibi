@@ -10,6 +10,7 @@ use App\Models\Payment;
 use App\Models\Receipt;
 use App\Models\StudentScholarship;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class InvoiceService
 {
@@ -94,8 +95,9 @@ class InvoiceService
             $payment = Payment::create($data);
 
             Receipt::create([
-                'payment_id'     => $payment->id,
-                'receipt_number' => $this->generateReceiptNumber(),
+                'payment_id'        => $payment->id,
+                'receipt_number'    => $this->generateReceiptNumber(),
+                'verification_code' => $this->generateVerificationCode(),
             ]);
 
             $invoice->recalculate();
@@ -115,21 +117,37 @@ class InvoiceService
     /* Générateurs de numéros uniques                                      */
     /* ------------------------------------------------------------------ */
 
+    /** Numéro de facture séquentiel par année : INV-AAAA-0001 */
     public function generateInvoiceNumber(): string
     {
+        $year = now()->format('Y');
         do {
-            $number = 'INV-' . now()->format('Y') . '-' . str_pad((string) random_int(1, 99999), 5, '0', STR_PAD_LEFT);
+            $seq    = Invoice::where('invoice_number', 'like', "INV-{$year}-%")->count() + 1;
+            $number = 'INV-' . $year . '-' . str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
         } while (Invoice::where('invoice_number', $number)->exists());
 
         return $number;
     }
 
+    /** Numéro de reçu séquentiel par année : REC-AAAA-0001 */
     public function generateReceiptNumber(): string
     {
+        $year = now()->format('Y');
         do {
-            $number = 'REC-' . now()->format('Y') . '-' . str_pad((string) random_int(1, 99999), 5, '0', STR_PAD_LEFT);
+            $seq    = Receipt::where('receipt_number', 'like', "REC-{$year}-%")->count() + 1;
+            $number = 'REC-' . $year . '-' . str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
         } while (Receipt::where('receipt_number', $number)->exists());
 
         return $number;
+    }
+
+    /** Code unique anti-falsification encodé dans le code-barres du reçu. */
+    public function generateVerificationCode(): string
+    {
+        do {
+            $code = 'DAL-' . strtoupper(Str::random(12));
+        } while (Receipt::where('verification_code', $code)->exists());
+
+        return $code;
     }
 }
