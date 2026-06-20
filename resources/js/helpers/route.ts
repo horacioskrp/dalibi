@@ -283,6 +283,7 @@ export function route(name: string, params?: any): string {
 
         // Roster / Effectifs
         'roster.index':         '/roster',
+        'roster.export':        '/roster/export',
         'roster.update-status': `/roster/${params}/status`,
         'roster.bulk-status':   '/roster/bulk-status',
 
