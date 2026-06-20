@@ -29,6 +29,11 @@ export const mainNavItems: NavItem[] = [
                 icon: ListChecks,
             },
             {
+                title: 'Passage de classe',
+                href: route('promotion.index'),
+                icon: ArrowLeftRight,
+            },
+            {
                 title: 'Bourses d\'étudiants',
                 href: route('student-scholarships.index'),
                 icon: Percent,

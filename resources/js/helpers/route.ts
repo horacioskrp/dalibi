@@ -266,6 +266,10 @@ export function route(name: string, params?: any): string {
         'students.photo.upload': `/students/${params}/photo`,
         'students.photo.delete': `/students/${params}/photo`,
 
+        // Promotion / Passage de classe
+        'promotion.index': '/promotion',
+        'promotion.store': '/promotion',
+
         // Roster / Effectifs
         'roster.index':         '/roster',
         'roster.update-status': `/roster/${params}/status`,

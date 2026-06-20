@@ -4,6 +4,7 @@ use App\Http\Controllers\AcademicPeriodController;
 use App\Http\Controllers\DocumentTemplateController;
 use App\Http\Controllers\FileStorageController;
 use App\Http\Controllers\OfficialExamController;
+use App\Http\Controllers\PromotionController;
 use App\Http\Controllers\RosterController;
 use App\Http\Controllers\TimetableController;
 use App\Http\Controllers\AcademicYearController;
@@ -160,6 +161,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('settings/file-storage', [FileStorageController::class, 'index'])->name('file-storage.index');
     Route::post('settings/file-storage', [FileStorageController::class, 'update'])->name('file-storage.update');
     Route::post('settings/file-storage/test', [FileStorageController::class, 'test'])->name('file-storage.test');
+
+    // Passage de classe / réinscription en masse
+    Route::get('promotion', [PromotionController::class, 'index'])->name('promotion.index');
+    Route::post('promotion', [PromotionController::class, 'store'])->name('promotion.store');
 
     // Effectifs / Listes de classe
     Route::get('roster', [RosterController::class, 'index'])->name('roster.index');
