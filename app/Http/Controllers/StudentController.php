@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -257,5 +258,43 @@ class StudentController extends Controller
 
         return redirect()->route('students.index')
             ->with('success', 'Élève supprimé avec succès.');
+    }
+
+    /**
+     * Téléverse / remplace la photo de profil de l'élève.
+     */
+    public function uploadPhoto(Request $request, Student $student): RedirectResponse
+    {
+        $this->authorize('update', $student);
+
+        $request->validate([
+            'photo' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+        ]);
+
+        // Supprime l'ancienne photo si présente
+        if ($student->profile_photo) {
+            Storage::disk('media')->delete($student->profile_photo);
+        }
+
+        $student->update([
+            'profile_photo' => $request->file('photo')->store('students/photos', 'media'),
+        ]);
+
+        return back()->with('success', 'Photo mise à jour.');
+    }
+
+    /**
+     * Supprime la photo de profil de l'élève.
+     */
+    public function deletePhoto(Student $student): RedirectResponse
+    {
+        $this->authorize('update', $student);
+
+        if ($student->profile_photo) {
+            Storage::disk('media')->delete($student->profile_photo);
+            $student->update(['profile_photo' => null]);
+        }
+
+        return back()->with('success', 'Photo supprimée.');
     }
 }

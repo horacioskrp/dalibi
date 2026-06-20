@@ -262,6 +262,10 @@ export function route(name: string, params?: any): string {
         'file-storage.update': '/settings/file-storage',
         'file-storage.test':   '/settings/file-storage/test',
 
+        // Student photo
+        'students.photo.upload': `/students/${params}/photo`,
+        'students.photo.delete': `/students/${params}/photo`,
+
         // Roster / Effectifs
         'roster.index':         '/roster',
         'roster.update-status': `/roster/${params}/status`,

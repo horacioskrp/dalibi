@@ -117,6 +117,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('students.bulk-status');
     Route::get('students/{student}/history', [StudentController::class, 'history'])
         ->name('students.history');
+    Route::post('students/{student}/photo', [StudentController::class, 'uploadPhoto'])
+        ->name('students.photo.upload');
+    Route::delete('students/{student}/photo', [StudentController::class, 'deletePhoto'])
+        ->name('students.photo.delete');
     Route::resource('students', StudentController::class);
     Route::get('accounting', [AccountingController::class, 'index'])->name('accounting.index');
     Route::get('accounting/transactions', [TransactionController::class, 'index'])->name('accounting.transactions');

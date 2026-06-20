@@ -33,6 +33,7 @@ interface Student {
     nationality?: string | null;
     phone?: string | null;
     email?: string | null;
+    profile_photo?: string | null;
     active: boolean;
     user?: {
         id: string;
@@ -412,9 +413,17 @@ export default function Index({ students, perPage, stats, filters }: Readonly<In
                                             </TableCell>
                                             <TableCell className="font-semibold text-gray-900">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
-                                                        <Users className="h-5 w-5 text-blue-600" />
-                                                    </div>
+                                                    {student.profile_photo ? (
+                                                        <img
+                                                            src={`/storage/${student.profile_photo}`}
+                                                            alt={`${student.firstname} ${student.lastname}`}
+                                                            className="h-10 w-10 rounded-full object-cover ring-1 ring-gray-200"
+                                                        />
+                                                    ) : (
+                                                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
+                                                            <Users className="h-5 w-5 text-blue-600" />
+                                                        </div>
+                                                    )}
                                                     <span>{student.firstname} {student.lastname}</span>
                                                 </div>
                                             </TableCell>

@@ -18,7 +18,8 @@ import {
     ShieldAlert,
     Clock3,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { Camera, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
@@ -111,6 +112,24 @@ export default function Show({ student, documentContext, issuedDocuments }: Read
     const [classe, setClasse] = useState(documentContext?.classe ?? '');
     const [annee, setAnnee] = useState(documentContext?.annee_scolaire ?? '');
 
+    const photoRef = useRef<HTMLInputElement>(null);
+    const photoUrl = student.profile_photo ? `/storage/${student.profile_photo}` : null;
+    const initials = `${student.firstname?.[0] ?? ''}${student.lastname?.[0] ?? ''}`.toUpperCase();
+
+    const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        router.post(route('students.photo.upload', student.id), { photo: file }, {
+            forceFormData: true,
+            preserveScroll: true,
+            onFinish: () => { if (photoRef.current) photoRef.current.value = ''; },
+        });
+    };
+
+    const handlePhotoDelete = () => {
+        router.delete(route('students.photo.delete', student.id), { preserveScroll: true });
+    };
+
     // Génère et télécharge le PDF via une soumission de formulaire native (download).
     const handleGenerate = () => {
         if (!templateId) return;
@@ -168,6 +187,43 @@ export default function Show({ student, documentContext, issuedDocuments }: Read
                             <Pencil className="w-4 h-4" />
                             Modifier
                         </Button>
+                    </div>
+                </div>
+
+                {/* Photo + identité */}
+                <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm flex items-center gap-5">
+                    <div className="relative group shrink-0">
+                        {photoUrl ? (
+                            <img src={photoUrl} alt={`${student.firstname} ${student.lastname}`} className="w-24 h-24 rounded-2xl object-cover ring-1 ring-gray-200" />
+                        ) : (
+                            <div className="w-24 h-24 rounded-2xl bg-blue-100 flex items-center justify-center text-2xl font-bold text-blue-600 ring-1 ring-blue-200">
+                                {initials || <UserCircle2 className="w-10 h-10" />}
+                            </div>
+                        )}
+                        <button
+                            type="button"
+                            onClick={() => photoRef.current?.click()}
+                            className="absolute -bottom-2 -right-2 w-9 h-9 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center shadow-md ring-2 ring-white"
+                            title="Changer la photo"
+                        >
+                            <Camera className="w-4 h-4" />
+                        </button>
+                        <input ref={photoRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handlePhotoChange} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <h2 className="text-2xl font-bold text-gray-900 truncate">{student.firstname} {student.lastname}</h2>
+                        <p className="text-sm text-gray-500 font-mono mt-0.5">{student.matricule ?? '—'}</p>
+                        <div className="flex items-center gap-2 mt-2">
+                            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => photoRef.current?.click()}>
+                                <Camera className="w-3.5 h-3.5" /> {photoUrl ? 'Changer' : 'Ajouter une photo'}
+                            </Button>
+                            {photoUrl && (
+                                <Button variant="outline" size="sm" className="gap-1.5 border-red-200 text-red-500 hover:bg-red-50" onClick={handlePhotoDelete}>
+                                    <Trash2 className="w-3.5 h-3.5" /> Retirer
+                                </Button>
+                            )}
+                        </div>
+                        <p className="text-xs text-gray-400 mt-1">JPG, PNG ou WebP — max 2 Mo</p>
                     </div>
                 </div>
 
