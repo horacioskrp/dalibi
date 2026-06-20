@@ -164,6 +164,15 @@ class StudentController extends Controller
                 'issued_at'        => $i->issued_at?->format('d/m/Y H:i'),
             ]);
 
+        // Inscription de l'année active (pour la réaffectation de classe)
+        $activeYear = \App\Models\AcademicYear::where('active', true)->first(['id', 'year']);
+        $currentEnrollment = $activeYear
+            ? Enrollment::with('classroom:id,name,code')
+                ->where('student_id', $student->id)
+                ->where('academic_year_id', $activeYear->id)
+                ->first()
+            : null;
+
         return Inertia::render('Students/Show', [
             'student' => $student,
             'documentContext' => [
@@ -172,7 +181,40 @@ class StudentController extends Controller
                 'annee_scolaire' => $latestEnrollment?->academicYear?->year,
             ],
             'issuedDocuments' => $issued,
+            'currentEnrollment' => $currentEnrollment ? [
+                'id'         => $currentEnrollment->id,
+                'class_id'   => $currentEnrollment->class_id,
+                'class_name' => $currentEnrollment->classroom?->name,
+                'class_code' => $currentEnrollment->classroom?->code,
+                'year'       => $activeYear?->year,
+            ] : null,
+            'classrooms' => \App\Models\Classroom::where('active', true)->orderBy('name')->get(['id', 'name', 'code']),
         ]);
+    }
+
+    /**
+     * Réaffecte l'élève à une autre classe pour l'année active.
+     */
+    public function changeClass(Request $request, Student $student): RedirectResponse
+    {
+        $this->authorize('update', $student);
+
+        $validated = $request->validate([
+            'class_id' => ['required', 'uuid', 'exists:classes,id'],
+        ]);
+
+        $activeYear = \App\Models\AcademicYear::where('active', true)->first(['id']);
+        abort_unless($activeYear, 422, 'Aucune année académique active.');
+
+        $enrollment = Enrollment::where('student_id', $student->id)
+            ->where('academic_year_id', $activeYear->id)
+            ->first();
+
+        abort_unless($enrollment, 422, 'Cet élève n\'a pas d\'inscription pour l\'année active.');
+
+        $enrollment->update(['class_id' => $validated['class_id']]);
+
+        return back()->with('success', 'Élève réaffecté à la nouvelle classe.');
     }
 
     public function history(Student $student): Response

@@ -116,6 +116,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('student-scholarships', StudentScholarshipController::class);
     Route::post('students/bulk-status', [StudentController::class, 'bulkStatus'])
         ->name('students.bulk-status');
+    // Statistiques élèves
+    Route::get('students-stats', [\App\Http\Controllers\StudentStatsController::class, 'index'])->name('students.stats');
+
     // Import d'élèves (CSV)
     Route::get('students-import', [\App\Http\Controllers\StudentImportController::class, 'index'])->name('students.import');
     Route::get('students-import/template', [\App\Http\Controllers\StudentImportController::class, 'template'])->name('students.import.template');
@@ -123,6 +126,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('students/{student}/history', [StudentController::class, 'history'])
         ->name('students.history');
+    Route::post('students/{student}/change-class', [StudentController::class, 'changeClass'])
+        ->name('students.change-class');
     Route::post('students/{student}/photo', [StudentController::class, 'uploadPhoto'])
         ->name('students.photo.upload');
     Route::delete('students/{student}/photo', [StudentController::class, 'deletePhoto'])

@@ -34,6 +34,11 @@ export const mainNavItems: NavItem[] = [
                 icon: ArrowLeftRight,
             },
             {
+                title: 'Statistiques élèves',
+                href: route('students.stats'),
+                icon: BarChart3,
+            },
+            {
                 title: 'Bourses d\'étudiants',
                 href: route('student-scholarships.index'),
                 icon: Percent,
