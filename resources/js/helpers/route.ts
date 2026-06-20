@@ -262,6 +262,11 @@ export function route(name: string, params?: any): string {
         'file-storage.update': '/settings/file-storage',
         'file-storage.test':   '/settings/file-storage/test',
 
+        // Student import
+        'students.import':          '/students-import',
+        'students.import.template': '/students-import/template',
+        'students.import.store':    '/students-import',
+
         // Student photo
         'students.photo.upload': `/students/${params}/photo`,
         'students.photo.delete': `/students/${params}/photo`,
