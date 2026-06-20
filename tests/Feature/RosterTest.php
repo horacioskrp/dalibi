@@ -113,6 +113,20 @@ class RosterTest extends TestCase
         $this->assertCount(1, $props['studentsWithStatus']);
     }
 
+    public function test_export_returns_pdf(): void
+    {
+        $this->enroll('R001');
+
+        $response = $this->actingAs($this->admin())
+            ->get(route('roster.export', [
+                'academic_year_id' => $this->year->id,
+                'class_id'         => $this->class->id,
+            ]));
+
+        $response->assertOk();
+        $this->assertEquals('application/pdf', $response->headers->get('content-type'));
+    }
+
     public function test_invalid_status_rejected(): void
     {
         $enr = $this->enroll();

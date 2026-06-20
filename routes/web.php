@@ -178,6 +178,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Effectifs / Listes de classe
     Route::get('roster', [RosterController::class, 'index'])->name('roster.index');
+    Route::get('roster/export', [RosterController::class, 'export'])->name('roster.export');
     Route::patch('roster/{enrollment}/status', [RosterController::class, 'updateStatus'])->name('roster.update-status');
     Route::post('roster/bulk-status', [RosterController::class, 'bulkStatus'])->name('roster.bulk-status');
 

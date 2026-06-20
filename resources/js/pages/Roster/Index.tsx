@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { CheckCircle2, GraduationCap, Search, Settings2, Users, X, XCircle } from 'lucide-react';
+import { CheckCircle2, Download, GraduationCap, Search, Settings2, Users, X, XCircle } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -102,9 +102,23 @@ export default function Index({ years, classrooms, enrollments, stats, statuses,
             <Head title="Effectifs / Listes de classe" />
             <div className="w-full space-y-6">
 
-                <div>
-                    <h1 className="text-4xl font-bold tracking-tight text-gray-900">Effectifs / Listes de classe</h1>
-                    <p className="mt-2 text-gray-500">Élèves par année et classe, suivi de scolarité (validation, abandon, transfert).</p>
+                <div className="flex items-start justify-between gap-4 flex-wrap">
+                    <div>
+                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Effectifs / Listes de classe</h1>
+                        <p className="mt-2 text-gray-500">Élèves par année et classe, suivi de scolarité (validation, abandon, transfert).</p>
+                    </div>
+                    {ready && (
+                        <Button
+                            className="gap-2 bg-emerald-600 hover:bg-emerald-700"
+                            onClick={() => {
+                                const params = new URLSearchParams({ academic_year_id: yearId, class_id: classId });
+                                if (statusF !== ALL) params.set('academic_status', statusF);
+                                window.open(`${route('roster.export')}?${params.toString()}`, '_blank');
+                            }}
+                        >
+                            <Download className="w-4 h-4" /> Exporter en PDF
+                        </Button>
+                    )}
                 </div>
 
                 {/* Filtres */}
