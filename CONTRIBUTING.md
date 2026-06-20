@@ -1,6 +1,6 @@
-# Guide de Contribution à Ecolio
+# Guide de Contribution à Dalibi
 
-Merci d'avoir l'intention de contribuer à Ecolio! Ce document fournit des directives et des stratégies pour contribuer efficacement au projet.
+Merci d'avoir l'intention de contribuer à Dalibi! Ce document fournit des directives et des stratégies pour contribuer efficacement au projet.
 
 ## Code de Conduite
 
@@ -68,6 +68,56 @@ Les suggestions d'améliorations sont bienvenues:
     - Type de changement (bugfix, feature, documentation)
     - Tests effectués
     - Checklist de vérification
+
+## Convention de Commits (Conventional Commits)
+
+Tous les messages de commit **doivent** suivre ce format :
+
+```
+<type>(<portée>): <description courte à l'impératif>
+
+[corps optionnel : explique le pourquoi, les détails]
+```
+
+### Types autorisés
+
+| Type | Usage |
+|------|-------|
+| `feat` | Nouvelle fonctionnalité |
+| `fix` | Correction de bug |
+| `refactor` | Refactorisation sans changement de comportement |
+| `style` | Mise en forme / UI (aucune logique modifiée) |
+| `test` | Ajout ou correction de tests |
+| `docs` | Documentation |
+| `chore` | Maintenance, configuration, dépendances |
+
+### Portée (`scope`)
+
+Le module concerné : `eleves`, `effectifs`, `presences`, `notes`, `examens`,
+`bulletins`, `documents`, `comptabilite`, `parametres`, `ecole`, etc.
+
+### Exemples
+
+```
+feat(effectifs): listes par annee/classe + statut academique
+fix(ecole): edition avec upload via POST + _method=put
+refactor(notes): Grade base sur academic_period_id au lieu de term
+test(roster): couverture du marquage d'abandon
+docs(readme): mise a jour des fonctionnalites
+```
+
+> ⚠️ **Aucune empreinte d'outil ou d'IA** dans les messages de commit (pas de
+> `Co-Authored-By` généré). Le commit reflète l'auteur humain de la contribution.
+
+### Commentaires de code
+
+- Documentent **le pourquoi**, pas le « quoi » évident.
+- Rédigés en **français**, comme le reste du code métier.
+- Toute décision technique non triviale (contournement, contrainte, sécurité) est commentée.
+
+  ```php
+  // PUT multipart non parsé par PHP : on passe par POST + _method=put.
+  ```
 
 ## Processus de Pull Request
 
@@ -202,4 +252,4 @@ public function test_user_can_create_student()
 
 ---
 
-Merci de contribuer à rendre Ecolio meilleur! 🙏
+Merci de contribuer à rendre Dalibi meilleur! 🙏

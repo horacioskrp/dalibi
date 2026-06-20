@@ -262,6 +262,11 @@ export function route(name: string, params?: any): string {
         'file-storage.update': '/settings/file-storage',
         'file-storage.test':   '/settings/file-storage/test',
 
+        // Roster / Effectifs
+        'roster.index':         '/roster',
+        'roster.update-status': `/roster/${params}/status`,
+        'roster.bulk-status':   '/roster/bulk-status',
+
         // Timetable
         'timetable.index':   '/timetable',
         'timetable.export':  `/timetable/${params}/export`,

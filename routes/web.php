@@ -4,6 +4,7 @@ use App\Http\Controllers\AcademicPeriodController;
 use App\Http\Controllers\DocumentTemplateController;
 use App\Http\Controllers\FileStorageController;
 use App\Http\Controllers\OfficialExamController;
+use App\Http\Controllers\RosterController;
 use App\Http\Controllers\TimetableController;
 use App\Http\Controllers\AcademicYearController;
 use App\Http\Controllers\ClassroomController;
@@ -155,6 +156,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('settings/file-storage', [FileStorageController::class, 'index'])->name('file-storage.index');
     Route::post('settings/file-storage', [FileStorageController::class, 'update'])->name('file-storage.update');
     Route::post('settings/file-storage/test', [FileStorageController::class, 'test'])->name('file-storage.test');
+
+    // Effectifs / Listes de classe
+    Route::get('roster', [RosterController::class, 'index'])->name('roster.index');
+    Route::patch('roster/{enrollment}/status', [RosterController::class, 'updateStatus'])->name('roster.update-status');
+    Route::post('roster/bulk-status', [RosterController::class, 'bulkStatus'])->name('roster.bulk-status');
 
     // Timetable (emploi du temps)
     Route::get('timetable', [TimetableController::class, 'index'])->name('timetable.index');

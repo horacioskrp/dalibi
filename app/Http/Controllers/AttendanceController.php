@@ -44,9 +44,10 @@ class AttendanceController extends Controller
                 ->with('records')
                 ->first();
 
-            // Élèves inscrits dans la classe pour l'année active
+            // Élèves inscrits dans la classe pour l'année active (hors abandon / transfert)
             $enrollments = Enrollment::where('enrollments.class_id', $classroomId)
                 ->where('enrollments.academic_year_id', $activeYear?->id)
+                ->whereIn('enrollments.academic_status', Enrollment::ACTIVE_ACADEMIC_STATUSES)
                 ->join('students', 'students.id', '=', 'enrollments.student_id')
                 ->orderBy('students.lastname')
                 ->orderBy('students.firstname')

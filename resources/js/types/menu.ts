@@ -24,6 +24,11 @@ export const mainNavItems: NavItem[] = [
                 icon: ClipboardList,
             },
             {
+                title: 'Effectifs / Listes',
+                href: route('roster.index'),
+                icon: ListChecks,
+            },
+            {
                 title: 'Bourses d\'étudiants',
                 href: route('student-scholarships.index'),
                 icon: Percent,
