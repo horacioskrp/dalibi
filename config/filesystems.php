@@ -47,6 +47,21 @@ return [
             'report' => false,
         ],
 
+        /*
+        | Disque "media" — disque centralisé de TOUS les uploads de l'app
+        | (logos d'école, photos d'élèves, etc.). Valeur par défaut = local ;
+        | FileStorageServiceProvider le remplace par S3 si configuré dans
+        | Paramètres → Fichiers & Stockage. Toujours défini (web, console, file d'attente).
+        */
+        'media' => [
+            'driver' => 'local',
+            'root' => storage_path('app/public'),
+            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',
+            'visibility' => 'public',
+            'throw' => false,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),
