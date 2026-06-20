@@ -6,9 +6,12 @@ use App\Constants\Roles;
 use App\Models\AcademicYear;
 use App\Models\Classroom;
 use App\Models\Enrollment;
+use App\Models\School;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -85,6 +88,41 @@ class RosterController extends Controller
             ],
             'canManage'    => $request->user()->hasAnyRole(self::MANAGE_ROLES),
         ]);
+    }
+
+    public function export(Request $request)
+    {
+        abort_unless($request->user()->hasAnyRole(self::MANAGE_ROLES), 403);
+
+        $validated = $request->validate([
+            'academic_year_id' => ['required', 'uuid', 'exists:academic_years,id'],
+            'class_id'         => ['required', 'uuid', 'exists:classes,id'],
+            'academic_status'  => ['nullable', 'string'],
+        ]);
+
+        $year      = AcademicYear::findOrFail($validated['academic_year_id']);
+        $classroom = Classroom::findOrFail($validated['class_id']);
+        $statusF   = $validated['academic_status'] ?? '';
+
+        $students = Enrollment::with('student:id,firstname,lastname,matricule,gender,birth_date')
+            ->where('academic_year_id', $year->id)
+            ->where('class_id', $classroom->id)
+            ->when($statusF && array_key_exists($statusF, Enrollment::ACADEMIC_STATUSES), fn ($q) => $q->where('academic_status', $statusF))
+            ->get()
+            ->sortBy(fn ($e) => $e->student?->lastname)
+            ->values();
+
+        $school = School::where('active', true)->first() ?? School::query()->first();
+
+        $pdf = Pdf::loadView('exports.roster', [
+            'school'    => $school,
+            'classroom' => $classroom,
+            'year'      => $year,
+            'students'  => $students,
+            'statuses'  => Enrollment::ACADEMIC_STATUSES,
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->stream('effectifs-' . Str::slug($classroom->name . '-' . $year->year) . '.pdf');
     }
 
     public function updateStatus(Request $request, Enrollment $enrollment): RedirectResponse
