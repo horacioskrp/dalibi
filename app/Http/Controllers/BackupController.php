@@ -75,6 +75,35 @@ class BackupController extends Controller
         );
     }
 
+    public function restore(Request $request): RedirectResponse
+    {
+        $this->authorizeAdmin($request);
+
+        $request->validate([
+            'file' => ['required', 'file', 'max:51200'], // 50 Mo
+        ], [
+            'file.required' => 'Sélectionnez un fichier de sauvegarde.',
+            'file.max'      => 'Le fichier ne doit pas dépasser 50 Mo.',
+        ]);
+
+        $ext = strtolower($request->file('file')->getClientOriginalExtension());
+        if (! in_array($ext, ['json', 'sql'], true)) {
+            return back()->withErrors(['file' => 'Format non supporté : choisissez un fichier .json ou .sql.']);
+        }
+
+        try {
+            $result = $this->service->restore($request->file('file'));
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Échec de la restauration : ' . $e->getMessage());
+        }
+
+        $detail = isset($result['rows'])
+            ? "{$result['tables']} tables, {$result['rows']} lignes"
+            : "{$result['tables']} tables";
+
+        return back()->with('success', "Restauration effectuée ({$detail}). Une sauvegarde de sécurité a été créée au préalable.");
+    }
+
     public function download(Request $request, Backup $backup)
     {
         $this->authorizeAdmin($request);
