@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { Plus, Pencil, Trash2, Search, DollarSign, Eye, ChevronLeft, ChevronRight, X, Layers, School, TrendingUp } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, DollarSign, Eye, ChevronLeft, ChevronRight, X, Layers, School, TrendingUp, Copy } from 'lucide-react';
 import { useState } from 'react';
 import {
     AlertDialog,
@@ -10,6 +10,13 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -96,6 +103,21 @@ export default function Index({ feeStructures, academicYears, feeCategories, cla
     const [minAmount, setMinAmount] = useState(filters.min_amount || '');
     const [maxAmount, setMaxAmount] = useState(filters.max_amount || '');
 
+    const activeYear = academicYears.find((y) => y.active) ?? null;
+    const [replicateOpen, setReplicateOpen] = useState(false);
+    const [sourceYearId, setSourceYearId] = useState('');
+    const [replicating, setReplicating] = useState(false);
+
+    const handleReplicate = () => {
+        if (!sourceYearId) return;
+        setReplicating(true);
+        router.post(route('fee-structures.replicate'), { source_year_id: sourceYearId }, {
+            preserveScroll: true,
+            onSuccess: () => { setReplicateOpen(false); setSourceYearId(''); },
+            onFinish: () => setReplicating(false),
+        });
+    };
+
     const formatMoney = (amount: number) => {
         return new Intl.NumberFormat('fr-FR', {
             style: 'currency',
@@ -180,13 +202,23 @@ export default function Index({ feeStructures, academicYears, feeCategories, cla
                             Gérez les montants des frais par catégorie, classe et année académique
                         </p>
                     </div>
-                    <Button 
-                        onClick={() => router.visit(route('fee-structures.create'))}
-                        className="bg-blue-600 hover:bg-blue-700 text-white"
-                    >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Nouvelle structure
-                    </Button>
+                    <div className="flex gap-3">
+                        <Button
+                            variant="outline"
+                            onClick={() => setReplicateOpen(true)}
+                            className="border-indigo-300 text-indigo-600 hover:bg-indigo-50"
+                        >
+                            <Copy className="h-4 w-4 mr-2" />
+                            Répliquer une année
+                        </Button>
+                        <Button
+                            onClick={() => router.visit(route('fee-structures.create'))}
+                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                        >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Nouvelle structure
+                        </Button>
+                    </div>
                 </div>
 
                 {/* Message de succès */}
@@ -484,6 +516,56 @@ export default function Index({ feeStructures, academicYears, feeCategories, cla
                     </div>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* Modal de réplication d'une année vers l'année active */}
+            <Dialog open={replicateOpen} onOpenChange={setReplicateOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Répliquer les structures de frais</DialogTitle>
+                        <DialogDescription>
+                            Copie toutes les structures (et leurs tranches) d'une année vers l'année active.
+                            Les combinaisons catégorie / classe déjà présentes sont ignorées.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {activeYear ? (
+                        <div className="space-y-4 py-2">
+                            <div className="rounded-lg bg-indigo-50 ring-1 ring-indigo-100 p-3 text-sm">
+                                <span className="text-gray-600">Année cible (active) :</span>
+                                <span className="font-semibold text-indigo-700 ml-2">{activeYear.year}</span>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-700">Année source *</label>
+                                <Select value={sourceYearId} onValueChange={setSourceYearId}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Choisir l'année à copier" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {academicYears.filter((y) => y.id !== activeYear.id).map((y) => (
+                                            <SelectItem key={y.id} value={y.id}>{y.year}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="flex justify-end gap-2 pt-2">
+                                <Button variant="outline" onClick={() => setReplicateOpen(false)}>Annuler</Button>
+                                <Button
+                                    onClick={handleReplicate}
+                                    disabled={!sourceYearId || replicating}
+                                    className="bg-indigo-600 hover:bg-indigo-700"
+                                >
+                                    <Copy className="h-4 w-4 mr-2" />
+                                    {replicating ? 'Réplication...' : 'Répliquer'}
+                                </Button>
+                            </div>
+                        </div>
+                    ) : (
+                        <p className="text-sm text-red-600 py-4">
+                            Aucune année académique active. Activez une année avant de répliquer.
+                        </p>
+                    )}
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }
