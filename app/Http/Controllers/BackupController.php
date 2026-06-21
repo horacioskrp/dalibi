@@ -45,7 +45,7 @@ class BackupController extends Controller
                 'created_at' => $b->created_at?->format('d/m/Y H:i'),
             ]);
 
-        return Inertia::render('Settings/Backups', [
+        return Inertia::render('settings/Backups', [
             'backups'        => $backups,
             'settings'       => BackupSetting::allSettings(),
             'storageDriver'  => FileStorageSetting::get('driver', 'local') === 's3' ? 's3' : 'local',
