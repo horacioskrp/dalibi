@@ -7,11 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { route } from '@/helpers/route';
 import AppLayout from '@/layouts/app-layout';
 
-interface AcademicYear {
-    id: string;
-    year: string;
-}
-
 interface FeeCategory {
     id: string;
     name: string;
@@ -24,14 +19,14 @@ interface Classroom {
 }
 
 interface CreateProps {
-    academicYears: AcademicYear[];
+    activeYear: { id: string; year: string } | null;
     feeCategories: FeeCategory[];
     classrooms: Classroom[];
 }
 
-export default function Create({ academicYears, feeCategories, classrooms }: Readonly<CreateProps>) {
+export default function Create({ activeYear, feeCategories, classrooms }: Readonly<CreateProps>) {
     const { data, setData, post, processing, errors } = useForm({
-        academic_year_id: '',
+        academic_year_id: activeYear?.id ?? '',
         fee_category_id: '',
         class_id: '',
         amount: '',
@@ -76,24 +71,16 @@ export default function Create({ academicYears, feeCategories, classrooms }: Rea
                             <p className="text-sm font-semibold">Contexte académique</p>
                         </div>
                         <div className="space-y-2">
-                        <Label htmlFor="academic_year_id">
-                            Année académique <span className="text-red-600">*</span>
-                        </Label>
-                        <Select
-                            value={data.academic_year_id}
-                            onValueChange={(value) => setData('academic_year_id', value)}
-                        >
-                            <SelectTrigger id="academic_year_id" className="border-slate-200 bg-white/90">
-                                <SelectValue placeholder="Sélectionner une année académique" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {academicYears.map((year) => (
-                                    <SelectItem key={year.id} value={year.id}>
-                                        {year.year}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <Label>Année académique active</Label>
+                        {activeYear ? (
+                            <div className="flex items-center gap-2 rounded-md border border-slate-200 bg-white/90 px-3 py-2">
+                                <span className="text-base font-semibold text-gray-900">{activeYear.year}</span>
+                                <span className="text-xs rounded-full bg-indigo-100 text-indigo-700 px-2 py-0.5">active</span>
+                            </div>
+                        ) : (
+                            <p className="text-sm text-red-600">Aucune année académique active. Activez-en une d'abord.</p>
+                        )}
+                        <p className="text-xs text-gray-500">La structure est automatiquement rattachée à l'année active.</p>
                         {errors.academic_year_id && (
                             <p className="text-sm text-red-600">{errors.academic_year_id}</p>
                         )}
@@ -198,7 +185,7 @@ export default function Create({ academicYears, feeCategories, classrooms }: Rea
                         </Button>
                         <Button
                             type="submit"
-                            disabled={processing}
+                            disabled={processing || !activeYear}
                             className="bg-blue-600 hover:bg-blue-700"
                         >
                             {processing ? 'Enregistrement...' : 'Enregistrer'}

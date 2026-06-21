@@ -61,11 +61,13 @@ interface ShowProps {
     feeStructure: FeeStructure;
 }
 
+const uid = () => (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2));
+
 export default function Show({ feeStructure }: Readonly<ShowProps>) {
     const [deleteConfirm, setDeleteConfirm] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [installmentsModal, setInstallmentsModal] = useState(false);
-    const [newInstallments, setNewInstallments] = useState<Array<{name: string, installment_number: string, amount: string}>>([{name: '', installment_number: '1', amount: '0'}]);
+    const [newInstallments, setNewInstallments] = useState<Array<{uid: string, name: string, installment_number: string, amount: string}>>([{uid: uid(), name: '', installment_number: '1', amount: '0'}]);
     const [installmentsError, setInstallmentsError] = useState<string>('');
 
     // Calculer le total des tranches
@@ -79,7 +81,7 @@ export default function Show({ feeStructure }: Readonly<ShowProps>) {
 
     const addInstallmentRow = () => {
         const nextNumber = Math.max(...newInstallments.map(inst => Number.parseInt(inst.installment_number, 10) || 0), 0) + 1;
-        const updated = [...newInstallments, {name: '', installment_number: nextNumber.toString(), amount: '0'}];
+        const updated = [...newInstallments, {uid: uid(), name: '', installment_number: nextNumber.toString(), amount: '0'}];
         setNewInstallments(updated);
 
         // Vérifier le total
@@ -188,12 +190,13 @@ export default function Show({ feeStructure }: Readonly<ShowProps>) {
                                 // Pré-remplir avec les tranches existantes ou une tranche vide
                                 if (feeStructure.installments && feeStructure.installments.length > 0) {
                                     setNewInstallments(feeStructure.installments.map(inst => ({
+                                        uid: uid(),
                                         name: inst.name,
                                         installment_number: inst.installment_number.toString(),
                                         amount: inst.amount.toString()
                                     })));
                                 } else {
-                                    setNewInstallments([{name: '', installment_number: '1', amount: '0'}]);
+                                    setNewInstallments([{uid: uid(), name: '', installment_number: '1', amount: '0'}]);
                                 }
                                 setInstallmentsModal(true);
                             }}
@@ -319,12 +322,13 @@ export default function Show({ feeStructure }: Readonly<ShowProps>) {
                                             // Pré-remplir avec les tranches existantes ou une tranche vide
                                             if (feeStructure.installments && feeStructure.installments.length > 0) {
                                                 setNewInstallments(feeStructure.installments.map(inst => ({
+                                                    uid: uid(),
                                                     name: inst.name,
                                                     installment_number: inst.installment_number.toString(),
                                                     amount: inst.amount.toString()
                                                 })));
                                             } else {
-                                                setNewInstallments([{name: '', installment_number: '1', amount: '0'}]);
+                                                setNewInstallments([{uid: uid(), name: '', installment_number: '1', amount: '0'}]);
                                             }
                                             setInstallmentsModal(true);
                                         }}
@@ -467,13 +471,12 @@ export default function Show({ feeStructure }: Readonly<ShowProps>) {
 
                         <div className="space-y-3">
                             {newInstallments.map((installment, index) => {
-                                const rowKey = `${installment.installment_number}-${installment.name}-${installment.amount}`;
                                 const nameId = `installment-name-${index}`;
                                 const numberId = `installment-number-${index}`;
                                 const amountId = `installment-amount-${index}`;
 
                                 return (
-                                <div key={rowKey} className="flex gap-3 items-end">
+                                <div key={installment.uid} className="flex gap-3 items-end">
                                     <div className="flex-1">
                                         <label htmlFor={nameId} className="block text-sm font-medium text-gray-700 mb-1">
                                             Nom de la tranche
@@ -544,7 +547,7 @@ export default function Show({ feeStructure }: Readonly<ShowProps>) {
                                 variant="outline"
                                 onClick={() => {
                                     setInstallmentsModal(false);
-                                    setNewInstallments([{name: '', installment_number: '1', amount: '0'}]);
+                                    setNewInstallments([{uid: uid(), name: '', installment_number: '1', amount: '0'}]);
                                 }}
                             >
                                 Annuler
@@ -568,10 +571,14 @@ export default function Show({ feeStructure }: Readonly<ShowProps>) {
                                     router.post(route('fee-structures.installments.store-multiple', feeStructure.id), {
                                         installments: validInstallments,
                                     }, {
+                                        preserveScroll: true,
                                         onSuccess: () => {
                                             setInstallmentsModal(false);
-                                            setNewInstallments([{name: '', installment_number: '1', amount: '0'}]);
+                                            setNewInstallments([{uid: uid(), name: '', installment_number: '1', amount: '0'}]);
                                             setInstallmentsError('');
+                                        },
+                                        onError: (errs) => {
+                                            setInstallmentsError(errs.installments ?? 'Erreur lors de l\'enregistrement des tranches.');
                                         },
                                     });
                                 }}

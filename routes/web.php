@@ -109,6 +109,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('academic-years', AcademicYearController::class);
     Route::resource('academic-periods', AcademicPeriodController::class);
     Route::resource('fee-categories', FeeCategorieController::class);
+    Route::post('fee-structures/replicate', [FeeStructureController::class, 'replicate'])
+        ->name('fee-structures.replicate');
     Route::resource('fee-structures', FeeStructureController::class);
     Route::post('fee-structures/{feeStructure}/installments', [\App\Http\Controllers\InstallmentController::class, 'storeMultiple'])
         ->name('fee-structures.installments.store-multiple');
