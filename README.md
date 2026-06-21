@@ -12,6 +12,12 @@ Un système de gestion scolaire open-source pour les écoles primaires, collège
 
 ## 🎓 Fonctionnalités
 
+### Tableau de bord
+
+- Vue d'ensemble avec indicateurs clés (effectifs, inscriptions, encaissements)
+- Évolution des paiements par mois et derniers paiements
+- Filtrage par année académique, contenu adapté au rôle de l'utilisateur
+
 ### Gestion des établissements
 
 - Support multi-écoles (primaire, collège, lycée)
@@ -44,6 +50,12 @@ Un système de gestion scolaire open-source pour les écoles primaires, collège
 - Statistiques par élève et effectifs / statut académique
 - **Effectifs / listes de classe** avec export PDF
 - **Dossier de pièces par élève** : tout fichier lié à l'élève (extrait de naissance, passeport, etc.) est rangé dans son dossier privé `students/{id}`, avec ajout dynamique (nom + fichier), téléchargement authentifié et suppression
+
+### Emploi du temps
+
+- Grille hebdomadaire par classe (jour / créneau horaire)
+- Création, modification et suppression des créneaux (matière, enseignant)
+- Export PDF de l'emploi du temps d'une classe
 
 ### Examens & évaluations
 
@@ -225,6 +237,11 @@ L'application est accessible sur `http://localhost:8000`.
 | `student_scholarships`| Bourses attribuées aux élèves                                  |
 | `cash_accounts`       | Caisses                                                        |
 | `transactions`        | Journal comptable                                              |
+| `invoices` / `invoice_items` | Factures d'écolage et leurs lignes                      |
+| `payments`            | Paiements enregistrés                                          |
+| `receipts`            | Reçus de paiement avec code de vérification                    |
+| `timetable_slots`     | Créneaux de l'emploi du temps par classe                       |
+| `document_issuances`  | Traçabilité des documents délivrés par élève                   |
 | `note_reclamations`   | Réclamations sur les notes                                     |
 | `file_storage_settings`| Configuration du stockage des fichiers (local / S3, chiffrée) |
 
