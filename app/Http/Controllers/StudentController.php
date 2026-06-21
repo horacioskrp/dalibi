@@ -189,6 +189,15 @@ class StudentController extends Controller
                 'year'       => $activeYear?->year,
             ] : null,
             'classrooms' => \App\Models\Classroom::where('active', true)->orderBy('name')->get(['id', 'name', 'code']),
+            'documents' => $student->documents()->with('uploadedBy:id,firstname,lastname')->latest()->get()->map(fn ($d) => [
+                'id'            => $d->id,
+                'name'          => $d->name,
+                'original_name' => $d->original_name,
+                'mime'          => $d->mime,
+                'size'          => $d->size,
+                'uploaded_by'   => $d->uploadedBy?->name,
+                'created_at'    => $d->created_at?->format('d/m/Y'),
+            ]),
         ]);
     }
 
@@ -297,6 +306,9 @@ class StudentController extends Controller
     {
         $this->authorize('delete', $student);
 
+        // Supprime tout le dossier privé de l'élève (photo, documents)
+        Storage::disk('secure')->deleteDirectory($student->storageFolder());
+
         $student->delete();
 
         return redirect()->route('students.index')
@@ -320,7 +332,7 @@ class StudentController extends Controller
         }
 
         $student->update([
-            'profile_photo' => $request->file('photo')->store('students/photos', 'secure'),
+            'profile_photo' => $request->file('photo')->store($student->storageFolder() . '/photo', 'secure'),
         ]);
 
         return back()->with('success', 'Photo mise à jour.');
