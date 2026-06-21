@@ -21,11 +21,26 @@ class OfficialExamController extends Controller
     {
         abort_unless($request->user()->hasAnyRole(self::MANAGE_ROLES), 403);
 
+        $activeYear = \App\Models\AcademicYear::where('active', true)->first(['id', 'year']);
+        $years      = \App\Models\AcademicYear::orderByDesc('start_date')->get(['id', 'year', 'active']);
+
+        // Année par défaut = année académique active
+        $yearId  = $request->string('academic_year_id')->toString() ?: ($activeYear?->id ?? '');
+        $type    = $request->string('type')->toString();
+        $session = $request->string('session')->toString();
+        $status  = $request->string('status')->toString();
+        $search  = $request->string('search')->toString();
+
         $exams = OfficialExam::withCount([
             'registrations',
             'registrations as admis_count' => fn ($q) => $q->where('status', 'admis'),
         ])
-            ->orderByDesc('year')
+            ->when($yearId, fn ($q) => $q->where('academic_year_id', $yearId))
+            ->when($type && array_key_exists($type, OfficialExam::TYPES), fn ($q) => $q->where('type', $type))
+            ->when($session && array_key_exists($session, OfficialExam::SESSIONS), fn ($q) => $q->where('session', $session))
+            ->when($status && array_key_exists($status, OfficialExam::STATUSES), fn ($q) => $q->where('status', $status))
+            ->when($search, fn ($q) => $q->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($search) . '%']))
+            ->orderByDesc('exam_date')
             ->orderBy('type')
             ->get()
             ->map(fn ($e) => [
@@ -44,9 +59,18 @@ class OfficialExamController extends Controller
 
         return Inertia::render('OfficialExams/Index', [
             'exams'    => $exams,
+            'years'    => $years,
+            'activeYear' => $activeYear,
             'types'    => OfficialExam::TYPES,
             'sessions' => OfficialExam::SESSIONS,
             'statuses' => OfficialExam::STATUSES,
+            'filters'  => [
+                'academic_year_id' => $yearId,
+                'type'             => $type,
+                'session'          => $session,
+                'status'           => $status,
+                'search'           => $search,
+            ],
         ]);
     }
 
@@ -56,6 +80,8 @@ class OfficialExamController extends Controller
 
         $data = $this->validateExam($request);
         $data['school_id'] = School::query()->value('id');
+        // Rattaché à l'année académique active
+        $data['academic_year_id'] = \App\Models\AcademicYear::where('active', true)->value('id');
 
         OfficialExam::create($data);
 
