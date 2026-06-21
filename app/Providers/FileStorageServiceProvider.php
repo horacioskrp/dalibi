@@ -19,10 +19,13 @@ class FileStorageServiceProvider extends ServiceProvider
     {
         try {
             if (FileStorageSetting::get('driver', 'local') === 's3') {
-                config(['filesystems.disks.media' => FileStorageSetting::s3Config()]);
+                $s3 = FileStorageSetting::s3Config();
+                config(['filesystems.disks.media' => $s3]);
+                // Même backend S3, mais visibilité privée pour les fichiers sensibles
+                config(['filesystems.disks.secure' => array_merge($s3, ['visibility' => 'private'])]);
             }
         } catch (\Throwable) {
-            // Table absente (migrations en cours) : on garde le disque "media" local par défaut.
+            // Table absente (migrations en cours) : on garde les disques locaux par défaut.
         }
     }
 }

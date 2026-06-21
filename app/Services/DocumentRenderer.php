@@ -154,9 +154,12 @@ class DocumentRenderer
         // Logo de l'école si disponible
         $logoHtml = '';
         $logoPath = $template->school?->logo;
-        if ($logoPath && Storage::disk('public')->exists($logoPath)) {
-            $absolute = Storage::disk('public')->path($logoPath);
-            $logoHtml = '<img class="doc-logo" src="' . $absolute . '" alt="logo">';
+        // Logo embarqué en data-URI : fonctionne quel que soit le disque (local ou S3)
+        // et évite tout accès fichier par dompdf.
+        if ($logoPath && Storage::disk('media')->exists($logoPath)) {
+            $mime     = Storage::disk('media')->mimeType($logoPath) ?: 'image/png';
+            $base64   = base64_encode(Storage::disk('media')->get($logoPath));
+            $logoHtml = '<img class="doc-logo" src="data:' . $mime . ';base64,' . $base64 . '" alt="logo">';
         }
 
         return <<<HTML

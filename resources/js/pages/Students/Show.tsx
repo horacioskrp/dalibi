@@ -118,7 +118,7 @@ export default function Show({ student, documentContext, issuedDocuments, curren
     const [annee, setAnnee] = useState(documentContext?.annee_scolaire ?? '');
 
     const photoRef = useRef<HTMLInputElement>(null);
-    const photoUrl = student.profile_photo ? `/storage/${student.profile_photo}` : null;
+    const photoUrl = student.profile_photo ? route('students.photo.view', student.id) : null;
     const initials = `${student.firstname?.[0] ?? ''}${student.lastname?.[0] ?? ''}`.toUpperCase();
 
     const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {

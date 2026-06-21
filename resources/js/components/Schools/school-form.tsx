@@ -152,7 +152,7 @@ export function SchoolForm({ mode, data, errors, processing, currentLogoUrl, cla
                                 <input
                                     ref={fileRef}
                                     type="file"
-                                    accept="image/jpeg,image/png,image/svg+xml,image/webp"
+                                    accept="image/jpeg,image/png,image/webp"
                                     className="hidden"
                                     onChange={handleFile}
                                     disabled={processing}
@@ -168,7 +168,7 @@ export function SchoolForm({ mode, data, errors, processing, currentLogoUrl, cla
                                     <ImageIcon className="w-4 h-4" />
                                     {preview ? 'Changer le logo' : 'Choisir une image'}
                                 </Button>
-                                <p className="text-xs text-gray-400 mt-1">JPG, PNG, SVG, WebP — max 2 Mo</p>
+                                <p className="text-xs text-gray-400 mt-1">JPG, PNG, WebP — max 2 Mo</p>
                             </div>
                         </div>
                         {errors.logo && <p className="text-sm text-red-600 mt-1">{errors.logo}</p>}

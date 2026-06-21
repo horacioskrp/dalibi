@@ -62,6 +62,20 @@ return [
             'report' => false,
         ],
 
+        /*
+        | Disque "secure" — fichiers SENSIBLES (photos d'élèves, pièces justificatives).
+        | Stocké hors du dossier public (pas de symlink) : jamais accessible par URL directe.
+        | Servi uniquement via une route authentifiée. Suit aussi la config local/S3
+        | (FileStorageServiceProvider), mais en visibilité PRIVÉE.
+        */
+        'secure' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/secure'),
+            'visibility' => 'private',
+            'throw' => false,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),
