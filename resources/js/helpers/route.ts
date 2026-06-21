@@ -9,6 +9,8 @@ import { route as ziggyRoute } from 'ziggy-js';
 export function route(name: string, params?: any): string {
     const baseUrl = globalThis.location.origin;
     const routeMap: Record<string, string> = {
+        'dashboard': '/dashboard',
+
         // Schools routes
         'schools.index': '/schools',
         'schools.create': '/schools/create',
