@@ -19,7 +19,7 @@ import {
     Clock3,
 } from 'lucide-react';
 import { useRef, useState } from 'react';
-import { Camera, Trash2 } from 'lucide-react';
+import { Camera, Trash2, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
@@ -84,6 +84,7 @@ interface IssuedDoc { id: string; reference_number: string; template_name: strin
 
 interface ClassroomOption { id: string; name: string; code: string; }
 interface CurrentEnrollment { id: string; class_id: string; class_name: string | null; class_code: string | null; year: string | null; }
+interface StudentDocument { id: string; name: string; original_name: string | null; mime: string | null; size: number; uploaded_by: string | null; created_at: string | null; }
 
 interface ShowProps {
     student: Student;
@@ -95,6 +96,7 @@ interface ShowProps {
     issuedDocuments: IssuedDoc[];
     currentEnrollment: CurrentEnrollment | null;
     classrooms: ClassroomOption[];
+    documents: StudentDocument[];
 }
 
 const formatDate = (value?: string | null): string => {
@@ -108,7 +110,7 @@ const admissionTypeLabel: Record<string, string> = {
     re_admission: 'Ré-admission',
 };
 
-export default function Show({ student, documentContext, issuedDocuments, currentEnrollment, classrooms }: Readonly<ShowProps>) {
+export default function Show({ student, documentContext, issuedDocuments, currentEnrollment, classrooms, documents }: Readonly<ShowProps>) {
     const userLabel = `${student.user?.firstname ?? ''} ${student.user?.lastname ?? ''}`.trim() || student.user?.name || '—';
     const hasEmergencyContact = Boolean(student.medical_info?.emergency_contact_name || student.medical_info?.emergency_contact_phone);
 
@@ -137,6 +139,29 @@ export default function Show({ student, documentContext, issuedDocuments, curren
 
     const [classOpen, setClassOpen] = useState(false);
     const [targetClass, setTargetClass] = useState(currentEnrollment?.class_id ?? '');
+
+    const docFileRef = useRef<HTMLInputElement>(null);
+    const [docName, setDocName] = useState('');
+    const [docFile, setDocFile] = useState<File | null>(null);
+    const [docUploading, setDocUploading] = useState(false);
+
+    const addDocument = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!docName || !docFile) return;
+        setDocUploading(true);
+        router.post(route('students.documents.store', student.id), { name: docName, file: docFile }, {
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: () => { setDocName(''); setDocFile(null); if (docFileRef.current) docFileRef.current.value = ''; },
+            onFinish: () => setDocUploading(false),
+        });
+    };
+
+    const deleteDocument = (id: string) => {
+        router.delete(`/students/${student.id}/documents/${id}`, { preserveScroll: true });
+    };
+
+    const fmtSize = (b: number) => b > 1048576 ? `${(b / 1048576).toFixed(1)} Mo` : `${Math.max(1, Math.round(b / 1024))} Ko`;
 
     const handleChangeClass = () => {
         if (!targetClass) return;
@@ -433,6 +458,63 @@ export default function Show({ student, documentContext, issuedDocuments, curren
                             </div>
                         </div>
                     </div>
+                </div>
+
+                {/* Pièces du dossier de l'élève (uploads) */}
+                <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                    <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2 mb-3">
+                        <FileText className="w-4 h-4 text-indigo-600" />
+                        Pièces du dossier
+                        <span className="text-gray-400 font-normal">({documents.length})</span>
+                    </h2>
+
+                    {/* Formulaire d'ajout : nom + fichier */}
+                    <form onSubmit={addDocument} className="flex flex-wrap items-end gap-3 mb-4 rounded-xl bg-gray-50 ring-1 ring-gray-100 p-3">
+                        <div className="flex-1 min-w-48">
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Nom du document *</label>
+                            <Input value={docName} onChange={e => setDocName(e.target.value)} placeholder="Ex: Extrait de naissance, Passeport..." className="bg-white" />
+                        </div>
+                        <div className="flex-1 min-w-48">
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Fichier *</label>
+                            <input
+                                ref={docFileRef}
+                                type="file"
+                                accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx"
+                                onChange={e => setDocFile(e.target.files?.[0] ?? null)}
+                                className="block w-full text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-50 file:px-3 file:py-1.5 file:text-indigo-700 file:text-sm hover:file:bg-indigo-100"
+                            />
+                        </div>
+                        <Button type="submit" disabled={!docName || !docFile || docUploading} className="bg-indigo-600 hover:bg-indigo-700 gap-2">
+                            <Upload className="w-4 h-4" /> {docUploading ? 'Ajout...' : 'Ajouter'}
+                        </Button>
+                    </form>
+                    <p className="text-xs text-gray-400 mb-3">Stockés dans le dossier privé de l'élève. PDF, image ou Word — max 5 Mo.</p>
+
+                    {documents.length === 0 ? (
+                        <p className="text-sm text-gray-400 py-4 text-center">Aucune pièce dans le dossier.</p>
+                    ) : (
+                        <div className="divide-y divide-gray-50">
+                            {documents.map(d => (
+                                <div key={d.id} className="flex items-center justify-between py-2.5">
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <FileText className="w-4 h-4 text-gray-400 shrink-0" />
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-medium text-gray-900 truncate">{d.name}</p>
+                                            <p className="text-xs text-gray-400">{d.original_name} · {fmtSize(d.size)}{d.created_at ? ` · ${d.created_at}` : ''}{d.uploaded_by ? ` · ${d.uploaded_by}` : ''}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 shrink-0 ml-3">
+                                        <a href={`/students/${student.id}/documents/${d.id}`} target="_blank" rel="noreferrer">
+                                            <Button variant="outline" size="sm" className="gap-1 text-xs"><Download className="w-3.5 h-3.5" /> Télécharger</Button>
+                                        </a>
+                                        <Button variant="outline" size="sm" className="border-red-200 text-red-500 hover:bg-red-50" onClick={() => deleteDocument(d.id)}>
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 {/* Traçabilité des documents délivrés */}

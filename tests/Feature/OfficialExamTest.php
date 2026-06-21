@@ -3,8 +3,10 @@
 namespace Tests\Feature;
 
 use App\Constants\Roles;
+use App\Models\AcademicYear;
 use App\Models\OfficialExam;
 use App\Models\OfficialExamRegistration;
+use App\Models\School;
 use App\Models\Student;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
@@ -102,6 +104,20 @@ class OfficialExamTest extends TestCase
             ->assertRedirect(route('official-exams.index'));
 
         $this->assertDatabaseHas('official_exams', ['name' => 'Baccalauréat 2026', 'type' => 'bac']);
+    }
+
+    public function test_created_exam_is_attached_to_active_year(): void
+    {
+        $school = School::factory()->create();
+        $year   = AcademicYear::create(['school_id' => $school->id, 'year' => '2025-2026', 'start_date' => '2025-09-01', 'end_date' => '2026-07-31', 'active' => true]);
+
+        $this->actingAs($this->admin())
+            ->post(route('official-exams.store'), $this->validPayload());
+
+        $this->assertDatabaseHas('official_exams', [
+            'name'             => 'Baccalauréat 2026',
+            'academic_year_id' => $year->id,
+        ]);
     }
 
     public function test_create_requires_name(): void

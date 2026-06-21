@@ -108,6 +108,20 @@ class Student extends Model
     }
 
     /**
+     * Get all documents (pièces justificatives) for this student.
+     */
+    public function documents(): HasMany
+    {
+        return $this->hasMany(StudentDocument::class);
+    }
+
+    /** Dossier de stockage privé propre à l'élève. */
+    public function storageFolder(): string
+    {
+        return 'students/' . $this->id;
+    }
+
+    /**
      * Générer un matricule pour cet élève
      *
      * @return string
