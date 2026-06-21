@@ -212,6 +212,28 @@ Pour activer les sauvegardes planifiées, ajoutez le planificateur Laravel au cr
 * * * * * cd /chemin/vers/dalibi && php artisan schedule:run >> /dev/null 2>&1
 ```
 
+## 🐳 Docker
+
+Une image de production (multi-stage : build PHP+Node → runtime **PHP-FPM 8.3 + Nginx + Supervisor**) est fournie.
+
+```bash
+# Construire l'image
+docker build -t dalibi .
+
+# Lancer le conteneur (port 80 interne)
+docker run -d --name dalibi -p 8080:80 \
+  -e APP_KEY="base64:..."            \
+  -e APP_ENV=production -e APP_DEBUG=false \
+  -e APP_URL=http://localhost:8080   \
+  -e DB_CONNECTION=pgsql -e DB_HOST=... -e DB_DATABASE=... -e DB_USERNAME=... -e DB_PASSWORD=... \
+  -e RUN_MIGRATIONS=true             \
+  dalibi
+```
+
+- L'**entrypoint** crée le lien de stockage, met en cache la config et les vues, et exécute les migrations si `RUN_MIGRATIONS=true`.
+- Générez une clé avec `php artisan key:generate --show` et passez-la via `APP_KEY`.
+- Pour les **sauvegardes planifiées**, exécutez `php artisan schedule:run` chaque minute (cron de l'hôte ou conteneur dédié).
+
 ## 👥 Utilisateurs par défaut (seeder)
 
 | Rôle       | Email                       | Mot de passe |

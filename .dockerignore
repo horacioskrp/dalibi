@@ -1,0 +1,46 @@
+# Contrôle de version / CI
+**/.git
+.github
+.gitattributes
+
+# Dépendances (réinstallées dans l'image)
+node_modules
+vendor
+
+# Secrets et env (sauf l'exemple)
+.env
+.env.*
+!.env.example
+
+# Assets compilés / liens (régénérés au build)
+public/build
+public/hot
+public/storage
+
+# Fichiers générés par Wayfinder (régénérés au build)
+resources/js/routes
+resources/js/actions
+
+# Stockage runtime (on ne copie pas les données)
+storage/logs/*.log
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/views/*.php
+storage/app/public/*
+storage/app/private/*
+
+# Base SQLite locale / tests
+*.sqlite
+database/*.sqlite
+
+# Outils & éditeurs
+.idea
+.vscode
+.fleet
+.phpunit.result.cache
+.phpunit.cache
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose*.yml
