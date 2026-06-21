@@ -128,6 +128,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('students.history');
     Route::post('students/{student}/change-class', [StudentController::class, 'changeClass'])
         ->name('students.change-class');
+    // Documents (pièces justificatives) — dossier privé students/{id}
+    Route::post('students/{student}/documents', [\App\Http\Controllers\StudentDocumentController::class, 'store'])->name('students.documents.store');
+    Route::get('students/{student}/documents/{document}', [\App\Http\Controllers\StudentDocumentController::class, 'download'])->name('students.documents.download');
+    Route::delete('students/{student}/documents/{document}', [\App\Http\Controllers\StudentDocumentController::class, 'destroy'])->name('students.documents.destroy');
+
     Route::get('students/{student}/photo', [StudentController::class, 'photo'])
         ->name('students.photo.view');
     Route::post('students/{student}/photo', [StudentController::class, 'uploadPhoto'])
