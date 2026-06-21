@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Constants\Roles;
+use App\Models\AcademicYear;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -11,6 +12,17 @@ class StoreFeeStructureRequest extends FormRequest
     public function authorize(): bool
     {
         return $this->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR, Roles::ACCOUNTING]);
+    }
+
+    /**
+     * La structure de frais est toujours rattachée à l'année académique active :
+     * on impose la valeur côté serveur, quoi qu'envoie le client.
+     */
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'academic_year_id' => AcademicYear::where('active', true)->value('id'),
+        ]);
     }
 
     /**

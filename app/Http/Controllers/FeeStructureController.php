@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\Roles;
 use App\Http\Requests\StoreFeeStructureRequest;
 use App\Http\Requests\UpdateFeeStructureRequest;
 use App\Models\AcademicYear;
 use App\Models\Classroom;
 use App\Models\FeeCategorie;
 use App\Models\FeeStructure;
+use App\Models\Installment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class FeeStructureController extends Controller
@@ -119,10 +122,81 @@ class FeeStructureController extends Controller
     public function create()
     {
         return Inertia::render('FeeStructures/Create', [
-            'academicYears' => AcademicYear::orderBy('year', 'desc')->get(),
+            'activeYear' => AcademicYear::where('active', true)->first(['id', 'year']),
             'feeCategories' => FeeCategorie::orderBy('name')->get(),
             'classrooms' => Classroom::orderBy('name')->get(),
         ]);
+    }
+
+    /**
+     * Réplique toutes les structures de frais (et leurs tranches) d'une année
+     * source vers l'année académique active.
+     */
+    public function replicate(Request $request)
+    {
+        abort_unless(
+            $request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR, Roles::ACCOUNTING]),
+            403
+        );
+
+        $target = AcademicYear::where('active', true)->first();
+        if (! $target) {
+            return back()->with('error', 'Aucune année académique active. Activez une année avant de répliquer.');
+        }
+
+        $validated = $request->validate([
+            'source_year_id' => ['required', 'uuid', 'exists:academic_years,id', 'different:'.$target->id],
+        ], [
+            'source_year_id.required'  => 'L\'année source est requise.',
+            'source_year_id.different' => 'L\'année source doit être différente de l\'année active.',
+        ]);
+
+        // Combinaisons déjà présentes dans l'année cible (pour éviter les doublons)
+        $existing = FeeStructure::where('academic_year_id', $target->id)
+            ->get(['fee_category_id', 'class_id'])
+            ->map(fn ($f) => $f->fee_category_id.'|'.$f->class_id)
+            ->all();
+
+        $sources = FeeStructure::with('installments')
+            ->where('academic_year_id', $validated['source_year_id'])
+            ->get();
+
+        $copied = 0;
+
+        DB::transaction(function () use ($sources, $target, $existing, &$copied): void {
+            foreach ($sources as $src) {
+                if (in_array($src->fee_category_id.'|'.$src->class_id, $existing, true)) {
+                    continue;
+                }
+
+                $new = FeeStructure::create([
+                    'academic_year_id' => $target->id,
+                    'fee_category_id'  => $src->fee_category_id,
+                    'class_id'         => $src->class_id,
+                    'amount'           => $src->amount,
+                ]);
+
+                foreach ($src->installments as $inst) {
+                    Installment::create([
+                        'fee_structure_id'   => $new->id,
+                        'name'               => $inst->name,
+                        'installment_number' => $inst->installment_number,
+                        'amount'             => $inst->amount,
+                        // Les dates et périodes sont propres à l'année : on les réinitialise
+                        'due_date'           => null,
+                        'academic_period_id' => null,
+                    ]);
+                }
+
+                $copied++;
+            }
+        });
+
+        $message = $copied > 0
+            ? "{$copied} structure(s) répliquée(s) vers {$target->year}."
+            : 'Aucune nouvelle structure à répliquer (déjà existantes pour l\'année active).';
+
+        return back()->with('message', $message);
     }
 
     /**

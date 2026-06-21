@@ -139,6 +139,7 @@ export function route(name: string, params?: any): string {
 
         // Fee Structures routes
         'fee-structures.index': '/fee-structures',
+        'fee-structures.replicate': '/fee-structures/replicate',
         'fee-structures.create': '/fee-structures/create',
         'fee-structures.store': '/fee-structures',
         'fee-structures.show': `/fee-structures/${params}`,

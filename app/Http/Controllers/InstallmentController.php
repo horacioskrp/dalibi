@@ -8,6 +8,7 @@ use App\Models\Installment;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class InstallmentController extends Controller
 {
@@ -29,6 +30,18 @@ class InstallmentController extends Controller
             'installments.*.due_date'               => ['nullable', 'date'],
             'installments.*.academic_period_id'     => ['nullable', 'uuid', 'exists:academic_periods,id'],
         ]);
+
+        // Le total des tranches ne doit jamais dépasser le montant de la structure
+        $total = collect($request->installments)->sum(fn ($i) => (float) $i['amount']);
+        if (round($total, 2) > round((float) $feeStructure->amount, 2)) {
+            throw ValidationException::withMessages([
+                'installments' => sprintf(
+                    'Le total des tranches (%s) dépasse le montant de la structure (%s).',
+                    number_format($total, 0, ',', ' '),
+                    number_format((float) $feeStructure->amount, 0, ',', ' ')
+                ),
+            ]);
+        }
 
         DB::transaction(function () use ($request, $feeStructure): void {
             $feeStructure->installments()->delete();
