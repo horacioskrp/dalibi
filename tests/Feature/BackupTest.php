@@ -1,0 +1,103 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Constants\Roles;
+use App\Models\Backup;
+use App\Models\BackupSetting;
+use App\Models\User;
+use Database\Seeders\RolesAndPermissionsSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
+use Tests\TestCase;
+
+class BackupTest extends TestCase
+{
+    use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(RolesAndPermissionsSeeder::class);
+        Storage::fake('media');
+    }
+
+    private function admin(): User
+    {
+        $u = User::factory()->create();
+        $u->assignRole(Roles::ADMINISTRATOR);
+
+        return $u;
+    }
+
+    public function test_admin_can_generate_backup_in_both_formats(): void
+    {
+        $this->actingAs($this->admin())
+            ->post(route('backups.store'), ['formats' => ['json', 'sql']])
+            ->assertRedirect();
+
+        $this->assertEquals(2, Backup::where('status', 'completed')->count());
+
+        foreach (Backup::all() as $b) {
+            Storage::disk('media')->assertExists($b->path);
+        }
+    }
+
+    public function test_backup_requires_a_format(): void
+    {
+        $this->actingAs($this->admin())
+            ->post(route('backups.store'), ['formats' => []])
+            ->assertSessionHasErrors('formats');
+    }
+
+    public function test_non_admin_cannot_access_backups(): void
+    {
+        $teacher = User::factory()->create();
+        $teacher->assignRole(Roles::TEACHER);
+
+        $this->actingAs($teacher)->get(route('backups.index'))->assertForbidden();
+        $this->actingAs($teacher)->post(route('backups.store'), ['formats' => ['json']])->assertForbidden();
+    }
+
+    public function test_admin_can_save_schedule(): void
+    {
+        $this->actingAs($this->admin())
+            ->post(route('backups.schedule'), [
+                'frequency'   => 'weekly',
+                'time'        => '04:00',
+                'day_of_week' => 2,
+                'formats'     => ['json', 'sql'],
+                'retention'   => 5,
+            ])
+            ->assertRedirect();
+
+        $this->assertEquals('weekly', BackupSetting::get('frequency'));
+        $this->assertEquals('04:00', BackupSetting::get('time'));
+        $this->assertEquals('5', BackupSetting::get('retention'));
+    }
+
+    public function test_admin_can_delete_backup(): void
+    {
+        $this->actingAs($this->admin())->post(route('backups.store'), ['formats' => ['json']]);
+        $backup = Backup::first();
+
+        $this->actingAs($this->admin())
+            ->delete(route('backups.destroy', $backup))
+            ->assertRedirect();
+
+        $this->assertDatabaseMissing('backups', ['id' => $backup->id]);
+        Storage::disk('media')->assertMissing($backup->path);
+    }
+
+    public function test_retention_keeps_only_latest_backups(): void
+    {
+        BackupSetting::set('retention', '3');
+
+        for ($i = 0; $i < 5; $i++) {
+            $this->actingAs($this->admin())->post(route('backups.store'), ['formats' => ['json']]);
+        }
+
+        // Au plus 3 sauvegardes JSON conservées
+        $this->assertLessThanOrEqual(3, Backup::where('format', 'json')->count());
+    }
+}
