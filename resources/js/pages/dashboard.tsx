@@ -5,7 +5,12 @@ import {
     BookOpen, ClipboardList, ArrowRight, CalendarDays,
     GraduationCap, UserCheck, ShieldCheck, FileBadge,
 } from 'lucide-react';
+import {
+    Area, AreaChart, Bar, BarChart, Cell, Pie, PieChart,
+    ResponsiveContainer, Tooltip as RTooltip, XAxis, YAxis,
+} from 'recharts';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { route } from '@/helpers/route';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
@@ -15,6 +20,8 @@ import type { BreadcrumbItem } from '@/types';
 /* ------------------------------------------------------------------ */
 
 interface ActiveYear { id: string; year: string; }
+interface YearOption { id: string; year: string; active?: boolean; }
+interface EnrollmentByClass { class_name: string; total: number; }
 
 interface FinancialStats {
     total_invoices:  number;
@@ -86,6 +93,9 @@ interface UpcomingExam {
 
 interface DashboardProps {
     activeYear:          ActiveYear | null;
+    selectedYearId:      string | null;
+    selectedYear:        ActiveYear | null;
+    academicYears:       YearOption[];
     userRole:            string | null;
     financial?: {
         stats:           FinancialStats | null;
@@ -100,6 +110,7 @@ interface DashboardProps {
         enrollments_year:  number;
         enrollments_week:  number;
         recentEnrollments: RecentEnrollment[];
+        byClass:           EnrollmentByClass[];
     };
     teaching?: {
         assignments: Assignment[];
@@ -226,11 +237,20 @@ function SectionCard({ title, icon, count, children, action }: {
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Tableau de bord', href: '/dashboard' }];
 
-export default function Dashboard({ activeYear, userRole, financial, enrollments, teaching, academic }: Readonly<DashboardProps>) {
+export default function Dashboard({ activeYear, selectedYearId, selectedYear, academicYears, userRole, financial, enrollments, teaching, academic }: Readonly<DashboardProps>) {
+
+    const changeYear = (id: string) => {
+        router.get(route('dashboard'), { academic_year_id: id }, { preserveScroll: true, preserveState: false });
+    };
 
     const stats      = financial?.stats;
     const collectedPct = pct(Number(stats?.total_paid ?? 0), Number(stats?.total_amount ?? 0));
-    const maxMonthly   = Math.max(...(financial?.monthlyPayments ?? []).map(m => Number(m.total)), 1);
+
+    const invoiceStatusData = stats ? [
+        { name: 'Soldé',    value: Number(stats.paid_count ?? 0),    color: '#22c55e' },
+        { name: 'Partiel',  value: Number(stats.partial_count ?? 0), color: '#f97316' },
+        { name: 'Non payé', value: Number(stats.issued_count ?? 0),  color: '#ef4444' },
+    ].filter(d => d.value > 0) : [];
 
     const isFinancial  = !!financial;
     const isEnrollment = !!enrollments;
@@ -245,12 +265,29 @@ export default function Dashboard({ activeYear, userRole, financial, enrollments
             <div className="space-y-6 p-1">
 
                 {/* ── En-tête ──────────────────────────────────────────── */}
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Tableau de bord</h1>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                        {activeYear ? `Année scolaire ${activeYear.year}` : 'Aucune année active'}
-                        {userRole && ` · ${userRole}`}
-                    </p>
+                <div className="flex items-start justify-between gap-4 flex-wrap">
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Tableau de bord</h1>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                            {selectedYear ? `Année scolaire ${selectedYear.year}` : 'Aucune année active'}
+                            {userRole && ` · ${userRole}`}
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <CalendarDays className="w-4 h-4 text-gray-400" />
+                        <Select value={selectedYearId ?? ''} onValueChange={changeYear}>
+                            <SelectTrigger className="w-44 bg-white dark:bg-card">
+                                <SelectValue placeholder="Année académique" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {academicYears.map(y => (
+                                    <SelectItem key={y.id} value={y.id}>
+                                        {y.year}{y.active ? ' · active' : ''}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
 
                 {/* ── Alerte élèves 0 paiement ─────────────────────────── */}
@@ -445,26 +482,22 @@ export default function Dashboard({ activeYear, userRole, financial, enrollments
                             {financial.monthlyPayments.length === 0 ? (
                                 <p className="text-sm text-gray-400 text-center py-8">Aucun paiement sur la période</p>
                             ) : (
-                                <div className="flex items-end gap-2 h-32">
-                                    {financial.monthlyPayments.map(m => {
-                                        const h = Math.round((Number(m.total) / maxMonthly) * 100);
-                                        return (
-                                            <div key={m.month} className="flex-1 flex flex-col items-center gap-1 group min-w-0">
-                                                <div className="relative w-full flex items-end justify-center" style={{ height: '96px' }}>
-                                                    <div className="absolute bottom-full mb-1.5 hidden group-hover:flex bg-gray-900 text-white text-xs rounded-lg px-2 py-1 whitespace-nowrap shadow-lg z-10 flex-col items-center">
-                                                        <span className="font-semibold">{fmt(Number(m.total))}</span>
-                                                        <span className="text-gray-400">{m.month_label}</span>
-                                                    </div>
-                                                    <div
-                                                        className="w-full rounded-t-lg bg-blue-500 hover:bg-blue-600 transition-colors cursor-default"
-                                                        style={{ height: `${Math.max(h, 4)}%` }}
-                                                    />
-                                                </div>
-                                                <p className="text-xs text-gray-400 truncate w-full text-center">{m.month_label.slice(0, 3)}</p>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
+                                <ResponsiveContainer width="100%" height={200}>
+                                    <AreaChart data={financial.monthlyPayments.map(m => ({ name: m.month_label.slice(0, 3), total: Number(m.total), label: m.month_label }))}
+                                        margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                                        <defs>
+                                            <linearGradient id="payGrad" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.35} />
+                                                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                            </linearGradient>
+                                        </defs>
+                                        <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+                                        <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} width={48}
+                                            tickFormatter={(v: number) => v >= 1000 ? `${Math.round(v / 1000)}k` : `${v}`} />
+                                        <RTooltip formatter={(v: number) => [fmt(Number(v)), 'Encaissé']} labelFormatter={() => ''} />
+                                        <Area type="monotone" dataKey="total" stroke="#3b82f6" strokeWidth={2} fill="url(#payGrad)" />
+                                    </AreaChart>
+                                </ResponsiveContainer>
                             )}
                         </div>
 
@@ -498,6 +531,63 @@ export default function Dashboard({ activeYear, userRole, financial, enrollments
                                 </div>
                             )}
                         </div>
+                    </div>
+                )}
+
+                {/* ── Charts : répartition factures + élèves par classe ─── */}
+                {((isFinancial && invoiceStatusData.length > 0) || (isEnrollment && enrollments.byClass.length > 0)) && (
+                    <div className="grid lg:grid-cols-2 gap-5">
+
+                        {/* Donut : statut des factures */}
+                        {isFinancial && invoiceStatusData.length > 0 && (
+                            <div className="bg-white dark:bg-card rounded-xl border border-gray-100 dark:border-gray-700 p-5 shadow-sm">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <Banknote className="w-4 h-4 text-gray-400" />
+                                    <h2 className="font-semibold text-sm text-gray-900 dark:text-white">Répartition des factures</h2>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <ResponsiveContainer width="55%" height={200}>
+                                        <PieChart>
+                                            <Pie data={invoiceStatusData} dataKey="value" nameKey="name"
+                                                innerRadius={50} outerRadius={80} paddingAngle={2}>
+                                                {invoiceStatusData.map(d => <Cell key={d.name} fill={d.color} />)}
+                                            </Pie>
+                                            <RTooltip formatter={(v: number, n: string) => [`${v}`, n]} />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                    <div className="space-y-2 flex-1">
+                                        {invoiceStatusData.map(d => (
+                                            <div key={d.name} className="flex items-center justify-between text-sm">
+                                                <span className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+                                                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.color }} />
+                                                    {d.name}
+                                                </span>
+                                                <span className="font-semibold text-gray-900 dark:text-white">{d.value}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Barres : élèves par classe */}
+                        {isEnrollment && enrollments.byClass.length > 0 && (
+                            <div className="bg-white dark:bg-card rounded-xl border border-gray-100 dark:border-gray-700 p-5 shadow-sm">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <Users className="w-4 h-4 text-gray-400" />
+                                    <h2 className="font-semibold text-sm text-gray-900 dark:text-white">Élèves par classe</h2>
+                                </div>
+                                <ResponsiveContainer width="100%" height={200}>
+                                    <BarChart data={enrollments.byClass.map(c => ({ name: c.class_name, total: Number(c.total) }))}
+                                        margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                                        <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} interval={0} angle={-15} textAnchor="end" height={50} />
+                                        <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} width={28} allowDecimals={false} />
+                                        <RTooltip formatter={(v: number) => [`${v}`, 'Élèves']} />
+                                        <Bar dataKey="total" fill="#6366f1" radius={[6, 6, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        )}
                     </div>
                 )}
 

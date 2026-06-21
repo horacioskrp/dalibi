@@ -15,21 +15,33 @@ use App\Models\OfficialExamRegistration;
 use App\Models\Payment;
 use App\Models\Student;
 use App\Models\SubjectAssignment;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $user       = auth()->user();
         $activeYear = AcademicYear::where('active', true)->first();
-        $yearId     = $activeYear?->id;
+        $years      = AcademicYear::orderByDesc('start_date')->get(['id', 'year', 'active']);
+
+        // Année sélectionnée via le filtre, par défaut l'année académique active
+        $requested = $request->string('academic_year_id')->toString();
+        $yearId    = ($requested && $years->contains('id', $requested))
+            ? $requested
+            : $activeYear?->id;
+
+        $selectedYear = $years->firstWhere('id', $yearId);
 
         $data = [
-            'activeYear' => $activeYear ? ['id' => $activeYear->id, 'year' => $activeYear->year] : null,
-            'userRole'   => $user->roles->first()?->name,
+            'activeYear'     => $activeYear ? ['id' => $activeYear->id, 'year' => $activeYear->year] : null,
+            'selectedYearId' => $yearId,
+            'selectedYear'   => $selectedYear ? ['id' => $selectedYear->id, 'year' => $selectedYear->year] : null,
+            'academicYears'  => $years,
+            'userRole'       => $user->roles->first()?->name,
         ];
 
         /* ── Section financière : ADMIN, DIRECTEUR, COMPTABILITÉ ─────────── */
@@ -151,6 +163,16 @@ class DashboardController extends Controller
                     'class_code' => $e->classroom?->code ?? '—',
                 ]);
 
+            /* Répartition des inscriptions par classe (pour le graphe) */
+            $enrollmentsByClass = Enrollment::query()
+                ->join('classes', 'enrollments.class_id', '=', 'classes.id')
+                ->when($yearId, fn ($q) => $q->where('enrollments.academic_year_id', $yearId))
+                ->selectRaw('classes.name AS class_name, COUNT(*) AS total')
+                ->groupBy('classes.name')
+                ->orderByDesc('total')
+                ->limit(8)
+                ->get();
+
             $data['enrollments'] = [
                 'total_students'    => Student::count(),
                 'active_students'   => Student::where('active', true)->count(),
@@ -159,6 +181,7 @@ class DashboardController extends Controller
                     ->where('enrollment_date', '>=', now()->startOfWeek())
                     ->count(),
                 'recentEnrollments' => $recentEnrollments,
+                'byClass'           => $enrollmentsByClass,
             ];
         }
 
