@@ -184,6 +184,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('settings/file-storage', [FileStorageController::class, 'update'])->name('file-storage.update');
     Route::post('settings/file-storage/test', [FileStorageController::class, 'test'])->name('file-storage.test');
 
+    // Sauvegardes de la base de données
+    Route::get('settings/backups', [\App\Http\Controllers\BackupController::class, 'index'])->name('backups.index');
+    Route::post('settings/backups', [\App\Http\Controllers\BackupController::class, 'store'])->name('backups.store');
+    Route::post('settings/backups/schedule', [\App\Http\Controllers\BackupController::class, 'updateSchedule'])->name('backups.schedule');
+    Route::get('settings/backups/{backup}/download', [\App\Http\Controllers\BackupController::class, 'download'])->name('backups.download');
+    Route::delete('settings/backups/{backup}', [\App\Http\Controllers\BackupController::class, 'destroy'])->name('backups.destroy');
+
     // Passage de classe / réinscription en masse
     Route::get('promotion', [PromotionController::class, 'index'])->name('promotion.index');
     Route::post('promotion', [PromotionController::class, 'store'])->name('promotion.store');
