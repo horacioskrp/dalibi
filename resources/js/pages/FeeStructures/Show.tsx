@@ -571,10 +571,14 @@ export default function Show({ feeStructure }: Readonly<ShowProps>) {
                                     router.post(route('fee-structures.installments.store-multiple', feeStructure.id), {
                                         installments: validInstallments,
                                     }, {
+                                        preserveScroll: true,
                                         onSuccess: () => {
                                             setInstallmentsModal(false);
                                             setNewInstallments([{uid: uid(), name: '', installment_number: '1', amount: '0'}]);
                                             setInstallmentsError('');
+                                        },
+                                        onError: (errs) => {
+                                            setInstallmentsError(errs.installments ?? 'Erreur lors de l\'enregistrement des tranches.');
                                         },
                                     });
                                 }}

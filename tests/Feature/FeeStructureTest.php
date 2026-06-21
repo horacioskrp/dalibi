@@ -94,6 +94,54 @@ class FeeStructureTest extends TestCase
         $this->assertEquals(2, $copy->installments()->count());
     }
 
+    public function test_installments_total_cannot_exceed_structure_amount(): void
+    {
+        $this->year('2025-2026', true);
+        $cat   = FeeCategorie::create(['name' => 'Écolage']);
+        $class = Classroom::factory()->create();
+        $fs    = FeeStructure::create([
+            'academic_year_id' => AcademicYear::where('active', true)->value('id'),
+            'fee_category_id'  => $cat->id,
+            'class_id'         => $class->id,
+            'amount'           => 100000,
+        ]);
+
+        $this->actingAs($this->admin())
+            ->post(route('fee-structures.installments.store-multiple', $fs), [
+                'installments' => [
+                    ['name' => 'T1', 'installment_number' => 1, 'amount' => 60000],
+                    ['name' => 'T2', 'installment_number' => 2, 'amount' => 60000], // total 120000 > 100000
+                ],
+            ])
+            ->assertSessionHasErrors('installments');
+
+        $this->assertEquals(0, $fs->installments()->count());
+    }
+
+    public function test_installments_total_within_amount_is_accepted(): void
+    {
+        $this->year('2025-2026', true);
+        $cat   = FeeCategorie::create(['name' => 'Écolage']);
+        $class = Classroom::factory()->create();
+        $fs    = FeeStructure::create([
+            'academic_year_id' => AcademicYear::where('active', true)->value('id'),
+            'fee_category_id'  => $cat->id,
+            'class_id'         => $class->id,
+            'amount'           => 100000,
+        ]);
+
+        $this->actingAs($this->admin())
+            ->post(route('fee-structures.installments.store-multiple', $fs), [
+                'installments' => [
+                    ['name' => 'T1', 'installment_number' => 1, 'amount' => 50000],
+                    ['name' => 'T2', 'installment_number' => 2, 'amount' => 50000],
+                ],
+            ])
+            ->assertSessionHasNoErrors();
+
+        $this->assertEquals(2, $fs->installments()->count());
+    }
+
     public function test_replicate_skips_existing_combinations(): void
     {
         $source = $this->year('2024-2025', false);
