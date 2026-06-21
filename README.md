@@ -269,6 +269,8 @@ Pour activer les sauvegardes planifiées, ajoutez le planificateur Laravel au cr
 ## 🔐 Sécurité
 
 - Authentification email / mot de passe
+- **Inscription publique désactivée** : les comptes sont créés uniquement par un administrateur (module Utilisateurs)
+- Limitation des tentatives de connexion (5/min par e-mail + IP)
 - Two-Factor Authentication (2FA)
 - UUIDs pour toutes les clés primaires
 - Gestion des rôles et permissions via Spatie Laravel Permission
