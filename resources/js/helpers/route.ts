@@ -143,6 +143,7 @@ export function route(name: string, params?: any): string {
         'backups.index': '/settings/backups',
         'backups.store': '/settings/backups',
         'backups.schedule': '/settings/backups/schedule',
+        'backups.restore': '/settings/backups/restore',
         'backups.download': `/settings/backups/${params}/download`,
         'backups.destroy': `/settings/backups/${params}`,
 

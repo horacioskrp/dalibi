@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Backup;
 use App\Models\BackupSetting;
 use App\Models\FileStorageSetting;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -69,6 +70,120 @@ class BackupService
         $this->applyRetention();
 
         return $results;
+    }
+
+    /**
+     * Restaure la base à partir d'un fichier de sauvegarde (JSON ou SQL).
+     * Une sauvegarde de sécurité (JSON) est générée au préalable.
+     *
+     * @return array{format:string, tables:int, rows?:int}
+     */
+    public function restore(UploadedFile $file): array
+    {
+        $ext      = strtolower($file->getClientOriginalExtension());
+        $contents = (string) file_get_contents($file->getRealPath());
+
+        if (! in_array($ext, ['json', 'sql'], true)) {
+            throw new \InvalidArgumentException('Format non supporté (JSON ou SQL attendu).');
+        }
+
+        // Filet de sécurité : snapshot avant écrasement
+        try {
+            $this->run(['json']);
+        } catch (\Throwable) {
+            // On n'empêche pas la restauration si le snapshot échoue
+        }
+
+        return $ext === 'sql' ? $this->restoreSql($contents) : $this->restoreJson($contents);
+    }
+
+    /** Restaure depuis un export JSON (vide puis réinsère chaque table). */
+    private function restoreJson(string $contents): array
+    {
+        $data = json_decode($contents, true);
+
+        if (! is_array($data) || ! isset($data['tables']) || ! is_array($data['tables'])) {
+            throw new \RuntimeException('Fichier JSON de sauvegarde invalide.');
+        }
+
+        $rowsTotal = 0;
+
+        try {
+            DB::transaction(function () use ($data, &$rowsTotal): void {
+                $this->deferForeignKeys();
+
+                foreach ($data['tables'] as $table => $rows) {
+                    if (! Schema::hasTable($table)) {
+                        continue;
+                    }
+                    DB::table($table)->delete();
+
+                    foreach (array_chunk($rows, 500) as $chunk) {
+                        if (! empty($chunk)) {
+                            DB::table($table)->insert($chunk);
+                            $rowsTotal += count($chunk);
+                        }
+                    }
+                }
+            });
+        } finally {
+            $this->restoreForeignKeys();
+        }
+
+        return ['format' => 'json', 'tables' => count($data['tables']), 'rows' => $rowsTotal];
+    }
+
+    /** Restaure depuis un export SQL (vide les tables visées puis rejoue le script). */
+    private function restoreSql(string $contents): array
+    {
+        preg_match_all('/INSERT\s+INTO\s+"([^"]+)"/i', $contents, $matches);
+        $tables = array_values(array_unique($matches[1] ?? []));
+
+        try {
+            DB::transaction(function () use ($contents, $tables): void {
+                $this->deferForeignKeys();
+
+                foreach ($tables as $table) {
+                    if (Schema::hasTable($table)) {
+                        DB::table($table)->delete();
+                    }
+                }
+
+                DB::unprepared($contents);
+            });
+        } finally {
+            $this->restoreForeignKeys();
+        }
+
+        return ['format' => 'sql', 'tables' => count($tables)];
+    }
+
+    /** Désactive / diffère les contraintes de clés étrangères le temps de la restauration. */
+    private function deferForeignKeys(): void
+    {
+        try {
+            match (DB::getDriverName()) {
+                'sqlite' => DB::statement('PRAGMA defer_foreign_keys = ON'),
+                'mysql'  => DB::statement('SET FOREIGN_KEY_CHECKS=0'),
+                'pgsql'  => DB::statement("SET session_replication_role = 'replica'"),
+                default  => null,
+            };
+        } catch (\Throwable) {
+            // Best effort selon les privilèges du compte SGBD
+        }
+    }
+
+    private function restoreForeignKeys(): void
+    {
+        try {
+            match (DB::getDriverName()) {
+                'mysql'  => DB::statement('SET FOREIGN_KEY_CHECKS=1'),
+                'pgsql'  => DB::statement("SET session_replication_role = 'origin'"),
+                default  => null,
+            };
+        } catch (\Throwable) {
+            // Best effort
+        }
     }
 
     /** Supprime un enregistrement de sauvegarde et son fichier. */

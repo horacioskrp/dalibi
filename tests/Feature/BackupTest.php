@@ -6,8 +6,10 @@ use App\Constants\Roles;
 use App\Models\Backup;
 use App\Models\BackupSetting;
 use App\Models\User;
+use App\Services\BackupService;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -87,6 +89,63 @@ class BackupTest extends TestCase
 
         $this->assertDatabaseMissing('backups', ['id' => $backup->id]);
         Storage::disk('media')->assertMissing($backup->path);
+    }
+
+    public function test_restore_from_json_repopulates_the_database(): void
+    {
+        // Données initiales
+        $u = User::factory()->create(['firstname' => 'Ama', 'lastname' => 'Koffi']);
+
+        // Snapshot JSON du contenu actuel
+        $json = json_encode([
+            'tables' => [
+                'users' => User::all()->map(fn ($x) => $x->getAttributes())->all(),
+            ],
+        ]);
+
+        // On supprime la donnée…
+        $u->forceDelete();
+        $this->assertDatabaseMissing('users', ['id' => $u->id]);
+
+        // … puis on restaure via le service
+        Storage::fake('media');
+        app(BackupService::class)->restore(
+            UploadedFile::fake()->createWithContent('dump.json', $json)
+        );
+
+        $this->assertDatabaseHas('users', ['id' => $u->id, 'firstname' => 'Ama']);
+    }
+
+    public function test_admin_can_upload_and_restore_via_endpoint(): void
+    {
+        $admin = $this->admin();
+        $json  = json_encode(['tables' => ['users' => User::all()->map(fn ($x) => $x->getAttributes())->all()]]);
+
+        $this->actingAs($admin)
+            ->post(route('backups.restore'), [
+                'file' => UploadedFile::fake()->createWithContent('dump.json', $json),
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+    }
+
+    public function test_restore_rejects_unsupported_format(): void
+    {
+        $this->actingAs($this->admin())
+            ->post(route('backups.restore'), [
+                'file' => UploadedFile::fake()->create('archive.zip', 10),
+            ])
+            ->assertSessionHasErrors('file');
+    }
+
+    public function test_non_admin_cannot_restore(): void
+    {
+        $teacher = User::factory()->create();
+        $teacher->assignRole(Roles::TEACHER);
+
+        $this->actingAs($teacher)
+            ->post(route('backups.restore'), ['file' => UploadedFile::fake()->createWithContent('d.json', '{"tables":{}}')])
+            ->assertForbidden();
     }
 
     public function test_retention_keeps_only_latest_backups(): void
