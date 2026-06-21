@@ -133,6 +133,7 @@ Un système de gestion scolaire open-source pour les écoles primaires, collège
 - **Planification** des sauvegardes automatiques : quotidienne ou hebdomadaire, heure et jour configurables
 - **Rétention** automatique (nombre de sauvegardes conservées par format)
 - Historique des sauvegardes (taille, statut, origine manuelle/planifiée), téléchargement et suppression
+- **Restauration** : import d'un fichier `.json` ou `.sql` pour réécrire la base ; une **sauvegarde de sécurité** est générée automatiquement avant l'opération
 - Commande CLI : `php artisan backup:run --formats=json,sql`
 - Page réservée aux administrateurs
 

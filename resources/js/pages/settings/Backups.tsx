@@ -1,9 +1,9 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import {
-    AlertCircle, CheckCircle2, Clock, Cloud, Database, DatabaseBackup,
-    Download, HardDrive, Play, Trash2,
+    AlertCircle, AlertTriangle, CheckCircle2, Clock, Cloud, Database, DatabaseBackup,
+    Download, HardDrive, Play, Trash2, Upload,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
     AlertDialog, AlertDialogAction, AlertDialogCancel,
     AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle,
@@ -35,6 +35,22 @@ export default function Backups({ backups, settings, storageDriver }: Readonly<P
     const [deleteId, setDeleteId] = useState<string | null>(null);
     const [runFormats, setRunFormats] = useState<string[]>(['json', 'sql']);
     const [running, setRunning] = useState(false);
+
+    const restoreInputRef = useRef<HTMLInputElement>(null);
+    const [restoreFile, setRestoreFile] = useState<File | null>(null);
+    const [restoreConfirm, setRestoreConfirm] = useState(false);
+    const [restoring, setRestoring] = useState(false);
+
+    const runRestore = () => {
+        if (!restoreFile) return;
+        setRestoring(true);
+        router.post(route('backups.restore'), { file: restoreFile }, {
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: () => { setRestoreFile(null); if (restoreInputRef.current) restoreInputRef.current.value = ''; },
+            onFinish: () => { setRestoring(false); setRestoreConfirm(false); },
+        });
+    };
 
     const toggle = (list: string[], set: (v: string[]) => void, f: string) =>
         set(list.includes(f) ? list.filter(x => x !== f) : [...list, f]);
@@ -167,6 +183,37 @@ export default function Backups({ backups, settings, storageDriver }: Readonly<P
                     </div>
                 </form>
 
+                {/* Restauration */}
+                <div className="bg-white rounded-2xl shadow-sm ring-1 ring-red-100 p-5 space-y-4">
+                    <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+                        <Upload className="w-4 h-4 text-red-600" /> Restaurer la base de données
+                    </h2>
+                    <div className="flex items-start gap-3 rounded-xl bg-red-50 ring-1 ring-red-100 p-3 text-sm">
+                        <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+                        <p className="text-red-700">
+                            La restauration <strong>écrase les données actuelles</strong> avec le contenu du fichier.
+                            Une sauvegarde de sécurité (JSON) est créée automatiquement avant l'opération.
+                        </p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3">
+                        <input
+                            ref={restoreInputRef}
+                            type="file"
+                            accept=".json,.sql"
+                            onChange={e => setRestoreFile(e.target.files?.[0] ?? null)}
+                            className="block text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-red-50 file:px-3 file:py-1.5 file:text-red-700 file:text-sm hover:file:bg-red-100"
+                        />
+                        <Button
+                            onClick={() => setRestoreConfirm(true)}
+                            disabled={!restoreFile || restoring}
+                            className="bg-red-600 hover:bg-red-700 gap-2"
+                        >
+                            <Upload className="w-4 h-4" /> {restoring ? 'Restauration…' : 'Restaurer'}
+                        </Button>
+                    </div>
+                    <p className="text-xs text-gray-400">Formats acceptés : .json ou .sql (issus de cette application) — max 50 Mo.</p>
+                </div>
+
                 {/* Historique */}
                 <div className="bg-white rounded-2xl shadow-sm ring-1 ring-gray-100 overflow-hidden">
                     <h2 className="font-semibold text-gray-900 px-5 pt-5 pb-3">Historique des sauvegardes</h2>
@@ -217,6 +264,24 @@ export default function Backups({ backups, settings, storageDriver }: Readonly<P
                     </Table>
                 </div>
             </div>
+
+            <AlertDialog open={restoreConfirm} onOpenChange={setRestoreConfirm}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Confirmer la restauration ?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Toutes les données actuelles seront remplacées par le contenu de
+                            « {restoreFile?.name} ». Une sauvegarde de sécurité est créée avant. Cette action est irréversible.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="flex justify-end gap-2">
+                        <AlertDialogCancel>Annuler</AlertDialogCancel>
+                        <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={runRestore}>
+                            Restaurer maintenant
+                        </AlertDialogAction>
+                    </div>
+                </AlertDialogContent>
+            </AlertDialog>
 
             <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
                 <AlertDialogContent>

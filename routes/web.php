@@ -188,6 +188,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('settings/backups', [\App\Http\Controllers\BackupController::class, 'index'])->name('backups.index');
     Route::post('settings/backups', [\App\Http\Controllers\BackupController::class, 'store'])->name('backups.store');
     Route::post('settings/backups/schedule', [\App\Http\Controllers\BackupController::class, 'updateSchedule'])->name('backups.schedule');
+    Route::post('settings/backups/restore', [\App\Http\Controllers\BackupController::class, 'restore'])->name('backups.restore');
     Route::get('settings/backups/{backup}/download', [\App\Http\Controllers\BackupController::class, 'download'])->name('backups.download');
     Route::delete('settings/backups/{backup}', [\App\Http\Controllers\BackupController::class, 'destroy'])->name('backups.destroy');
 
