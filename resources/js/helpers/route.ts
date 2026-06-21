@@ -275,6 +275,7 @@ export function route(name: string, params?: any): string {
         'students.change-class': `/students/${params}/change-class`,
 
         // Student photo
+        'students.photo.view':   `/students/${params}/photo`,
         'students.photo.upload': `/students/${params}/photo`,
         'students.photo.delete': `/students/${params}/photo`,
 

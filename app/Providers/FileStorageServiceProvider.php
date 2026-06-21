@@ -3,31 +3,29 @@
 namespace App\Providers;
 
 use App\Models\FileStorageSetting;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
 
 class FileStorageServiceProvider extends ServiceProvider
 {
+    /**
+     * Propage la configuration centralisée (Paramètres → Fichiers & Stockage)
+     * vers le disque "media" utilisé par TOUS les uploads de l'app.
+     *
+     * Le disque "media" est défini par défaut (local) dans config/filesystems.php,
+     * donc toujours disponible — y compris en console / file d'attente. Ici on ne
+     * fait que le surcharger en S3 lorsque ce mode est sélectionné.
+     */
     public function boot(): void
     {
-        // Ne pas tenter d'accéder à la DB pendant les migrations ou en console (artisan)
-        if ($this->app->runningInConsole()) {
-            return;
-        }
-
         try {
-            $driver = FileStorageSetting::get('driver', 'local');
-
-            if ($driver === 's3') {
-                config(['filesystems.disks.media' => FileStorageSetting::s3Config()]);
-            } else {
-                config(['filesystems.disks.media' => config('filesystems.disks.public')]);
+            if (FileStorageSetting::get('driver', 'local') === 's3') {
+                $s3 = FileStorageSetting::s3Config();
+                config(['filesystems.disks.media' => $s3]);
+                // Même backend S3, mais visibilité privée pour les fichiers sensibles
+                config(['filesystems.disks.secure' => array_merge($s3, ['visibility' => 'private'])]);
             }
-
-            // Le disque "media" est celui utilisé dans toute l'app pour les uploads
         } catch (\Throwable) {
-            // Fallback silencieux si la table n'existe pas encore
-            config(['filesystems.disks.media' => config('filesystems.disks.public')]);
+            // Table absente (migrations en cours) : on garde les disques locaux par défaut.
         }
     }
 }
