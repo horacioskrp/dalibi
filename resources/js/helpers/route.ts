@@ -140,6 +140,12 @@ export function route(name: string, params?: any): string {
         'fee-categories.destroy': `/fee-categories/${params}`,
 
         // Fee Structures routes
+        'backups.index': '/settings/backups',
+        'backups.store': '/settings/backups',
+        'backups.schedule': '/settings/backups/schedule',
+        'backups.download': `/settings/backups/${params}/download`,
+        'backups.destroy': `/settings/backups/${params}`,
+
         'fee-structures.index': '/fee-structures',
         'fee-structures.replicate': '/fee-structures/replicate',
         'fee-structures.create': '/fee-structures/create',

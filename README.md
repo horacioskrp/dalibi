@@ -126,6 +126,16 @@ Un système de gestion scolaire open-source pour les écoles primaires, collège
 - **Sécurité** : credentials S3 chiffrés au repos (`APP_KEY`), clé d'accès masquée à l'affichage, page réservée aux administrateurs
 - Recommandation Cloudflare R2 (S3-compatible, sans frais de bande passante sortante)
 
+### Sauvegardes de la base de données
+
+- Sauvegarde de la base depuis l'interface (Paramètres → Sauvegardes), aux formats **JSON** et **SQL**
+- Stockage sur le **dépôt distant** configuré (S3 / Cloudflare R2) ou en local — via la même configuration centralisée que les uploads
+- **Planification** des sauvegardes automatiques : quotidienne ou hebdomadaire, heure et jour configurables
+- **Rétention** automatique (nombre de sauvegardes conservées par format)
+- Historique des sauvegardes (taille, statut, origine manuelle/planifiée), téléchargement et suppression
+- Commande CLI : `php artisan backup:run --formats=json,sql`
+- Page réservée aux administrateurs
+
 ## 📋 Prérequis
 
 - PHP 8.3+
@@ -193,6 +203,14 @@ npm run build
 
 L'application est accessible sur `http://localhost:8000`.
 
+### 6. Planificateur (sauvegardes automatiques)
+
+Pour activer les sauvegardes planifiées, ajoutez le planificateur Laravel au cron du serveur :
+
+```cron
+* * * * * cd /chemin/vers/dalibi && php artisan schedule:run >> /dev/null 2>&1
+```
+
 ## 👥 Utilisateurs par défaut (seeder)
 
 | Rôle       | Email                       | Mot de passe |
@@ -244,6 +262,8 @@ L'application est accessible sur `http://localhost:8000`.
 | `document_issuances`  | Traçabilité des documents délivrés par élève                   |
 | `note_reclamations`   | Réclamations sur les notes                                     |
 | `file_storage_settings`| Configuration du stockage des fichiers (local / S3, chiffrée) |
+| `backups`             | Historique des sauvegardes de base de données (JSON / SQL)     |
+| `backup_settings`     | Planification et options des sauvegardes                       |
 
 ## 🔐 Sécurité
 
