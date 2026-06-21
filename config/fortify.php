@@ -144,7 +144,8 @@ return [
     */
 
     'features' => [
-        Features::registration(),
+        // Inscription publique désactivée : les comptes sont créés par un administrateur
+        // via le module Utilisateurs. Réactiver Features::registration() pour rouvrir /register.
         Features::resetPasswords(),
         Features::emailVerification(),
         Features::twoFactorAuthentication([
