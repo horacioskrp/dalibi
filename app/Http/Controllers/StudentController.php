@@ -314,13 +314,13 @@ class StudentController extends Controller
             'photo' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ]);
 
-        // Supprime l'ancienne photo si présente
+        // Supprime l'ancienne photo si présente (disque privé)
         if ($student->profile_photo) {
-            Storage::disk('media')->delete($student->profile_photo);
+            Storage::disk('secure')->delete($student->profile_photo);
         }
 
         $student->update([
-            'profile_photo' => $request->file('photo')->store('students/photos', 'media'),
+            'profile_photo' => $request->file('photo')->store('students/photos', 'secure'),
         ]);
 
         return back()->with('success', 'Photo mise à jour.');
@@ -334,10 +334,22 @@ class StudentController extends Controller
         $this->authorize('update', $student);
 
         if ($student->profile_photo) {
-            Storage::disk('media')->delete($student->profile_photo);
+            Storage::disk('secure')->delete($student->profile_photo);
             $student->update(['profile_photo' => null]);
         }
 
         return back()->with('success', 'Photo supprimée.');
+    }
+
+    /**
+     * Sert la photo d'un élève (fichier privé) via une route authentifiée.
+     */
+    public function photo(Student $student)
+    {
+        $this->authorize('view', $student);
+
+        abort_unless($student->profile_photo && Storage::disk('secure')->exists($student->profile_photo), 404);
+
+        return Storage::disk('secure')->response($student->profile_photo);
     }
 }

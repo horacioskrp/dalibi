@@ -21,7 +21,7 @@ class UpdateSchoolRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255', Rule::unique('schools', 'name')->ignore($this->school)],
             'code' => ['required', 'string', 'max:50', Rule::unique('schools', 'code')->ignore($this->school)],
-            'logo'   => ['nullable', 'image', 'mimes:jpg,jpeg,png,svg,webp', 'max:2048'],
+            'logo'   => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'devise' => ['nullable', 'string', 'max:500'],
             'terme'  => ['nullable', 'string', 'max:255'],
             'email'  => ['nullable', 'email', 'max:255'],

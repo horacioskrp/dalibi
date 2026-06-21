@@ -128,6 +128,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('students.history');
     Route::post('students/{student}/change-class', [StudentController::class, 'changeClass'])
         ->name('students.change-class');
+    Route::get('students/{student}/photo', [StudentController::class, 'photo'])
+        ->name('students.photo.view');
     Route::post('students/{student}/photo', [StudentController::class, 'uploadPhoto'])
         ->name('students.photo.upload');
     Route::delete('students/{student}/photo', [StudentController::class, 'deletePhoto'])
@@ -147,6 +149,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('enrollments/{enrollment}/invoice', [InvoiceController::class, 'show'])->name('enrollments.invoice');
     Route::post('enrollments/{enrollment}/payments', [InvoiceController::class, 'storePayment'])->name('enrollments.payments.store');
     Route::get('payments/{payment}/receipt', [InvoiceController::class, 'receipt'])->name('payments.receipt');
+    Route::get('receipts/verify', [InvoiceController::class, 'verifyReceipt'])
+        ->middleware('throttle:30,1')
+        ->name('receipts.verify');
     Route::resource('subject-assignments', SubjectAssignmentController::class);
 
     // Présences & Permissions

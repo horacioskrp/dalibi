@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\Roles;
 use App\Http\Requests\StorePaymentRequest;
 use App\Models\CashAccount;
 use App\Models\Enrollment;
@@ -98,6 +99,11 @@ class InvoiceController extends Controller
      */
     public function verifyReceipt(Request $request): Response
     {
+        abort_unless(
+            $request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR, Roles::ACCOUNTING, Roles::SECRETARIAT]),
+            403
+        );
+
         $code = trim($request->string('code')->toString());
         $result = null;
 
