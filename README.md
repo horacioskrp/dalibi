@@ -66,6 +66,16 @@ Un système de gestion scolaire open-source pour les écoles primaires, collège
 - **Modèles d'évaluation par type de classe** pour plus de cohérence
 - **Examens officiels** (CEPD, BEPC, Baccalauréat) : liste filtrable (type, session, statut, recherche), rattachée à l'année académique active, gestion des inscriptions et des résultats (admis)
 
+### Archives documentaires
+
+- Archivage de tout document (PDF, Office, image, CSV, ZIP) avec **titre, description, catégorie** et **référence automatique** (`ARC-AAAA-0001`)
+- **Tags** réutilisables et colorés (création à la volée), filtrage **multi-tags**
+- Liste filtrable (recherche, catégorie, tags, plage de dates) + pagination
+- **Liaison optionnelle** d'un document à un élève (matricule) ou une classe
+- **Corbeille** (soft delete) → restauration / suppression définitive
+- Date de **conservation** (rétention) indicative
+- Fichiers sur le disque privé **`secure`**, téléchargement via route authentifiée ; réservé aux rôles Admin / Directeur / Secrétariat
+
 ### Documents officiels
 
 - **Modèles de documents** PDF personnalisables (éditeur de contenu riche)
@@ -267,6 +277,8 @@ docker run -d --name dalibi -p 8080:80 \
 | `official_exam_registrations` | Inscriptions et résultats aux examens officiels        |
 | `student_documents`   | Pièces du dossier privé de l'élève (fichiers uploadés)         |
 | `document_templates`  | Modèles de documents PDF personnalisables                      |
+| `archived_documents`  | Archives documentaires (fichiers + métadonnées, soft delete)   |
+| `document_tags` / `archived_document_tag` | Tags d'archivage et table pivot            |
 | `attendances`         | Séance d'appel (classe / date / session)                       |
 | `attendance_records`  | Statut de présence par élève et séance                         |
 | `absence_permissions` | Demandes de permission d'absence avec cycle de révision        |
