@@ -9,7 +9,7 @@ import {
     AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -254,7 +254,12 @@ export default function Index({ documents, tags, categories, classrooms, filters
             {/* Dialog création / édition */}
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader><DialogTitle>{editing ? 'Modifier le document' : 'Archiver un document'}</DialogTitle></DialogHeader>
+                    <DialogHeader>
+                        <DialogTitle>{editing ? 'Modifier le document' : 'Archiver un document'}</DialogTitle>
+                        <DialogDescription>
+                            {editing ? 'Mettez à jour les métadonnées et les tags.' : 'Ajoutez un fichier au coffre documentaire avec ses métadonnées et tags.'}
+                        </DialogDescription>
+                    </DialogHeader>
                     <form onSubmit={submit} className="space-y-4 py-1">
                         <div className="space-y-1.5">
                             <label className="text-sm font-medium text-gray-700">Titre *</label>
