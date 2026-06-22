@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { CheckCircle2, Download, GraduationCap, Search, Settings2, Users, X, XCircle } from 'lucide-react';
+import { CheckCircle2, Download, GraduationCap, Search, Settings2, Users, X, XCircle, ListChecks } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -104,7 +104,7 @@ export default function Index({ years, classrooms, enrollments, stats, statuses,
 
                 <div className="flex items-start justify-between gap-4 flex-wrap">
                     <div>
-                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Effectifs / Listes de classe</h1>
+                        <h1 className="text-4xl font-bold tracking-tight text-gray-900 flex items-center gap-3"><ListChecks className="h-7 w-7 text-blue-600 shrink-0" />Effectifs / Listes de classe</h1>
                         <p className="mt-2 text-gray-500">Élèves par année et classe, suivi de scolarité (validation, abandon, transfert).</p>
                     </div>
                     {ready && (

@@ -151,7 +151,7 @@ export default function Index({ enrollments, perPage, filters, stats, academicYe
             <div className="space-y-6">
                 <div className="flex items-start justify-between">
                     <div>
-                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Inscriptions</h1>
+                        <h1 className="text-4xl font-bold tracking-tight text-gray-900 flex items-center gap-3"><ClipboardList className="h-7 w-7 text-blue-600 shrink-0" />Inscriptions</h1>
                         <p className="mt-2 text-lg text-gray-600">Gérez les inscriptions des élèves par année académique</p>
                     </div>
                     <Button onClick={() => router.get(route('enrollments.create'))} className="bg-blue-600 hover:bg-blue-700 gap-2">

@@ -195,7 +195,7 @@ export default function Index({ feeStructures, academicYears, feeCategories, cla
                 {/* Header avec titre et bouton */}
                 <div className="flex items-start justify-between">
                     <div>
-                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">
+                        <h1 className="text-4xl font-bold tracking-tight text-gray-900 flex items-center gap-3"><DollarSign className="h-7 w-7 text-blue-600 shrink-0" />
                             Structures de frais
                         </h1>
                         <p className="mt-3 text-base text-gray-600">

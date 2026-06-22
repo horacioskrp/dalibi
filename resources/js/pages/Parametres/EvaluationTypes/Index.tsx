@@ -94,7 +94,7 @@ export default function Index({ evaluationTypes, filters }: Readonly<IndexProps>
             <div className="w-full space-y-6">
                 <div className="flex items-start justify-between">
                     <div>
-                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Types d'évaluation</h1>
+                        <h1 className="text-4xl font-bold tracking-tight text-gray-900 flex items-center gap-3"><Tag className="h-7 w-7 text-blue-600 shrink-0" />Types d'évaluation</h1>
                         <p className="mt-2 text-lg text-gray-600">Gérez les types d'évaluation</p>
                     </div>
                     <Button className="gap-2 bg-blue-600 hover:bg-blue-700" onClick={() => router.get(route('evaluation-types.create'))}>

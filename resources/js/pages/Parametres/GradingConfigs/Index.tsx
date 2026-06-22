@@ -68,7 +68,7 @@ export default function Index({ configs, schools, filters }: Readonly<Props>) {
                 {/* Header */}
                 <div className="flex items-start justify-between">
                     <div>
-                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Calcul des moyennes</h1>
+                        <h1 className="text-4xl font-bold tracking-tight text-gray-900 flex items-center gap-3"><SlidersHorizontal className="h-7 w-7 text-blue-600 shrink-0" />Calcul des moyennes</h1>
                         <p className="mt-2 text-lg text-gray-600">
                             Personnalisez la formule de calcul par établissement
                         </p>

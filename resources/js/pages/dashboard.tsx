@@ -1,10 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import {
-    Users, Banknote, TrendingUp, TrendingDown, Wallet,
-    CheckCircle2, AlertCircle, XCircle, AlertTriangle,
-    BookOpen, ClipboardList, ArrowRight, CalendarDays,
-    GraduationCap, UserCheck, ShieldCheck, FileBadge,
-} from 'lucide-react';
+import { Users, Banknote, TrendingUp, TrendingDown, Wallet, CheckCircle2, AlertCircle, XCircle, AlertTriangle, BookOpen, ClipboardList, ArrowRight, CalendarDays, GraduationCap, UserCheck, ShieldCheck, FileBadge, LayoutGrid } from 'lucide-react';
 import {
     Area, AreaChart, Bar, BarChart, Cell, Pie, PieChart,
     ResponsiveContainer, Tooltip as RTooltip, XAxis, YAxis,
@@ -267,7 +262,7 @@ export default function Dashboard({ activeYear, selectedYearId, selectedYear, ac
                 {/* ── En-tête ──────────────────────────────────────────── */}
                 <div className="flex items-start justify-between gap-4 flex-wrap">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Tableau de bord</h1>
+                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3"><LayoutGrid className="h-7 w-7 text-blue-600 shrink-0" />Tableau de bord</h1>
                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
                             {selectedYear ? `Année scolaire ${selectedYear.year}` : 'Aucune année active'}
                             {userRole && ` · ${userRole}`}

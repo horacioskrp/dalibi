@@ -1,5 +1,5 @@
 import { Head, router, useForm } from '@inertiajs/react';
-import { ArrowLeft, Banknote, CalendarDays, Layers, School } from 'lucide-react';
+import { ArrowLeft, Banknote, CalendarDays, Layers, School, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -69,7 +69,7 @@ export default function Edit({ feeStructure, academicYears, feeCategories, class
                 </div>
 
                 <div>
-                    <h1 className="text-4xl font-bold tracking-tight text-gray-900">
+                    <h1 className="text-4xl font-bold tracking-tight text-gray-900 flex items-center gap-3"><DollarSign className="h-7 w-7 text-blue-600 shrink-0" />
                         Modifier la structure de frais
                     </h1>
                     <p className="mt-3 text-base text-gray-600">

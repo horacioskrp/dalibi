@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { CheckCircle2, ScanLine, Search, XCircle } from 'lucide-react';
+import { CheckCircle2, ScanLine, Search, XCircle, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,7 +37,7 @@ export default function Verify({ code, result }: Readonly<Props>) {
             <div className="w-full max-w-2xl space-y-6">
 
                 <div>
-                    <h1 className="text-4xl font-bold tracking-tight text-gray-900">Vérifier un reçu</h1>
+                    <h1 className="text-4xl font-bold tracking-tight text-gray-900 flex items-center gap-3"><ShieldCheck className="h-7 w-7 text-blue-600 shrink-0" />Vérifier un reçu</h1>
                     <p className="mt-2 text-gray-500">Scannez le code-barres ou saisissez le code de vérification du reçu.</p>
                 </div>
 

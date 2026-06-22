@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { ArrowRight, CheckCircle2, GraduationCap, Users } from 'lucide-react';
+import { ArrowRight, CheckCircle2, GraduationCap, Users, ArrowLeftRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -78,7 +78,7 @@ export default function Index({ years, classrooms, students, stats, statuses, fi
             <div className="w-full space-y-6">
 
                 <div>
-                    <h1 className="text-4xl font-bold tracking-tight text-gray-900">Passage de classe</h1>
+                    <h1 className="text-4xl font-bold tracking-tight text-gray-900 flex items-center gap-3"><ArrowLeftRight className="h-7 w-7 text-blue-600 shrink-0" />Passage de classe</h1>
                     <p className="mt-2 text-gray-500">Réinscrivez en masse les élèves validés vers la classe et l'année suivantes.</p>
                 </div>
 
