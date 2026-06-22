@@ -10,7 +10,7 @@ class StoreSubjectAssignmentRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]);
+        return $this->user()->can('create_subject_assignments');
     }
 
     public function rules(): array

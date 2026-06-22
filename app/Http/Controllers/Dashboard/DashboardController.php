@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Dashboard;
 use App\Http\Controllers\Controller;
 
-use App\Constants\Roles;
 use App\Models\AbsencePermission;
 use App\Models\AcademicYear;
 use App\Models\AttendanceRecord;
@@ -47,8 +46,8 @@ class DashboardController extends Controller
             'userRole'       => $user->roles->first()?->name,
         ];
 
-        /* ── Section financière : ADMIN, DIRECTEUR, COMPTABILITÉ ─────────── */
-        if ($user->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR, Roles::ACCOUNTING])) {
+        /* ── Section financière (permission view_finances) ──────────────── */
+        if ($user->can('view_finances')) {
             /* Statistiques globales factures */
             $stats = DB::table('invoices')
                 ->join('enrollments', 'invoices.enrollment_id', '=', 'enrollments.id')
@@ -143,8 +142,8 @@ class DashboardController extends Controller
             ];
         }
 
-        /* ── Section inscriptions : ADMIN, DIRECTEUR, SECRÉTARIAT ───────── */
-        if ($user->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR, Roles::SECRETARIAT])) {
+        /* ── Section inscriptions (permission view_enrollments) ─────────── */
+        if ($user->can('view_enrollments')) {
             $recentEnrollments = Enrollment::with([
                     'student:id,firstname,lastname,matricule',
                     'classroom:id,name,code',
@@ -203,8 +202,8 @@ class DashboardController extends Controller
             ];
         }
 
-        /* ── Section vie scolaire & pédagogie : ADMIN, DIRECTEUR, SECRÉTARIAT ─ */
-        if ($user->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR, Roles::SECRETARIAT])) {
+        /* ── Section vie scolaire & pédagogie (permission view_attendances) ─ */
+        if ($user->can('view_attendances')) {
             $today = now()->toDateString();
 
             $presentToday = AttendanceRecord::whereHas('attendance', fn ($q) => $q->where('date', $today))
@@ -255,8 +254,8 @@ class DashboardController extends Controller
             ];
         }
 
-        /* ── Section enseignant : ENSEIGNANT ──────────────────────────────── */
-        if ($user->hasRole(Roles::TEACHER)) {
+        /* ── Section enseignant : capacité de saisie des notes (create_marks) ─ */
+        if ($user->can('create_marks')) {
             $myAssignments = SubjectAssignment::with(['subject:id,name', 'classroom:id,name,code'])
                 ->where('teacher_id', $user->id)
                 ->when($yearId, fn ($q) => $q->where('academic_year_id', $yearId))

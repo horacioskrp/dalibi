@@ -20,7 +20,7 @@ class StudentImportController extends Controller
 
     public function index(Request $request): Response
     {
-        abort_unless($request->user()->hasAnyRole(self::MANAGE_ROLES), 403);
+        abort_unless($request->user()->can('view_students'), 403);
 
         return Inertia::render('Eleves/Students/Import', ['result' => null]);
     }
@@ -40,7 +40,7 @@ class StudentImportController extends Controller
 
     public function store(Request $request): Response
     {
-        abort_unless($request->user()->hasAnyRole(self::MANAGE_ROLES), 403);
+        abort_unless($request->user()->can('create_students'), 403);
 
         $request->validate([
             'file' => ['required', 'file', 'mimes:csv,txt', 'max:5120'],

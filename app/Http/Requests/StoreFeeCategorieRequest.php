@@ -10,7 +10,7 @@ class StoreFeeCategorieRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR, Roles::ACCOUNTING]);
+        return $this->user()->can('create_fee_categories');
     }
 
     /**

@@ -11,7 +11,7 @@ class StoreEnrollmentRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR, Roles::SECRETARIAT]);
+        return $this->user()->can('create_enrollments');
     }
 
     public function rules(): array

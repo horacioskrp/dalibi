@@ -87,13 +87,13 @@ class RosterController extends Controller
                 'academic_status'  => $statusF,
                 'search'           => $search,
             ],
-            'canManage'    => $request->user()->hasAnyRole(self::MANAGE_ROLES),
+            'canManage'    => $request->user()->can('edit_enrollments'),
         ]);
     }
 
     public function export(Request $request)
     {
-        abort_unless($request->user()->hasAnyRole(self::MANAGE_ROLES), 403);
+        abort_unless($request->user()->can('export_roster'), 403);
 
         $validated = $request->validate([
             'academic_year_id' => ['required', 'uuid', 'exists:academic_years,id'],
@@ -128,7 +128,7 @@ class RosterController extends Controller
 
     public function updateStatus(Request $request, Enrollment $enrollment): RedirectResponse
     {
-        abort_unless($request->user()->hasAnyRole(self::MANAGE_ROLES), 403);
+        abort_unless($request->user()->can('edit_enrollments'), 403);
 
         $validated = $request->validate([
             'academic_status' => ['required', 'in:en_cours,valide,non_valide,abandon,transfere'],
@@ -146,7 +146,7 @@ class RosterController extends Controller
 
     public function bulkStatus(Request $request): RedirectResponse
     {
-        abort_unless($request->user()->hasAnyRole(self::MANAGE_ROLES), 403);
+        abort_unless($request->user()->can('edit_enrollments'), 403);
 
         $validated = $request->validate([
             'enrollment_ids'   => ['required', 'array', 'min:1'],

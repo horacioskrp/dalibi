@@ -17,7 +17,7 @@ class StudentStatsController extends Controller
     public function index(\Illuminate\Http\Request $request): Response
     {
         abort_unless(
-            $request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR, Roles::SECRETARIAT]),
+            $request->user()->can('view_students'),
             403
         );
 

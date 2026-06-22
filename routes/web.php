@@ -59,24 +59,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('schools.bulk-deactivate');
     Route::patch('schools/{school}/toggle-active', [SchoolController::class, 'toggleActive'])
         ->name('schools.toggle-active');
-    Route::resource('schools', SchoolController::class);
-    Route::resource('classrooms', ClassroomController::class);
+    Route::resource('schools', SchoolController::class)->middleware('can:view_schools');
+    Route::resource('classrooms', ClassroomController::class)->middleware('can:view_classes');
     Route::get('classrooms/{classroom}/subject-assignments', [ClassroomSubjectAssignmentController::class, 'create'])
         ->name('classrooms.subject-assignments.create');
     Route::post('classrooms/{classroom}/subject-assignments', [ClassroomSubjectAssignmentController::class, 'store'])
         ->name('classrooms.subject-assignments.store');
-    Route::resource('classroom-types', ClassroomTypeController::class);
-    Route::resource('levels', LevelController::class);
-    Route::resource('subjects', SubjectController::class);
-    Route::resource('evaluation-types', EvaluationTypeController::class);
+    Route::resource('classroom-types', ClassroomTypeController::class)->middleware('can:view_classroom_types');
+    Route::resource('levels', LevelController::class)->middleware('can:view_levels');
+    Route::resource('subjects', SubjectController::class)->middleware('can:view_subjects');
+    Route::resource('evaluation-types', EvaluationTypeController::class)->middleware('can:view_evaluation_types');
 
     // Modèles d'évaluation (global)
-    Route::resource('evaluation-templates', EvaluationTemplateController::class);
+    Route::resource('evaluation-templates', EvaluationTemplateController::class)->middleware('can:view_evaluation_templates');
     Route::post('evaluation-templates/{evaluationTemplate}/generate', [EvaluationTemplateController::class, 'generate'])
         ->name('evaluation-templates.generate');
 
     // Évaluations par classe/matière
-    Route::resource('evaluations', EvaluationController::class)->only(['index', 'show', 'destroy']);
+    Route::resource('evaluations', EvaluationController::class)->only(['index', 'show', 'destroy'])->middleware('can:view_evaluations');
     Route::patch('evaluations/{evaluation}/status', [EvaluationController::class, 'updateStatus'])
         ->name('evaluations.update-status');
     Route::patch('evaluations/{evaluation}/lock', [EvaluationController::class, 'toggleLock'])
@@ -95,31 +95,31 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('evaluations/{evaluation}/marks', [MarkController::class, 'store'])->name('marks.store');
 
     // Réclamations de notes
-    Route::resource('note-reclamations', NoteReclamationController::class)->only(['index', 'create', 'store', 'show']);
+    Route::resource('note-reclamations', NoteReclamationController::class)->only(['index', 'create', 'store', 'show'])->middleware('can:view_note_reclamations');
     Route::patch('note-reclamations/{noteReclamation}/review', [NoteReclamationController::class, 'review'])
         ->name('note-reclamations.review');
 
     // Configurations de calcul des moyennes
-    Route::resource('grading-configs', GradingConfigController::class)->except(['show']);
+    Route::resource('grading-configs', GradingConfigController::class)->except(['show'])->middleware('can:view_grading_configs');
     Route::patch('grading-configs/{gradingConfig}/activate', [GradingConfigController::class, 'activate'])
         ->name('grading-configs.activate');
-    Route::resource('academic-years', AcademicYearController::class);
-    Route::resource('academic-periods', AcademicPeriodController::class);
-    Route::resource('fee-categories', FeeCategorieController::class);
+    Route::resource('academic-years', AcademicYearController::class)->middleware('can:view_academic_years');
+    Route::resource('academic-periods', AcademicPeriodController::class)->middleware('can:view_academic_periods');
+    Route::resource('fee-categories', FeeCategorieController::class)->middleware('can:view_fee_categories');
     Route::post('fee-structures/replicate', [FeeStructureController::class, 'replicate'])
         ->name('fee-structures.replicate');
-    Route::resource('fee-structures', FeeStructureController::class);
+    Route::resource('fee-structures', FeeStructureController::class)->middleware('can:view_fee_structures');
     Route::post('fee-structures/{feeStructure}/installments', [\App\Http\Controllers\Parametres\InstallmentController::class, 'storeMultiple'])
         ->name('fee-structures.installments.store-multiple');
-    Route::resource('scholarships', ScholarshipController::class);
-    Route::resource('student-scholarships', StudentScholarshipController::class);
+    Route::resource('scholarships', ScholarshipController::class)->middleware('can:view_scholarships');
+    Route::resource('student-scholarships', StudentScholarshipController::class)->middleware('can:view_student_scholarships');
     Route::post('students/bulk-status', [StudentController::class, 'bulkStatus'])
         ->name('students.bulk-status');
     // Statistiques élèves
-    Route::get('students-stats', [\App\Http\Controllers\Eleves\StudentStatsController::class, 'index'])->name('students.stats');
+    Route::get('students-stats', [\App\Http\Controllers\Eleves\StudentStatsController::class, 'index'])->middleware('can:view_students')->name('students.stats');
 
     // Import d'élèves (CSV)
-    Route::get('students-import', [\App\Http\Controllers\Eleves\StudentImportController::class, 'index'])->name('students.import');
+    Route::get('students-import', [\App\Http\Controllers\Eleves\StudentImportController::class, 'index'])->middleware('can:view_students')->name('students.import');
     Route::get('students-import/template', [\App\Http\Controllers\Eleves\StudentImportController::class, 'template'])->name('students.import.template');
     Route::post('students-import', [\App\Http\Controllers\Eleves\StudentImportController::class, 'store'])->name('students.import.store');
 
@@ -138,90 +138,90 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('students.photo.upload');
     Route::delete('students/{student}/photo', [StudentController::class, 'deletePhoto'])
         ->name('students.photo.delete');
-    Route::resource('students', StudentController::class);
-    Route::get('accounting', [AccountingController::class, 'index'])->name('accounting.index');
-    Route::get('accounting/transactions', [TransactionController::class, 'index'])->name('accounting.transactions');
-    Route::get('accounting/situation', [SituationController::class, 'index'])->name('accounting.situation');
+    Route::resource('students', StudentController::class)->middleware('can:view_students');
+    Route::get('accounting', [AccountingController::class, 'index'])->middleware('can:view_finances')->name('accounting.index');
+    Route::get('accounting/transactions', [TransactionController::class, 'index'])->middleware('can:view_transactions')->name('accounting.transactions');
+    Route::get('accounting/situation', [SituationController::class, 'index'])->middleware('can:view_finances')->name('accounting.situation');
     Route::get('accounting/situation/export', [SituationController::class, 'export'])->name('accounting.situation.export');
     Route::post('accounting/expenses', [ExpenseController::class, 'store'])->name('expenses.store');
     Route::delete('accounting/expenses/{transaction}', [ExpenseController::class, 'destroy'])->name('expenses.destroy');
-    Route::get('cash-accounts', [CashAccountController::class, 'index'])->name('cash-accounts.index');
+    Route::get('cash-accounts', [CashAccountController::class, 'index'])->middleware('can:view_cash_accounts')->name('cash-accounts.index');
     Route::post('cash-accounts', [CashAccountController::class, 'store'])->name('cash-accounts.store');
     Route::put('cash-accounts/{cashAccount}', [CashAccountController::class, 'update'])->name('cash-accounts.update');
     Route::delete('cash-accounts/{cashAccount}', [CashAccountController::class, 'destroy'])->name('cash-accounts.destroy');
-    Route::resource('enrollments', EnrollmentController::class);
+    Route::resource('enrollments', EnrollmentController::class)->middleware('can:view_enrollments');
     Route::get('enrollments/{enrollment}/invoice', [InvoiceController::class, 'show'])->name('enrollments.invoice');
     Route::post('enrollments/{enrollment}/payments', [InvoiceController::class, 'storePayment'])->name('enrollments.payments.store');
     Route::get('payments/{payment}/receipt', [InvoiceController::class, 'receipt'])->name('payments.receipt');
     Route::get('receipts/verify', [InvoiceController::class, 'verifyReceipt'])
         ->middleware('throttle:30,1')
         ->name('receipts.verify');
-    Route::resource('subject-assignments', SubjectAssignmentController::class);
+    Route::resource('subject-assignments', SubjectAssignmentController::class)->middleware('can:view_subject_assignments');
 
     // Présences & Permissions
-    Route::get('attendances', [AttendanceController::class, 'index'])->name('attendances.index');
+    Route::get('attendances', [AttendanceController::class, 'index'])->middleware('can:view_attendances')->name('attendances.index');
     Route::post('attendances', [AttendanceController::class, 'store'])->name('attendances.store');
-    Route::get('attendances/stats', [AttendanceController::class, 'stats'])->name('attendances.stats');
-    Route::resource('absence-permissions', AbsencePermissionController::class)->only(['index', 'create', 'store', 'show', 'destroy']);
+    Route::get('attendances/stats', [AttendanceController::class, 'stats'])->middleware('can:view_attendances')->name('attendances.stats');
+    Route::resource('absence-permissions', AbsencePermissionController::class)->only(['index', 'create', 'store', 'show', 'destroy'])->middleware('can:view_absence_permissions');
     Route::patch('absence-permissions/{absencePermission}/review', [AbsencePermissionController::class, 'review'])
         ->name('absence-permissions.review');
 
     // Grades Routes
-    Route::get('grades', [GradeController::class, 'index'])->name('grades.index');
+    Route::get('grades', [GradeController::class, 'index'])->middleware('can:view_grades')->name('grades.index');
     Route::post('grades', [GradeController::class, 'store'])->name('grades.store');
     Route::get('grades/student/{student}', [GradeController::class, 'student'])->name('grades.student');
 
     // Administration Routes
-    Route::resource('roles', RoleController::class);
-    Route::resource('permissions', PermissionController::class);
-    Route::resource('users', UserController::class);
+    Route::resource('roles', RoleController::class)->middleware('can:manage_roles_permissions');
+    Route::resource('permissions', PermissionController::class)->middleware('can:manage_roles_permissions');
+    Route::resource('users', UserController::class)->middleware('can:view_users');
 
     // File Storage Settings
-    Route::get('settings/file-storage', [FileStorageController::class, 'index'])->name('file-storage.index');
+    Route::get('settings/file-storage', [FileStorageController::class, 'index'])->middleware('can:manage_file_storage')->name('file-storage.index');
     Route::post('settings/file-storage', [FileStorageController::class, 'update'])->name('file-storage.update');
     Route::post('settings/file-storage/test', [FileStorageController::class, 'test'])->name('file-storage.test');
 
     // Archives documentaires
-    Route::get('archives', [\App\Http\Controllers\Archives\ArchiveController::class, 'index'])->name('archives.index');
-    Route::post('archives', [\App\Http\Controllers\Archives\ArchiveController::class, 'store'])->name('archives.store');
-    Route::post('archives/{archive}', [\App\Http\Controllers\Archives\ArchiveController::class, 'update'])->name('archives.update');
-    Route::get('archives/{archive}/download', [\App\Http\Controllers\Archives\ArchiveController::class, 'download'])->name('archives.download');
-    Route::delete('archives/{archive}', [\App\Http\Controllers\Archives\ArchiveController::class, 'destroy'])->name('archives.destroy');
-    Route::post('archives/{archive}/restore', [\App\Http\Controllers\Archives\ArchiveController::class, 'restore'])->name('archives.restore');
-    Route::delete('archives/{archive}/force', [\App\Http\Controllers\Archives\ArchiveController::class, 'forceDelete'])->name('archives.force-delete');
+    Route::get('archives', [\App\Http\Controllers\Archives\ArchiveController::class, 'index'])->middleware('can:view_archives')->name('archives.index');
+    Route::post('archives', [\App\Http\Controllers\Archives\ArchiveController::class, 'store'])->middleware('can:create_archives')->name('archives.store');
+    Route::post('archives/{archive}', [\App\Http\Controllers\Archives\ArchiveController::class, 'update'])->middleware('can:edit_archives')->name('archives.update');
+    Route::get('archives/{archive}/download', [\App\Http\Controllers\Archives\ArchiveController::class, 'download'])->middleware('can:view_archives')->name('archives.download');
+    Route::delete('archives/{archive}', [\App\Http\Controllers\Archives\ArchiveController::class, 'destroy'])->middleware('can:delete_archives')->name('archives.destroy');
+    Route::post('archives/{archive}/restore', [\App\Http\Controllers\Archives\ArchiveController::class, 'restore'])->middleware('can:delete_archives')->name('archives.restore');
+    Route::delete('archives/{archive}/force', [\App\Http\Controllers\Archives\ArchiveController::class, 'forceDelete'])->middleware('can:delete_archives')->name('archives.force-delete');
 
-    Route::get('archives-tags', [\App\Http\Controllers\Archives\DocumentTagController::class, 'index'])->name('archives.tags.index');
-    Route::post('archives-tags', [\App\Http\Controllers\Archives\DocumentTagController::class, 'store'])->name('archives.tags.store');
-    Route::put('archives-tags/{documentTag}', [\App\Http\Controllers\Archives\DocumentTagController::class, 'update'])->name('archives.tags.update');
-    Route::delete('archives-tags/{documentTag}', [\App\Http\Controllers\Archives\DocumentTagController::class, 'destroy'])->name('archives.tags.destroy');
+    Route::get('archives-tags', [\App\Http\Controllers\Archives\DocumentTagController::class, 'index'])->middleware('can:view_archives')->name('archives.tags.index');
+    Route::post('archives-tags', [\App\Http\Controllers\Archives\DocumentTagController::class, 'store'])->middleware('can:create_archives')->name('archives.tags.store');
+    Route::put('archives-tags/{documentTag}', [\App\Http\Controllers\Archives\DocumentTagController::class, 'update'])->middleware('can:edit_archives')->name('archives.tags.update');
+    Route::delete('archives-tags/{documentTag}', [\App\Http\Controllers\Archives\DocumentTagController::class, 'destroy'])->middleware('can:delete_archives')->name('archives.tags.destroy');
 
     // Sauvegardes de la base de données
-    Route::get('settings/backups', [\App\Http\Controllers\Parametres\BackupController::class, 'index'])->name('backups.index');
-    Route::post('settings/backups', [\App\Http\Controllers\Parametres\BackupController::class, 'store'])->name('backups.store');
-    Route::post('settings/backups/schedule', [\App\Http\Controllers\Parametres\BackupController::class, 'updateSchedule'])->name('backups.schedule');
-    Route::post('settings/backups/restore', [\App\Http\Controllers\Parametres\BackupController::class, 'restore'])->name('backups.restore');
-    Route::get('settings/backups/{backup}/download', [\App\Http\Controllers\Parametres\BackupController::class, 'download'])->name('backups.download');
-    Route::delete('settings/backups/{backup}', [\App\Http\Controllers\Parametres\BackupController::class, 'destroy'])->name('backups.destroy');
+    Route::get('settings/backups', [\App\Http\Controllers\Parametres\BackupController::class, 'index'])->middleware('can:view_backups')->name('backups.index');
+    Route::post('settings/backups', [\App\Http\Controllers\Parametres\BackupController::class, 'store'])->middleware('can:create_backups')->name('backups.store');
+    Route::post('settings/backups/schedule', [\App\Http\Controllers\Parametres\BackupController::class, 'updateSchedule'])->middleware('can:create_backups')->name('backups.schedule');
+    Route::post('settings/backups/restore', [\App\Http\Controllers\Parametres\BackupController::class, 'restore'])->middleware('can:restore_backups')->name('backups.restore');
+    Route::get('settings/backups/{backup}/download', [\App\Http\Controllers\Parametres\BackupController::class, 'download'])->middleware('can:view_backups')->name('backups.download');
+    Route::delete('settings/backups/{backup}', [\App\Http\Controllers\Parametres\BackupController::class, 'destroy'])->middleware('can:delete_backups')->name('backups.destroy');
 
     // Passage de classe / réinscription en masse
-    Route::get('promotion', [PromotionController::class, 'index'])->name('promotion.index');
+    Route::get('promotion', [PromotionController::class, 'index'])->middleware('can:execute_promotion')->name('promotion.index');
     Route::post('promotion', [PromotionController::class, 'store'])->name('promotion.store');
 
     // Effectifs / Listes de classe
-    Route::get('roster', [RosterController::class, 'index'])->name('roster.index');
+    Route::get('roster', [RosterController::class, 'index'])->middleware('can:view_roster')->name('roster.index');
     Route::get('roster/export', [RosterController::class, 'export'])->name('roster.export');
     Route::patch('roster/{enrollment}/status', [RosterController::class, 'updateStatus'])->name('roster.update-status');
     Route::post('roster/bulk-status', [RosterController::class, 'bulkStatus'])->name('roster.bulk-status');
 
     // Timetable (emploi du temps)
-    Route::get('timetable', [TimetableController::class, 'index'])->name('timetable.index');
+    Route::get('timetable', [TimetableController::class, 'index'])->middleware('can:view_timetable')->name('timetable.index');
     Route::get('timetable/{classId}/export', [TimetableController::class, 'export'])->name('timetable.export');
     Route::post('timetable', [TimetableController::class, 'store'])->name('timetable.store');
     Route::put('timetable/{timetableSlot}', [TimetableController::class, 'update'])->name('timetable.update');
     Route::delete('timetable/{timetableSlot}', [TimetableController::class, 'destroy'])->name('timetable.destroy');
 
     // Official Exams (CEPD, BEPC, BAC)
-    Route::get('official-exams', [OfficialExamController::class, 'index'])->name('official-exams.index');
+    Route::get('official-exams', [OfficialExamController::class, 'index'])->middleware('can:view_official_exams')->name('official-exams.index');
     Route::post('official-exams', [OfficialExamController::class, 'store'])->name('official-exams.store');
     Route::get('official-exams/{officialExam}', [OfficialExamController::class, 'show'])->name('official-exams.show');
     Route::put('official-exams/{officialExam}', [OfficialExamController::class, 'update'])->name('official-exams.update');
@@ -232,7 +232,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Document Templates (Settings)
     Route::get('settings/documents-registry', [DocumentTemplateController::class, 'registry'])->name('document-templates.registry');
-    Route::get('settings/documents', [DocumentTemplateController::class, 'index'])->name('document-templates.index');
+    Route::get('settings/documents', [DocumentTemplateController::class, 'index'])->middleware('can:view_documents')->name('document-templates.index');
     Route::get('settings/documents/create', [DocumentTemplateController::class, 'create'])->name('document-templates.create');
     Route::get('settings/documents/{documentTemplate}', [DocumentTemplateController::class, 'show'])->name('document-templates.show');
     Route::post('settings/documents', [DocumentTemplateController::class, 'store'])->name('document-templates.store');

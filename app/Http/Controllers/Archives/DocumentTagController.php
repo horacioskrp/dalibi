@@ -18,7 +18,7 @@ class DocumentTagController extends Controller
 
     private function authorizeManage(Request $request): void
     {
-        abort_unless($request->user()->hasAnyRole(self::MANAGE_ROLES), 403);
+        // Autorisation déléguée aux permissions (middleware can:* sur les routes).
     }
 
     public function index(Request $request): Response

@@ -26,7 +26,11 @@ class StudentTest extends TestCase
 
     private function user(): User
     {
-        return User::factory()->create();
+        // Utilisateur authentifié disposant du droit de consultation des élèves
+        $user = User::factory()->create();
+        $user->givePermissionTo('view_students');
+
+        return $user;
     }
 
     private function admin(): User

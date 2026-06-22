@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { ChevronRight } from 'lucide-react';
 import {
     Collapsible,
@@ -20,10 +20,20 @@ import type { NavItem } from '@/types';
 export function NavMain({ items = [] }: Readonly<{ items: NavItem[] }>) {
     const { isCurrentUrl } = useCurrentUrl();
 
+    const auth = (usePage().props as { auth?: { permissions?: string[] } }).auth;
+    const permissions = auth?.permissions ?? [];
+    const allowed = (item: NavItem) => !item.permission || permissions.includes(item.permission);
+
+    // Filtre par permission : on masque les entrées non autorisées
+    // (un groupe disparaît s'il n'a plus aucun sous-élément visible).
+    const visibleItems = items
+        .map((item) => (item.items ? { ...item, items: item.items.filter(allowed) } : item))
+        .filter((item) => (item.items ? item.items.length > 0 : allowed(item)));
+
     return (
         <SidebarGroup className="px-2 py-0">
             <SidebarMenu>
-                {items.map((item) => (
+                {visibleItems.map((item) => (
                     <Collapsible
                         key={item.title}
                         asChild
