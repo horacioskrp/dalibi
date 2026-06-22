@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Presences;
 
+use App\Http\Controllers\Controller;
 use App\Constants\Roles;
 use App\Models\AcademicPeriod;
 use App\Models\AcademicYear;
@@ -86,7 +87,7 @@ class AttendanceController extends Controller
             });
         }
 
-        return Inertia::render('Attendances/Index', [
+        return Inertia::render('Presences/Attendances/Index', [
             'classrooms'         => $classrooms,
             'periods'            => $periods,
             'studentsWithStatus' => $studentsWithStatus,
@@ -210,7 +211,7 @@ class AttendanceController extends Controller
                 ->get(['id', 'date', 'session']);
         }
 
-        return Inertia::render('Attendances/Stats', [
+        return Inertia::render('Presences/Attendances/Stats', [
             'classrooms'   => $classrooms,
             'periods'      => $periods,
             'stats'        => $stats,

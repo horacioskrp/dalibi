@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Archives;
 
+use App\Http\Controllers\Controller;
 use App\Constants\Roles;
 use App\Models\DocumentTag;
 use Illuminate\Http\RedirectResponse;

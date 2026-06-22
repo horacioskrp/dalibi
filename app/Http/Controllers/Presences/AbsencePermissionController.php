@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Presences;
 
+use App\Http\Controllers\Controller;
 use App\Constants\Roles;
 use App\Models\AbsencePermission;
 use App\Models\AcademicYear;
@@ -46,7 +47,7 @@ class AbsencePermissionController extends Controller
             COUNT(*) FILTER (WHERE status = 'rejected') as rejected
         ")->first();
 
-        return Inertia::render('AbsencePermissions/Index', [
+        return Inertia::render('Presences/AbsencePermissions/Index', [
             'permissions' => $permissions,
             'stats'       => $stats,
             'filters'     => compact('status', 'studentId', 'search'),
@@ -69,7 +70,7 @@ class AbsencePermissionController extends Controller
             $students = Student::orderBy('lastname')->get(['id', 'firstname', 'lastname', 'matricule']);
         }
 
-        return Inertia::render('AbsencePermissions/Create', [
+        return Inertia::render('Presences/AbsencePermissions/Create', [
             'students'    => $students,
             'preStudentId' => $request->string('student_id')->toString(),
         ]);
@@ -107,7 +108,7 @@ class AbsencePermissionController extends Controller
             'attendanceRecords.attendance.classroom:id,name,code',
         ]);
 
-        return Inertia::render('AbsencePermissions/Show', [
+        return Inertia::render('Presences/AbsencePermissions/Show', [
             'permission' => $absencePermission,
         ]);
     }
