@@ -117,7 +117,7 @@ class SubjectAssignmentController extends Controller
     public function destroy(SubjectAssignment $subjectAssignment): RedirectResponse
     {
         abort_unless(
-            request()->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]),
+            request()->user()->can('delete_subject_assignments'),
             403
         );
 

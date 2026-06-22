@@ -21,7 +21,7 @@ class PromotionController extends Controller
 
     public function index(Request $request): Response
     {
-        abort_unless($request->user()->hasAnyRole(self::MANAGE_ROLES), 403);
+        abort_unless($request->user()->can('execute_promotion'), 403);
 
         $sourceYearId  = $request->string('source_year_id')->toString();
         $sourceClassId = $request->string('source_class_id')->toString();
@@ -77,7 +77,7 @@ class PromotionController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        abort_unless($request->user()->hasAnyRole(self::MANAGE_ROLES), 403);
+        abort_unless($request->user()->can('execute_promotion'), 403);
 
         $validated = $request->validate([
             'target_year_id'  => ['required', 'uuid', 'exists:academic_years,id'],

@@ -15,7 +15,7 @@ class FileStorageController extends Controller
 {
     public function index(Request $request): Response
     {
-        abort_unless($request->user()->hasAnyRole([Roles::ADMINISTRATOR]), 403);
+        abort_unless($request->user()->can('manage_file_storage'), 403);
 
         $settings = FileStorageSetting::allSettings();
 
@@ -53,7 +53,7 @@ class FileStorageController extends Controller
 
     public function update(Request $request): RedirectResponse
     {
-        abort_unless($request->user()->hasAnyRole([Roles::ADMINISTRATOR]), 403);
+        abort_unless($request->user()->can('manage_file_storage'), 403);
 
         $driver = $request->validate(['driver' => ['required', 'in:local,s3']])['driver'];
 
@@ -107,7 +107,7 @@ class FileStorageController extends Controller
 
     public function test(Request $request): \Illuminate\Http\JsonResponse
     {
-        abort_unless($request->user()->hasAnyRole([Roles::ADMINISTRATOR]), 403);
+        abort_unless($request->user()->can('manage_file_storage'), 403);
 
         try {
             $driver = FileStorageSetting::get('driver', 'local');

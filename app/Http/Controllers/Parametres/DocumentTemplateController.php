@@ -25,7 +25,7 @@ class DocumentTemplateController extends Controller
 
     public function index(Request $request): Response
     {
-        abort_unless($request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]), 403);
+        abort_unless($request->user()->can('view_documents'), 403);
 
         $templates = DocumentTemplate::orderBy('category')->orderBy('name')->get();
 
@@ -46,7 +46,7 @@ class DocumentTemplateController extends Controller
 
     public function create(Request $request): Response
     {
-        abort_unless($request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]), 403);
+        abort_unless($request->user()->can('create_documents'), 403);
 
         return Inertia::render('Parametres/Documents/Edit', [
             'template'   => null,
@@ -59,7 +59,7 @@ class DocumentTemplateController extends Controller
     /** Registre central des documents délivrés (traçabilité). */
     public function registry(Request $request): Response
     {
-        abort_unless($request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR, Roles::SECRETARIAT]), 403);
+        abort_unless($request->user()->can('view_documents'), 403);
 
         $search = $request->string('search')->toString();
 
@@ -94,7 +94,7 @@ class DocumentTemplateController extends Controller
 
     public function show(Request $request, DocumentTemplate $documentTemplate): Response
     {
-        abort_unless($request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]), 403);
+        abort_unless($request->user()->can('view_documents'), 403);
 
         $school = $documentTemplate->school ?? School::query()->first() ?? new School();
         $documentTemplate->setRelation('school', $school);
@@ -127,7 +127,7 @@ class DocumentTemplateController extends Controller
 
     public function edit(Request $request, DocumentTemplate $documentTemplate): Response
     {
-        abort_unless($request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]), 403);
+        abort_unless($request->user()->can('edit_documents'), 403);
 
         return Inertia::render('Parametres/Documents/Edit', [
             'template'   => $documentTemplate,
@@ -139,7 +139,7 @@ class DocumentTemplateController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        abort_unless($request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]), 403);
+        abort_unless($request->user()->can('create_documents'), 403);
 
         $data = $this->validateData($request);
         $this->applyDefault($data);
@@ -152,7 +152,7 @@ class DocumentTemplateController extends Controller
 
     public function update(Request $request, DocumentTemplate $documentTemplate): RedirectResponse
     {
-        abort_unless($request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]), 403);
+        abort_unless($request->user()->can('edit_documents'), 403);
 
         $data = $this->validateData($request);
         $this->applyDefault($data, $documentTemplate->id);
@@ -165,7 +165,7 @@ class DocumentTemplateController extends Controller
 
     public function destroy(Request $request, DocumentTemplate $documentTemplate): RedirectResponse
     {
-        abort_unless($request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]), 403);
+        abort_unless($request->user()->can('delete_documents'), 403);
 
         $documentTemplate->delete();
 
@@ -176,7 +176,7 @@ class DocumentTemplateController extends Controller
     /** Prévisualisation HTML live avec données d'exemple. */
     public function preview(Request $request): \Illuminate\Http\JsonResponse
     {
-        abort_unless($request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]), 403);
+        abort_unless($request->user()->can('create_documents'), 403);
 
         $validated = $request->validate([
             'content'         => ['nullable', 'string'],
@@ -208,7 +208,7 @@ class DocumentTemplateController extends Controller
     /** Génère le PDF officiel pour un élève + enregistre dans le registre. */
     public function generate(Request $request, DocumentTemplate $documentTemplate)
     {
-        abort_unless($request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR, Roles::SECRETARIAT]), 403);
+        abort_unless($request->user()->can('generate_documents'), 403);
 
         $validated = $request->validate([
             'student_id'     => ['required', 'uuid', 'exists:students,id'],

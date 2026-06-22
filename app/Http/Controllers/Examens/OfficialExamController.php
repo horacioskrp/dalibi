@@ -20,7 +20,7 @@ class OfficialExamController extends Controller
 
     public function index(Request $request): Response
     {
-        abort_unless($request->user()->hasAnyRole(self::MANAGE_ROLES), 403);
+        abort_unless($request->user()->can('view_official_exams'), 403);
 
         $activeYear = \App\Models\AcademicYear::where('active', true)->first(['id', 'year']);
         $years      = \App\Models\AcademicYear::orderByDesc('start_date')->get(['id', 'year', 'active']);
@@ -77,7 +77,7 @@ class OfficialExamController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        abort_unless($request->user()->hasAnyRole(self::MANAGE_ROLES), 403);
+        abort_unless($request->user()->can('create_official_exams'), 403);
 
         $data = $this->validateExam($request);
         $data['school_id'] = School::query()->value('id');
@@ -91,7 +91,7 @@ class OfficialExamController extends Controller
 
     public function update(Request $request, OfficialExam $officialExam): RedirectResponse
     {
-        abort_unless($request->user()->hasAnyRole(self::MANAGE_ROLES), 403);
+        abort_unless($request->user()->can('edit_official_exams'), 403);
 
         $officialExam->update($this->validateExam($request));
 
@@ -100,7 +100,7 @@ class OfficialExamController extends Controller
 
     public function destroy(Request $request, OfficialExam $officialExam): RedirectResponse
     {
-        abort_unless($request->user()->hasAnyRole(self::MANAGE_ROLES), 403);
+        abort_unless($request->user()->can('delete_official_exams'), 403);
 
         $officialExam->delete();
 
@@ -109,7 +109,7 @@ class OfficialExamController extends Controller
 
     public function show(Request $request, OfficialExam $officialExam): Response
     {
-        abort_unless($request->user()->hasAnyRole(self::MANAGE_ROLES), 403);
+        abort_unless($request->user()->can('view_official_exams'), 403);
 
         $registrations = $officialExam->registrations()
             ->with('student:id,firstname,lastname,matricule')
@@ -170,7 +170,7 @@ class OfficialExamController extends Controller
 
     public function registerStudents(Request $request, OfficialExam $officialExam): RedirectResponse
     {
-        abort_unless($request->user()->hasAnyRole(self::MANAGE_ROLES), 403);
+        abort_unless($request->user()->can('edit_official_exams'), 403);
 
         $validated = $request->validate([
             'student_ids'   => ['required', 'array', 'min:1'],
@@ -189,7 +189,7 @@ class OfficialExamController extends Controller
 
     public function updateResults(Request $request, OfficialExam $officialExam): RedirectResponse
     {
-        abort_unless($request->user()->hasAnyRole(self::MANAGE_ROLES), 403);
+        abort_unless($request->user()->can('edit_official_exams'), 403);
 
         $validated = $request->validate([
             'results'                       => ['required', 'array'],
@@ -220,7 +220,7 @@ class OfficialExamController extends Controller
 
     public function removeRegistration(Request $request, OfficialExam $officialExam, OfficialExamRegistration $registration): RedirectResponse
     {
-        abort_unless($request->user()->hasAnyRole(self::MANAGE_ROLES), 403);
+        abort_unless($request->user()->can('edit_official_exams'), 403);
 
         $registration->delete();
 

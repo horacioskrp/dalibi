@@ -59,7 +59,7 @@ class TimetableController extends Controller
             'slots'      => $slots,
             'days'       => TimetableSlot::DAYS,
             'filters'    => ['class_id' => $classId],
-            'canManage'  => $request->user()->hasAnyRole(self::MANAGE_ROLES),
+            'canManage'  => $request->user()->can('create_timetable'),
         ]);
     }
 
@@ -100,7 +100,7 @@ class TimetableController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        abort_unless($request->user()->hasAnyRole(self::MANAGE_ROLES), 403);
+        abort_unless($request->user()->can('create_timetable'), 403);
 
         $data = $this->validateSlot($request);
         $data['school_id']        = School::query()->value('id');
@@ -113,7 +113,7 @@ class TimetableController extends Controller
 
     public function update(Request $request, TimetableSlot $timetableSlot): RedirectResponse
     {
-        abort_unless($request->user()->hasAnyRole(self::MANAGE_ROLES), 403);
+        abort_unless($request->user()->can('edit_timetable'), 403);
 
         $timetableSlot->update($this->validateSlot($request));
 
@@ -122,7 +122,7 @@ class TimetableController extends Controller
 
     public function destroy(Request $request, TimetableSlot $timetableSlot): RedirectResponse
     {
-        abort_unless($request->user()->hasAnyRole(self::MANAGE_ROLES), 403);
+        abort_unless($request->user()->can('delete_timetable'), 403);
 
         $timetableSlot->delete();
 

@@ -90,7 +90,7 @@ class UserController extends Controller
             'profile'    => $request->validated('profile'),
         ]);
 
-        if ($request->has('roles') && auth()->user()->hasRole(Roles::ADMINISTRATOR)) {
+        if ($request->has('roles') && auth()->user()->can('manage_roles_permissions')) {
             $roleIds = $request->validated('roles');
             $roles   = Role::whereIn('id', $roleIds)->pluck('name');
             $user->syncRoles($roles);
@@ -139,7 +139,7 @@ class UserController extends Controller
 
         $user->update($data);
 
-        if (auth()->user()->hasRole(Roles::ADMINISTRATOR)) {
+        if (auth()->user()->can('manage_roles_permissions')) {
             $roleIds = $request->has('roles') ? ($request->validated('roles') ?? []) : [];
             $roles   = Role::whereIn('id', $roleIds)->pluck('name');
             $user->syncRoles($roles);
@@ -151,10 +151,7 @@ class UserController extends Controller
 
     public function destroy(User $user): RedirectResponse
     {
-        abort_unless(
-            auth()->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]),
-            403
-        );
+        abort_unless(auth()->user()->can('delete_users'), 403);
 
         if ($user->id === auth()->id()) {
             return back()->withErrors(['delete' => 'Vous ne pouvez pas supprimer votre propre compte.']);
