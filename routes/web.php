@@ -181,6 +181,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('settings/file-storage', [FileStorageController::class, 'update'])->name('file-storage.update');
     Route::post('settings/file-storage/test', [FileStorageController::class, 'test'])->name('file-storage.test');
 
+    // Archives documentaires
+    Route::get('archives', [\App\Http\Controllers\ArchiveController::class, 'index'])->name('archives.index');
+    Route::post('archives', [\App\Http\Controllers\ArchiveController::class, 'store'])->name('archives.store');
+    Route::post('archives/{archive}', [\App\Http\Controllers\ArchiveController::class, 'update'])->name('archives.update');
+    Route::get('archives/{archive}/download', [\App\Http\Controllers\ArchiveController::class, 'download'])->name('archives.download');
+    Route::delete('archives/{archive}', [\App\Http\Controllers\ArchiveController::class, 'destroy'])->name('archives.destroy');
+    Route::post('archives/{archive}/restore', [\App\Http\Controllers\ArchiveController::class, 'restore'])->name('archives.restore');
+    Route::delete('archives/{archive}/force', [\App\Http\Controllers\ArchiveController::class, 'forceDelete'])->name('archives.force-delete');
+
+    Route::get('archives-tags', [\App\Http\Controllers\DocumentTagController::class, 'index'])->name('archives.tags.index');
+    Route::post('archives-tags', [\App\Http\Controllers\DocumentTagController::class, 'store'])->name('archives.tags.store');
+    Route::put('archives-tags/{documentTag}', [\App\Http\Controllers\DocumentTagController::class, 'update'])->name('archives.tags.update');
+    Route::delete('archives-tags/{documentTag}', [\App\Http\Controllers\DocumentTagController::class, 'destroy'])->name('archives.tags.destroy');
+
     // Sauvegardes de la base de données
     Route::get('settings/backups', [\App\Http\Controllers\BackupController::class, 'index'])->name('backups.index');
     Route::post('settings/backups', [\App\Http\Controllers\BackupController::class, 'store'])->name('backups.store');

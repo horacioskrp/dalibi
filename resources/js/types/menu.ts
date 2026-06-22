@@ -1,4 +1,4 @@
-import { BookOpen, Calendar, Clock, ClipboardList, GraduationCap, LayoutGrid, Layers, Settings, Tag, Users, Shield, Lock, Wallet, Percent, DollarSign, UserCircle, TrendingUp, ArrowLeftRight, PieChart, FileText, ListChecks, NotebookPen, SlidersHorizontal, AlertCircle, CalendarRange, UserCheck, BarChart3, ShieldCheck, HardDrive, FileBadge, ScanLine, DatabaseBackup } from 'lucide-react';
+import { BookOpen, Calendar, Clock, ClipboardList, GraduationCap, LayoutGrid, Layers, Settings, Tag, Users, Shield, Lock, Wallet, Percent, DollarSign, UserCircle, TrendingUp, ArrowLeftRight, PieChart, FileText, ListChecks, NotebookPen, SlidersHorizontal, AlertCircle, CalendarRange, UserCheck, BarChart3, ShieldCheck, HardDrive, FileBadge, ScanLine, DatabaseBackup, Archive } from 'lucide-react';
 import { route } from '@/helpers/route';
 import type { NavItem } from '@/types';
 
@@ -188,6 +188,23 @@ export const mainNavItems: NavItem[] = [
                 title: 'Examens officiels',
                 href: route('official-exams.index'),
                 icon: GraduationCap,
+            },
+        ],
+    },
+    {
+        title: 'Archives',
+        href: '#',
+        icon: Archive,
+        items: [
+            {
+                title: 'Documents archivés',
+                href: route('archives.index'),
+                icon: FileText,
+            },
+            {
+                title: 'Tags',
+                href: route('archives.tags.index'),
+                icon: Tag,
             },
         ],
     },
