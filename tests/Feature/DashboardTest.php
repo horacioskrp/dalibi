@@ -2,9 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Constants\Roles;
 use App\Models\AcademicYear;
+use App\Models\Classroom;
 use App\Models\School;
 use App\Models\User;
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia;
 use Tests\TestCase;
@@ -39,6 +42,23 @@ class DashboardTest extends TestCase
             ->assertInertia(fn (AssertableInertia $page) => $page
                 ->component('dashboard')
                 ->where('selectedYearId', $active->id)
+            );
+    }
+
+    public function test_dashboard_exposes_effectifs_stats_for_admin()
+    {
+        $this->seed(RolesAndPermissionsSeeder::class);
+        Classroom::factory()->create(); // classe active
+        $admin = User::factory()->create();
+        $admin->assignRole(Roles::ADMINISTRATOR);
+
+        $this->actingAs($admin)
+            ->get(route('dashboard'))
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->has('enrollments.students_by_gender.male')
+                ->has('enrollments.students_by_gender.female')
+                ->where('enrollments.active_classrooms', 1)
+                ->where('enrollments.total_users', User::count())
             );
     }
 
