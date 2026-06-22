@@ -51,6 +51,72 @@ export const mainNavItems: NavItem[] = [
         ],
     },
     {
+        title: 'Présences',
+        href: '#',
+        icon: UserCheck,
+        items: [
+            {
+                title: 'Saisie de l\'appel',
+                href: route('attendances.index'),
+                icon: ClipboardList,
+            },
+            {
+                title: 'Statistiques',
+                href: route('attendances.stats'),
+                icon: BarChart3,
+            },
+            {
+                title: 'Demandes de permission',
+                href: route('absence-permissions.index'),
+                icon: ShieldCheck,
+            },
+        ],
+    },
+    {
+        title: 'Examens',
+        href: '#',
+        icon: FileText,
+        items: [
+            {
+                title: 'Modèles d\'évaluation',
+                href: route('evaluation-templates.index'),
+                icon: ListChecks,
+            },
+            {
+                title: 'Évaluations par classe',
+                href: route('evaluations.index'),
+                icon: ClipboardList,
+            },
+            {
+                title: 'Planning des examens',
+                href: route('evaluations.planning'),
+                icon: CalendarRange,
+            },
+            {
+                title: 'Examens officiels',
+                href: route('official-exams.index'),
+                icon: GraduationCap,
+            },
+        ],
+    },
+    {
+        title: 'Notes',
+        href: '#',
+        icon: NotebookPen,
+        items: [
+            {
+                title: 'Saisie par trimestre',
+                href: route('grades.index'),
+                icon: ClipboardList,
+            },
+            {
+                title: 'Réclamations',
+                href: route('note-reclamations.index'),
+                icon: AlertCircle,
+            },
+        ],
+    },
+    {
         title: 'Comptabilité',
         href: '#',
         icon: TrendingUp,
@@ -79,6 +145,50 @@ export const mainNavItems: NavItem[] = [
                 title: 'Vérifier un reçu',
                 href: route('receipts.verify'),
                 icon: ScanLine,
+            },
+        ],
+    },
+    {
+        title: 'Archives',
+        href: '#',
+        icon: Archive,
+        items: [
+            {
+                title: 'Documents archivés',
+                href: route('archives.index'),
+                icon: FileText,
+            },
+            {
+                title: 'Tags',
+                href: route('archives.tags.index'),
+                icon: Tag,
+            },
+        ],
+    },
+    {
+        title: 'Administration',
+        href: '#',
+        icon: Shield,
+        items: [
+            {
+                title: 'Utilisateurs',
+                href: route('users.index'),
+                icon: Users,
+            },
+            {
+                title: 'Rôles',
+                href: route('roles.index'),
+                icon: Shield,
+            },
+            {
+                title: 'Permissions',
+                href: route('permissions.index'),
+                icon: Lock,
+            },
+            {
+                title: 'Affectations',
+                href: route('subject-assignments.index'),
+                icon: ClipboardList,
             },
         ],
     },
@@ -161,116 +271,6 @@ export const mainNavItems: NavItem[] = [
                 title: 'Sauvegardes',
                 href: route('backups.index'),
                 icon: DatabaseBackup,
-            },
-        ],
-    },
-    {
-        title: 'Examens',
-        href: '#',
-        icon: FileText,
-        items: [
-            {
-                title: 'Modèles d\'évaluation',
-                href: route('evaluation-templates.index'),
-                icon: ListChecks,
-            },
-            {
-                title: 'Évaluations par classe',
-                href: route('evaluations.index'),
-                icon: ClipboardList,
-            },
-            {
-                title: 'Planning des examens',
-                href: route('evaluations.planning'),
-                icon: CalendarRange,
-            },
-            {
-                title: 'Examens officiels',
-                href: route('official-exams.index'),
-                icon: GraduationCap,
-            },
-        ],
-    },
-    {
-        title: 'Archives',
-        href: '#',
-        icon: Archive,
-        items: [
-            {
-                title: 'Documents archivés',
-                href: route('archives.index'),
-                icon: FileText,
-            },
-            {
-                title: 'Tags',
-                href: route('archives.tags.index'),
-                icon: Tag,
-            },
-        ],
-    },
-    {
-        title: 'Notes',
-        href: '#',
-        icon: NotebookPen,
-        items: [
-            {
-                title: 'Saisie par trimestre',
-                href: route('grades.index'),
-                icon: ClipboardList,
-            },
-            {
-                title: 'Réclamations',
-                href: route('note-reclamations.index'),
-                icon: AlertCircle,
-            },
-        ],
-    },
-    {
-        title: 'Présences',
-        href: '#',
-        icon: UserCheck,
-        items: [
-            {
-                title: 'Saisie de l\'appel',
-                href: route('attendances.index'),
-                icon: ClipboardList,
-            },
-            {
-                title: 'Statistiques',
-                href: route('attendances.stats'),
-                icon: BarChart3,
-            },
-            {
-                title: 'Demandes de permission',
-                href: route('absence-permissions.index'),
-                icon: ShieldCheck,
-            },
-        ],
-    },
-    {
-        title: 'Administration',
-        href: '#',
-        icon: Shield,
-        items: [
-            {
-                title: 'Utilisateurs',
-                href: route('users.index'),
-                icon: Users,
-            },
-            {
-                title: 'Rôles',
-                href: route('roles.index'),
-                icon: Shield,
-            },
-            {
-                title: 'Permissions',
-                href: route('permissions.index'),
-                icon: Lock,
-            },
-            {
-                title: 'Affectations',
-                href: route('subject-assignments.index'),
-                icon: ClipboardList,
             },
         ],
     },
