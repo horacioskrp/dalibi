@@ -140,6 +140,18 @@ export function route(name: string, params?: any): string {
         'fee-categories.destroy': `/fee-categories/${params}`,
 
         // Fee Structures routes
+        'archives.index': '/archives',
+        'archives.store': '/archives',
+        'archives.update': `/archives/${params}`,
+        'archives.download': `/archives/${params}/download`,
+        'archives.destroy': `/archives/${params}`,
+        'archives.restore': `/archives/${params}/restore`,
+        'archives.force-delete': `/archives/${params}/force`,
+        'archives.tags.index': '/archives-tags',
+        'archives.tags.store': '/archives-tags',
+        'archives.tags.update': `/archives-tags/${params}`,
+        'archives.tags.destroy': `/archives-tags/${params}`,
+
         'backups.index': '/settings/backups',
         'backups.store': '/settings/backups',
         'backups.schedule': '/settings/backups/schedule',
