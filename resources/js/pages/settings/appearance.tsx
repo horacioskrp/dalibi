@@ -18,7 +18,7 @@ export default function Appearance() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Apparence" />
 
-            <h1 className="sr-only">Apparence</h1>
+            <h1 className="sr-only flex items-center gap-3"><Palette className="h-7 w-7 text-blue-600 shrink-0" />Apparence</h1>
 
             <SettingsLayout>
                 <div className="space-y-6">

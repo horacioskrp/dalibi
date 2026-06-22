@@ -1,6 +1,6 @@
 import { Transition } from '@headlessui/react';
 import { Form, Head, Link, usePage } from '@inertiajs/react';
-import { User, Mail, Phone, MapPin, Calendar, IdCard } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Calendar, IdCard, UserCircle } from 'lucide-react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -33,7 +33,7 @@ export default function Profile({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Mon profil" />
 
-            <h1 className="sr-only">Mon profil</h1>
+            <h1 className="sr-only flex items-center gap-3"><UserCircle className="h-7 w-7 text-blue-600 shrink-0" />Mon profil</h1>
 
             <SettingsLayout>
                 <div className="space-y-6">

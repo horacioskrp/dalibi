@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Building2, CalendarClock, CheckCircle2, ImageIcon, Mail, MapPin, Pencil, Phone, Quote, XCircle } from 'lucide-react';
+import { ArrowLeft, Building2, CalendarClock, CheckCircle2, ImageIcon, Mail, MapPin, Pencil, Phone, Quote, XCircle, School } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { route } from '@/helpers/route';
 import AppLayout from '@/layouts/app-layout';
@@ -52,7 +52,7 @@ export default function Show({ school }: Readonly<ShowProps>) {
                             )}
                             <div>
                                 <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">{school.terme ?? 'République Togolaise'}</p>
-                                <h1 className="text-3xl font-bold text-gray-900">{school.name}</h1>
+                                <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3"><School className="h-7 w-7 text-blue-600 shrink-0" />{school.name}</h1>
                                 {school.devise && (
                                     <p className="text-sm text-gray-500 italic mt-0.5 flex items-center gap-1">
                                         <Quote className="w-3 h-3" />

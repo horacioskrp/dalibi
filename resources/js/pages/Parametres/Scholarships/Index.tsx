@@ -139,7 +139,7 @@ export default function Index({ scholarships, message, filters }: Readonly<Index
             <div className="space-y-6">
                 <div className="flex items-start justify-between">
                     <div>
-                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">
+                        <h1 className="text-4xl font-bold tracking-tight text-gray-900 flex items-center gap-3"><Percent className="h-7 w-7 text-blue-600 shrink-0" />
                             Bourses
                         </h1>
                         <p className="mt-2 text-lg text-gray-600">

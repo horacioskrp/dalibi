@@ -46,7 +46,7 @@ export default function Index({ templatesByCategory, categories }: Readonly<Prop
 
                 <div className="flex items-start justify-between gap-4 flex-wrap">
                     <div>
-                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Modèles de documents</h1>
+                        <h1 className="text-4xl font-bold tracking-tight text-gray-900 flex items-center gap-3"><FileBadge className="h-7 w-7 text-blue-600 shrink-0" />Modèles de documents</h1>
                         <p className="mt-2 text-gray-500">Gérez les modèles de certificats, attestations et bulletins exportables en PDF.</p>
                     </div>
                     <div className="flex items-center gap-2">

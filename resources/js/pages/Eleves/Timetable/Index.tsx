@@ -96,7 +96,7 @@ export default function Index({ classrooms, subjects, teachers, slots, days, fil
 
                 <div className="flex items-start justify-between gap-4 flex-wrap">
                     <div>
-                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Emploi du temps</h1>
+                        <h1 className="text-4xl font-bold tracking-tight text-gray-900 flex items-center gap-3"><CalendarRange className="h-7 w-7 text-blue-600 shrink-0" />Emploi du temps</h1>
                         <p className="mt-2 text-gray-500">Organisez les créneaux de cours par classe.</p>
                     </div>
                 </div>

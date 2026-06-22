@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { Plus, Pencil, Trash2, Search, Award, Eye, ChevronLeft, ChevronRight, X, Users, Calendar } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Award, Eye, ChevronLeft, ChevronRight, X, Users, Calendar, GraduationCap } from 'lucide-react';
 import { useState, useCallback } from 'react';
 import {
     AlertDialog,
@@ -170,7 +170,7 @@ export default function Index({ studentScholarships, scholarships, academicYears
                 {/* Header avec titre et bouton */}
                 <div className="flex items-start justify-between">
                     <div>
-                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">
+                        <h1 className="text-4xl font-bold tracking-tight text-gray-900 flex items-center gap-3"><GraduationCap className="h-7 w-7 text-blue-600 shrink-0" />
                             Bourses d'Éleves
                         </h1>
                         <p className="mt-3 text-base text-gray-600">

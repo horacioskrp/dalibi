@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { CheckCircle2, Clock, Plus, Search, Trash2, X, XCircle } from 'lucide-react';
+import { CheckCircle2, Clock, Plus, Search, Trash2, X, XCircle, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 import {
     AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -73,7 +73,7 @@ export default function Index({ permissions, stats, filters }: Readonly<Props>) 
                 {/* Header */}
                 <div className="flex items-start justify-between gap-4 flex-wrap">
                     <div>
-                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Demandes de permission</h1>
+                        <h1 className="text-4xl font-bold tracking-tight text-gray-900 flex items-center gap-3"><ShieldCheck className="h-7 w-7 text-blue-600 shrink-0" />Demandes de permission</h1>
                         <p className="mt-2 text-lg text-gray-600">Gérez les demandes d'absence justifiée</p>
                     </div>
                     <Button className="gap-2 bg-blue-600 hover:bg-blue-700" onClick={() => router.get(route('absence-permissions.create'))}>

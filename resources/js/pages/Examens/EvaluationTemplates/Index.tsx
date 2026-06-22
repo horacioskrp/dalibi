@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { BookOpen, Eye, Pencil, Plus, Search, Trash2, X, Layers } from 'lucide-react';
+import { BookOpen, Eye, Pencil, Plus, Search, Trash2, X, Layers, ListChecks } from 'lucide-react';
 import { useState } from 'react';
 import {
     AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -60,7 +60,7 @@ export default function Index({ templates, periods, activeYear, filters }: Reado
                 {/* Header */}
                 <div className="flex items-start justify-between">
                     <div>
-                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Modèles d'évaluation</h1>
+                        <h1 className="text-4xl font-bold tracking-tight text-gray-900 flex items-center gap-3"><ListChecks className="h-7 w-7 text-blue-600 shrink-0" />Modèles d'évaluation</h1>
                         <p className="mt-2 text-lg text-gray-600">
                             {activeYear ? `Année : ${activeYear.year}` : 'Définissez les examens globaux avant de les déployer par classe'}
                         </p>

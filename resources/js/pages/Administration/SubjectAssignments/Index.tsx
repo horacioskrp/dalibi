@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { Plus, Pencil, Trash2, Search, BookOpen, CheckCircle2, Eye, ChevronLeft, ChevronRight, X, Users } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, BookOpen, CheckCircle2, Eye, ChevronLeft, ChevronRight, X, Users, ClipboardList } from 'lucide-react';
 import { useState } from 'react';
 import {
     AlertDialog,
@@ -142,7 +142,7 @@ export default function Index({ assignments, filters }: Readonly<IndexProps>) {
                 {/* Header */}
                 <div className="flex items-start justify-between">
                     <div>
-                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">
+                        <h1 className="text-4xl font-bold tracking-tight text-gray-900 flex items-center gap-3"><ClipboardList className="h-7 w-7 text-blue-600 shrink-0" />
                             Affectations de matières
                         </h1>
                         <p className="mt-2 text-lg text-gray-600">

@@ -124,7 +124,7 @@ export default function Index({ academicYears, filters }: Readonly<IndexProps>) 
                 {/* Header */}
                 <div className="flex items-start justify-between">
                     <div>
-                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">
+                        <h1 className="text-4xl font-bold tracking-tight text-gray-900 flex items-center gap-3"><Calendar className="h-7 w-7 text-blue-600 shrink-0" />
                             Années académiques
                         </h1>
                         <p className="mt-2 text-lg text-gray-600">

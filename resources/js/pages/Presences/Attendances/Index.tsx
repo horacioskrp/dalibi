@@ -123,7 +123,7 @@ export default function Index({ classrooms, periods, studentsWithStatus, existin
                 {/* Header */}
                 <div className="flex items-start justify-between gap-4 flex-wrap">
                     <div>
-                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Saisie des présences</h1>
+                        <h1 className="text-4xl font-bold tracking-tight text-gray-900 flex items-center gap-3"><UserCheck className="h-7 w-7 text-blue-600 shrink-0" />Saisie des présences</h1>
                         <p className="mt-2 text-lg text-gray-600">Enregistrez l'appel quotidien par classe</p>
                     </div>
                     <Button variant="outline" className="gap-2" onClick={() => router.get(route('attendances.stats'))}>
