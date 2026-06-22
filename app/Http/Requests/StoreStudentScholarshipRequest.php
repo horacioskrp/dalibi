@@ -10,7 +10,7 @@ class StoreStudentScholarshipRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR, Roles::SECRETARIAT]);
+        return $this->user()->can('create_student_scholarships');
     }
 
     public function rules(): array

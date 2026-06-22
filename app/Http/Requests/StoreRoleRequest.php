@@ -10,7 +10,7 @@ class StoreRoleRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->hasAnyRole([Roles::ADMINISTRATOR]);
+        return $this->user()->can('manage_roles_permissions');
     }
 
     /**

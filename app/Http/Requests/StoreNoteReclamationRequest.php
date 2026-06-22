@@ -9,9 +9,7 @@ class StoreNoteReclamationRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->hasAnyRole([
-            Roles::ADMINISTRATOR, Roles::DIRECTOR, Roles::TEACHER, Roles::SECRETARIAT,
-        ]);
+        return $this->user()->can('create_note_reclamations');
     }
 
     public function rules(): array
