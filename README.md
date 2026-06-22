@@ -315,6 +315,33 @@ docker run -d --name dalibi -p 8080:80 \
 - Upload d'images restreint (pas de SVG → pas de XSS stocké) et génération PDF verrouillée (dompdf sans accès distant)
 - Code-barres de vérification anti-falsification sur reçus et documents
 
+## 🔑 Rôles & permissions
+
+L'application est entièrement **gouvernée par les permissions** (Spatie Laravel Permission). La protection est appliquée à **4 niveaux cohérents** :
+
+1. **Menu** : chaque entrée porte sa permission ; les items/groupes non autorisés sont masqués.
+2. **Routes** : middleware `can:<permission>` (accès aux pages).
+3. **FormRequests** : `authorize()` vérifie `create_*` / `edit_*` / `review_*`.
+4. **Contrôleurs & dashboard** : actions et sections conditionnées par `can(...)`.
+
+### Modèle de permissions
+
+Les permissions sont générées **par module** (aligné sur les menus) sous la forme **`{capacité}_{module}`** — ex. `view_students`, `create_archives`, `delete_backups`. Capacités : `view`, `create`, `edit`, `delete`, et spéciales `export`, `generate`, `review`, `restore`, `execute`, `manage`. **~145 permissions** au total (voir `App\Constants\Permissions`).
+
+### Rôles par défaut (seeder)
+
+| Rôle | Portée des permissions |
+| --- | --- |
+| **Administrateur** | **Toutes** les permissions |
+| **Directeur** | Consultation générale + création/édition (académique, élèves, classes, examens, inscriptions, emploi du temps), revue des réclamations & permissions, génération de documents, gestion des utilisateurs |
+| **Enseignant** | Consultation classes/élèves/matières, **saisie & édition des notes** (notes & évaluations), statut des évaluations, présences (création/édition), création de réclamations |
+| **Comptabilité** | **Finances complètes** (caisses, factures/paiements, transactions, dépenses), frais (consultation/édition), rapports |
+| **Secrétariat** | **Élèves & inscriptions** (complet), effectifs, passage de classe, emploi du temps, documents, archives, gestion des utilisateurs |
+
+> Un administrateur peut affiner finement chaque rôle via **Administration → Rôles & permissions**, sans toucher au code.
+>
+> Deux contrôles restent volontairement liés au rôle (sécurité/affichage, pas des gardes d'accès) : seul un administrateur peut supprimer un compte administrateur, et un enseignant ne voit que **ses** réclamations.
+
 ## 📦 Structure du projet
 
 ```
