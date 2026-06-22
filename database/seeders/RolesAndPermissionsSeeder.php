@@ -2,148 +2,141 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
-use App\Constants\Roles;
 use App\Constants\Permissions;
+use App\Constants\Roles;
+use Illuminate\Database\Seeder;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class RolesAndPermissionsSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // Reset cached roles and permissions
         app()['cache']->forget('spatie.permission.cache');
 
-        // Create all permissions with descriptions
-        $permissionsList = [
-            // Schools
-            [Permissions::VIEW_SCHOOLS, 'Voir les écoles'],
-            [Permissions::CREATE_SCHOOLS, 'Créer une école'],
-            [Permissions::EDIT_SCHOOLS, 'Modifier une école'],
-            [Permissions::DELETE_SCHOOLS, 'Supprimer une école'],
-
-            // Academic Years
-            [Permissions::VIEW_ACADEMIC_YEARS, 'Voir les années scolaires'],
-            [Permissions::CREATE_ACADEMIC_YEARS, 'Créer une année scolaire'],
-            [Permissions::EDIT_ACADEMIC_YEARS, 'Modifier une année scolaire'],
-            [Permissions::DELETE_ACADEMIC_YEARS, 'Supprimer une année scolaire'],
-
-            // Classes
-            [Permissions::VIEW_CLASSES, 'Voir les classes'],
-            [Permissions::CREATE_CLASSES, 'Créer une classe'],
-            [Permissions::EDIT_CLASSES, 'Modifier une classe'],
-            [Permissions::DELETE_CLASSES, 'Supprimer une classe'],
-
-            // Students
-            [Permissions::VIEW_STUDENTS, 'Voir les élèves'],
-            [Permissions::CREATE_STUDENTS, 'Créer un élève'],
-            [Permissions::EDIT_STUDENTS, 'Modifier un élève'],
-            [Permissions::DELETE_STUDENTS, 'Supprimer un élève'],
-            [Permissions::VIEW_STUDENT_PARENTS_INFO, 'Voir les informations des parents'],
-
-            // Subjects
-            [Permissions::VIEW_SUBJECTS, 'Voir les matières'],
-            [Permissions::CREATE_SUBJECTS, 'Créer une matière'],
-            [Permissions::EDIT_SUBJECTS, 'Modifier une matière'],
-            [Permissions::DELETE_SUBJECTS, 'Supprimer une matière'],
-
-            // Grades
-            [Permissions::VIEW_GRADES, 'Voir les notes'],
-            [Permissions::CREATE_GRADES, 'Créer une note'],
-            [Permissions::EDIT_GRADES, 'Modifier une note'],
-            [Permissions::DELETE_GRADES, 'Supprimer une note'],
-
-            // Attendance
-            [Permissions::VIEW_ATTENDANCES, 'Voir les présences'],
-            [Permissions::CREATE_ATTENDANCES, 'Créer une présence'],
-            [Permissions::EDIT_ATTENDANCES, 'Modifier une présence'],
-            [Permissions::DELETE_ATTENDANCES, 'Supprimer une présence'],
-
-            // Users
-            [Permissions::VIEW_USERS, 'Voir les utilisateurs'],
-            [Permissions::CREATE_USERS, 'Créer un utilisateur'],
-            [Permissions::EDIT_USERS, 'Modifier un utilisateur'],
-            [Permissions::DELETE_USERS, 'Supprimer un utilisateur'],
-
-            // Reports
-            [Permissions::VIEW_REPORTS, 'Voir les rapports'],
-            [Permissions::EXPORT_REPORTS, 'Exporter des rapports'],
-
-            // Finances
-            [Permissions::VIEW_FINANCES, 'Voir les finances'],
-            [Permissions::CREATE_FINANCES, 'Créer une finance'],
-            [Permissions::EDIT_FINANCES, 'Modifier une finance'],
-            [Permissions::DELETE_FINANCES, 'Supprimer une finance'],
-
-            // Settings
-            [Permissions::MANAGE_SETTINGS, 'Gérer les paramètres'],
-            [Permissions::MANAGE_ROLES_PERMISSIONS, 'Gérer les rôles et permissions'],
-        ];
-
-        foreach ($permissionsList as [$name, $description]) {
-            Permission::firstOrCreate(['name' => $name], ['description' => $description]);
+        // 1) Création de TOUTES les permissions (générées par module)
+        $labels = Permissions::labels();
+        foreach (Permissions::all() as $name) {
+            Permission::firstOrCreate(['name' => $name], ['description' => $labels[$name] ?? $name]);
         }
 
-        // Create Admin role and assign all permissions
-        $adminRole = Role::firstOrCreate(['name' => Roles::ADMINISTRATOR]);
-        $adminRole->syncPermissions(Permission::pluck('name'));
+        // 2) Administrateur : toutes les permissions
+        Role::firstOrCreate(['name' => Roles::ADMINISTRATOR])
+            ->syncPermissions(Permission::pluck('name'));
 
-        // Create Director role
-        $directorRole = Role::firstOrCreate(['name' => Roles::DIRECTOR]);
-        $directorPermissions = [
-            Permissions::VIEW_SCHOOLS,
-            Permissions::VIEW_ACADEMIC_YEARS, Permissions::CREATE_ACADEMIC_YEARS, Permissions::EDIT_ACADEMIC_YEARS,
-            Permissions::VIEW_CLASSES, Permissions::CREATE_CLASSES, Permissions::EDIT_CLASSES,
-            Permissions::VIEW_STUDENTS, Permissions::CREATE_STUDENTS, Permissions::EDIT_STUDENTS,
-            Permissions::VIEW_SUBJECTS, Permissions::CREATE_SUBJECTS, Permissions::EDIT_SUBJECTS,
-            Permissions::VIEW_GRADES, Permissions::VIEW_ATTENDANCES,
-            Permissions::VIEW_USERS, Permissions::CREATE_USERS, Permissions::EDIT_USERS,
-            Permissions::VIEW_REPORTS, Permissions::EXPORT_REPORTS,
-            Permissions::VIEW_FINANCES,
-        ];
-        $directorRole->syncPermissions($directorPermissions);
+        // 3) Directeur
+        $director = $this->expand([
+            'schools' => ['view'],
+            'academic_years' => ['view', 'create', 'edit'],
+            'academic_periods' => ['view', 'create', 'edit'],
+            'classes' => ['view', 'create', 'edit'],
+            'classroom_types' => ['view'],
+            'levels' => ['view'],
+            'subjects' => ['view', 'create', 'edit'],
+            'subject_assignments' => ['view', 'create', 'edit'],
+            'class_subjects' => ['view', 'create', 'edit'],
+            'students' => ['view', 'create', 'edit'],
+            'enrollments' => ['view', 'create', 'edit'],
+            'roster' => ['view', 'export'],
+            'promotion' => ['execute'],
+            'timetable' => ['view', 'create', 'edit'],
+            'student_scholarships' => ['view'],
+            'attendances' => ['view'],
+            'absence_permissions' => ['view', 'review'],
+            'evaluations' => ['view'],
+            'evaluation_templates' => ['view', 'generate'],
+            'evaluation_types' => ['view'],
+            'marks' => ['view'],
+            'official_exams' => ['view', 'create', 'edit'],
+            'grades' => ['view'],
+            'note_reclamations' => ['view', 'review'],
+            'finances' => ['view'],
+            'reports' => ['view', 'export'],
+            'archives' => ['view'],
+            'documents' => ['view', 'generate'],
+            'grading_configs' => ['view'],
+            'fee_categories' => ['view'],
+            'fee_structures' => ['view'],
+            'scholarships' => ['view'],
+            'users' => ['view', 'create', 'edit'],
+        ], [Permissions::VIEW_STUDENT_PARENTS_INFO]);
+        Role::firstOrCreate(['name' => Roles::DIRECTOR])->syncPermissions($director);
 
-        // Create Teacher role
-        $teacherRole = Role::firstOrCreate(['name' => Roles::TEACHER]);
-        $teacherPermissions = [
-            Permissions::VIEW_CLASSES,
-            Permissions::VIEW_STUDENTS,
-            Permissions::VIEW_STUDENT_PARENTS_INFO,
-            Permissions::CREATE_GRADES, Permissions::EDIT_GRADES, Permissions::VIEW_GRADES,
-            Permissions::CREATE_ATTENDANCES, Permissions::EDIT_ATTENDANCES, Permissions::VIEW_ATTENDANCES,
-            Permissions::VIEW_SUBJECTS,
-        ];
-        $teacherRole->syncPermissions($teacherPermissions);
+        // 4) Enseignant
+        $teacher = $this->expand([
+            'classes' => ['view'],
+            'subjects' => ['view'],
+            'students' => ['view'],
+            'timetable' => ['view'],
+            'roster' => ['view'],
+            'grades' => ['view', 'create', 'edit'],
+            'marks' => ['view', 'create', 'edit'],
+            'evaluations' => ['view'],
+            'evaluation_templates' => ['view'],
+            'attendances' => ['view', 'create', 'edit'],
+            'absence_permissions' => ['view', 'create'],
+            'note_reclamations' => ['view', 'create'],
+        ], [Permissions::VIEW_STUDENT_PARENTS_INFO]);
+        Role::firstOrCreate(['name' => Roles::TEACHER])->syncPermissions($teacher);
 
-        // Create Accountant role
-        $accountantRole = Role::firstOrCreate(['name' => Roles::ACCOUNTING]);
-        $accountantPermissions = [
-            Permissions::VIEW_SCHOOLS,
-            Permissions::VIEW_STUDENTS,
-            Permissions::VIEW_FINANCES, Permissions::CREATE_FINANCES, Permissions::EDIT_FINANCES,
-            Permissions::VIEW_REPORTS, Permissions::EXPORT_REPORTS,
-            Permissions::VIEW_USERS,
-        ];
-        $accountantRole->syncPermissions($accountantPermissions);
+        // 5) Comptabilité
+        $accounting = $this->expand([
+            'schools' => ['view'],
+            'academic_years' => ['view'],
+            'students' => ['view'],
+            'finances' => ['view', 'create', 'edit', 'delete'],
+            'cash_accounts' => ['view', 'create', 'edit', 'delete'],
+            'invoices' => ['view', 'create'],
+            'transactions' => ['view', 'create'],
+            'expenses' => ['view', 'create', 'edit', 'delete'],
+            'fee_categories' => ['view', 'create', 'edit'],
+            'fee_structures' => ['view', 'create', 'edit'],
+            'reports' => ['view', 'export'],
+            'users' => ['view'],
+        ]);
+        Role::firstOrCreate(['name' => Roles::ACCOUNTING])->syncPermissions($accounting);
 
-        // Create Secretary role
-        $secretaryRole = Role::firstOrCreate(['name' => Roles::SECRETARIAT]);
-        $secretaryPermissions = [
-            Permissions::VIEW_SCHOOLS,
-            Permissions::VIEW_CLASSES,
-            Permissions::VIEW_STUDENTS, Permissions::CREATE_STUDENTS, Permissions::EDIT_STUDENTS,
-            Permissions::VIEW_STUDENT_PARENTS_INFO,
-            Permissions::VIEW_SUBJECTS,
-            Permissions::VIEW_ATTENDANCES,
-            Permissions::VIEW_USERS, Permissions::CREATE_USERS, Permissions::EDIT_USERS,
-            Permissions::VIEW_REPORTS,
-        ];
-        $secretaryRole->syncPermissions($secretaryPermissions);
+        // 6) Secrétariat
+        $secretary = $this->expand([
+            'schools' => ['view'],
+            'academic_years' => ['view'],
+            'academic_periods' => ['view'],
+            'classes' => ['view'],
+            'students' => ['view', 'create', 'edit'],
+            'enrollments' => ['view', 'create', 'edit'],
+            'roster' => ['view', 'export'],
+            'promotion' => ['execute'],
+            'timetable' => ['view', 'create', 'edit'],
+            'student_scholarships' => ['view'],
+            'attendances' => ['view'],
+            'absence_permissions' => ['view', 'create'],
+            'official_exams' => ['view'],
+            'documents' => ['view', 'create', 'edit', 'generate'],
+            'archives' => ['view', 'create', 'edit', 'delete'],
+            'users' => ['view', 'create', 'edit'],
+            'reports' => ['view'],
+        ], [Permissions::VIEW_STUDENT_PARENTS_INFO]);
+        Role::firstOrCreate(['name' => Roles::SECRETARIAT])->syncPermissions($secretary);
 
-        $this->command->info('Rôles et permissions créés avec succès!');
+        $this->command?->info('Rôles et permissions synchronisés (' . count(Permissions::all()) . ' permissions).');
+    }
+
+    /**
+     * Développe une carte module => [capacités] en noms de permissions.
+     *
+     * @param  array<string, array<int,string>>  $map
+     * @param  array<int,string>  $extra
+     * @return array<int,string>
+     */
+    private function expand(array $map, array $extra = []): array
+    {
+        $names = $extra;
+        foreach ($map as $module => $abilities) {
+            foreach ($abilities as $ability) {
+                $names[] = Permissions::name($ability, $module);
+            }
+        }
+
+        return array_values(array_unique($names));
     }
 }
