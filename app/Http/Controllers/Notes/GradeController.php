@@ -9,7 +9,8 @@
  * par la Free Software Foundation.
  */
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Notes;
+use App\Http\Controllers\Controller;
 
 use App\Models\AcademicPeriod;
 use App\Models\AcademicYear;
@@ -100,7 +101,7 @@ class GradeController extends Controller
             ];
         }
 
-        return Inertia::render('Grades/Index', [
+        return Inertia::render('Notes/Grades/Index', [
             'classrooms' => $classrooms,
             'classSubjects' => $classSubjects,
             'periods' => $periods,
@@ -212,7 +213,7 @@ class GradeController extends Controller
             }
         }
 
-        return Inertia::render('Grades/Student', [
+        return Inertia::render('Notes/Grades/Student', [
             'student' => $student->only(['id', 'firstname', 'lastname', 'matricule']),
             'enrollment' => $enrollment,
             'grades' => $grades->values(),

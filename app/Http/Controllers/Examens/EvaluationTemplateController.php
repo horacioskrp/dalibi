@@ -5,7 +5,8 @@
  * Copyright (c) 2026 Kudayah Sassou Horacio Herve. GPL v3.
  */
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Examens;
+use App\Http\Controllers\Controller;
 
 use App\Models\AcademicPeriod;
 use App\Models\AcademicYear;
@@ -40,7 +41,7 @@ class EvaluationTemplateController extends Controller
             fn ($q) => $q->where('academic_year_id', $activeYear->id)
         )->orderBy('start_date')->get(['id', 'name']);
 
-        return Inertia::render('EvaluationTemplates/Index', [
+        return Inertia::render('Examens/EvaluationTemplates/Index', [
             'templates'      => $templates,
             'periods'        => $periods,
             'activeYear'     => $activeYear,
@@ -56,7 +57,7 @@ class EvaluationTemplateController extends Controller
             fn ($q) => $q->where('academic_year_id', $activeYear->id)
         )->orderBy('start_date')->get(['id', 'name', 'is_current']);
 
-        return Inertia::render('EvaluationTemplates/Create', [
+        return Inertia::render('Examens/EvaluationTemplates/Create', [
             'periods'         => $periods,
             'evaluationTypes' => EvaluationType::orderBy('name')->get(['id', 'name']),
             'classroomTypes'  => ClassroomType::where('active', true)->orderBy('name')->get(['id', 'name']),
@@ -117,7 +118,7 @@ class EvaluationTemplateController extends Controller
             ->with(['class:id,name,code', 'subject:id,name'])
             ->get(['id', 'class_id', 'subject_id', 'coefficient']);
 
-        return Inertia::render('EvaluationTemplates/Show', [
+        return Inertia::render('Examens/EvaluationTemplates/Show', [
             'template'               => $evaluationTemplate,
             'evaluations'            => $evaluations,
             'availableClassSubjects' => $availableClassSubjects,
@@ -133,7 +134,7 @@ class EvaluationTemplateController extends Controller
             fn ($q) => $q->where('academic_year_id', $activeYear->id)
         )->orderBy('start_date')->get(['id', 'name']);
 
-        return Inertia::render('EvaluationTemplates/Edit', [
+        return Inertia::render('Examens/EvaluationTemplates/Edit', [
             'template'        => $evaluationTemplate->load(['academicPeriod:id,name', 'evaluationType:id,name']),
             'periods'         => $periods,
             'evaluationTypes' => EvaluationType::orderBy('name')->get(['id', 'name']),

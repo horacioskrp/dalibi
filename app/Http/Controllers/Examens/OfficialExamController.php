@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Examens;
+use App\Http\Controllers\Controller;
 
 use App\Constants\Roles;
 use App\Models\OfficialExam;
@@ -57,7 +58,7 @@ class OfficialExamController extends Controller
                 'admis'         => $e->admis_count,
             ]);
 
-        return Inertia::render('OfficialExams/Index', [
+        return Inertia::render('Examens/OfficialExams/Index', [
             'exams'    => $exams,
             'years'    => $years,
             'activeYear' => $activeYear,
@@ -146,7 +147,7 @@ class OfficialExamController extends Controller
         ];
         $stats['taux'] = $stats['total'] > 0 ? round($stats['admis'] / $stats['total'] * 100, 1) : 0;
 
-        return Inertia::render('OfficialExams/Show', [
+        return Inertia::render('Examens/OfficialExams/Show', [
             'exam' => [
                 'id'         => $officialExam->id,
                 'type'       => $officialExam->type,

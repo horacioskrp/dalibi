@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Notes;
+use App\Http\Controllers\Controller;
 
 use App\Constants\Roles;
 use App\Http\Requests\ReviewNoteReclamationRequest;
@@ -48,7 +49,7 @@ class NoteReclamationController extends Controller
 
         $reclamations = $query->paginate(20)->withQueryString();
 
-        return Inertia::render('NoteReclamations/Index', [
+        return Inertia::render('Notes/NoteReclamations/Index', [
             'reclamations' => $reclamations,
             'filters'      => ['status' => $status],
             'canReview'    => $user->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]),
@@ -88,7 +89,7 @@ class NoteReclamationController extends Controller
             ->where('status', 'pending')
             ->exists();
 
-        return Inertia::render('NoteReclamations/Create', [
+        return Inertia::render('Notes/NoteReclamations/Create', [
             'evaluation'    => $evaluation,
             'student'       => $student->only(['id', 'firstname', 'lastname', 'matricule']),
             'originalScore' => $existingMark?->score !== null ? (float) $existingMark->score : null,
@@ -141,7 +142,7 @@ class NoteReclamationController extends Controller
             'reviewedBy:id,firstname,lastname',
         ]);
 
-        return Inertia::render('NoteReclamations/Show', [
+        return Inertia::render('Notes/NoteReclamations/Show', [
             'reclamation' => $noteReclamation,
             'canReview'   => $request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]),
         ]);

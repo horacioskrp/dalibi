@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Examens;
+use App\Http\Controllers\Controller;
 
 use App\Constants\Roles;
 use App\Models\AcademicPeriod;
@@ -57,7 +58,7 @@ class EvaluationController extends Controller
 
         $evaluations = $query->orderByDesc('created_at')->paginate(20)->withQueryString();
 
-        return Inertia::render('Evaluations/Index', [
+        return Inertia::render('Examens/Evaluations/Index', [
             'evaluations' => $evaluations,
             'filters'     => [
                 'search'             => $search,
@@ -92,7 +93,7 @@ class EvaluationController extends Controller
             'marks.student:id,firstname,lastname,matricule',
         ]);
 
-        return Inertia::render('Evaluations/Show', [
+        return Inertia::render('Examens/Evaluations/Show', [
             'evaluation' => $evaluation,
         ]);
     }
@@ -171,7 +172,7 @@ class EvaluationController extends Controller
             )->orderBy('start_date')->get(['id', 'name']);
         }
 
-        return Inertia::render('Planning/Index', [
+        return Inertia::render('Examens/Planning/Index', [
             'classrooms'  => $classrooms,
             'evaluations' => $evaluations,
             'periods'     => $periods,

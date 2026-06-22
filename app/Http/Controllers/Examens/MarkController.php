@@ -5,7 +5,8 @@
  * Copyright (c) 2026 Kudayah Sassou Horacio Herve. GPL v3.
  */
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Examens;
+use App\Http\Controllers\Controller;
 
 use App\Models\AcademicYear;
 use App\Models\Enrollment;
@@ -77,7 +78,7 @@ class MarkController extends Controller
             'max'     => $scores->count() > 0 ? $scores->max() : null,
         ];
 
-        return Inertia::render('Marks/Index', [
+        return Inertia::render('Examens/Marks/Index', [
             'evaluation'       => $evaluation,
             'studentsWithMarks' => $studentsWithMarks,
             'stats'            => $stats,
