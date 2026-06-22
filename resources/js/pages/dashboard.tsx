@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { Users, Banknote, TrendingUp, TrendingDown, Wallet, CheckCircle2, AlertCircle, XCircle, AlertTriangle, BookOpen, ClipboardList, ArrowRight, CalendarDays, GraduationCap, UserCheck, ShieldCheck, FileBadge, LayoutGrid } from 'lucide-react';
+import { Users, Banknote, TrendingUp, TrendingDown, Wallet, CheckCircle2, AlertCircle, XCircle, AlertTriangle, BookOpen, ClipboardList, ArrowRight, CalendarDays, GraduationCap, UserCheck, ShieldCheck, FileBadge, LayoutGrid, User, Layers } from 'lucide-react';
 import {
     Area, AreaChart, Bar, BarChart, Cell, Pie, PieChart,
     ResponsiveContainer, Tooltip as RTooltip, XAxis, YAxis,
@@ -102,6 +102,9 @@ interface DashboardProps {
     enrollments?: {
         total_students:    number;
         active_students:   number;
+        students_by_gender: { male: number; female: number; other: number };
+        active_classrooms: number;
+        total_users:       number;
         enrollments_year:  number;
         enrollments_week:  number;
         recentEnrollments: RecentEnrollment[];
@@ -253,6 +256,10 @@ export default function Dashboard({ activeYear, selectedYearId, selectedYear, ac
     const isAcademic   = !!academic;
     const reasonLabel: Record<string, string> = { medical: 'Médical', familial: 'Familial', autre: 'Autre' };
 
+    const g = enrollments?.students_by_gender;
+    const genderTotal = g ? g.male + g.female + g.other : 0;
+    const genderPct = (n: number) => (genderTotal > 0 ? Math.round((n / genderTotal) * 100) : 0);
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Tableau de bord" />
@@ -372,6 +379,40 @@ export default function Dashboard({ activeYear, selectedYearId, selectedYear, ac
                                 />
                             </div>
                         )}
+                    </div>
+                )}
+
+                {/* ── Effectifs par sexe + classes + utilisateurs ───────── */}
+                {isEnrollment && (
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <KpiCard
+                            title="Garçons"
+                            value={enrollments.students_by_gender.male}
+                            sub={`${genderPct(enrollments.students_by_gender.male)}% des inscrits`}
+                            icon={User}
+                            color="blue"
+                        />
+                        <KpiCard
+                            title="Filles"
+                            value={enrollments.students_by_gender.female}
+                            sub={`${genderPct(enrollments.students_by_gender.female)}% des inscrits`}
+                            icon={User}
+                            color="purple"
+                        />
+                        <KpiCard
+                            title="Classes actives"
+                            value={enrollments.active_classrooms}
+                            sub="Classes ouvertes"
+                            icon={Layers}
+                            color="green"
+                        />
+                        <KpiCard
+                            title="Utilisateurs"
+                            value={enrollments.total_users}
+                            sub="Comptes au total"
+                            icon={Users}
+                            color="orange"
+                        />
                     </div>
                 )}
 
