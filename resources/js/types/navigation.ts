@@ -12,4 +12,6 @@ export type NavItem = {
     icon?: LucideIcon | null;
     isActive?: boolean;
     items?: NavItem[];
+    /** Permission requise pour afficher l'entrée (absente = toujours visible). */
+    permission?: string;
 };
