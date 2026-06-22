@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Parametres;
+use App\Http\Controllers\Controller;
 
 use App\Constants\Roles;
 use App\Models\DocumentIssuance;
@@ -28,7 +29,7 @@ class DocumentTemplateController extends Controller
 
         $templates = DocumentTemplate::orderBy('category')->orderBy('name')->get();
 
-        return Inertia::render('settings/Documents/Index', [
+        return Inertia::render('Parametres/Documents/Index', [
             'templatesByCategory' => $templates->groupBy('category')->map(
                 fn ($group) => $group->map(fn ($t) => [
                     'id'         => $t->id,
@@ -47,7 +48,7 @@ class DocumentTemplateController extends Controller
     {
         abort_unless($request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]), 403);
 
-        return Inertia::render('settings/Documents/Edit', [
+        return Inertia::render('Parametres/Documents/Edit', [
             'template'   => null,
             'categories' => DocumentTemplate::CATEGORIES,
             'types'      => DocumentTemplate::TYPES,
@@ -85,7 +86,7 @@ class DocumentTemplateController extends Controller
                 'issued_at'        => $i->issued_at?->format('d/m/Y H:i'),
             ]);
 
-        return Inertia::render('settings/Documents/Registry', [
+        return Inertia::render('Parametres/Documents/Registry', [
             'issuances' => $issuances,
             'filters'   => ['search' => $search],
         ]);
@@ -105,7 +106,7 @@ class DocumentTemplateController extends Controller
             'signataire.titre'   => $documentTemplate->signatory_title ?? 'Le Directeur',
         ]);
 
-        return Inertia::render('settings/Documents/Show', [
+        return Inertia::render('Parametres/Documents/Show', [
             'template' => [
                 'id'              => $documentTemplate->id,
                 'name'            => $documentTemplate->name,
@@ -128,7 +129,7 @@ class DocumentTemplateController extends Controller
     {
         abort_unless($request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]), 403);
 
-        return Inertia::render('settings/Documents/Edit', [
+        return Inertia::render('Parametres/Documents/Edit', [
             'template'   => $documentTemplate,
             'categories' => DocumentTemplate::CATEGORIES,
             'types'      => DocumentTemplate::TYPES,

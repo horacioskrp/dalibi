@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Eleves;
+use App\Http\Controllers\Controller;
 
 use App\Http\Requests\StoreEnrollmentRequest;
 use App\Http\Requests\UpdateEnrollmentRequest;
@@ -68,7 +69,7 @@ class EnrollmentController extends Controller
             SUM(CASE WHEN status = 'CANCELLED' THEN 1 ELSE 0 END) as cancelled
         ")->first();
 
-        return Inertia::render('Enrollments/Index', [
+        return Inertia::render('Eleves/Enrollments/Index', [
             'enrollments'   => $enrollments,
             'perPage'       => $perPage,
             'filters'       => $request->only(['search', 'status', 'academic_year_id', 'class_id', 'per_page']),
@@ -94,7 +95,7 @@ class EnrollmentController extends Controller
                 'amount'           => $f->amount,
             ]);
 
-        return Inertia::render('Enrollments/Create', [
+        return Inertia::render('Eleves/Enrollments/Create', [
             'schools'       => School::where('active', true)->orderBy('name')->get(['id', 'name', 'code']),
             'students'      => Student::where('active', true)->orderBy('firstname')->orderBy('lastname')->get(['id', 'firstname', 'lastname', 'matricule']),
             'classrooms'    => Classroom::where('active', true)->orderBy('name')->get(['id', 'name', 'code']),
@@ -145,7 +146,7 @@ class EnrollmentController extends Controller
             'id', 'invoice_number', 'total', 'amount_paid', 'amount_remaining', 'status',
         ])->first();
 
-        return Inertia::render('Enrollments/Show', [
+        return Inertia::render('Eleves/Enrollments/Show', [
             'enrollment' => $enrollment,
             'invoice'    => $invoice,
         ]);
@@ -155,7 +156,7 @@ class EnrollmentController extends Controller
     {
         $enrollment->load(['school', 'student', 'classroom', 'academicYear', 'enrolledBy']);
 
-        return Inertia::render('Enrollments/Receipt', [
+        return Inertia::render('Eleves/Enrollments/Receipt', [
             'enrollment' => $enrollment,
         ]);
     }
@@ -164,7 +165,7 @@ class EnrollmentController extends Controller
     {
         $enrollment->load(['school', 'student', 'classroom', 'academicYear']);
 
-        return Inertia::render('Enrollments/Edit', [
+        return Inertia::render('Eleves/Enrollments/Edit', [
             'enrollment'    => $enrollment,
             'schools'       => School::where('active', true)->orderBy('name')->get(['id', 'name', 'code']),
             'students'      => Student::where('active', true)->orderBy('firstname')->orderBy('lastname')->get(['id', 'firstname', 'lastname', 'matricule']),

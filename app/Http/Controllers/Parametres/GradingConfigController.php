@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Parametres;
+use App\Http\Controllers\Controller;
 
 use App\Constants\Roles;
 use App\Http\Requests\StoreGradingConfigRequest;
@@ -30,7 +31,7 @@ class GradingConfigController extends Controller
 
         $schools = School::orderBy('name')->get(['id', 'name']);
 
-        return Inertia::render('GradingConfigs/Index', [
+        return Inertia::render('Parametres/GradingConfigs/Index', [
             'configs'  => $configs,
             'schools'  => $schools,
             'filters'  => ['school_id' => $schoolId],
@@ -43,7 +44,7 @@ class GradingConfigController extends Controller
 
         $schools = School::orderBy('name')->get(['id', 'name']);
 
-        return Inertia::render('GradingConfigs/Create', [
+        return Inertia::render('Parametres/GradingConfigs/Create', [
             'schools'            => $schools,
             'preselectedSchoolId'=> $request->string('school_id')->toString() ?: null,
         ]);
@@ -63,7 +64,7 @@ class GradingConfigController extends Controller
 
         $schools = School::orderBy('name')->get(['id', 'name']);
 
-        return Inertia::render('GradingConfigs/Edit', [
+        return Inertia::render('Parametres/GradingConfigs/Edit', [
             'config'  => $gradingConfig->load('school:id,name'),
             'schools' => $schools,
         ]);

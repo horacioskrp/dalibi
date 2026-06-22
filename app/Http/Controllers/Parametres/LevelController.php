@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Parametres;
+use App\Http\Controllers\Controller;
 
 use App\Http\Requests\StoreLevelRequest;
 use App\Http\Requests\UpdateLevelRequest;
@@ -26,7 +27,7 @@ class LevelController extends Controller
 
         $levels = $query->orderBy('name')->paginate(10)->appends(request()->query());
 
-        return Inertia::render('Administration/Levels/Index', [
+        return Inertia::render('Parametres/Levels/Index', [
             'levels' => $levels,
             'filters' => [
                 'search' => $search,
@@ -39,7 +40,7 @@ class LevelController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Administration/Levels/Create');
+        return Inertia::render('Parametres/Levels/Create');
     }
 
     /**
@@ -58,7 +59,7 @@ class LevelController extends Controller
      */
     public function show(Level $level)
     {
-        return Inertia::render('Administration/Levels/Show', [
+        return Inertia::render('Parametres/Levels/Show', [
             'level' => $level,
         ]);
     }
@@ -68,7 +69,7 @@ class LevelController extends Controller
      */
     public function edit(Level $level)
     {
-        return Inertia::render('Administration/Levels/Edit', [
+        return Inertia::render('Parametres/Levels/Edit', [
             'level' => $level,
         ]);
     }

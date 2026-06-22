@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Parametres;
+use App\Http\Controllers\Controller;
 
 use App\Http\Requests\StoreAcademicYearRequest;
 use App\Http\Requests\UpdateAcademicYearRequest;
@@ -24,7 +25,7 @@ class AcademicYearController extends Controller
 
         $academicYears = $query->orderBy('start_date', 'desc')->paginate(10)->appends(request()->query());
 
-        return Inertia::render('Administration/AcademicYears/Index', [
+        return Inertia::render('Parametres/AcademicYears/Index', [
             'academicYears' => $academicYears,
             'filters' => [
                 'search' => $search,
@@ -37,7 +38,7 @@ class AcademicYearController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Administration/AcademicYears/Create');
+        return Inertia::render('Parametres/AcademicYears/Create');
     }
 
     /**
@@ -56,7 +57,7 @@ class AcademicYearController extends Controller
      */
     public function show(AcademicYear $academicYear)
     {
-        return Inertia::render('Administration/AcademicYears/Show', [
+        return Inertia::render('Parametres/AcademicYears/Show', [
             'academicYear' => $academicYear,
         ]);
     }
@@ -66,7 +67,7 @@ class AcademicYearController extends Controller
      */
     public function edit(AcademicYear $academicYear)
     {
-        return Inertia::render('Administration/AcademicYears/Edit', [
+        return Inertia::render('Parametres/AcademicYears/Edit', [
             'academicYear' => $academicYear,
         ]);
     }

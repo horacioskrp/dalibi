@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Eleves;
+use App\Http\Controllers\Controller;
 
 use App\Constants\Roles;
 use App\Models\AcademicYear;
@@ -60,7 +61,7 @@ class PromotionController extends Controller
             $stats['deja_reinscrit'] = $students->where('already_enrolled', true)->count();
         }
 
-        return Inertia::render('Promotion/Index', [
+        return Inertia::render('Eleves/Promotion/Index', [
             'years'       => $years,
             'classrooms'  => $classrooms,
             'students'    => $students,

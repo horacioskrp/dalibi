@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Parametres;
+use App\Http\Controllers\Controller;
 
 use App\Constants\Roles;
 use App\Models\FileStorageSetting;
@@ -19,7 +20,7 @@ class FileStorageController extends Controller
         $settings = FileStorageSetting::allSettings();
 
         // Masquer les credentials : on ne renvoie jamais la clé ni le secret en clair.
-        return Inertia::render('settings/FileStorage', [
+        return Inertia::render('Parametres/FileStorage', [
             'settings' => [
                 'driver'      => $settings['driver']      ?? 'local',
                 's3_key'      => $this->maskKey($settings['s3_key'] ?? null),

@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Parametres;
+use App\Http\Controllers\Controller;
 
 use App\Http\Requests\StoreAcademicPeriodRequest;
 use App\Http\Requests\UpdateAcademicPeriodRequest;
@@ -47,7 +48,7 @@ class AcademicPeriodController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        return Inertia::render('Administration/AcademicPeriods/Index', [
+        return Inertia::render('Parametres/AcademicPeriods/Index', [
             'academicPeriods' => $academicPeriods,
             'filters' => $request->only(['search', 'type', 'academic_year_id']),
         ]);
@@ -60,7 +61,7 @@ class AcademicPeriodController extends Controller
     {
         $academicYears = AcademicYear::orderBy('start_date', 'desc')->get();
 
-        return Inertia::render('Administration/AcademicPeriods/Create', [
+        return Inertia::render('Parametres/AcademicPeriods/Create', [
             'academicYears'  => $academicYears,
             'classroomTypes' => ClassroomType::where('active', true)->orderBy('name')->get(['id', 'name', 'period_system']),
         ]);
@@ -92,7 +93,7 @@ class AcademicPeriodController extends Controller
     {
         $academicPeriod->load('academicYear');
 
-        return Inertia::render('Administration/AcademicPeriods/Show', [
+        return Inertia::render('Parametres/AcademicPeriods/Show', [
             'academicPeriod' => $academicPeriod,
         ]);
     }
@@ -105,7 +106,7 @@ class AcademicPeriodController extends Controller
         $academicPeriod->load('academicYear');
         $academicYears = AcademicYear::orderBy('start_date', 'desc')->get();
 
-        return Inertia::render('Administration/AcademicPeriods/Edit', [
+        return Inertia::render('Parametres/AcademicPeriods/Edit', [
             'academicPeriod' => $academicPeriod,
             'academicYears' => $academicYears,
             'classroomTypes' => ClassroomType::where('active', true)->orderBy('name')->get(['id', 'name', 'period_system']),

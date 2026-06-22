@@ -38,7 +38,7 @@ class InvoiceController extends Controller
             $invoice->load(['items', 'payments.receipt', 'payments.createdBy']);
         }
 
-        return Inertia::render('Enrollments/Invoice', [
+        return Inertia::render('Eleves/Enrollments/Invoice', [
             'enrollment'   => $enrollment,
             'invoice'      => $invoice,
             'cashAccounts' => CashAccount::where('active', true)->orderBy('type')->orderBy('name')->get(['id', 'name', 'type']),

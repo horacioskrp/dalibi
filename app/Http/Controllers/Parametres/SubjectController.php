@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Parametres;
+use App\Http\Controllers\Controller;
 
 use App\Http\Requests\StoreSubjectRequest;
 use App\Http\Requests\UpdateSubjectRequest;
@@ -27,7 +28,7 @@ class SubjectController extends Controller
 
         $subjects = $query->orderBy('name')->paginate(10)->appends(request()->query());
 
-        return Inertia::render('Administration/Subjects/Index', [
+        return Inertia::render('Parametres/Subjects/Index', [
             'subjects' => $subjects,
             'filters' => [
                 'search' => $search,
@@ -40,7 +41,7 @@ class SubjectController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Administration/Subjects/Create');
+        return Inertia::render('Parametres/Subjects/Create');
     }
 
     /**
@@ -59,7 +60,7 @@ class SubjectController extends Controller
      */
     public function show(Subject $subject)
     {
-        return Inertia::render('Administration/Subjects/Show', [
+        return Inertia::render('Parametres/Subjects/Show', [
             'subject' => $subject,
         ]);
     }
@@ -69,7 +70,7 @@ class SubjectController extends Controller
      */
     public function edit(Subject $subject)
     {
-        return Inertia::render('Administration/Subjects/Edit', [
+        return Inertia::render('Parametres/Subjects/Edit', [
             'subject' => $subject,
         ]);
     }

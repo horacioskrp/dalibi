@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Parametres;
+use App\Http\Controllers\Controller;
 
 use App\Models\ClassroomType;
 use App\Models\School;
@@ -42,7 +43,7 @@ class SchoolController extends Controller
 
         $schools = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
 
-        return Inertia::render('Schools/Index', [
+        return Inertia::render('Parametres/Schools/Index', [
             'schools' => $schools,
             'activeSchoolsCount' => $activeSchoolsCount,
         ]);
@@ -53,7 +54,7 @@ class SchoolController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Schools/Create', [
+        return Inertia::render('Parametres/Schools/Create', [
             'classroomTypes' => ClassroomType::where('active', true)->orderBy('name')->get(['id', 'name', 'period_system']),
         ]);
     }
@@ -84,7 +85,7 @@ class SchoolController extends Controller
      */
     public function show(School $school)
     {
-        return Inertia::render('Schools/Show', [
+        return Inertia::render('Parametres/Schools/Show', [
             'school' => $school,
         ]);
     }
@@ -94,7 +95,7 @@ class SchoolController extends Controller
      */
     public function edit(School $school)
     {
-        return Inertia::render('Schools/Edit', [
+        return Inertia::render('Parametres/Schools/Edit', [
             'school' => $school,
             'classroomTypes' => ClassroomType::where('active', true)->orderBy('name')->get(['id', 'name', 'period_system']),
             'selectedClassTypes' => $school->classTypes()->pluck('classroom_types.id'),

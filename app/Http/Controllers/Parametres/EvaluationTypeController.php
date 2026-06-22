@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Parametres;
+use App\Http\Controllers\Controller;
 
 use App\Constants\Roles;
 use App\Http\Requests\StoreEvaluationTypeRequest;
@@ -31,7 +32,7 @@ class EvaluationTypeController extends Controller
             ->paginate(10)
             ->appends($request->query());
 
-        return Inertia::render('Administration/EvaluationTypes/Index', [
+        return Inertia::render('Parametres/EvaluationTypes/Index', [
             'evaluationTypes' => $evaluationTypes,
             'filters'         => ['search' => $search],
         ]);
@@ -41,7 +42,7 @@ class EvaluationTypeController extends Controller
     {
         $this->authorize('create', EvaluationType::class);
 
-        return Inertia::render('Administration/EvaluationTypes/Create');
+        return Inertia::render('Parametres/EvaluationTypes/Create');
     }
 
     public function store(StoreEvaluationTypeRequest $request): RedirectResponse
@@ -55,7 +56,7 @@ class EvaluationTypeController extends Controller
 
     public function show(EvaluationType $evaluationType): Response
     {
-        return Inertia::render('Administration/EvaluationTypes/Show', [
+        return Inertia::render('Parametres/EvaluationTypes/Show', [
             'evaluationType' => $evaluationType,
         ]);
     }
@@ -64,7 +65,7 @@ class EvaluationTypeController extends Controller
     {
         $this->authorize('update', $evaluationType);
 
-        return Inertia::render('Administration/EvaluationTypes/Edit', [
+        return Inertia::render('Parametres/EvaluationTypes/Edit', [
             'evaluationType' => $evaluationType,
         ]);
     }

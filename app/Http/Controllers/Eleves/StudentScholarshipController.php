@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Eleves;
+use App\Http\Controllers\Controller;
 
 use App\Http\Requests\StoreStudentScholarshipRequest;
 use App\Http\Requests\UpdateStudentScholarshipRequest;
@@ -65,7 +66,7 @@ class StudentScholarshipController extends Controller
             ->orderBy('year', 'desc')
             ->get();
 
-        return Inertia::render('StudentScholarships/Index', [
+        return Inertia::render('Eleves/StudentScholarships/Index', [
             'studentScholarships' => $studentScholarships,
             'scholarships' => $scholarships,
             'academicYears' => $academicYears,
@@ -92,7 +93,7 @@ class StudentScholarshipController extends Controller
             ->orderBy('year', 'desc')
             ->get();
 
-        return Inertia::render('StudentScholarships/Create', [
+        return Inertia::render('Eleves/StudentScholarships/Create', [
             'students' => $students,
             'scholarships' => $scholarships,
             'academicYears' => $academicYears,
@@ -117,7 +118,7 @@ class StudentScholarshipController extends Controller
     {
         $studentScholarship->load(['student', 'scholarship', 'academicYear']);
 
-        return Inertia::render('StudentScholarships/Show', [
+        return Inertia::render('Eleves/StudentScholarships/Show', [
             'studentScholarship' => $studentScholarship,
         ]);
     }
@@ -143,7 +144,7 @@ class StudentScholarshipController extends Controller
             ->orderBy('year', 'desc')
             ->get();
 
-        return Inertia::render('StudentScholarships/Edit', [
+        return Inertia::render('Eleves/StudentScholarships/Edit', [
             'studentScholarship' => $studentScholarship,
             'students' => $students,
             'scholarships' => $scholarships,

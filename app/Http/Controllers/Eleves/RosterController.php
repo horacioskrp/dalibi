@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Eleves;
+use App\Http\Controllers\Controller;
 
 use App\Constants\Roles;
 use App\Models\AcademicYear;
@@ -74,7 +75,7 @@ class RosterController extends Controller
             }
         }
 
-        return Inertia::render('Roster/Index', [
+        return Inertia::render('Eleves/Roster/Index', [
             'years'        => $years,
             'classrooms'   => $classrooms,
             'enrollments'  => $enrollments,

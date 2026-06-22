@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Parametres;
+use App\Http\Controllers\Controller;
 
 use App\Http\Requests\StoreFeeCategorieRequest;
 use App\Http\Requests\UpdateFeeCategorieRequest;
@@ -24,7 +25,7 @@ class FeeCategorieController extends Controller
 
         $feeCategories = $query->latest()->paginate(10)->withQueryString();
 
-        return Inertia::render('FeeCategories/Index', [
+        return Inertia::render('Parametres/FeeCategories/Index', [
             'feeCategories' => $feeCategories,
             'filters' => $request->only(['search']),
         ]);
@@ -32,7 +33,7 @@ class FeeCategorieController extends Controller
 
     public function create(): Response
     {
-        return Inertia::render('FeeCategories/Create');
+        return Inertia::render('Parametres/FeeCategories/Create');
     }
 
     public function store(StoreFeeCategorieRequest $request): RedirectResponse
@@ -45,14 +46,14 @@ class FeeCategorieController extends Controller
 
     public function show(FeeCategorie $feeCategorie): Response
     {
-        return Inertia::render('FeeCategories/Show', [
+        return Inertia::render('Parametres/FeeCategories/Show', [
             'feeCategorie' => $feeCategorie,
         ]);
     }
 
     public function edit(FeeCategorie $feeCategorie): Response
     {
-        return Inertia::render('FeeCategories/Edit', [
+        return Inertia::render('Parametres/FeeCategories/Edit', [
             'feeCategorie' => $feeCategorie,
         ]);
     }

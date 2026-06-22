@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Eleves;
+use App\Http\Controllers\Controller;
 
 use App\Constants\Roles;
 use App\Models\AcademicYear;
@@ -79,7 +80,7 @@ class StudentStatsController extends Controller
             $enrolledActive = (int) $byClass->sum('count');
         }
 
-        return Inertia::render('Students/Stats', [
+        return Inertia::render('Eleves/Students/Stats', [
             'summary' => [
                 'total'           => $total,
                 'active'          => $active,

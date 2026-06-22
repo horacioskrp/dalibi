@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Parametres;
+use App\Http\Controllers\Controller;
 
 use App\Http\Requests\StoreScholarshipRequest;
 use App\Http\Requests\UpdateScholarshipRequest;
@@ -32,7 +33,7 @@ class ScholarshipController extends Controller
             ->paginate(10)
             ->appends(request()->query());
 
-        return Inertia::render('Administration/Scholarships/Index', [
+        return Inertia::render('Parametres/Scholarships/Index', [
             'scholarships' => $scholarships,
             'filters'      => ['search' => $search],
         ]);
@@ -43,7 +44,7 @@ class ScholarshipController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('Administration/Scholarships/Create');
+        return Inertia::render('Parametres/Scholarships/Create');
     }
 
     /**
@@ -62,7 +63,7 @@ class ScholarshipController extends Controller
      */
     public function show(Scholarship $scholarship): Response
     {
-        return Inertia::render('Administration/Scholarships/Show', [
+        return Inertia::render('Parametres/Scholarships/Show', [
             'scholarship' => $scholarship,
         ]);
     }
@@ -72,7 +73,7 @@ class ScholarshipController extends Controller
      */
     public function edit(Scholarship $scholarship): Response
     {
-        return Inertia::render('Administration/Scholarships/Edit', [
+        return Inertia::render('Parametres/Scholarships/Edit', [
             'scholarship' => $scholarship,
         ]);
     }

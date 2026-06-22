@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { Plus, Pencil, Trash2, Search, Layers, Users, Eye, BookPlus } from 'lucide-react';
+import { BookPlus, ChevronLeft, ChevronRight, Eye, Layers, Pencil, Plus, Search, Trash2, Users } from 'lucide-react';
 import { useState } from 'react';
 import {
     AlertDialog,
@@ -50,13 +50,21 @@ interface PaginatedClassrooms {
 interface IndexProps {
     classrooms: PaginatedClassrooms;
     activeCount: number;
+    filters: { search: string };
     message?: string;
 }
 
-export default function Index({ classrooms, activeCount, message }: Readonly<IndexProps>) {
+function getPages(current: number, last: number): (number | '...')[] {
+    if (last <= 7) return Array.from({ length: last }, (_, i) => i + 1);
+    if (current <= 4) return [1, 2, 3, 4, 5, '...', last];
+    if (current >= last - 3) return [1, '...', last - 4, last - 3, last - 2, last - 1, last];
+    return [1, '...', current - 1, current, current + 1, '...', last];
+}
+
+export default function Index({ classrooms, activeCount, filters, message }: Readonly<IndexProps>) {
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
-    const [searchQuery, setSearchQuery] = useState('');
+    const [searchQuery, setSearchQuery] = useState(filters.search ?? '');
 
     const handleDelete = (classroomId: string) => {
         setIsDeleting(true);
@@ -78,6 +86,10 @@ export default function Index({ classrooms, activeCount, message }: Readonly<Ind
     const handleClearSearch = () => {
         setSearchQuery('');
         router.get(route('classrooms.index'), { search: '' }, { preserveState: true });
+    };
+
+    const goToPage = (page: number) => {
+        router.get(route('classrooms.index'), { page, search: searchQuery }, { preserveState: true });
     };
 
     const statsCards = [
@@ -221,7 +233,7 @@ export default function Index({ classrooms, activeCount, message }: Readonly<Ind
                                             classrooms.data.map((classroom) => (
                                                 <TableRow
                                                     key={classroom.id}
-                                                    className="border-b border-gray-100 wave-table-row"
+                                                    className="border-b border-gray-100"
                                                 >
                                                     <TableCell className="font-semibold text-gray-900">
                                                         <div className="flex items-center gap-3">
@@ -294,44 +306,41 @@ export default function Index({ classrooms, activeCount, message }: Readonly<Ind
                         </div>
 
                         {classrooms.last_page > 1 && (
-                            <div className="flex items-center justify-between bg-white rounded-lg p-4 shadow-sm">
-                                <div className="text-sm text-gray-600">
-                                    Affichage de <span className="font-semibold">{classrooms.from}</span> à{' '}
-                                    <span className="font-semibold">{classrooms.to}</span> sur{' '}
-                                    <span className="font-semibold">{classrooms.total}</span> classes
-                                </div>
-                                <div className="flex gap-2">
-                                    {classrooms.current_page > 1 && (
-                                        <Button
-                                            variant="outline"
-                                            onClick={() =>
-                                                router.get(
-                                                    route('classrooms.index'),
-                                                    { page: classrooms.current_page - 1 },
-                                                    { preserveState: true }
-                                                )
-                                            }
-                                        >
-                                            ← Précédent
-                                        </Button>
+                            <div className="flex items-center justify-between bg-white rounded-lg px-4 py-3 shadow-sm">
+                                <p className="text-sm text-gray-500">
+                                    <span className="font-semibold text-gray-700">{classrooms.from}</span>–<span className="font-semibold text-gray-700">{classrooms.to}</span> sur <span className="font-semibold text-gray-700">{classrooms.total}</span> classes
+                                </p>
+                                <div className="flex items-center gap-1">
+                                    <Button
+                                        variant="outline" size="sm"
+                                        disabled={classrooms.current_page === 1}
+                                        onClick={() => goToPage(classrooms.current_page - 1)}
+                                        className="h-8 w-8 p-0"
+                                    >
+                                        <ChevronLeft className="w-4 h-4" />
+                                    </Button>
+                                    {getPages(classrooms.current_page, classrooms.last_page).map((p, i) =>
+                                        p === '...' ? (
+                                            <span key={`e${i}`} className="px-1 text-gray-400 select-none text-sm">…</span>
+                                        ) : (
+                                            <Button
+                                                key={p}
+                                                variant="outline" size="sm"
+                                                onClick={() => goToPage(p as number)}
+                                                className={`h-8 w-8 p-0 text-sm ${p === classrooms.current_page ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700' : ''}`}
+                                            >
+                                                {p}
+                                            </Button>
+                                        )
                                     )}
-                                    <span className="flex items-center px-4 text-sm font-medium text-gray-700">
-                                        Page {classrooms.current_page} sur {classrooms.last_page}
-                                    </span>
-                                    {classrooms.current_page < classrooms.last_page && (
-                                        <Button
-                                            variant="outline"
-                                            onClick={() =>
-                                                router.get(
-                                                    route('classrooms.index'),
-                                                    { page: classrooms.current_page + 1 },
-                                                    { preserveState: true }
-                                                )
-                                            }
-                                        >
-                                            Suivant →
-                                        </Button>
-                                    )}
+                                    <Button
+                                        variant="outline" size="sm"
+                                        disabled={classrooms.current_page === classrooms.last_page}
+                                        onClick={() => goToPage(classrooms.current_page + 1)}
+                                        className="h-8 w-8 p-0"
+                                    >
+                                        <ChevronRight className="w-4 h-4" />
+                                    </Button>
                                 </div>
                             </div>
                         )}

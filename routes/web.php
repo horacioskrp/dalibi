@@ -1,17 +1,17 @@
 <?php
 
-use App\Http\Controllers\AcademicPeriodController;
-use App\Http\Controllers\DocumentTemplateController;
-use App\Http\Controllers\FileStorageController;
+use App\Http\Controllers\Parametres\AcademicPeriodController;
+use App\Http\Controllers\Parametres\DocumentTemplateController;
+use App\Http\Controllers\Parametres\FileStorageController;
 use App\Http\Controllers\Examens\OfficialExamController;
-use App\Http\Controllers\PromotionController;
-use App\Http\Controllers\RosterController;
-use App\Http\Controllers\TimetableController;
-use App\Http\Controllers\AcademicYearController;
-use App\Http\Controllers\ClassroomController;
-use App\Http\Controllers\ClassroomSubjectAssignmentController;
-use App\Http\Controllers\ClassroomTypeController;
-use App\Http\Controllers\EnrollmentController;
+use App\Http\Controllers\Eleves\PromotionController;
+use App\Http\Controllers\Eleves\RosterController;
+use App\Http\Controllers\Eleves\TimetableController;
+use App\Http\Controllers\Parametres\AcademicYearController;
+use App\Http\Controllers\Parametres\ClassroomController;
+use App\Http\Controllers\Parametres\ClassroomSubjectAssignmentController;
+use App\Http\Controllers\Parametres\ClassroomTypeController;
+use App\Http\Controllers\Eleves\EnrollmentController;
 use App\Http\Controllers\Comptabilite\AccountingController;
 use App\Http\Controllers\Comptabilite\CashAccountController;
 use App\Http\Controllers\Comptabilite\InvoiceController;
@@ -21,23 +21,23 @@ use App\Http\Controllers\Presences\AbsencePermissionController;
 use App\Http\Controllers\Presences\AttendanceController;
 use App\Http\Controllers\Examens\EvaluationController;
 use App\Http\Controllers\Examens\EvaluationTemplateController;
-use App\Http\Controllers\EvaluationTypeController;
-use App\Http\Controllers\GradingConfigController;
+use App\Http\Controllers\Parametres\EvaluationTypeController;
+use App\Http\Controllers\Parametres\GradingConfigController;
 use App\Http\Controllers\Examens\MarkController;
 use App\Http\Controllers\Notes\NoteReclamationController;
-use App\Http\Controllers\FeeCategorieController;
-use App\Http\Controllers\FeeStructureController;
-use App\Http\Controllers\LevelController;
+use App\Http\Controllers\Parametres\FeeCategorieController;
+use App\Http\Controllers\Parametres\FeeStructureController;
+use App\Http\Controllers\Parametres\LevelController;
 use App\Http\Controllers\Administration\PermissionController;
 use App\Http\Controllers\Administration\RoleController;
-use App\Http\Controllers\SchoolController;
-use App\Http\Controllers\ScholarshipController;
-use App\Http\Controllers\StudentController;
-use App\Http\Controllers\StudentScholarshipController;
+use App\Http\Controllers\Parametres\SchoolController;
+use App\Http\Controllers\Parametres\ScholarshipController;
+use App\Http\Controllers\Eleves\StudentController;
+use App\Http\Controllers\Eleves\StudentScholarshipController;
 use App\Http\Controllers\Comptabilite\ExpenseController;
 use App\Http\Controllers\Notes\GradeController;
 use App\Http\Controllers\Administration\SubjectAssignmentController;
-use App\Http\Controllers\SubjectController;
+use App\Http\Controllers\Parametres\SubjectController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Administration\UserController;
 use Illuminate\Support\Facades\Route;
@@ -109,28 +109,28 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('fee-structures/replicate', [FeeStructureController::class, 'replicate'])
         ->name('fee-structures.replicate');
     Route::resource('fee-structures', FeeStructureController::class);
-    Route::post('fee-structures/{feeStructure}/installments', [\App\Http\Controllers\InstallmentController::class, 'storeMultiple'])
+    Route::post('fee-structures/{feeStructure}/installments', [\App\Http\Controllers\Parametres\InstallmentController::class, 'storeMultiple'])
         ->name('fee-structures.installments.store-multiple');
     Route::resource('scholarships', ScholarshipController::class);
     Route::resource('student-scholarships', StudentScholarshipController::class);
     Route::post('students/bulk-status', [StudentController::class, 'bulkStatus'])
         ->name('students.bulk-status');
     // Statistiques élèves
-    Route::get('students-stats', [\App\Http\Controllers\StudentStatsController::class, 'index'])->name('students.stats');
+    Route::get('students-stats', [\App\Http\Controllers\Eleves\StudentStatsController::class, 'index'])->name('students.stats');
 
     // Import d'élèves (CSV)
-    Route::get('students-import', [\App\Http\Controllers\StudentImportController::class, 'index'])->name('students.import');
-    Route::get('students-import/template', [\App\Http\Controllers\StudentImportController::class, 'template'])->name('students.import.template');
-    Route::post('students-import', [\App\Http\Controllers\StudentImportController::class, 'store'])->name('students.import.store');
+    Route::get('students-import', [\App\Http\Controllers\Eleves\StudentImportController::class, 'index'])->name('students.import');
+    Route::get('students-import/template', [\App\Http\Controllers\Eleves\StudentImportController::class, 'template'])->name('students.import.template');
+    Route::post('students-import', [\App\Http\Controllers\Eleves\StudentImportController::class, 'store'])->name('students.import.store');
 
     Route::get('students/{student}/history', [StudentController::class, 'history'])
         ->name('students.history');
     Route::post('students/{student}/change-class', [StudentController::class, 'changeClass'])
         ->name('students.change-class');
     // Documents (pièces justificatives) — dossier privé students/{id}
-    Route::post('students/{student}/documents', [\App\Http\Controllers\StudentDocumentController::class, 'store'])->name('students.documents.store');
-    Route::get('students/{student}/documents/{document}', [\App\Http\Controllers\StudentDocumentController::class, 'download'])->name('students.documents.download');
-    Route::delete('students/{student}/documents/{document}', [\App\Http\Controllers\StudentDocumentController::class, 'destroy'])->name('students.documents.destroy');
+    Route::post('students/{student}/documents', [\App\Http\Controllers\Eleves\StudentDocumentController::class, 'store'])->name('students.documents.store');
+    Route::get('students/{student}/documents/{document}', [\App\Http\Controllers\Eleves\StudentDocumentController::class, 'download'])->name('students.documents.download');
+    Route::delete('students/{student}/documents/{document}', [\App\Http\Controllers\Eleves\StudentDocumentController::class, 'destroy'])->name('students.documents.destroy');
 
     Route::get('students/{student}/photo', [StudentController::class, 'photo'])
         ->name('students.photo.view');
@@ -196,12 +196,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('archives-tags/{documentTag}', [\App\Http\Controllers\Archives\DocumentTagController::class, 'destroy'])->name('archives.tags.destroy');
 
     // Sauvegardes de la base de données
-    Route::get('settings/backups', [\App\Http\Controllers\BackupController::class, 'index'])->name('backups.index');
-    Route::post('settings/backups', [\App\Http\Controllers\BackupController::class, 'store'])->name('backups.store');
-    Route::post('settings/backups/schedule', [\App\Http\Controllers\BackupController::class, 'updateSchedule'])->name('backups.schedule');
-    Route::post('settings/backups/restore', [\App\Http\Controllers\BackupController::class, 'restore'])->name('backups.restore');
-    Route::get('settings/backups/{backup}/download', [\App\Http\Controllers\BackupController::class, 'download'])->name('backups.download');
-    Route::delete('settings/backups/{backup}', [\App\Http\Controllers\BackupController::class, 'destroy'])->name('backups.destroy');
+    Route::get('settings/backups', [\App\Http\Controllers\Parametres\BackupController::class, 'index'])->name('backups.index');
+    Route::post('settings/backups', [\App\Http\Controllers\Parametres\BackupController::class, 'store'])->name('backups.store');
+    Route::post('settings/backups/schedule', [\App\Http\Controllers\Parametres\BackupController::class, 'updateSchedule'])->name('backups.schedule');
+    Route::post('settings/backups/restore', [\App\Http\Controllers\Parametres\BackupController::class, 'restore'])->name('backups.restore');
+    Route::get('settings/backups/{backup}/download', [\App\Http\Controllers\Parametres\BackupController::class, 'download'])->name('backups.download');
+    Route::delete('settings/backups/{backup}', [\App\Http\Controllers\Parametres\BackupController::class, 'destroy'])->name('backups.destroy');
 
     // Passage de classe / réinscription en masse
     Route::get('promotion', [PromotionController::class, 'index'])->name('promotion.index');

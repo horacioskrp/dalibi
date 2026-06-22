@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Eleves;
+use App\Http\Controllers\Controller;
 
 use App\Http\Requests\StoreStudentRequest;
 use App\Http\Requests\UpdateStudentRequest;
@@ -60,7 +61,7 @@ class StudentController extends Controller
 
         $students = $query->paginate($perPage)->withQueryString();
 
-        return Inertia::render('Students/Index', [
+        return Inertia::render('Eleves/Students/Index', [
             'students' => $students,
             'perPage'  => $perPage,
             'filters' => $request->only(['search', 'gender', 'nationality', 'status', 'per_page']),
@@ -99,7 +100,7 @@ class StudentController extends Controller
     {
         $this->authorize('create', Student::class);
 
-        return Inertia::render('Students/Create');
+        return Inertia::render('Eleves/Students/Create');
     }
 
     public function store(StoreStudentRequest $request): RedirectResponse
@@ -173,7 +174,7 @@ class StudentController extends Controller
                 ->first()
             : null;
 
-        return Inertia::render('Students/Show', [
+        return Inertia::render('Eleves/Students/Show', [
             'student' => $student,
             'documentContext' => [
                 'templates'      => $templates,
@@ -256,7 +257,7 @@ class StudentController extends Controller
             ])
             ->values();
 
-        return Inertia::render('Students/History', [
+        return Inertia::render('Eleves/Students/History', [
             'student' => [
                 'id' => $student->id,
                 'firstname' => $student->firstname,
@@ -273,7 +274,7 @@ class StudentController extends Controller
 
         $student->load(['user', 'information', 'parentInfo', 'medicalInfo']);
 
-        return Inertia::render('Students/Edit', [
+        return Inertia::render('Eleves/Students/Edit', [
             'student' => $student,
         ]);
     }

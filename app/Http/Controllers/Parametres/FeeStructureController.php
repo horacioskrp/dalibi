@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Parametres;
+use App\Http\Controllers\Controller;
 
 use App\Constants\Roles;
 use App\Http\Requests\StoreFeeStructureRequest;
@@ -90,7 +91,7 @@ class FeeStructureController extends Controller
 
         $feeStructures = $query->paginate(10)->withQueryString();
 
-        return Inertia::render('FeeStructures/Index', [
+        return Inertia::render('Parametres/FeeStructures/Index', [
             'feeStructures' => $feeStructures,
             'filters' => [
                 'search' => $search,
@@ -121,7 +122,7 @@ class FeeStructureController extends Controller
      */
     public function create()
     {
-        return Inertia::render('FeeStructures/Create', [
+        return Inertia::render('Parametres/FeeStructures/Create', [
             'activeYear' => AcademicYear::where('active', true)->first(['id', 'year']),
             'feeCategories' => FeeCategorie::orderBy('name')->get(),
             'classrooms' => Classroom::orderBy('name')->get(),
@@ -217,7 +218,7 @@ class FeeStructureController extends Controller
     {
         $feeStructure->load(['academicYear', 'feeCategory', 'classroom', 'installments']);
 
-        return Inertia::render('FeeStructures/Show', [
+        return Inertia::render('Parametres/FeeStructures/Show', [
             'feeStructure' => $feeStructure,
         ]);
     }
@@ -229,7 +230,7 @@ class FeeStructureController extends Controller
     {
         $feeStructure->load(['academicYear', 'feeCategory', 'classroom']);
 
-        return Inertia::render('FeeStructures/Edit', [
+        return Inertia::render('Parametres/FeeStructures/Edit', [
             'feeStructure' => $feeStructure,
             'academicYears' => AcademicYear::orderBy('year', 'desc')->get(),
             'feeCategories' => FeeCategorie::orderBy('name')->get(),

@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Eleves;
+use App\Http\Controllers\Controller;
 
 use App\Constants\Roles;
 use App\Models\AcademicYear;
@@ -51,7 +52,7 @@ class TimetableController extends Controller
                 ]);
         }
 
-        return Inertia::render('Timetable/Index', [
+        return Inertia::render('Eleves/Timetable/Index', [
             'classrooms' => $classrooms,
             'subjects'   => $subjects,
             'teachers'   => $teachers,

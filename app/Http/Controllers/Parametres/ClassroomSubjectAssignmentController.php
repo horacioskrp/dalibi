@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Parametres;
+use App\Http\Controllers\Controller;
 
 use App\Http\Requests\StoreClassSubjectRequest;
 use App\Models\AcademicYear;
@@ -37,7 +38,7 @@ class ClassroomSubjectAssignmentController extends Controller
             ])->values())
             ->toArray();
 
-        return Inertia::render('Classrooms/SubjectAssignments', [
+        return Inertia::render('Parametres/Classrooms/SubjectAssignments', [
             'classroom' => $classroom->only(['id', 'name', 'code']),
             'subjects' => $subjects,
             'academicYears' => $academicYears,

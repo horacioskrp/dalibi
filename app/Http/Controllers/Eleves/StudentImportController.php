@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Eleves;
+use App\Http\Controllers\Controller;
 
 use App\Constants\Roles;
 use App\Models\Student;
@@ -21,7 +22,7 @@ class StudentImportController extends Controller
     {
         abort_unless($request->user()->hasAnyRole(self::MANAGE_ROLES), 403);
 
-        return Inertia::render('Students/Import', ['result' => null]);
+        return Inertia::render('Eleves/Students/Import', ['result' => null]);
     }
 
     /** Télécharge un modèle CSV. */
@@ -108,7 +109,7 @@ class StudentImportController extends Controller
             });
         }
 
-        return Inertia::render('Students/Import', [
+        return Inertia::render('Eleves/Students/Import', [
             'result' => [
                 'total'    => count($rows),
                 'imported' => $imported,

@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Parametres;
+use App\Http\Controllers\Controller;
 
 use App\Constants\Roles;
 use App\Models\Backup;
@@ -45,7 +46,7 @@ class BackupController extends Controller
                 'created_at' => $b->created_at?->format('d/m/Y H:i'),
             ]);
 
-        return Inertia::render('settings/Backups', [
+        return Inertia::render('Parametres/Backups', [
             'backups'        => $backups,
             'settings'       => BackupSetting::allSettings(),
             'storageDriver'  => FileStorageSetting::get('driver', 'local') === 's3' ? 's3' : 'local',

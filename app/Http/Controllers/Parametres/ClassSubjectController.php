@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Parametres;
+use App\Http\Controllers\Controller;
 
 use App\Http\Requests\StoreClassSubjectRequest;
 use App\Http\Requests\UpdateClassSubjectRequest;
@@ -58,7 +59,7 @@ class ClassSubjectController extends Controller
             ])
             ->withQueryString();
 
-        return Inertia::render('Administration/ClassSubjects/Index', [
+        return Inertia::render('Parametres/ClassSubjects/Index', [
             'classSubjects' => $classSubjects,
             'filters' => request()->only(['search', 'class_id', 'academic_year_id']),
         ]);
@@ -78,7 +79,7 @@ class ClassSubjectController extends Controller
             ->orderBy('start_date', 'desc')
             ->get();
 
-        return Inertia::render('Administration/ClassSubjects/Create', [
+        return Inertia::render('Parametres/ClassSubjects/Create', [
             'classrooms' => $classrooms,
             'subjects' => $subjects,
             'academicYears' => $academicYears,
@@ -116,7 +117,7 @@ class ClassSubjectController extends Controller
     {
         $classSubject->load(['class', 'subject', 'academicYear', 'grades']);
 
-        return Inertia::render('Administration/ClassSubjects/Show', [
+        return Inertia::render('Parametres/ClassSubjects/Show', [
             'classSubject' => [
                 'id' => $classSubject->id,
                 'class_id' => $classSubject->class_id,
@@ -160,7 +161,7 @@ class ClassSubjectController extends Controller
             ->orderBy('start_date', 'desc')
             ->get();
 
-        return Inertia::render('Administration/ClassSubjects/Edit', [
+        return Inertia::render('Parametres/ClassSubjects/Edit', [
             'classSubject' => $classSubject,
             'classrooms' => $classrooms,
             'subjects' => $subjects,

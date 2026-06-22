@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Parametres;
+use App\Http\Controllers\Controller;
 
 use App\Http\Requests\StoreClassroomTypeRequest;
 use App\Http\Requests\UpdateClassroomTypeRequest;
@@ -25,7 +26,7 @@ class ClassroomTypeController extends Controller
         $classroomTypes = $query->orderBy('created_at', 'desc')->paginate(10);
         $activeCount = ClassroomType::where('active', true)->count();
 
-        return Inertia::render('ClassroomTypes/Index', [
+        return Inertia::render('Parametres/ClassroomTypes/Index', [
             'classroomTypes' => $classroomTypes,
             'activeCount' => $activeCount,
         ]);
@@ -36,7 +37,7 @@ class ClassroomTypeController extends Controller
      */
     public function create()
     {
-        return Inertia::render('ClassroomTypes/Create');
+        return Inertia::render('Parametres/ClassroomTypes/Create');
     }
 
     /**
@@ -57,7 +58,7 @@ class ClassroomTypeController extends Controller
     {
         $classroomType->load('classrooms');
 
-        return Inertia::render('ClassroomTypes/Show', [
+        return Inertia::render('Parametres/ClassroomTypes/Show', [
             'classroomType' => $classroomType,
         ]);
     }
@@ -67,7 +68,7 @@ class ClassroomTypeController extends Controller
      */
     public function edit(ClassroomType $classroomType)
     {
-        return Inertia::render('ClassroomTypes/Edit', [
+        return Inertia::render('Parametres/ClassroomTypes/Edit', [
             'classroomType' => $classroomType,
         ]);
     }

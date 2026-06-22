@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Parametres;
+use App\Http\Controllers\Controller;
 
 use App\Http\Requests\StoreClassroomRequest;
 use App\Http\Requests\UpdateClassroomRequest;
@@ -16,22 +17,21 @@ class ClassroomController extends Controller
      */
     public function index()
     {
-        $query = Classroom::with('type');
+        $search = request()->string('search')->toString();
 
-        if (request('search')) {
-            $search = request('search');
-            $query->where('name', 'like', "%{$search}%")
-                ->orWhere('code', 'like', "%{$search}%");
-        }
+        $query = Classroom::with('type')
+            ->when($search, fn ($q) => $q->where(fn ($s) => $s
+                ->where('name', 'like', "%{$search}%")
+                ->orWhere('code', 'like', "%{$search}%")
+            ));
 
-        $classrooms = $query->orderBy('created_at', 'desc')->paginate(10);
+        $classrooms  = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
         $activeCount = Classroom::where('active', true)->count();
-        $classroomTypes = ClassroomType::select('id', 'name')->where('active', true)->get();
 
-        return Inertia::render('Classrooms/Index', [
-            'classrooms' => $classrooms,
+        return Inertia::render('Parametres/Classrooms/Index', [
+            'classrooms'  => $classrooms,
             'activeCount' => $activeCount,
-            'classroomTypes' => $classroomTypes,
+            'filters'     => ['search' => $search],
         ]);
     }
 
@@ -42,7 +42,7 @@ class ClassroomController extends Controller
     {
         $classroomTypes = ClassroomType::select('id', 'name')->where('active', true)->get();
 
-        return Inertia::render('Classrooms/Create', [
+        return Inertia::render('Parametres/Classrooms/Create', [
             'classroomTypes' => $classroomTypes,
         ]);
     }
@@ -84,7 +84,7 @@ class ClassroomController extends Controller
             ])->values())
             ->toArray();
 
-        return Inertia::render('Classrooms/Show', [
+        return Inertia::render('Parametres/Classrooms/Show', [
             'classroom' => $classroom,
             'academicYears' => $academicYears,
             'subjectAssignments' => $subjectAssignments,
@@ -99,7 +99,7 @@ class ClassroomController extends Controller
         $classroom->load('type:id,name');
         $classroomTypes = ClassroomType::select('id', 'name')->where('active', true)->get();
 
-        return Inertia::render('Classrooms/Edit', [
+        return Inertia::render('Parametres/Classrooms/Edit', [
             'classroom' => $classroom,
             'classroomTypes' => $classroomTypes,
         ]);
