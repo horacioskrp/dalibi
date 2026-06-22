@@ -183,17 +183,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Archives documentaires
     Route::get('archives', [\App\Http\Controllers\Archives\ArchiveController::class, 'index'])->middleware('can:view_archives')->name('archives.index');
-    Route::post('archives', [\App\Http\Controllers\Archives\ArchiveController::class, 'store'])->name('archives.store');
-    Route::post('archives/{archive}', [\App\Http\Controllers\Archives\ArchiveController::class, 'update'])->name('archives.update');
-    Route::get('archives/{archive}/download', [\App\Http\Controllers\Archives\ArchiveController::class, 'download'])->name('archives.download');
-    Route::delete('archives/{archive}', [\App\Http\Controllers\Archives\ArchiveController::class, 'destroy'])->name('archives.destroy');
-    Route::post('archives/{archive}/restore', [\App\Http\Controllers\Archives\ArchiveController::class, 'restore'])->name('archives.restore');
-    Route::delete('archives/{archive}/force', [\App\Http\Controllers\Archives\ArchiveController::class, 'forceDelete'])->name('archives.force-delete');
+    Route::post('archives', [\App\Http\Controllers\Archives\ArchiveController::class, 'store'])->middleware('can:create_archives')->name('archives.store');
+    Route::post('archives/{archive}', [\App\Http\Controllers\Archives\ArchiveController::class, 'update'])->middleware('can:edit_archives')->name('archives.update');
+    Route::get('archives/{archive}/download', [\App\Http\Controllers\Archives\ArchiveController::class, 'download'])->middleware('can:view_archives')->name('archives.download');
+    Route::delete('archives/{archive}', [\App\Http\Controllers\Archives\ArchiveController::class, 'destroy'])->middleware('can:delete_archives')->name('archives.destroy');
+    Route::post('archives/{archive}/restore', [\App\Http\Controllers\Archives\ArchiveController::class, 'restore'])->middleware('can:delete_archives')->name('archives.restore');
+    Route::delete('archives/{archive}/force', [\App\Http\Controllers\Archives\ArchiveController::class, 'forceDelete'])->middleware('can:delete_archives')->name('archives.force-delete');
 
     Route::get('archives-tags', [\App\Http\Controllers\Archives\DocumentTagController::class, 'index'])->middleware('can:view_archives')->name('archives.tags.index');
-    Route::post('archives-tags', [\App\Http\Controllers\Archives\DocumentTagController::class, 'store'])->name('archives.tags.store');
-    Route::put('archives-tags/{documentTag}', [\App\Http\Controllers\Archives\DocumentTagController::class, 'update'])->name('archives.tags.update');
-    Route::delete('archives-tags/{documentTag}', [\App\Http\Controllers\Archives\DocumentTagController::class, 'destroy'])->name('archives.tags.destroy');
+    Route::post('archives-tags', [\App\Http\Controllers\Archives\DocumentTagController::class, 'store'])->middleware('can:create_archives')->name('archives.tags.store');
+    Route::put('archives-tags/{documentTag}', [\App\Http\Controllers\Archives\DocumentTagController::class, 'update'])->middleware('can:edit_archives')->name('archives.tags.update');
+    Route::delete('archives-tags/{documentTag}', [\App\Http\Controllers\Archives\DocumentTagController::class, 'destroy'])->middleware('can:delete_archives')->name('archives.tags.destroy');
 
     // Sauvegardes de la base de données
     Route::get('settings/backups', [\App\Http\Controllers\Parametres\BackupController::class, 'index'])->middleware('can:view_backups')->name('backups.index');
