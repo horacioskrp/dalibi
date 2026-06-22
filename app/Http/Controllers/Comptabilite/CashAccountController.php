@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Comptabilite;
+use App\Http\Controllers\Controller;
 
 use App\Models\CashAccount;
 use Illuminate\Http\RedirectResponse;
@@ -19,7 +20,7 @@ class CashAccountController extends Controller
             ->orderBy('name')
             ->get();
 
-        return Inertia::render('Accounting/CashAccounts', [
+        return Inertia::render('Comptabilite/Accounting/CashAccounts', [
             'accounts' => $accounts,
         ]);
     }

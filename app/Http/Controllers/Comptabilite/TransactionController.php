@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Comptabilite;
+use App\Http\Controllers\Controller;
 
 use App\Models\AccountingTransaction;
 use App\Models\CashAccount;
@@ -49,7 +50,7 @@ class TransactionController extends Controller
             ->orderBy('name')
             ->get();
 
-        return Inertia::render('Accounting/Transactions', [
+        return Inertia::render('Comptabilite/Accounting/Transactions', [
             'transactions' => $transactions,
             'cashAccounts' => CashAccount::where('active', true)->orderBy('name')->get(['id', 'name', 'type']),
             'cashSummary'  => $cashSummary,

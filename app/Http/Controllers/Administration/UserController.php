@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Administration;
+use App\Http\Controllers\Controller;
 
 use App\Constants\Roles;
 use App\Http\Requests\StoreUserRequest;

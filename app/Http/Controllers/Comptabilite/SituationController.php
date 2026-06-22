@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Comptabilite;
+use App\Http\Controllers\Controller;
 
 use App\Models\AcademicYear;
 use App\Models\Classroom;
@@ -99,7 +100,7 @@ class SituationController extends Controller
                 ]);
         }
 
-        return Inertia::render('Accounting/Situation', [
+        return Inertia::render('Comptabilite/Accounting/Situation', [
             'academicYears' => $academicYears,
             'classrooms'    => $classrooms,
             'filters'       => [

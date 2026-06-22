@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Comptabilite;
+use App\Http\Controllers\Controller;
 
 use App\Models\AccountingTransaction;
 use App\Models\AcademicYear;
@@ -136,7 +137,7 @@ class AccountingController extends Controller
             coalesce(sum(case when type = 'EXPENSE' then amount end), 0) as total_expense
         ")->first();
 
-        return Inertia::render('Accounting/Dashboard', [
+        return Inertia::render('Comptabilite/Accounting/Dashboard', [
             'academicYears'    => $academicYears,
             'classrooms'       => $classrooms,
             'filters'          => [

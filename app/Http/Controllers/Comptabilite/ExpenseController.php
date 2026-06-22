@@ -6,7 +6,8 @@
  * * Copyright (c) 2026 Kudayah Sassou Horacio Herve.
  */
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Comptabilite;
+use App\Http\Controllers\Controller;
 
 use App\Models\AccountingTransaction;
 use App\Models\CashAccount;

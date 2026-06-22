@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Comptabilite;
+use App\Http\Controllers\Controller;
 
 use App\Constants\Roles;
 use App\Http\Requests\StorePaymentRequest;
@@ -89,7 +90,7 @@ class InvoiceController extends Controller
             'createdBy',
         ]);
 
-        return Inertia::render('Payments/Receipt', [
+        return Inertia::render('Comptabilite/Payments/Receipt', [
             'payment' => $payment,
         ]);
     }
@@ -128,7 +129,7 @@ class InvoiceController extends Controller
             ] : ['valid' => false];
         }
 
-        return Inertia::render('Payments/Verify', [
+        return Inertia::render('Comptabilite/Payments/Verify', [
             'code'   => $code,
             'result' => $result,
         ]);
