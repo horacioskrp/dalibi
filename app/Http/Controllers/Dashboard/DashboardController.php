@@ -8,8 +8,10 @@ use App\Models\AbsencePermission;
 use App\Models\AcademicYear;
 use App\Models\AttendanceRecord;
 use App\Models\CashAccount;
+use App\Models\Classroom;
 use App\Models\DocumentIssuance;
 use App\Models\Enrollment;
+use App\Models\User;
 use App\Models\Invoice;
 use App\Models\OfficialExam;
 use App\Models\OfficialExamRegistration;
@@ -174,9 +176,24 @@ class DashboardController extends Controller
                 ->limit(8)
                 ->get();
 
+            /* Répartition par sexe (élèves inscrits sur l'année sélectionnée) */
+            $genderRows = Enrollment::query()
+                ->join('students', 'enrollments.student_id', '=', 'students.id')
+                ->when($yearId, fn ($q) => $q->where('enrollments.academic_year_id', $yearId))
+                ->selectRaw('students.gender AS gender, COUNT(DISTINCT students.id) AS total')
+                ->groupBy('students.gender')
+                ->pluck('total', 'gender');
+
             $data['enrollments'] = [
                 'total_students'    => Student::count(),
                 'active_students'   => Student::where('active', true)->count(),
+                'students_by_gender' => [
+                    'male'   => (int) ($genderRows['male'] ?? 0),
+                    'female' => (int) ($genderRows['female'] ?? 0),
+                    'other'  => (int) ($genderRows['other'] ?? 0),
+                ],
+                'active_classrooms' => Classroom::where('active', true)->count(),
+                'total_users'       => User::count(),
                 'enrollments_year'  => Enrollment::when($yearId, fn ($q) => $q->where('academic_year_id', $yearId))->count(),
                 'enrollments_week'  => Enrollment::when($yearId, fn ($q) => $q->where('academic_year_id', $yearId))
                     ->where('enrollment_date', '>=', now()->startOfWeek())
