@@ -16,7 +16,7 @@ class RoleController extends Controller
 {
     public function index(): Response
     {
-        abort_unless(request()->user()->hasAnyRole([Roles::ADMINISTRATOR]), 403);
+        abort_unless(request()->user()->can('manage_roles_permissions'), 403);
 
         $query = Role::query();
 
@@ -41,7 +41,7 @@ class RoleController extends Controller
 
     public function create(): Response
     {
-        abort_unless(request()->user()->hasAnyRole([Roles::ADMINISTRATOR]), 403);
+        abort_unless(request()->user()->can('manage_roles_permissions'), 403);
 
         $permissions = Permission::orderBy('name')->get();
 
@@ -69,7 +69,7 @@ class RoleController extends Controller
 
     public function show(Role $role): Response
     {
-        abort_unless(request()->user()->hasAnyRole([Roles::ADMINISTRATOR]), 403);
+        abort_unless(request()->user()->can('manage_roles_permissions'), 403);
 
         $role->load('permissions');
 
@@ -80,7 +80,7 @@ class RoleController extends Controller
 
     public function edit(Role $role): Response
     {
-        abort_unless(request()->user()->hasAnyRole([Roles::ADMINISTRATOR]), 403);
+        abort_unless(request()->user()->can('manage_roles_permissions'), 403);
 
         $role->load('permissions');
         $permissions = Permission::orderBy('name')->get();
@@ -108,7 +108,7 @@ class RoleController extends Controller
 
     public function destroy(Role $role): RedirectResponse
     {
-        abort_unless(request()->user()->hasAnyRole([Roles::ADMINISTRATOR]), 403);
+        abort_unless(request()->user()->can('manage_roles_permissions'), 403);
 
         if ($role->users()->exists()) {
             return back()->withErrors([

@@ -19,7 +19,7 @@ class InstallmentController extends Controller
     public function storeMultiple(Request $request, FeeStructure $feeStructure): RedirectResponse
     {
         abort_unless(
-            $request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]),
+            $request->user()->can('edit_fee_structures'),
             403
         );
 

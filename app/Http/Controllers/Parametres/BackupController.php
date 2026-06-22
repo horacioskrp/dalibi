@@ -22,7 +22,7 @@ class BackupController extends Controller
 
     private function authorizeAdmin(Request $request): void
     {
-        abort_unless($request->user()->hasRole(Roles::ADMINISTRATOR), 403);
+        // Autorisation déléguée aux permissions (middleware can:* sur les routes).
     }
 
     public function index(Request $request): Response

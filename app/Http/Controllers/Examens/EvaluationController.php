@@ -77,7 +77,7 @@ class EvaluationController extends Controller
                 'periods'         => AcademicPeriod::when($activeYear, fn ($q) => $q->where('academic_year_id', $activeYear->id))
                     ->orderBy('start_date')->get(['id', 'name']),
             ],
-            'canLock'     => $user->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]),
+            'canLock'     => $user->can('edit_evaluations'),
         ]);
     }
 
@@ -100,7 +100,7 @@ class EvaluationController extends Controller
 
     public function updateStatus(Request $request, Evaluation $evaluation): RedirectResponse
     {
-        abort_unless($request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR, Roles::TEACHER]), 403);
+        abort_unless($request->user()->can('edit_evaluations'), 403);
 
         $validated = $request->validate([
             'status' => ['required', 'in:scheduled,completed'],
@@ -113,7 +113,7 @@ class EvaluationController extends Controller
 
     public function toggleLock(Request $request, Evaluation $evaluation): RedirectResponse
     {
-        abort_unless($request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]), 403);
+        abort_unless($request->user()->can('edit_evaluations'), 403);
 
         $isLocked = $evaluation->locked_at !== null;
 
@@ -129,7 +129,7 @@ class EvaluationController extends Controller
 
     public function destroy(Request $request, Evaluation $evaluation): RedirectResponse
     {
-        abort_unless($request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]), 403);
+        abort_unless($request->user()->can('delete_evaluations'), 403);
 
         $evaluation->delete();
 

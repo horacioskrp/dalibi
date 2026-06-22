@@ -136,7 +136,7 @@ class FeeStructureController extends Controller
     public function replicate(Request $request)
     {
         abort_unless(
-            $request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR, Roles::ACCOUNTING]),
+            $request->user()->can('create_fee_structures'),
             403
         );
 

@@ -18,7 +18,7 @@ class GradingConfigController extends Controller
 {
     public function index(Request $request): Response
     {
-        abort_unless($request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]), 403);
+        abort_unless($request->user()->can('view_grading_configs'), 403);
 
         $schoolId = $request->string('school_id')->toString();
 
@@ -40,7 +40,7 @@ class GradingConfigController extends Controller
 
     public function create(Request $request): Response
     {
-        abort_unless($request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]), 403);
+        abort_unless($request->user()->can('create_grading_configs'), 403);
 
         $schools = School::orderBy('name')->get(['id', 'name']);
 
@@ -60,7 +60,7 @@ class GradingConfigController extends Controller
 
     public function edit(Request $request, GradingConfig $gradingConfig): Response
     {
-        abort_unless($request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]), 403);
+        abort_unless($request->user()->can('edit_grading_configs'), 403);
 
         $schools = School::orderBy('name')->get(['id', 'name']);
 
@@ -80,7 +80,7 @@ class GradingConfigController extends Controller
 
     public function destroy(Request $request, GradingConfig $gradingConfig): RedirectResponse
     {
-        abort_unless($request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]), 403);
+        abort_unless($request->user()->can('delete_grading_configs'), 403);
 
         if ($gradingConfig->is_active) {
             return back()->withErrors(['delete' => 'Impossible de supprimer une configuration active.']);
@@ -94,7 +94,7 @@ class GradingConfigController extends Controller
 
     public function activate(Request $request, GradingConfig $gradingConfig): RedirectResponse
     {
-        abort_unless($request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]), 403);
+        abort_unless($request->user()->can('edit_grading_configs'), 403);
 
         DB::transaction(function () use ($gradingConfig): void {
             GradingConfig::where('school_id', $gradingConfig->school_id)

@@ -20,9 +20,7 @@ class NoteReclamationController extends Controller
 {
     public function index(Request $request): Response
     {
-        abort_unless($request->user()->hasAnyRole([
-            Roles::ADMINISTRATOR, Roles::DIRECTOR, Roles::TEACHER, Roles::SECRETARIAT,
-        ]), 403);
+        abort_unless($request->user()->can('view_note_reclamations'), 403);
 
         $status = $request->string('status')->toString();
         $user   = $request->user();
@@ -52,15 +50,13 @@ class NoteReclamationController extends Controller
         return Inertia::render('Notes/NoteReclamations/Index', [
             'reclamations' => $reclamations,
             'filters'      => ['status' => $status],
-            'canReview'    => $user->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]),
+            'canReview'    => $user->can('review_note_reclamations'),
         ]);
     }
 
     public function create(Request $request): Response
     {
-        abort_unless($request->user()->hasAnyRole([
-            Roles::ADMINISTRATOR, Roles::DIRECTOR, Roles::TEACHER, Roles::SECRETARIAT,
-        ]), 403);
+        abort_unless($request->user()->can('create_note_reclamations'), 403);
 
         $evaluationId = $request->string('evaluation_id')->toString();
         $studentId    = $request->string('student_id')->toString();
@@ -126,9 +122,7 @@ class NoteReclamationController extends Controller
 
     public function show(Request $request, NoteReclamation $noteReclamation): Response
     {
-        abort_unless($request->user()->hasAnyRole([
-            Roles::ADMINISTRATOR, Roles::DIRECTOR, Roles::TEACHER, Roles::SECRETARIAT,
-        ]), 403);
+        abort_unless($request->user()->can('view_note_reclamations'), 403);
 
         $noteReclamation->load([
             'student:id,firstname,lastname,matricule',
@@ -144,7 +138,7 @@ class NoteReclamationController extends Controller
 
         return Inertia::render('Notes/NoteReclamations/Show', [
             'reclamation' => $noteReclamation,
-            'canReview'   => $request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]),
+            'canReview'   => $request->user()->can('review_note_reclamations'),
         ]);
     }
 

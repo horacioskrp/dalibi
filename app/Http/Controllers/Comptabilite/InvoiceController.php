@@ -101,7 +101,7 @@ class InvoiceController extends Controller
     public function verifyReceipt(Request $request): Response
     {
         abort_unless(
-            $request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR, Roles::ACCOUNTING, Roles::SECRETARIAT]),
+            $request->user()->can('view_invoices'),
             403
         );
 

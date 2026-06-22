@@ -27,7 +27,7 @@ class UpdateUserRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return $this->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]);
+        return $this->user()->can('edit_users');
     }
 
     /**

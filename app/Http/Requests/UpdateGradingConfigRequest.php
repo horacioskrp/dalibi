@@ -9,7 +9,7 @@ class UpdateGradingConfigRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]);
+        return $this->user()->can('edit_grading_configs');
     }
 
     public function rules(): array

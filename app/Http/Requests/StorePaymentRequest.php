@@ -10,12 +10,7 @@ class StorePaymentRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->hasAnyRole([
-            Roles::ADMINISTRATOR,
-            Roles::DIRECTOR,
-            Roles::ACCOUNTING,
-            Roles::SECRETARIAT,
-        ]);
+        return $this->user()->can('create_invoices');
     }
 
     public function rules(): array

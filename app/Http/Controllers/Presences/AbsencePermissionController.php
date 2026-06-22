@@ -116,7 +116,7 @@ class AbsencePermissionController extends Controller
     public function review(Request $request, AbsencePermission $absencePermission): RedirectResponse
     {
         abort_unless(
-            $request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]),
+            $request->user()->can('review_absence_permissions'),
             403
         );
 
@@ -143,7 +143,7 @@ class AbsencePermissionController extends Controller
     public function destroy(Request $request, AbsencePermission $absencePermission): RedirectResponse
     {
         abort_unless(
-            $request->user()->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]),
+            $request->user()->can('delete_absence_permissions'),
             403
         );
 
