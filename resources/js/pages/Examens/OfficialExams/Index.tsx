@@ -79,7 +79,7 @@ export default function Index({ exams, years, activeYear, types, sessions, statu
 
                 <div className="flex items-start justify-between gap-4 flex-wrap">
                     <div>
-                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Examens officiels</h1>
+                        <h1 className="text-4xl font-bold tracking-tight text-gray-900 flex items-center gap-3"><GraduationCap className="h-7 w-7 text-blue-600 shrink-0" />Examens officiels</h1>
                         <p className="mt-2 text-gray-500">CEPD, BEPC, Baccalauréat — année {activeYear?.year ?? '—'}.</p>
                     </div>
                     <Button className="gap-2 bg-blue-600 hover:bg-blue-700" onClick={() => setCreateOpen(true)}>

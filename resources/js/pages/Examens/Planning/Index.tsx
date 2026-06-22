@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { AlertTriangle, Calendar, CheckCircle2, Clock, ClipboardList, Download, ListChecks, Pencil, Trash2, X } from 'lucide-react';
+import { AlertTriangle, Calendar, CheckCircle2, Clock, ClipboardList, Download, ListChecks, Pencil, Trash2, X, CalendarRange } from 'lucide-react';
 import { useState } from 'react';
 import {
     AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -116,7 +116,7 @@ export default function Index({ classrooms, evaluations, periods, filters, activ
                 {/* Header */}
                 <div className="flex items-start justify-between gap-4 flex-wrap">
                     <div>
-                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Planning des examens</h1>
+                        <h1 className="text-4xl font-bold tracking-tight text-gray-900 flex items-center gap-3"><CalendarRange className="h-7 w-7 text-blue-600 shrink-0" />Planning des examens</h1>
                         <p className="mt-2 text-lg text-gray-600">
                             Planifiez et visualisez les dates d'examens par classe
                         </p>

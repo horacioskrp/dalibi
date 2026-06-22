@@ -77,7 +77,7 @@ export default function FileStorage({ settings, hasKey, hasSecret }: Readonly<Pr
             <div className="w-full space-y-6">
 
                 <div>
-                    <h1 className="text-4xl font-bold tracking-tight text-gray-900">Fichiers & Stockage</h1>
+                    <h1 className="text-4xl font-bold tracking-tight text-gray-900 flex items-center gap-3"><HardDrive className="h-7 w-7 text-blue-600 shrink-0" />Fichiers & Stockage</h1>
                     <p className="mt-2 text-gray-500">Configurez où les fichiers uploadés (logos, documents) seront stockés.</p>
                 </div>
 

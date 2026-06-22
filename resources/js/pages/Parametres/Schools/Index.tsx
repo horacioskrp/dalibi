@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { BookOpen, CheckCircle2, Eye, Pencil, Plus, Search, Trash2, XCircle, Power } from 'lucide-react';
+import { BookOpen, CheckCircle2, Eye, Pencil, Plus, Search, Trash2, XCircle, Power, School } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
     AlertDialog,
@@ -219,7 +219,7 @@ export default function Index({ schools, activeSchoolsCount, message }: Readonly
             <div className="space-y-6">
                 <div className="flex items-start justify-between">
                     <div>
-                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Écoles</h1>
+                        <h1 className="text-4xl font-bold tracking-tight text-gray-900 flex items-center gap-3"><School className="h-7 w-7 text-blue-600 shrink-0" />Écoles</h1>
                         <p className="mt-2 text-lg text-gray-600">Gérez les écoles de votre institution</p>
                     </div>
                     <Button

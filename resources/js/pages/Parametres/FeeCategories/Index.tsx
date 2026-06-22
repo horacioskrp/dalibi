@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { Plus, Pencil, Trash2, Search, Tag, Eye, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Tag, Eye, ChevronLeft, ChevronRight, X, Percent } from 'lucide-react';
 import { useState } from 'react';
 import {
     AlertDialog,
@@ -95,7 +95,7 @@ export default function Index({ feeCategories, message, filters }: Readonly<Inde
                 {/* Header avec titre et bouton */}
                 <div className="flex items-start justify-between">
                     <div>
-                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">
+                        <h1 className="text-4xl font-bold tracking-tight text-gray-900 flex items-center gap-3"><Percent className="h-7 w-7 text-blue-600 shrink-0" />
                             Catégories de frais
                         </h1>
                         <p className="mt-2 text-lg text-gray-600">

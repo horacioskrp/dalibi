@@ -27,7 +27,7 @@ export default function Password() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Mot de passe" />
 
-            <h1 className="sr-only">Mot de passe</h1>
+            <h1 className="sr-only flex items-center gap-3"><KeyRound className="h-7 w-7 text-blue-600 shrink-0" />Mot de passe</h1>
 
             <SettingsLayout>
                 <div className="space-y-6">

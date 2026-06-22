@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import { GraduationCap, Users, UserCheck, UserX } from 'lucide-react';
+import { GraduationCap, Users, UserCheck, UserX, BarChart3 } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 
 interface Bar { label: string; count: number; }
@@ -56,7 +56,7 @@ export default function Stats({ summary, byGender, byNationality, byAge, byClass
             <div className="w-full space-y-6">
 
                 <div>
-                    <h1 className="text-4xl font-bold tracking-tight text-gray-900">Statistiques élèves</h1>
+                    <h1 className="text-4xl font-bold tracking-tight text-gray-900 flex items-center gap-3"><BarChart3 className="h-7 w-7 text-blue-600 shrink-0" />Statistiques élèves</h1>
                     <p className="mt-2 text-gray-500">Vue démographique et effectifs{activeYear ? ` — année ${activeYear.year}` : ''}.</p>
                 </div>
 

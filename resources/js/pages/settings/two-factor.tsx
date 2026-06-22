@@ -43,7 +43,7 @@ export default function TwoFactor({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Authentification à deux facteurs" />
 
-            <h1 className="sr-only">Authentification à deux facteurs</h1>
+            <h1 className="sr-only flex items-center gap-3"><ShieldCheck className="h-7 w-7 text-blue-600 shrink-0" />Authentification à deux facteurs</h1>
 
             <SettingsLayout>
                 <div className="space-y-6">

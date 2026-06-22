@@ -103,7 +103,7 @@ export default function Index({ evaluations, filters, options, canLock }: Readon
                 {/* Header */}
                 <div className="flex items-start justify-between">
                     <div>
-                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Évaluations par classe</h1>
+                        <h1 className="text-4xl font-bold tracking-tight text-gray-900 flex items-center gap-3"><ClipboardList className="h-7 w-7 text-blue-600 shrink-0" />Évaluations par classe</h1>
                         <p className="mt-2 text-lg text-gray-600">
                             Évaluations générées depuis les modèles, par classe et matière
                         </p>
