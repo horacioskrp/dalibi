@@ -2,44 +2,28 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Seeder;
 
+/**
+ * Seeder GLOBAL (démonstration / développement).
+ *
+ * = Données de référence (ReferenceDataSeeder) + données de démo (comptes de test,
+ *   classes d'exemple, élèves fictifs).
+ *
+ * ⚠️ Ne pas exécuter en production : utilisez plutôt `ReferenceDataSeeder`
+ *    (ou seulement `RolesAndPermissionsSeeder`).
+ */
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        $this->call(LevelSeeder::class);
+        // 1) Données de référence (rôles/permissions + catalogues prod-safe)
+        $this->call(ReferenceDataSeeder::class);
 
-        // Create roles and permissions first
-        $this->call(RolesAndPermissionsSeeder::class);
-
-        // Comptes de démonstration : un utilisateur par rôle (requiert les rôles)
-        $this->call(DefaultUsersSeeder::class);
-
-        // Create classroom types then classrooms
-        $this->call(ClassTypeSeeder::class);
-        $this->call(ClassroomSeeder::class);
-
-        // Seed subjects
-        $this->call(SubjectSeeder::class);
-
-        // Create fee categories
-        $this->call(FeeCategorieSeeder::class);
-
-        // Seed evaluation types
-        $this->call(ExamenTypeSeeder::class);
-
-        // Seed scholarships
-        $this->call(ScholarshipSeeder::class);
-
-        // Seed default document templates (certificats, attestations)
-        $this->call(DocumentTemplateSeeder::class);
-
-        // Seed test students (dev only)
-        $this->call(StudentTestSeeder::class);
+        // 2) Données de démonstration
+        $this->call(DefaultUsersSeeder::class);   // comptes de test (1 par rôle) + école par défaut
+        $this->call(ClassroomSeeder::class);      // classes d'exemple
+        $this->call(DocumentTemplateSeeder::class); // modèles de documents (requiert une école)
+        $this->call(StudentTestSeeder::class);    // élèves fictifs (dev)
     }
 }

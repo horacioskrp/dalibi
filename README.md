@@ -245,9 +245,13 @@ docker run -d --name dalibi -p 8080:80 \
   | Variable | Effet |
   | --- | --- |
   | `RUN_MIGRATIONS=true` | `php artisan migrate --force` |
-  | `SEED_PERMISSIONS=true` | Synchronise **rôles & permissions** uniquement (idempotent) — *recommandé en production* |
-  | `SEED_DATABASE=true` | **Seed global** (`DatabaseSeeder`) : rôles/permissions **+ données de démo** (élèves de test, comptes de démonstration) — *démo/staging uniquement* |
-- En **production**, utilisez `SEED_PERMISSIONS=true` (jamais `SEED_DATABASE`), puis créez vos comptes via Administration → Utilisateurs.
+  | `SEED_PERMISSIONS=true` | **Rôles & permissions** uniquement (idempotent) |
+  | `SEED_REFERENCE=true` | **Données de référence prod-safe** (`ReferenceDataSeeder`) : rôles/permissions + catalogues (niveaux, types de classes, matières, catégories de frais, types d'évaluation, bourses) — *recommandé en production* |
+  | `SEED_DATABASE=true` | **Seed global** (`DatabaseSeeder`) : référence **+ données de démo** (comptes de test, classes d'exemple, élèves fictifs) — *démo/staging uniquement* |
+
+  Les seeders sont **idempotents** et organisés en niveaux : `ReferenceDataSeeder` (prod) ⊂ `DatabaseSeeder` (global/démo). Les **modèles de documents** nécessitent une école : en prod, créez votre établissement puis lancez `php artisan db:seed --class=DocumentTemplateSeeder`.
+
+- En **production**, utilisez `SEED_REFERENCE=true` (jamais `SEED_DATABASE`), puis créez votre administrateur et vos comptes via Administration → Utilisateurs.
 - Générez une clé avec `php artisan key:generate --show` et passez-la via `APP_KEY`.
 - Pour les **sauvegardes planifiées**, exécutez `php artisan schedule:run` chaque minute (cron de l'hôte ou conteneur dédié).
 

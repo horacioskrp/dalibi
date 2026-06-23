@@ -48,7 +48,7 @@ class FeeCategorieSeeder extends Seeder
         ];
 
         foreach ($categories as $category) {
-            FeeCategorie::create($category);
+            FeeCategorie::firstOrCreate(['name' => $category['name']], $category);
         }
     }
 }
