@@ -22,7 +22,6 @@ class DatabaseSeeder extends Seeder
 
         // 2) Données de démonstration
         $this->call(DefaultUsersSeeder::class);   // comptes de test (1 par rôle) + école par défaut
-        $this->call(ClassroomSeeder::class);      // classes d'exemple
         $this->call(DocumentTemplateSeeder::class); // modèles de documents (requiert une école)
         $this->call(StudentTestSeeder::class);    // élèves fictifs (dev)
     }

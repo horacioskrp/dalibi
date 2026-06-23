@@ -20,6 +20,13 @@ class StudentTestSeeder extends Seeder
      */
     public function run(): void
     {
+        // Idempotent : on ne régénère pas de faux élèves si la base en contient déjà.
+        if (\App\Models\Student::query()->exists()) {
+            $this->command?->warn('StudentTestSeeder ignoré : des élèves existent déjà.');
+
+            return;
+        }
+
         $faker = Faker::create('fr_FR'); // Utiliser le français pour les données
         $matriculeService = new MatriculeService();
 
