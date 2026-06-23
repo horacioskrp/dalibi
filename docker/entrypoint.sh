@@ -17,4 +17,15 @@ if [ "${RUN_MIGRATIONS:-false}" = "true" ]; then
     php artisan migrate --force
 fi
 
+# Seeding
+# - SEED_DATABASE=true  : seed GLOBAL (rôles/permissions + données de démo : élèves, comptes de test)
+# - sinon, si SEED_PERMISSIONS=true (ou migrations lancées) : on garantit au minimum les rôles & permissions
+if [ "${SEED_DATABASE:-false}" = "true" ]; then
+    echo "→ Seed global (démo)…"
+    php artisan db:seed --force
+elif [ "${SEED_PERMISSIONS:-false}" = "true" ] || [ "${RUN_MIGRATIONS:-false}" = "true" ]; then
+    echo "→ Synchronisation des rôles & permissions…"
+    php artisan db:seed --class=RolesAndPermissionsSeeder --force
+fi
+
 exec "$@"

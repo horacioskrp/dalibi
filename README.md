@@ -237,10 +237,17 @@ docker run -d --name dalibi -p 8080:80 \
   -e APP_URL=http://localhost:8080   \
   -e DB_CONNECTION=pgsql -e DB_HOST=... -e DB_DATABASE=... -e DB_USERNAME=... -e DB_PASSWORD=... \
   -e RUN_MIGRATIONS=true             \
+  -e SEED_PERMISSIONS=true           \
   dalibi
 ```
 
-- L'**entrypoint** crée le lien de stockage, met en cache la config et les vues, et exécute les migrations si `RUN_MIGRATIONS=true`.
+- L'**entrypoint** crée le lien de stockage, met en cache la config et les vues, exécute les migrations et seed selon les variables :
+  | Variable | Effet |
+  | --- | --- |
+  | `RUN_MIGRATIONS=true` | `php artisan migrate --force` |
+  | `SEED_PERMISSIONS=true` | Synchronise **rôles & permissions** uniquement (idempotent) — *recommandé en production* |
+  | `SEED_DATABASE=true` | **Seed global** (`DatabaseSeeder`) : rôles/permissions **+ données de démo** (élèves de test, comptes de démonstration) — *démo/staging uniquement* |
+- En **production**, utilisez `SEED_PERMISSIONS=true` (jamais `SEED_DATABASE`), puis créez vos comptes via Administration → Utilisateurs.
 - Générez une clé avec `php artisan key:generate --show` et passez-la via `APP_KEY`.
 - Pour les **sauvegardes planifiées**, exécutez `php artisan schedule:run` chaque minute (cron de l'hôte ou conteneur dédié).
 
