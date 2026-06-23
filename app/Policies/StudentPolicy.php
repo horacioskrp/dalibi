@@ -2,7 +2,6 @@
 
 namespace App\Policies;
 
-use App\Constants\Roles;
 use App\Models\Student;
 use App\Models\User;
 
@@ -10,31 +9,31 @@ class StudentPolicy
 {
     public function viewAny(User $user): bool
     {
-        return true;
+        return $user->can('view_students');
     }
 
     public function view(User $user, Student $student): bool
     {
-        return true;
+        return $user->can('view_students');
     }
 
     public function create(User $user): bool
     {
-        return $user->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR, Roles::SECRETARIAT]);
+        return $user->can('create_students');
     }
 
     public function update(User $user, Student $student): bool
     {
-        return $user->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR, Roles::SECRETARIAT]);
+        return $user->can('edit_students');
     }
 
     public function delete(User $user, Student $student): bool
     {
-        return $user->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR]);
+        return $user->can('delete_students');
     }
 
     public function bulkStatus(User $user): bool
     {
-        return $user->hasAnyRole([Roles::ADMINISTRATOR, Roles::DIRECTOR, Roles::SECRETARIAT]);
+        return $user->can('edit_students');
     }
 }

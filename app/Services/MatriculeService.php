@@ -38,10 +38,9 @@ class MatriculeService
 
     protected function getNextUserSequence(string $prefix, string $year): int
     {
-        // lockForUpdate() requires an active transaction; the caller must wrap in DB::transaction()
-        return User::where('natricule', 'like', "{$prefix}{$year}%")
-            ->lockForUpdate()
-            ->count() + 1;
+        // NB : pas de lockForUpdate() — PostgreSQL interdit FOR UPDATE avec un agrégat (count).
+        // L'unicité du matricule est garantie par la boucle de génération (generateUniqueMatricule).
+        return User::where('natricule', 'like', "{$prefix}{$year}%")->count() + 1;
     }
 
     protected function getNextStudentSequence(string $schoolCode, string $year): int
@@ -49,10 +48,8 @@ class MatriculeService
         $schoolCode = strtoupper(substr($schoolCode, 0, 3));
         $pattern    = "{$schoolCode}STU{$year}%";
 
-        // lockForUpdate() prevents duplicate sequences under concurrent inserts
-        return Student::where('matricule', 'like', $pattern)
-            ->lockForUpdate()
-            ->count() + 1;
+        // NB : pas de lockForUpdate() (cf. getNextUserSequence) — incompatible avec count() sur PostgreSQL.
+        return Student::where('matricule', 'like', $pattern)->count() + 1;
     }
 
     public function parseMatricule(string $matricule): ?array
