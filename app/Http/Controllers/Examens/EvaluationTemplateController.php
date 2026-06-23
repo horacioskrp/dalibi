@@ -67,6 +67,8 @@ class EvaluationTemplateController extends Controller
 
     public function store(Request $request)
     {
+        abort_unless($request->user()->can('create_evaluation_templates'), 403);
+
         $validated = $request->validate([
             'academic_period_id'  => ['required', 'uuid', 'exists:academic_periods,id'],
             'evaluation_type_id'  => ['required', 'uuid', 'exists:evaluation_types,id'],
@@ -144,6 +146,8 @@ class EvaluationTemplateController extends Controller
 
     public function update(Request $request, EvaluationTemplate $evaluationTemplate)
     {
+        abort_unless($request->user()->can('edit_evaluation_templates'), 403);
+
         $validated = $request->validate([
             'academic_period_id'  => ['required', 'uuid', 'exists:academic_periods,id'],
             'evaluation_type_id'  => ['required', 'uuid', 'exists:evaluation_types,id'],
@@ -163,6 +167,8 @@ class EvaluationTemplateController extends Controller
 
     public function destroy(EvaluationTemplate $evaluationTemplate)
     {
+        abort_unless(request()->user()->can('delete_evaluation_templates'), 403);
+
         $evaluationTemplate->delete(); // cascade → evaluations → marks
 
         return redirect()->route('evaluation-templates.index')

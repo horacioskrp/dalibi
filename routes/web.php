@@ -54,17 +54,17 @@ Route::get('dashboard', [DashboardController::class, 'index'])
 // Schools Routes
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('schools/bulk-activate', [SchoolController::class, 'bulkActivate'])
-        ->name('schools.bulk-activate');
+        ->middleware('can:edit_schools')->name('schools.bulk-activate');
     Route::post('schools/bulk-deactivate', [SchoolController::class, 'bulkDeactivate'])
-        ->name('schools.bulk-deactivate');
+        ->middleware('can:edit_schools')->name('schools.bulk-deactivate');
     Route::patch('schools/{school}/toggle-active', [SchoolController::class, 'toggleActive'])
-        ->name('schools.toggle-active');
+        ->middleware('can:edit_schools')->name('schools.toggle-active');
     Route::resource('schools', SchoolController::class)->middleware('can:view_schools');
     Route::resource('classrooms', ClassroomController::class)->middleware('can:view_classes');
     Route::get('classrooms/{classroom}/subject-assignments', [ClassroomSubjectAssignmentController::class, 'create'])
-        ->name('classrooms.subject-assignments.create');
+        ->middleware('can:view_subject_assignments')->name('classrooms.subject-assignments.create');
     Route::post('classrooms/{classroom}/subject-assignments', [ClassroomSubjectAssignmentController::class, 'store'])
-        ->name('classrooms.subject-assignments.store');
+        ->middleware('can:create_subject_assignments')->name('classrooms.subject-assignments.store');
     Route::resource('classroom-types', ClassroomTypeController::class)->middleware('can:view_classroom_types');
     Route::resource('levels', LevelController::class)->middleware('can:view_levels');
     Route::resource('subjects', SubjectController::class)->middleware('can:view_subjects');
@@ -73,7 +73,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Modèles d'évaluation (global)
     Route::resource('evaluation-templates', EvaluationTemplateController::class)->middleware('can:view_evaluation_templates');
     Route::post('evaluation-templates/{evaluationTemplate}/generate', [EvaluationTemplateController::class, 'generate'])
-        ->name('evaluation-templates.generate');
+        ->middleware('can:generate_evaluation_templates')->name('evaluation-templates.generate');
 
     // Évaluations par classe/matière
     Route::resource('evaluations', EvaluationController::class)->only(['index', 'show', 'destroy'])->middleware('can:view_evaluations');
@@ -86,13 +86,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Planning des examens
     Route::get('evaluations-planning', [EvaluationController::class, 'planning'])
-        ->name('evaluations.planning');
+        ->middleware('can:view_evaluations')->name('evaluations.planning');
     Route::get('evaluations-planning/{classroomId}/export', [EvaluationController::class, 'exportPlanning'])
-        ->name('evaluations.export-planning');
+        ->middleware('can:view_evaluations')->name('evaluations.export-planning');
 
     // Saisie des notes
-    Route::get('evaluations/{evaluation}/marks', [MarkController::class, 'index'])->name('marks.index');
-    Route::post('evaluations/{evaluation}/marks', [MarkController::class, 'store'])->name('marks.store');
+    Route::get('evaluations/{evaluation}/marks', [MarkController::class, 'index'])->middleware('can:view_marks')->name('marks.index');
+    Route::post('evaluations/{evaluation}/marks', [MarkController::class, 'store'])->middleware('can:create_marks')->name('marks.store');
 
     // Réclamations de notes
     Route::resource('note-reclamations', NoteReclamationController::class)->only(['index', 'create', 'store', 'show'])->middleware('can:view_note_reclamations');
@@ -142,17 +142,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('accounting', [AccountingController::class, 'index'])->middleware('can:view_finances')->name('accounting.index');
     Route::get('accounting/transactions', [TransactionController::class, 'index'])->middleware('can:view_transactions')->name('accounting.transactions');
     Route::get('accounting/situation', [SituationController::class, 'index'])->middleware('can:view_finances')->name('accounting.situation');
-    Route::get('accounting/situation/export', [SituationController::class, 'export'])->name('accounting.situation.export');
-    Route::post('accounting/expenses', [ExpenseController::class, 'store'])->name('expenses.store');
-    Route::delete('accounting/expenses/{transaction}', [ExpenseController::class, 'destroy'])->name('expenses.destroy');
+    Route::get('accounting/situation/export', [SituationController::class, 'export'])->middleware('can:view_finances')->name('accounting.situation.export');
+    Route::post('accounting/expenses', [ExpenseController::class, 'store'])->middleware('can:create_expenses')->name('expenses.store');
+    Route::delete('accounting/expenses/{transaction}', [ExpenseController::class, 'destroy'])->middleware('can:delete_expenses')->name('expenses.destroy');
     Route::get('cash-accounts', [CashAccountController::class, 'index'])->middleware('can:view_cash_accounts')->name('cash-accounts.index');
-    Route::post('cash-accounts', [CashAccountController::class, 'store'])->name('cash-accounts.store');
-    Route::put('cash-accounts/{cashAccount}', [CashAccountController::class, 'update'])->name('cash-accounts.update');
-    Route::delete('cash-accounts/{cashAccount}', [CashAccountController::class, 'destroy'])->name('cash-accounts.destroy');
+    Route::post('cash-accounts', [CashAccountController::class, 'store'])->middleware('can:create_cash_accounts')->name('cash-accounts.store');
+    Route::put('cash-accounts/{cashAccount}', [CashAccountController::class, 'update'])->middleware('can:edit_cash_accounts')->name('cash-accounts.update');
+    Route::delete('cash-accounts/{cashAccount}', [CashAccountController::class, 'destroy'])->middleware('can:delete_cash_accounts')->name('cash-accounts.destroy');
     Route::resource('enrollments', EnrollmentController::class)->middleware('can:view_enrollments');
-    Route::get('enrollments/{enrollment}/invoice', [InvoiceController::class, 'show'])->name('enrollments.invoice');
+    Route::get('enrollments/{enrollment}/invoice', [InvoiceController::class, 'show'])->middleware('can:view_invoices')->name('enrollments.invoice');
     Route::post('enrollments/{enrollment}/payments', [InvoiceController::class, 'storePayment'])->name('enrollments.payments.store');
-    Route::get('payments/{payment}/receipt', [InvoiceController::class, 'receipt'])->name('payments.receipt');
+    Route::get('payments/{payment}/receipt', [InvoiceController::class, 'receipt'])->middleware('can:view_invoices')->name('payments.receipt');
     Route::get('receipts/verify', [InvoiceController::class, 'verifyReceipt'])
         ->middleware('throttle:30,1')
         ->name('receipts.verify');
@@ -160,7 +160,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Présences & Permissions
     Route::get('attendances', [AttendanceController::class, 'index'])->middleware('can:view_attendances')->name('attendances.index');
-    Route::post('attendances', [AttendanceController::class, 'store'])->name('attendances.store');
+    Route::post('attendances', [AttendanceController::class, 'store'])->middleware('can:create_attendances')->name('attendances.store');
     Route::get('attendances/stats', [AttendanceController::class, 'stats'])->middleware('can:view_attendances')->name('attendances.stats');
     Route::resource('absence-permissions', AbsencePermissionController::class)->only(['index', 'create', 'store', 'show', 'destroy'])->middleware('can:view_absence_permissions');
     Route::patch('absence-permissions/{absencePermission}/review', [AbsencePermissionController::class, 'review'])
@@ -168,8 +168,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Grades Routes
     Route::get('grades', [GradeController::class, 'index'])->middleware('can:view_grades')->name('grades.index');
-    Route::post('grades', [GradeController::class, 'store'])->name('grades.store');
-    Route::get('grades/student/{student}', [GradeController::class, 'student'])->name('grades.student');
+    Route::post('grades', [GradeController::class, 'store'])->middleware('can:create_grades')->name('grades.store');
+    Route::get('grades/student/{student}', [GradeController::class, 'student'])->middleware('can:view_grades')->name('grades.student');
 
     // Administration Routes
     Route::resource('roles', RoleController::class)->middleware('can:manage_roles_permissions');
