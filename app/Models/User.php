@@ -49,6 +49,7 @@ class User extends Authenticatable
         'email',
         'address',
         'password',
+        'is_demo',
     ];
 
     /**
@@ -84,6 +85,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
             'birth_date' => 'date',
+            'is_demo' => 'boolean',
         ];
     }
 
