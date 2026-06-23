@@ -46,7 +46,7 @@ class ScholarshipSeeder extends Seeder
         ];
 
         foreach ($scholarships as $scholarship) {
-            \App\Models\Scholarship::create($scholarship);
+            \App\Models\Scholarship::firstOrCreate(['name' => $scholarship['name']], $scholarship);
         }
     }
 }

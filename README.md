@@ -237,10 +237,23 @@ docker run -d --name dalibi -p 8080:80 \
   -e APP_URL=http://localhost:8080   \
   -e DB_CONNECTION=pgsql -e DB_HOST=... -e DB_DATABASE=... -e DB_USERNAME=... -e DB_PASSWORD=... \
   -e RUN_MIGRATIONS=true             \
+  -e SEED_PERMISSIONS=true           \
   dalibi
 ```
 
-- L'**entrypoint** crée le lien de stockage, met en cache la config et les vues, et exécute les migrations si `RUN_MIGRATIONS=true`.
+- L'**entrypoint** crée le lien de stockage, met en cache la config et les vues, exécute les migrations et seed selon les variables :
+  | Variable | Effet |
+  | --- | --- |
+  | `RUN_MIGRATIONS=true` | `migrate --force` **+ seed automatique des données de référence** (rôles/permissions **et** catalogues) |
+  | `SEED_REFERENCE=true` | Idem ci-dessus sans relancer les migrations |
+  | `SEED_PERMISSIONS=true` | **Rôles & permissions** uniquement |
+  | `SEED_DATABASE=true` | **Seed global** (`DatabaseSeeder`) : référence **+ données de démo** (comptes de test, élèves fictifs) — *démo/staging uniquement* |
+
+  Les **données de référence** (`ReferenceDataSeeder`) sont **idempotentes** et seedées **automatiquement** au déploiement (`RUN_MIGRATIONS=true`) : rôles & permissions, niveaux, types de classes, **classes** (PS → Terminale), matières, catégories de frais, types d'évaluation, bourses. `ReferenceDataSeeder` (prod) ⊂ `DatabaseSeeder` (global/démo).
+
+  Les **modèles de documents** nécessitent une école : en prod, créez votre établissement puis lancez `php artisan db:seed --class=DocumentTemplateSeeder`.
+
+- En **production**, `RUN_MIGRATIONS=true` suffit (jamais `SEED_DATABASE`) ; créez ensuite votre administrateur et vos comptes via Administration → Utilisateurs.
 - Générez une clé avec `php artisan key:generate --show` et passez-la via `APP_KEY`.
 - Pour les **sauvegardes planifiées**, exécutez `php artisan schedule:run` chaque minute (cron de l'hôte ou conteneur dédié).
 
