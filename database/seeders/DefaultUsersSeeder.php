@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Constants\Roles;
 use App\Models\School;
 use App\Models\User;
+use App\Services\MatriculeService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 
@@ -54,8 +55,10 @@ class DefaultUsersSeeder extends Seeder
 
             $user->syncRoles([$role]);
 
-            if (! $user->natricule) {
-                $user->generateMatricule();
+            // Matricule basé sur le rôle (préfixe ADM/DIR/PROF/COMPT/SEC).
+            // On régénère aussi les anciens préfixes "USR" (fallback) le cas échéant.
+            if (! $user->natricule || str_starts_with($user->natricule, 'USR')) {
+                $user->natricule = app(MatriculeService::class)->generateUserMatricule($role);
                 $user->save();
             }
 
