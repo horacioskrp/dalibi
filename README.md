@@ -244,16 +244,24 @@ docker run -d --name dalibi -p 8080:80 \
 - Générez une clé avec `php artisan key:generate --show` et passez-la via `APP_KEY`.
 - Pour les **sauvegardes planifiées**, exécutez `php artisan schedule:run` chaque minute (cron de l'hôte ou conteneur dédié).
 
-## 👥 Utilisateurs par défaut (seeder)
+## 👥 Comptes de démonstration (seeder)
 
-| Rôle       | Email                       | Mot de passe |
-| ---------- | --------------------------- | ------------ |
-| Admin      | admin@ecoliotogo.tg         | password     |
-| Enseignant | sophie.martin@ecoliotogo.tg | password     |
-| Comptable  | claire@ecoliotogo.tg        | password     |
-| Secrétaire | isabelle@ecoliotogo.tg      | password     |
+Le seeder `DefaultUsersSeeder` crée **un compte par rôle** (mot de passe commun : `password`) :
 
-> **Sécurité** : Changez ces mots de passe en production.
+| Rôle           | Email                  | Mot de passe |
+| -------------- | ---------------------- | ------------ |
+| Administrateur | `admin@dalibi.tg`      | `password`   |
+| Directeur      | `directeur@dalibi.tg`  | `password`   |
+| Enseignant     | `enseignant@dalibi.tg` | `password`   |
+| Comptabilité   | `comptable@dalibi.tg`  | `password`   |
+| Secrétariat    | `secretaire@dalibi.tg` | `password`   |
+
+Ces comptes sont marqués `is_demo = true` : une **bannière d'avertissement** s'affiche dans l'application lorsqu'ils sont connectés.
+
+> ### 🔒 En production
+> 1. **Changez immédiatement** les mots de passe (ou supprimez ces comptes de test).
+> 2. Ne lancez pas `DefaultUsersSeeder` en prod ; créez plutôt votre administrateur, puis les comptes via **Administration → Utilisateurs**.
+> 3. Pour purger les comptes de démo : `User::where('is_demo', true)->delete();`
 
 ## 🏗️ Structure de la base de données
 
