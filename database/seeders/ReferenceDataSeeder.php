@@ -26,6 +26,7 @@ class ReferenceDataSeeder extends Seeder
             FeeCategorieSeeder::class,        // catégories de frais
             ExamenTypeSeeder::class,          // types d'évaluation
             ScholarshipSeeder::class,         // bourses
+            DocumentTagSeeder::class,         // tags d'archivage par défaut
         ]);
     }
 }
