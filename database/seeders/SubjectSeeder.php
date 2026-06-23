@@ -42,7 +42,7 @@ class SubjectSeeder extends Seeder
             Subject::updateOrCreate(
                 ['code' => $subject['code']], // Évite les doublons si vous relancez le seeder
                 [
-                    'id' => Str::uuid(),
+                    // NB : pas d'`id` ici — généré à la création, ne pas réécrire (référencé par FK)
                     'name' => $subject['name'],
                     'description' => $subject['description'],
                 ]

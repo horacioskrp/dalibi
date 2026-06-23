@@ -42,16 +42,20 @@ class ClassTypeSeeder extends Seeder
         ];
 
         foreach ($types as $type) {
-            DB::table('classroom_types')->updateOrInsert(
-                ['name' => $type['name']], // Évite les doublons sur le nom
-                [
-                    'id' => (string) Str::uuid(),
+            // Idempotent : on insère seulement si absent (ne jamais réécrire l'id existant,
+            // référencé par d'autres tables → FK).
+            $exists = DB::table('classroom_types')->where('name', $type['name'])->exists();
+
+            if (! $exists) {
+                DB::table('classroom_types')->insert([
+                    'id'          => (string) Str::uuid(),
+                    'name'        => $type['name'],
                     'description' => $type['description'],
-                    'active' => $type['active'],
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]
-            );
+                    'active'      => $type['active'],
+                    'created_at'  => now(),
+                    'updated_at'  => now(),
+                ]);
+            }
         }
     }
 }

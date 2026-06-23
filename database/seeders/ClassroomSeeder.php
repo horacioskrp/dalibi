@@ -51,19 +51,19 @@ class ClassroomSeeder extends Seeder
         ];
 
         foreach ($classes as $class) {
-            if ($class['type_id']) {
-                Classroom::updateOrInsert(
-                    ['code' => $class['code']], // Identifiant unique pour éviter les doublons
-                    [
-                        'id' => \Illuminate\Support\Str::uuid(),
-                        'name' => $class['name'],
-                        'capacity' => $class['capacity'],
-                        'classroom_type_id' => $class['type_id'],
-                        'active' => true,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]
-                );
+            if (! $class['type_id']) {
+                continue;
+            }
+
+            // Idempotent : on insère seulement si absent (ne pas réécrire l'id existant → FK enrollments)
+            if (! Classroom::where('code', $class['code'])->exists()) {
+                Classroom::create([
+                    'name'              => $class['name'],
+                    'code'              => $class['code'],
+                    'capacity'          => $class['capacity'],
+                    'classroom_type_id' => $class['type_id'],
+                    'active'            => true,
+                ]);
             }
         }
     }
