@@ -330,6 +330,10 @@ export function route(name: string, params?: any): string {
         'official-exams.register': `/official-exams/${params}/register`,
         'official-exams.results':  `/official-exams/${params}/results`,
 
+        // Document header designer
+        'document-header.edit':   '/settings/document-header',
+        'document-header.update': '/settings/document-header',
+
         // Document Templates
         'document-templates.index':    '/settings/documents',
         'document-templates.registry': '/settings/documents-registry',
