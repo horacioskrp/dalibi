@@ -1,12 +1,19 @@
 import { ClipboardList, Save, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 
 export interface EvaluationTypeFormData {
     name: string;
+    category: string;
     description: string;
 }
+
+const CATEGORY_LABELS: Record<string, string> = {
+    continu: 'Contrôle continu (note de classe)',
+    composition: 'Composition (examen)',
+};
 
 interface EvaluationTypeFormProps {
     mode: 'create' | 'edit';
@@ -62,6 +69,22 @@ export function EvaluationTypeForm({
                     </div>
 
                     <div>
+                        <label className="block text-sm font-medium text-gray-900 mb-2">Catégorie *</label>
+                        <Select value={data.category} onValueChange={(v) => setData('category', v)} disabled={processing}>
+                            <SelectTrigger className={errors.category ? 'border-red-500 bg-red-50/40' : 'border-gray-200 bg-white'}>
+                                <SelectValue placeholder="Choisir une catégorie" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
+                                    <SelectItem key={value} value={value}>{label}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <p className="text-xs text-gray-500 mt-1">Détermine si les notes alimentent la « note de classe » ou la « composition » du bulletin.</p>
+                        {errors.category && <p className="text-sm text-red-600 mt-1">{errors.category}</p>}
+                    </div>
+
+                    <div>
                         <label htmlFor="description" className="block text-sm font-medium text-gray-900 mb-2">Description</label>
                         <Textarea
                             id="description"
@@ -86,6 +109,7 @@ export function EvaluationTypeForm({
                 </div>
                 <p className="text-sm text-gray-700 mt-3">
                     <span className="font-semibold">{data.name || 'Nom du type'}</span>
+                    {data.category && <span className="ml-2 text-xs text-gray-500">— {CATEGORY_LABELS[data.category] ?? data.category}</span>}
                 </p>
                 <p className="text-sm text-gray-600 mt-1 whitespace-pre-wrap">
                     {data.description || 'Aucune description renseignée.'}

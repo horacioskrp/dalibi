@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\DocumentHeader;
 use App\Models\DocumentTemplate;
 use App\Models\School;
 use App\Models\Student;
@@ -124,6 +125,7 @@ class DocumentRenderer
         $body      = $this->interpolate($template->content ?? '', $variables);
         $header    = $template->header_enabled ? $this->renderHeader($template, $variables) : '';
         $signature = $template->show_signature ? $this->renderSignature($template, $variables) : '';
+        $watermark = $this->renderWatermark($template->school, $variables);
 
         $css = $this->baseCss();
 
@@ -132,6 +134,7 @@ class DocumentRenderer
         <html lang="fr">
         <head><meta charset="utf-8"><style>{$css}</style></head>
         <body>
+            {$watermark}
             {$header}
             <main class="doc-body">{$body}</main>
             {$signature}
@@ -140,7 +143,114 @@ class DocumentRenderer
         HTML;
     }
 
+    /** En-tête configurable réutilisable (ex. bulletins), pour une école donnée. */
+    public function headerHtml(School $school, array $variables): string
+    {
+        $template = new DocumentTemplate(['header_enabled' => true]);
+        $template->setRelation('school', $school);
+
+        return $this->renderHeader($template, $variables);
+    }
+
+    /** Filigrane configurable réutilisable, pour une école donnée. */
+    public function watermarkHtml(?School $school, array $variables): string
+    {
+        return $this->renderWatermark($school, $variables);
+    }
+
+    /**
+     * En-tête : disposition personnalisée (drag-and-drop) si l'école en a une,
+     * sinon l'en-tête classique par défaut (rétro-compatibilité).
+     */
     protected function renderHeader(DocumentTemplate $template, array $variables): string
+    {
+        $header = $template->school?->documentHeader;
+
+        if (! $header || empty($header->layout['elements'])) {
+            return $this->renderDefaultHeader($template, $variables);
+        }
+
+        $layout = $header->layout;
+        $width  = (int) ($layout['width'] ?? DocumentHeader::CANVAS_WIDTH);
+        $height = (int) ($layout['height'] ?? 130);
+
+        $inner = '';
+        foreach ($layout['elements'] as $element) {
+            $inner .= $this->renderElement((array) $element, $template, $variables);
+        }
+
+        return <<<HTML
+        <div class="doc-header-canvas" style="position:relative;width:{$width}px;height:{$height}px;margin:0 auto 18px;">
+            {$inner}
+        </div>
+        HTML;
+    }
+
+    /** Rend un bloc positionné de l'en-tête (texte interpolé ou logo). */
+    protected function renderElement(array $el, DocumentTemplate $template, array $variables): string
+    {
+        $x     = (int) ($el['x'] ?? 0);
+        $y     = (int) ($el['y'] ?? 0);
+        $w     = (int) ($el['w'] ?? 200);
+        $align = in_array($el['align'] ?? 'left', ['left', 'center', 'right'], true) ? $el['align'] : 'left';
+        $base  = "position:absolute;left:{$x}px;top:{$y}px;width:{$w}px;text-align:{$align};";
+
+        if (($el['type'] ?? 'text') === 'logo') {
+            $logo = $this->logoDataUri($template->school);
+            if (! $logo) {
+                return '';
+            }
+
+            return '<div style="' . $base . '"><img src="' . $logo . '" style="max-width:' . $w . 'px;max-height:' . $w . 'px;object-fit:contain;" alt="logo"></div>';
+        }
+
+        $content = e($this->interpolate((string) ($el['content'] ?? ''), $variables));
+        if (trim(strip_tags($content)) === '') {
+            return '';
+        }
+
+        $size   = (int) ($el['fontSize'] ?? 12);
+        $weight = ! empty($el['bold']) ? 'bold' : 'normal';
+        $italic = ! empty($el['italic']) ? 'italic' : 'normal';
+        $color  = $el['color'] ?? '#1a1a1a';
+
+        return '<div style="' . $base . "font-size:{$size}px;font-weight:{$weight};font-style:{$italic};color:{$color};line-height:1.3;\">" . $content . '</div>';
+    }
+
+    /** Filigrane (texte ou image) répété sur chaque page. */
+    protected function renderWatermark(?School $school, array $variables): string
+    {
+        $wm = $school?->documentHeader?->watermark;
+        if (! $wm || empty($wm['enabled'])) {
+            return '';
+        }
+
+        $opacity  = max(0, min(100, (int) ($wm['opacity'] ?? 8))) / 100;
+        $rotation = (int) ($wm['rotation'] ?? -30);
+        $size     = (int) ($wm['size'] ?? 60);
+
+        if (($wm['type'] ?? 'text') === 'image' && ! empty($wm['image_path']) && Storage::disk('media')->exists($wm['image_path'])) {
+            $mime    = Storage::disk('media')->mimeType($wm['image_path']) ?: 'image/png';
+            $data    = 'data:' . $mime . ';base64,' . base64_encode(Storage::disk('media')->get($wm['image_path']));
+            $content = '<img src="' . $data . '" style="width:' . ($size * 6) . 'px;max-width:90%;">';
+        } else {
+            $text = e($this->interpolate((string) ($wm['text'] ?? ''), $variables));
+            if (trim($text) === '') {
+                return '';
+            }
+            $color   = $wm['color'] ?? '#1a1a1a';
+            $content = '<div style="font-size:' . $size . 'px;font-weight:bold;color:' . $color . ';white-space:nowrap;">' . $text . '</div>';
+        }
+
+        return <<<HTML
+        <div style="position:fixed;top:38%;left:0;width:100%;text-align:center;opacity:{$opacity};transform:rotate({$rotation}deg);">
+            {$content}
+        </div>
+        HTML;
+    }
+
+    /** En-tête « administratif » classique (utilisé sans personnalisation). */
+    protected function renderDefaultHeader(DocumentTemplate $template, array $variables): string
     {
         $terme  = e($variables['ecole.terme'] ?? '');
         $devise = e($variables['ecole.devise'] ?? '');
@@ -151,16 +261,9 @@ class DocumentRenderer
             $variables['ecole.telephone'] ?? null,
         ])->filter()->implode(' – ');
 
-        // Logo de l'école si disponible
-        $logoHtml = '';
-        $logoPath = $template->school?->logo;
-        // Logo embarqué en data-URI : fonctionne quel que soit le disque (local ou S3)
-        // et évite tout accès fichier par dompdf.
-        if ($logoPath && Storage::disk('media')->exists($logoPath)) {
-            $mime     = Storage::disk('media')->mimeType($logoPath) ?: 'image/png';
-            $base64   = base64_encode(Storage::disk('media')->get($logoPath));
-            $logoHtml = '<img class="doc-logo" src="data:' . $mime . ';base64,' . $base64 . '" alt="logo">';
-        }
+        // Logo de l'école si disponible (embarqué en data-URI).
+        $logo     = $this->logoDataUri($template->school);
+        $logoHtml = $logo ? '<img class="doc-logo" src="' . $logo . '" alt="logo">' : '';
 
         return <<<HTML
         <header class="doc-header">
@@ -178,6 +281,19 @@ class DocumentRenderer
             <hr class="doc-rule">
         </header>
         HTML;
+    }
+
+    /** Logo de l'école embarqué en data-URI (compatible dompdf, tout disque). */
+    protected function logoDataUri(?School $school): ?string
+    {
+        $logoPath = $school?->logo;
+        if ($logoPath && Storage::disk('media')->exists($logoPath)) {
+            $mime = Storage::disk('media')->mimeType($logoPath) ?: 'image/png';
+
+            return 'data:' . $mime . ';base64,' . base64_encode(Storage::disk('media')->get($logoPath));
+        }
+
+        return null;
     }
 
     protected function renderSignature(DocumentTemplate $template, array $variables): string
