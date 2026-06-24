@@ -1,5 +1,7 @@
 import { Form, Head } from '@inertiajs/react';
+import { useState } from 'react';
 import InputError from '@/components/input-error';
+import PasswordStrength from '@/components/password-strength';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,6 +15,8 @@ type Props = {
 };
 
 export default function ResetPassword({ token, email }: Props) {
+    const [password, setPassword] = useState('');
+
     return (
         <AuthLayout
             title="Reset password"
@@ -54,8 +58,10 @@ export default function ResetPassword({ token, email }: Props) {
                                 className="mt-1 block w-full"
                                 autoFocus
                                 placeholder="Password"
+                                onChange={(e) => setPassword(e.target.value)}
                             />
                             <InputError message={errors.password} />
+                            <PasswordStrength value={password} />
                         </div>
 
                         <div className="grid gap-2">
@@ -78,7 +84,7 @@ export default function ResetPassword({ token, email }: Props) {
 
                         <Button
                             type="submit"
-                            className="mt-4 w-full"
+                            className="mt-4 w-full bg-blue-600 hover:bg-blue-700"
                             disabled={processing}
                             data-test="reset-password-button"
                         >

@@ -25,17 +25,24 @@ class DocumentTagController extends Controller
     {
         $this->authorizeManage($request);
 
+        $search = trim((string) $request->query('search', ''));
+
         $tags = DocumentTag::withCount('documents')
+            ->when($search !== '', fn ($q) => $q->where('name', 'like', "%{$search}%"))
             ->orderBy('name')
-            ->get()
-            ->map(fn (DocumentTag $t) => [
-                'id'             => $t->id,
-                'name'           => $t->name,
-                'color'          => $t->color,
+            ->paginate(15)
+            ->withQueryString()
+            ->through(fn (DocumentTag $t) => [
+                'id'              => $t->id,
+                'name'            => $t->name,
+                'color'           => $t->color,
                 'documents_count' => $t->documents_count,
             ]);
 
-        return Inertia::render('Archives/Tags', ['tags' => $tags]);
+        return Inertia::render('Archives/Tags', [
+            'tags'    => $tags,
+            'filters' => ['search' => $search],
+        ]);
     }
 
     public function store(Request $request): RedirectResponse
