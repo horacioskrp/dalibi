@@ -245,6 +245,11 @@ export function route(name: string, params?: any): string {
         'grades.store':   '/grades',
         'grades.student': `/grades/student/${params}`,
 
+        // Bulletins routes
+        'bulletins.index':    '/bulletins',
+        'bulletins.validate': '/bulletins/validate',
+        'bulletins.download': `/bulletins/${params}/download`,
+
         // Evaluations lock / date / planning
         'evaluations.toggle-lock':    `/evaluations/${params}/lock`,
         'evaluations.update-date':    `/evaluations/${params}/date`,
@@ -329,6 +334,10 @@ export function route(name: string, params?: any): string {
         'official-exams.destroy': `/official-exams/${params}`,
         'official-exams.register': `/official-exams/${params}/register`,
         'official-exams.results':  `/official-exams/${params}/results`,
+
+        // Document header designer
+        'document-header.edit':   '/settings/document-header',
+        'document-header.update': '/settings/document-header',
 
         // Document Templates
         'document-templates.index':    '/settings/documents',

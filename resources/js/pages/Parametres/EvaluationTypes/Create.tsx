@@ -9,6 +9,7 @@ import AppLayout from '@/layouts/app-layout';
 
 const initialValues: EvaluationTypeFormData = {
     name: '',
+    category: 'continu',
     description: '',
 };
 

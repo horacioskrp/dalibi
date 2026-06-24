@@ -10,6 +10,7 @@ import AppLayout from '@/layouts/app-layout';
 interface EvaluationType {
     id: string;
     name: string;
+    category: string | null;
     description: string | null;
 }
 
@@ -20,6 +21,7 @@ interface EditProps {
 export default function Edit({ evaluationType }: Readonly<EditProps>) {
     const { data, setData, put, processing, errors } = useForm<EvaluationTypeFormData>({
         name: evaluationType.name,
+        category: evaluationType.category || 'continu',
         description: evaluationType.description || '',
     });
 

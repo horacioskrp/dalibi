@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { Award, Eye, FileBadge, FileText, GraduationCap, Pencil, Plus, Star, Trash2 } from 'lucide-react';
+import { Award, Eye, FileBadge, FileText, GraduationCap, LayoutTemplate, Pencil, Plus, Star, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import {
     AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -50,6 +50,9 @@ export default function Index({ templatesByCategory, categories }: Readonly<Prop
                         <p className="mt-2 text-gray-500">Gérez les modèles de certificats, attestations et bulletins exportables en PDF.</p>
                     </div>
                     <div className="flex items-center gap-2">
+                        <Button variant="outline" className="gap-2" onClick={() => router.get(route('document-header.edit'))}>
+                            <LayoutTemplate className="w-4 h-4" /> En-tête
+                        </Button>
                         <Button variant="outline" className="gap-2" onClick={() => router.get(route('document-templates.registry'))}>
                             <FileText className="w-4 h-4" /> Registre
                         </Button>

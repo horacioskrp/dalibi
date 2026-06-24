@@ -27,6 +27,7 @@ class ReferenceDataSeeder extends Seeder
             ExamenTypeSeeder::class,          // types d'évaluation
             ScholarshipSeeder::class,         // bourses
             DocumentTagSeeder::class,         // tags d'archivage par défaut
+            DocumentHeaderSeeder::class,      // en-tête par défaut des documents (par école existante)
         ]);
     }
 }

@@ -36,6 +36,7 @@ use App\Http\Controllers\Eleves\StudentController;
 use App\Http\Controllers\Eleves\StudentScholarshipController;
 use App\Http\Controllers\Comptabilite\ExpenseController;
 use App\Http\Controllers\Notes\GradeController;
+use App\Http\Controllers\Notes\BulletinController;
 use App\Http\Controllers\Administration\SubjectAssignmentController;
 use App\Http\Controllers\Parametres\SubjectController;
 use App\Http\Controllers\Dashboard\DashboardController;
@@ -171,6 +172,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('grades', [GradeController::class, 'store'])->middleware('can:create_grades')->name('grades.store');
     Route::get('grades/student/{student}', [GradeController::class, 'student'])->middleware('can:view_grades')->name('grades.student');
 
+    // Bulletins (préparation, validation/snapshot, téléchargement PDF)
+    Route::get('bulletins', [BulletinController::class, 'index'])->middleware('can:view_grades')->name('bulletins.index');
+    Route::post('bulletins/validate', [BulletinController::class, 'validateClass'])->middleware('can:create_grades')->name('bulletins.validate');
+    Route::get('bulletins/{student}/download', [BulletinController::class, 'download'])->middleware('can:view_grades')->name('bulletins.download');
+
     // Administration Routes
     Route::resource('roles', RoleController::class)->middleware('can:manage_roles_permissions');
     Route::resource('permissions', PermissionController::class)->middleware('can:manage_roles_permissions');
@@ -231,6 +237,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('official-exams/{officialExam}/registrations/{registration}', [OfficialExamController::class, 'removeRegistration'])->name('official-exams.registrations.destroy');
 
     // Document Templates (Settings)
+    Route::get('settings/document-header', [\App\Http\Controllers\Parametres\DocumentHeaderController::class, 'edit'])->middleware('can:view_documents')->name('document-header.edit');
+    Route::post('settings/document-header', [\App\Http\Controllers\Parametres\DocumentHeaderController::class, 'update'])->middleware('can:edit_documents')->name('document-header.update');
     Route::get('settings/documents-registry', [DocumentTemplateController::class, 'registry'])->name('document-templates.registry');
     Route::get('settings/documents', [DocumentTemplateController::class, 'index'])->middleware('can:view_documents')->name('document-templates.index');
     Route::get('settings/documents/create', [DocumentTemplateController::class, 'create'])->name('document-templates.create');

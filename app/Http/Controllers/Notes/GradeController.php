@@ -16,9 +16,13 @@ use App\Models\AcademicPeriod;
 use App\Models\AcademicYear;
 use App\Models\ClassSubject;
 use App\Models\Classroom;
+use App\Models\ClassroomType;
 use App\Models\Enrollment;
 use App\Models\Grade;
+use App\Models\GradingConfig;
+use App\Models\School;
 use App\Models\Student;
+use App\Services\GradingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -187,6 +191,8 @@ class GradeController extends Controller
 
         $grades = collect();
         $average = null;
+        $rangGlobal = null;
+        $mention = null;
 
         if ($enrollment && $periodId !== '') {
             $classSubjects = ClassSubject::where('class_id', $enrollment->class_id)
@@ -197,19 +203,31 @@ class GradeController extends Controller
                 ])
                 ->get();
 
-            $grades = $classSubjects->map(fn ($cs) => [
-                'class_subject_id' => $cs->id,
-                'subject' => $cs->subject,
-                'coefficient' => (float) $cs->coefficient,
-                'score' => $cs->grades->first()?->score !== null ? (float) $cs->grades->first()->score : null,
-                'comments' => $cs->grades->first()?->comments,
-            ]);
+            // Configuration de notation applicable au type de classe de l'élève
+            $school  = School::query()->first();
+            $type    = ClassroomType::find($enrollment->classroom?->classroom_type_id);
+            $config  = GradingConfig::resolveOrDefault($school, $type);
+            $service = app(GradingService::class);
 
-            $withScores = $grades->filter(fn ($g) => $g['score'] !== null);
-            if ($withScores->count() > 0) {
-                $totalCoef = $withScores->sum('coefficient');
-                $weightedSum = $withScores->sum(fn ($g) => $g['score'] * $g['coefficient']);
-                $average = $totalCoef > 0 ? round($weightedSum / $totalCoef, 2) : null;
+            $grades = $classSubjects->map(function ($cs) use ($service, $student, $periodId, $config) {
+                $grade = $cs->grades->first();
+
+                return [
+                    'class_subject_id' => $cs->id,
+                    'subject'     => $cs->subject,
+                    'coefficient' => (float) $cs->coefficient,
+                    'score'       => $grade?->score !== null ? (float) $grade->score : null,
+                    'comments'    => $grade?->comments,
+                    'rang'        => $service->subjectRanking($cs, $periodId, $config)->get($student->id)['rank'] ?? null,
+                ];
+            });
+
+            if ($enrollment->classroom) {
+                $ranking    = $service->classRanking($enrollment->classroom, $periodId, $config);
+                $me         = $ranking->get($student->id);
+                $average    = $me['average'] ?? null;
+                $rangGlobal = $me['rank'] ?? null;
+                $mention    = $service->mention($average, $config);
             }
         }
 
@@ -219,6 +237,8 @@ class GradeController extends Controller
             'grades' => $grades->values(),
             'periods' => $periods,
             'average' => $average,
+            'rang_global' => $rangGlobal,
+            'mention' => $mention,
             'academic_period_id' => $periodId,
             'activeYear' => $activeYear,
         ]);

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Constants\Roles;
 use App\Http\Requests\StoreGradingConfigRequest;
 use App\Http\Requests\UpdateGradingConfigRequest;
+use App\Models\ClassroomType;
 use App\Models\GradingConfig;
 use App\Models\School;
 use Illuminate\Http\RedirectResponse;
@@ -23,7 +24,7 @@ class GradingConfigController extends Controller
         $schoolId = $request->string('school_id')->toString();
 
         $configs = GradingConfig::query()
-            ->with('school:id,name')
+            ->with(['school:id,name', 'classroomType:id,name,period_system'])
             ->when($schoolId, fn ($q) => $q->where('school_id', $schoolId))
             ->orderByDesc('is_active')
             ->orderBy('name')
@@ -46,6 +47,8 @@ class GradingConfigController extends Controller
 
         return Inertia::render('Parametres/GradingConfigs/Create', [
             'schools'            => $schools,
+            'classroomTypes'     => ClassroomType::where('active', true)->orderBy('name')->get(['id', 'name', 'period_system']),
+            'defaultMentions'    => GradingConfig::defaultMentions(),
             'preselectedSchoolId'=> $request->string('school_id')->toString() ?: null,
         ]);
     }
@@ -65,8 +68,10 @@ class GradingConfigController extends Controller
         $schools = School::orderBy('name')->get(['id', 'name']);
 
         return Inertia::render('Parametres/GradingConfigs/Edit', [
-            'config'  => $gradingConfig->load('school:id,name'),
-            'schools' => $schools,
+            'config'          => $gradingConfig->load('school:id,name'),
+            'schools'         => $schools,
+            'classroomTypes'  => ClassroomType::where('active', true)->orderBy('name')->get(['id', 'name', 'period_system']),
+            'defaultMentions' => GradingConfig::defaultMentions(),
         ]);
     }
 
@@ -97,7 +102,9 @@ class GradingConfigController extends Controller
         abort_unless($request->user()->can('edit_grading_configs'), 403);
 
         DB::transaction(function () use ($gradingConfig): void {
+            // Une seule config active par (école, type de classe).
             GradingConfig::where('school_id', $gradingConfig->school_id)
+                ->where('classroom_type_id', $gradingConfig->classroom_type_id)
                 ->where('id', '!=', $gradingConfig->id)
                 ->update(['is_active' => false]);
 

@@ -13,30 +13,25 @@ import AppLayout from '@/layouts/app-layout';
 
 interface School { id: string; name: string; }
 
+interface ClassroomTypeRef { id: string; name: string; period_system: string }
+
 interface Config {
     id: string;
     name: string;
     is_active: boolean;
     passing_score: number;
     default_max_score: number;
-    term1_weight: number;
-    term2_weight: number;
-    term3_weight: number;
+    class_weight: number;
+    comp_weight: number;
     round_precision: number;
     school: School;
+    classroom_type: ClassroomTypeRef | null;
 }
 
 interface Props {
     configs: Config[];
     schools: School[];
     filters: { school_id: string };
-}
-
-function weightLabel(t1: number, t2: number, t3: number): string {
-    const total = t1 + t2 + t3;
-    if (total === 0) return '—';
-    const pct = (w: number) => Math.round((w / total) * 100);
-    return `T1 ${pct(t1)}% · T2 ${pct(t2)}% · T3 ${pct(t3)}%`;
 }
 
 export default function Index({ configs, schools, filters }: Readonly<Props>) {
@@ -106,9 +101,9 @@ export default function Index({ configs, schools, filters }: Readonly<Props>) {
                             <TableRow>
                                 <TableHead>Nom</TableHead>
                                 <TableHead>Établissement</TableHead>
+                                <TableHead>Type de classe</TableHead>
                                 <TableHead className="text-center">Seuil</TableHead>
                                 <TableHead className="text-center">Note max</TableHead>
-                                <TableHead>Poids T1/T2/T3</TableHead>
                                 <TableHead className="text-center">Arrondi</TableHead>
                                 <TableHead className="text-center">Statut</TableHead>
                                 <TableHead className="text-center w-36">Actions</TableHead>
@@ -126,14 +121,18 @@ export default function Index({ configs, schools, filters }: Readonly<Props>) {
                                 <TableRow key={c.id} className={`transition-colors ${c.is_active ? 'bg-emerald-50/30' : 'hover:bg-gray-50/60'}`}>
                                     <TableCell className="font-semibold text-gray-900">{c.name}</TableCell>
                                     <TableCell className="text-gray-600">{c.school.name}</TableCell>
+                                    <TableCell className="text-sm text-gray-600">
+                                        {c.classroom_type ? (
+                                            <>
+                                                {c.classroom_type.name}
+                                                <span className="block text-xs text-gray-400">{c.classroom_type.period_system}</span>
+                                            </>
+                                        ) : (
+                                            <span className="text-gray-400 italic">Toutes (défaut)</span>
+                                        )}
+                                    </TableCell>
                                     <TableCell className="text-center font-mono text-gray-700">{c.passing_score}/20</TableCell>
                                     <TableCell className="text-center font-mono text-gray-700">{c.default_max_score}</TableCell>
-                                    <TableCell className="text-sm text-gray-500">
-                                        {weightLabel(c.term1_weight, c.term2_weight, c.term3_weight)}
-                                        <span className="block text-xs text-gray-400 mt-0.5">
-                                            ({c.term1_weight} / {c.term2_weight} / {c.term3_weight})
-                                        </span>
-                                    </TableCell>
                                     <TableCell className="text-center text-gray-600">{c.round_precision} déc.</TableCell>
                                     <TableCell className="text-center">
                                         {c.is_active ? (

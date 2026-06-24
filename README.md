@@ -1,6 +1,8 @@
-# Dalibi - Système de Gestion Scolaire
+# Dalibi - Logiciel de gestion d'école Open Source
 
-Un système de gestion scolaire open-source pour les écoles primaires, collèges et lycées du Togo et d'Afrique.
+## À propos de ce projet de gestion scolaire
+
+Dalibi est un outil complet libre et open-source de gestion pour les établissements scolaires du Togo et d'Afrique (primaire, collège, lycée). Élèves, notes & bulletins, présences, examens officiels, comptabilité & écolage, emploi du temps, documents PDF, stockage local/S3 et sauvegardes planifiées
 
 ## 🛠️ Stack technique
 
@@ -79,6 +81,7 @@ Un système de gestion scolaire open-source pour les écoles primaires, collège
 ### Documents officiels
 
 - **Modèles de documents** PDF personnalisables (éditeur de contenu riche)
+- **Éditeur d'en-tête glisser-déposer** (par école) : positionnement libre du logo, du nom, de la devise et de champs de texte (avec variables `{{ecole.nom}}`…), réutilisé par tous les documents ; **filigrane** activable (texte ou image, opacité/taille/rotation). Repli sur l'en-tête classique sans configuration
 - Génération de documents par élève (certificats, attestations…) avec en-tête (logo de l'école embarqué)
 - **Code-barres de vérification** unique sur les documents pour éviter la falsification
 - Traçabilité des documents délivrés par élève
@@ -247,11 +250,11 @@ docker run -d --name dalibi -p 8080:80 \
   | `RUN_MIGRATIONS=true` | `migrate --force` **+ seed automatique des données de référence** (rôles/permissions **et** catalogues) |
   | `SEED_REFERENCE=true` | Idem ci-dessus sans relancer les migrations |
   | `SEED_PERMISSIONS=true` | **Rôles & permissions** uniquement |
-  | `SEED_DATABASE=true` | **Seed global** (`DatabaseSeeder`) : référence **+ données de démo** (comptes de test, élèves fictifs) — *démo/staging uniquement* |
+  | `SEED_DATABASE=true` | **Seed global** (`DatabaseSeeder`) : référence **+ données de démo** (comptes de test, élèves fictifs) — _démo/staging uniquement_ |
 
-  Les **données de référence** (`ReferenceDataSeeder`) sont **idempotentes** et seedées **automatiquement** au déploiement (`RUN_MIGRATIONS=true`) : rôles & permissions, niveaux, types de classes, **classes** (PS → Terminale), matières, catégories de frais, types d'évaluation, bourses. `ReferenceDataSeeder` (prod) ⊂ `DatabaseSeeder` (global/démo).
+    Les **données de référence** (`ReferenceDataSeeder`) sont **idempotentes** et seedées **automatiquement** au déploiement (`RUN_MIGRATIONS=true`) : rôles & permissions, niveaux, types de classes, **classes** (PS → Terminale), matières, catégories de frais, types d'évaluation, bourses. `ReferenceDataSeeder` (prod) ⊂ `DatabaseSeeder` (global/démo).
 
-  Les **modèles de documents** nécessitent une école : en prod, créez votre établissement puis lancez `php artisan db:seed --class=DocumentTemplateSeeder`.
+    Les **modèles de documents** nécessitent une école : en prod, créez votre établissement puis lancez `php artisan db:seed --class=DocumentTemplateSeeder`.
 
 - En **production**, `RUN_MIGRATIONS=true` suffit (jamais `SEED_DATABASE`) ; créez ensuite votre administrateur et vos comptes via Administration → Utilisateurs.
 - Générez une clé avec `php artisan key:generate --show` et passez-la via `APP_KEY`.
@@ -272,54 +275,55 @@ Le seeder `DefaultUsersSeeder` crée **un compte par rôle** (mot de passe commu
 Ces comptes sont marqués `is_demo = true` : une **bannière d'avertissement** s'affiche dans l'application lorsqu'ils sont connectés.
 
 > ### 🔒 En production
+>
 > 1. **Changez immédiatement** les mots de passe (ou supprimez ces comptes de test).
 > 2. Ne lancez pas `DefaultUsersSeeder` en prod ; créez plutôt votre administrateur, puis les comptes via **Administration → Utilisateurs**.
 > 3. Pour purger les comptes de démo : `User::where('is_demo', true)->delete();`
 
 ## 🏗️ Structure de la base de données
 
-| Table                 | Description                                                    |
-| --------------------- | -------------------------------------------------------------- |
-| `schools`             | Établissements scolaires                                       |
-| `academic_years`      | Années académiques par école                                   |
-| `academic_periods`    | Périodes / trimestres                                          |
-| `classes`             | Classes ou sections                                            |
-| `classroom_types`     | Types de classes                                               |
-| `levels`              | Niveaux scolaires                                              |
-| `students`            | Élèves avec matricule unique                                   |
-| `enrollments`         | Inscriptions élève ↔ classe ↔ année                           |
-| `subjects`            | Matières                                                       |
-| `class_subjects`      | Attribution matières/enseignants aux classes                   |
-| `evaluation_types`    | Types d'évaluation (devoir, examen…)                          |
-| `evaluation_templates`| Modèles d'évaluation par type de classe                       |
-| `evaluations`         | Évaluation planifiée par classe/matière avec date et heure    |
-| `marks`               | Notes par élève et évaluation                                  |
-| `official_exams`      | Examens officiels (CEPD/BEPC/BAC) rattachés à l'année active   |
-| `official_exam_registrations` | Inscriptions et résultats aux examens officiels        |
-| `student_documents`   | Pièces du dossier privé de l'élève (fichiers uploadés)         |
-| `document_templates`  | Modèles de documents PDF personnalisables                      |
-| `archived_documents`  | Archives documentaires (fichiers + métadonnées, soft delete)   |
-| `document_tags` / `archived_document_tag` | Tags d'archivage et table pivot            |
-| `attendances`         | Séance d'appel (classe / date / session)                       |
-| `attendance_records`  | Statut de présence par élève et séance                         |
-| `absence_permissions` | Demandes de permission d'absence avec cycle de révision        |
-| `grading_configs`     | Configuration du calcul des moyennes                           |
-| `fee_categories`      | Catégories de frais scolaires                                  |
-| `fee_structures`      | Structures de frais par classe et année                        |
-| `installments`        | Tranches de paiement d'une structure de frais                  |
-| `scholarships`        | Bourses                                                        |
-| `student_scholarships`| Bourses attribuées aux élèves                                  |
-| `cash_accounts`       | Caisses                                                        |
-| `transactions`        | Journal comptable                                              |
-| `invoices` / `invoice_items` | Factures d'écolage et leurs lignes                      |
-| `payments`            | Paiements enregistrés                                          |
-| `receipts`            | Reçus de paiement avec code de vérification                    |
-| `timetable_slots`     | Créneaux de l'emploi du temps par classe                       |
-| `document_issuances`  | Traçabilité des documents délivrés par élève                   |
-| `note_reclamations`   | Réclamations sur les notes                                     |
-| `file_storage_settings`| Configuration du stockage des fichiers (local / S3, chiffrée) |
-| `backups`             | Historique des sauvegardes de base de données (JSON / SQL)     |
-| `backup_settings`     | Planification et options des sauvegardes                       |
+| Table                                     | Description                                                   |
+| ----------------------------------------- | ------------------------------------------------------------- |
+| `schools`                                 | Établissements scolaires                                      |
+| `academic_years`                          | Années académiques par école                                  |
+| `academic_periods`                        | Périodes / trimestres                                         |
+| `classes`                                 | Classes ou sections                                           |
+| `classroom_types`                         | Types de classes                                              |
+| `levels`                                  | Niveaux scolaires                                             |
+| `students`                                | Élèves avec matricule unique                                  |
+| `enrollments`                             | Inscriptions élève ↔ classe ↔ année                           |
+| `subjects`                                | Matières                                                      |
+| `class_subjects`                          | Attribution matières/enseignants aux classes                  |
+| `evaluation_types`                        | Types d'évaluation (devoir, examen…)                          |
+| `evaluation_templates`                    | Modèles d'évaluation par type de classe                       |
+| `evaluations`                             | Évaluation planifiée par classe/matière avec date et heure    |
+| `marks`                                   | Notes par élève et évaluation                                 |
+| `official_exams`                          | Examens officiels (CEPD/BEPC/BAC) rattachés à l'année active  |
+| `official_exam_registrations`             | Inscriptions et résultats aux examens officiels               |
+| `student_documents`                       | Pièces du dossier privé de l'élève (fichiers uploadés)        |
+| `document_templates`                      | Modèles de documents PDF personnalisables                     |
+| `archived_documents`                      | Archives documentaires (fichiers + métadonnées, soft delete)  |
+| `document_tags` / `archived_document_tag` | Tags d'archivage et table pivot                               |
+| `attendances`                             | Séance d'appel (classe / date / session)                      |
+| `attendance_records`                      | Statut de présence par élève et séance                        |
+| `absence_permissions`                     | Demandes de permission d'absence avec cycle de révision       |
+| `grading_configs`                         | Configuration du calcul des moyennes                          |
+| `fee_categories`                          | Catégories de frais scolaires                                 |
+| `fee_structures`                          | Structures de frais par classe et année                       |
+| `installments`                            | Tranches de paiement d'une structure de frais                 |
+| `scholarships`                            | Bourses                                                       |
+| `student_scholarships`                    | Bourses attribuées aux élèves                                 |
+| `cash_accounts`                           | Caisses                                                       |
+| `transactions`                            | Journal comptable                                             |
+| `invoices` / `invoice_items`              | Factures d'écolage et leurs lignes                            |
+| `payments`                                | Paiements enregistrés                                         |
+| `receipts`                                | Reçus de paiement avec code de vérification                   |
+| `timetable_slots`                         | Créneaux de l'emploi du temps par classe                      |
+| `document_issuances`                      | Traçabilité des documents délivrés par élève                  |
+| `note_reclamations`                       | Réclamations sur les notes                                    |
+| `file_storage_settings`                   | Configuration du stockage des fichiers (local / S3, chiffrée) |
+| `backups`                                 | Historique des sauvegardes de base de données (JSON / SQL)    |
+| `backup_settings`                         | Planification et options des sauvegardes                      |
 
 ## 🔐 Sécurité
 
@@ -351,13 +355,13 @@ Les permissions sont générées **par module** (aligné sur les menus) sous la 
 
 ### Rôles par défaut (seeder)
 
-| Rôle | Portée des permissions |
-| --- | --- |
-| **Administrateur** | **Toutes** les permissions |
-| **Directeur** | Consultation générale + création/édition (académique, élèves, classes, examens, inscriptions, emploi du temps), revue des réclamations & permissions, génération de documents, gestion des utilisateurs |
-| **Enseignant** | Consultation classes/élèves/matières, **saisie & édition des notes** (notes & évaluations), statut des évaluations, présences (création/édition), création de réclamations |
-| **Comptabilité** | **Finances complètes** (caisses, factures/paiements, transactions, dépenses), frais (consultation/édition), rapports |
-| **Secrétariat** | **Élèves & inscriptions** (complet), effectifs, passage de classe, emploi du temps, documents, archives, gestion des utilisateurs |
+| Rôle               | Portée des permissions                                                                                                                                                                                  |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Administrateur** | **Toutes** les permissions                                                                                                                                                                              |
+| **Directeur**      | Consultation générale + création/édition (académique, élèves, classes, examens, inscriptions, emploi du temps), revue des réclamations & permissions, génération de documents, gestion des utilisateurs |
+| **Enseignant**     | Consultation classes/élèves/matières, **saisie & édition des notes** (notes & évaluations), statut des évaluations, présences (création/édition), création de réclamations                              |
+| **Comptabilité**   | **Finances complètes** (caisses, factures/paiements, transactions, dépenses), frais (consultation/édition), rapports                                                                                    |
+| **Secrétariat**    | **Élèves & inscriptions** (complet), effectifs, passage de classe, emploi du temps, documents, archives, gestion des utilisateurs                                                                       |
 
 > Un administrateur peut affiner finement chaque rôle via **Administration → Rôles & permissions**, sans toucher au code.
 >

@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\GradingConfig;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 class School extends Model
@@ -60,6 +61,12 @@ class School extends Model
     public function gradingConfigs(): HasMany
     {
         return $this->hasMany(GradingConfig::class);
+    }
+
+    /** En-tête personnalisé des documents (certificats, attestations, bulletins). */
+    public function documentHeader(): HasOne
+    {
+        return $this->hasOne(DocumentHeader::class);
     }
 
     /** Types de classe proposés par l'école. */
