@@ -34,7 +34,7 @@ const sidebarNavItems: NavItem[] = [
     },
 ];
 
-export default function SettingsLayout({ children }: Readonly<PropsWithChildren>) {
+export default function SettingsLayout({ children, bare = false }: Readonly<PropsWithChildren<{ bare?: boolean }>>) {
     const { isCurrentUrl } = useCurrentUrl();
 
     // When server-side rendering, we only render the layout on the client...
@@ -80,12 +80,16 @@ export default function SettingsLayout({ children }: Readonly<PropsWithChildren>
 
                     <Separator className="my-6 lg:hidden" />
 
-                    <div className="flex-1 max-w-3xl">
-                        <div className="bg-card rounded-xl shadow-sm border border-border">
-                            <section className="p-6 space-y-8">
-                                {children}
-                            </section>
-                        </div>
+                    <div className={cn('flex-1 min-w-0', !bare && 'max-w-3xl')}>
+                        {bare ? (
+                            children
+                        ) : (
+                            <div className="bg-card rounded-xl shadow-sm border border-border">
+                                <section className="p-6 space-y-8">
+                                    {children}
+                                </section>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

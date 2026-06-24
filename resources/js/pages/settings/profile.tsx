@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { edit } from '@/routes/profile';
@@ -29,14 +30,49 @@ export default function Profile({
 }>) {
     const { auth } = usePage().props;
 
+    const initials = [auth.user.firstname?.[0], auth.user.lastname?.[0]]
+        .filter(Boolean)
+        .join('')
+        .toUpperCase();
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Mon profil" />
 
             <h1 className="sr-only flex items-center gap-3"><UserCircle className="h-7 w-7 text-blue-600 shrink-0" />Mon profil</h1>
 
-            <SettingsLayout>
+            <SettingsLayout bare>
                 <div className="space-y-6">
+                    {/* Carte profil */}
+                    <div className="relative overflow-hidden rounded-2xl bg-linear-to-r from-blue-50 to-cyan-50 p-6 ring-1 ring-blue-100 shadow-sm">
+                        <div className="flex items-center gap-4">
+                            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-xl font-bold text-white shadow-md shadow-blue-600/20">
+                                {initials || <User className="h-7 w-7" />}
+                            </div>
+                            <div className="min-w-0">
+                                <h2 className="truncate text-xl font-bold text-gray-900">
+                                    {[auth.user.firstname, auth.user.lastname].filter(Boolean).join(' ') || 'Mon profil'}
+                                </h2>
+                                <p className="truncate text-sm text-gray-600">{auth.user.email}</p>
+                                <div className="mt-2 flex flex-wrap items-center gap-2">
+                                    {(auth.roles ?? []).map((role) => (
+                                        <span key={role} className="rounded-full bg-white/70 px-2.5 py-0.5 text-xs font-medium capitalize text-blue-700 ring-1 ring-blue-200">
+                                            {role}
+                                        </span>
+                                    ))}
+                                    {auth.user.matricule && (
+                                        <span className="inline-flex items-center gap-1 rounded-full bg-white/70 px-2.5 py-0.5 text-xs font-medium text-gray-600 ring-1 ring-slate-200">
+                                            <IdCard className="h-3.5 w-3.5" /> {auth.user.matricule}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                        <UserCircle className="pointer-events-none absolute -right-4 -bottom-6 h-32 w-32 text-blue-600 opacity-[0.07]" />
+                    </div>
+
+                    {/* Formulaire */}
+                    <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-100">
                     <div className="flex items-center gap-3 mb-6">
                         <div className="p-2 bg-blue-50 rounded-lg">
                             <User className="w-5 h-5 text-blue-600" />
@@ -133,7 +169,7 @@ export default function Profile({
                                                 id="birth_date"
                                                 type="date"
                                                 className="border-gray-300"
-                                                defaultValue={auth.user.birth_date || ''}
+                                                defaultValue={(auth.user.birth_date ?? '').slice(0, 10)}
                                                 name="birth_date"
                                             />
                                             <InputError message={errors.birth_date} />
@@ -182,8 +218,9 @@ export default function Profile({
                                             <MapPin className="w-4 h-4 inline mr-2" />
                                             Adresse
                                         </Label>
-                                        <Input
+                                        <Textarea
                                             id="address"
+                                            rows={3}
                                             className="border-gray-300"
                                             defaultValue={auth.user.address || ''}
                                             name="address"
@@ -238,6 +275,7 @@ export default function Profile({
                                 </>
                             )}
                         </Form>
+                    </div>
                 </div>
             </SettingsLayout>
         </AppLayout>
