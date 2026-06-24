@@ -61,14 +61,20 @@ class AppServiceProvider extends ServiceProvider
             DB::statement('PRAGMA foreign_keys = OFF');
         }
 
-        Password::defaults(fn (): ?Password => app()->isProduction()
-            ? Password::min(12)
-                ->mixedCase()
+        Password::defaults(function (): ?Password {
+            // Les tests utilisent des mots de passe simples : on garde le défaut souple.
+            if (app()->runningUnitTests()) {
+                return null;
+            }
+
+            $rule = Password::min(12)
+                ->mixedCase()   // au moins une majuscule et une minuscule
                 ->letters()
                 ->numbers()
-                ->symbols()
-                ->uncompromised()
-            : null
-        );
+                ->symbols();
+
+            // Vérification contre les fuites connues (HaveIBeenPwned) en production.
+            return app()->isProduction() ? $rule->uncompromised() : $rule;
+        });
     }
 }
