@@ -33,6 +33,16 @@ class ArchiveTest extends TestCase
         return $u;
     }
 
+    public function test_default_tags_seeder_is_idempotent(): void
+    {
+        $this->seed(\Database\Seeders\DocumentTagSeeder::class);
+        $this->seed(\Database\Seeders\DocumentTagSeeder::class);
+
+        $this->assertSame(9, \App\Models\DocumentTag::count());
+        $this->assertDatabaseHas('document_tags', ['slug' => 'administratif']);
+        $this->assertDatabaseHas('document_tags', ['slug' => 'juridique']);
+    }
+
     public function test_can_archive_document_with_tags(): void
     {
         $this->actingAs($this->manager())

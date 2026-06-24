@@ -69,7 +69,7 @@ Un système de gestion scolaire open-source pour les écoles primaires, collège
 ### Archives documentaires
 
 - Archivage de tout document (PDF, Office, image, CSV, ZIP) avec **titre, description, catégorie** et **référence automatique** (`ARC-AAAA-0001`)
-- **Tags** réutilisables et colorés (création à la volée), filtrage **multi-tags**
+- **Tags** réutilisables et colorés : page de gestion dédiée (création via **modal**, couleur, suppression), création **à la volée** depuis l'archivage, filtrage **multi-tags**. Un jeu de tags par défaut (Administratif, Comptable, Juridique, RH, Courrier…) est seedé (`DocumentTagSeeder`, inclus dans les données de référence)
 - Liste filtrable (recherche, catégorie, tags, plage de dates) + pagination
 - **Liaison optionnelle** d'un document à un élève (matricule) ou une classe
 - **Corbeille** (soft delete) → restauration / suppression définitive
