@@ -245,6 +245,11 @@ export function route(name: string, params?: any): string {
         'grades.store':   '/grades',
         'grades.student': `/grades/student/${params}`,
 
+        // Bulletins routes
+        'bulletins.index':    '/bulletins',
+        'bulletins.validate': '/bulletins/validate',
+        'bulletins.download': `/bulletins/${params}/download`,
+
         // Evaluations lock / date / planning
         'evaluations.toggle-lock':    `/evaluations/${params}/lock`,
         'evaluations.update-date':    `/evaluations/${params}/date`,

@@ -143,6 +143,21 @@ class DocumentRenderer
         HTML;
     }
 
+    /** En-tête configurable réutilisable (ex. bulletins), pour une école donnée. */
+    public function headerHtml(School $school, array $variables): string
+    {
+        $template = new DocumentTemplate(['header_enabled' => true]);
+        $template->setRelation('school', $school);
+
+        return $this->renderHeader($template, $variables);
+    }
+
+    /** Filigrane configurable réutilisable, pour une école donnée. */
+    public function watermarkHtml(?School $school, array $variables): string
+    {
+        return $this->renderWatermark($school, $variables);
+    }
+
     /**
      * En-tête : disposition personnalisée (drag-and-drop) si l'école en a une,
      * sinon l'en-tête classique par défaut (rétro-compatibilité).

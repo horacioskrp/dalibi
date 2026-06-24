@@ -17,6 +17,7 @@ class StoreEvaluationTypeRequest extends FormRequest
     {
         return [
             'name'        => ['required', 'string', 'max:255', Rule::unique('evaluation_types', 'name')],
+            'category'    => ['required', 'in:continu,composition'],
             'description' => ['nullable', 'string', 'max:1000'],
         ];
     }

@@ -27,7 +27,14 @@ class EvaluationType extends Model
 
     protected $fillable = [
         'name',
+        'category',
         'description',
+    ];
+
+    /** Catégories : contrôle continu (note de classe) ou composition (examen). */
+    public const CATEGORIES = [
+        'continu'     => 'Contrôle continu (note de classe)',
+        'composition' => 'Composition (examen)',
     ];
 
     /**

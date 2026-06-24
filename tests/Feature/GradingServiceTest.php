@@ -8,8 +8,12 @@ use App\Models\Classroom;
 use App\Models\ClassroomType;
 use App\Models\ClassSubject;
 use App\Models\Enrollment;
+use App\Models\Evaluation;
+use App\Models\EvaluationTemplate;
+use App\Models\EvaluationType;
 use App\Models\Grade;
 use App\Models\GradingConfig;
+use App\Models\Mark;
 use App\Models\School;
 use App\Models\Student;
 use App\Models\Subject;
@@ -153,6 +157,45 @@ class GradingServiceTest extends TestCase
         $this->assertSame(1, $mathRank[$a->id]['rank']); // 16
         $this->assertSame(2, $mathRank[$c->id]['rank']); // 14
         $this->assertSame(3, $mathRank[$b->id]['rank']); // 10
+    }
+
+    public function test_subject_classe_compo_from_evaluations(): void
+    {
+        $cs = $this->subject('Maths', 2);
+        $p1 = $this->period('Trimestre 1', 1, 1, true);
+        $student = $this->student();
+
+        $continu = EvaluationType::create(['name' => 'Devoir', 'category' => 'continu']);
+        $compo   = EvaluationType::create(['name' => 'Composition', 'category' => 'composition']);
+
+        $this->evaluationMark($cs, $p1, $continu, $student, 12);
+        $this->evaluationMark($cs, $p1, $compo, $student, 16);
+
+        $cc = $this->service->subjectClasseCompo($cs, $student->id, $p1->id);
+        $this->assertSame(12.0, $cc['classe']);
+        $this->assertSame(16.0, $cc['compo']);
+
+        // Pondération 1/1 → 14 ; pondération 1/2 → (12 + 32)/3 = 14,67
+        $this->assertSame(14.0, $this->service->combineClasseCompo(12.0, 16.0, $this->config()));
+        $weighted = GradingConfig::make(['class_weight' => 1, 'comp_weight' => 2, 'round_precision' => 2]);
+        $this->assertSame(14.67, $this->service->combineClasseCompo(12.0, 16.0, $weighted));
+    }
+
+    private function evaluationMark(ClassSubject $cs, AcademicPeriod $period, EvaluationType $type, Student $student, float $score): void
+    {
+        $template = EvaluationTemplate::create([
+            'academic_period_id' => $period->id, 'evaluation_type_id' => $type->id,
+            'class_type_id' => $this->type->id, 'name' => Str::random(6),
+            'coefficient' => 1, 'max_score' => 20, 'date' => '2025-10-01',
+        ]);
+        $evaluation = Evaluation::create([
+            'evaluation_template_id' => $template->id, 'class_subject_id' => $cs->id,
+            'date' => '2025-10-01', 'status' => 'published',
+        ]);
+        Mark::create([
+            'evaluation_id' => $evaluation->id, 'student_id' => $student->id,
+            'score' => $score, 'absent' => false,
+        ]);
     }
 
     public function test_annual_average_weighted_by_period_weight(): void

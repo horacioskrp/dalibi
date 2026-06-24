@@ -36,6 +36,7 @@ use App\Http\Controllers\Eleves\StudentController;
 use App\Http\Controllers\Eleves\StudentScholarshipController;
 use App\Http\Controllers\Comptabilite\ExpenseController;
 use App\Http\Controllers\Notes\GradeController;
+use App\Http\Controllers\Notes\BulletinController;
 use App\Http\Controllers\Administration\SubjectAssignmentController;
 use App\Http\Controllers\Parametres\SubjectController;
 use App\Http\Controllers\Dashboard\DashboardController;
@@ -170,6 +171,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('grades', [GradeController::class, 'index'])->middleware('can:view_grades')->name('grades.index');
     Route::post('grades', [GradeController::class, 'store'])->middleware('can:create_grades')->name('grades.store');
     Route::get('grades/student/{student}', [GradeController::class, 'student'])->middleware('can:view_grades')->name('grades.student');
+
+    // Bulletins (préparation, validation/snapshot, téléchargement PDF)
+    Route::get('bulletins', [BulletinController::class, 'index'])->middleware('can:view_grades')->name('bulletins.index');
+    Route::post('bulletins/validate', [BulletinController::class, 'validateClass'])->middleware('can:create_grades')->name('bulletins.validate');
+    Route::get('bulletins/{student}/download', [BulletinController::class, 'download'])->middleware('can:view_grades')->name('bulletins.download');
 
     // Administration Routes
     Route::resource('roles', RoleController::class)->middleware('can:manage_roles_permissions');

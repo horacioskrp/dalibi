@@ -136,6 +136,114 @@ class GradingService
     }
 
     /**
+     * Notes Classe (contrôle continu) et Composition d'une matière, dérivées des évaluations.
+     * Chaque note est normalisée sur 20 et pondérée par le coefficient du modèle d'évaluation.
+     *
+     * @return array{classe: float|null, compo: float|null}
+     */
+    public function subjectClasseCompo(ClassSubject $classSubject, string $studentId, string $periodId): array
+    {
+        $evaluations = $classSubject->evaluations()
+            ->whereHas('template', fn ($q) => $q->where('academic_period_id', $periodId))
+            ->with([
+                'template:id,coefficient,max_score,evaluation_type_id',
+                'template.evaluationType:id,category',
+                'marks' => fn ($q) => $q->where('student_id', $studentId),
+            ])
+            ->get();
+
+        $buckets = ['continu' => ['w' => 0.0, 'sum' => 0.0], 'composition' => ['w' => 0.0, 'sum' => 0.0]];
+
+        foreach ($evaluations as $evaluation) {
+            $mark = $evaluation->marks->first();
+            if (! $mark || $mark->absent || $mark->score === null) {
+                continue;
+            }
+
+            $template   = $evaluation->template;
+            $max        = (float) ($template->max_score ?: 20);
+            $coeff      = (float) ($template->coefficient ?: 1);
+            $category   = $template->evaluationType?->category === 'composition' ? 'composition' : 'continu';
+            $normalized = $max > 0 ? ((float) $mark->score / $max) * 20 : 0.0;
+
+            $buckets[$category]['w']   += $coeff;
+            $buckets[$category]['sum'] += $normalized * $coeff;
+        }
+
+        return [
+            'classe' => $buckets['continu']['w'] > 0 ? round($buckets['continu']['sum'] / $buckets['continu']['w'], 2) : null,
+            'compo'  => $buckets['composition']['w'] > 0 ? round($buckets['composition']['sum'] / $buckets['composition']['w'], 2) : null,
+        ];
+    }
+
+    /** Combine note de classe et composition selon la pondération de la configuration. */
+    public function combineClasseCompo(?float $classe, ?float $compo, GradingConfig $config): ?float
+    {
+        if ($classe === null && $compo === null) {
+            return null;
+        }
+        if ($classe === null) {
+            return $this->round($compo, $config);
+        }
+        if ($compo === null) {
+            return $this->round($classe, $config);
+        }
+
+        $cw    = (float) $config->class_weight;
+        $pw    = (float) $config->comp_weight;
+        $total = $cw + $pw;
+
+        return $total > 0 ? $this->round(($classe * $cw + $compo * $pw) / $total, $config) : null;
+    }
+
+    /** Moyenne matière (Classe/Compo combinées) à partir des évaluations. */
+    public function subjectMoyenne(ClassSubject $classSubject, string $studentId, string $periodId, GradingConfig $config): ?float
+    {
+        $cc = $this->subjectClasseCompo($classSubject, $studentId, $periodId);
+
+        return $this->combineClasseCompo($cc['classe'], $cc['compo'], $config);
+    }
+
+    /**
+     * Moyenne générale de période calculée à partir des évaluations (Classe/Compo).
+     *
+     * @param  Collection<int, ClassSubject>  $classSubjects
+     * @return array{average: float|null, total_points: float, total_coeff: float}
+     */
+    public function periodAverageFromEvaluations(string $studentId, string $periodId, Collection $classSubjects, GradingConfig $config): array
+    {
+        $totalCoeff = 0.0;
+        $weighted   = 0.0;
+
+        foreach ($classSubjects as $classSubject) {
+            $moyenne = $this->subjectMoyenne($classSubject, $studentId, $periodId, $config);
+            if ($moyenne === null) {
+                continue;
+            }
+            $coeff       = (float) $classSubject->coefficient;
+            $totalCoeff += $coeff;
+            $weighted   += $moyenne * $coeff;
+        }
+
+        return [
+            'average'      => $totalCoeff > 0 ? $this->round($weighted / $totalCoeff, $config) : null,
+            'total_points' => round($weighted, $config->round_precision),
+            'total_coeff'  => $totalCoeff,
+        ];
+    }
+
+    /**
+     * Attribue des rangs à une liste [{student_id, average}].
+     *
+     * @param  Collection<int, array{student_id: mixed, average: float|null}>  $rows
+     * @return Collection<string, array{average: float|null, rank: int|null}>
+     */
+    public function rank(Collection $rows): Collection
+    {
+        return $this->assignRanks($rows);
+    }
+
+    /**
      * @param  Collection<string, mixed>  $scores  note indexée par class_subject_id
      * @param  Collection<string, mixed>  $coeffs  coefficient indexé par class_subject_id
      * @return array{average: float|null, total_points: float, total_coeff: float}
