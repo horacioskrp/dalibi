@@ -1,5 +1,5 @@
 import { Head, router, useForm } from '@inertiajs/react';
-import { Plus, Tag as TagIcon, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Search, Tag as TagIcon, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import {
     AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -10,17 +10,33 @@ import {
     Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import {
+    Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from '@/components/ui/table';
 import { route } from '@/helpers/route';
 import AppLayout from '@/layouts/app-layout';
 
 interface Tag { id: string; name: string; color: string; documents_count: number; }
-interface Props { tags: Tag[]; }
+interface PaginatedTags {
+    data: Tag[];
+    current_page: number;
+    from: number;
+    last_page: number;
+    per_page: number;
+    to: number;
+    total: number;
+}
+interface Props {
+    tags: PaginatedTags;
+    filters: { search?: string };
+}
 
 const COLORS = ['#64748b', '#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899'];
 
-export default function Tags({ tags }: Readonly<Props>) {
+export default function Tags({ tags, filters }: Readonly<Props>) {
     const [deleteId, setDeleteId] = useState<string | null>(null);
     const [createOpen, setCreateOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState(filters.search || '');
 
     const { data, setData, post, processing, errors, reset } = useForm({ name: '', color: COLORS[0] });
 
@@ -38,58 +54,146 @@ export default function Tags({ tags }: Readonly<Props>) {
         router.put(route('archives.tags.update', tag.id), { name: tag.name, color }, { preserveScroll: true });
     };
 
+    const handleSearch = () => {
+        router.get(route('archives.tags.index'), { search: searchQuery }, { preserveScroll: true, replace: true });
+    };
+
+    const handleClearSearch = () => {
+        setSearchQuery('');
+        router.get(route('archives.tags.index'), {}, { preserveScroll: true, replace: true });
+    };
+
+    const goToPage = (page: number) => {
+        router.get(route('archives.tags.index'), { search: searchQuery, page }, { preserveScroll: true });
+    };
+
     return (
         <AppLayout>
             <Head title="Tags d'archivage" />
-            <div className="w-full max-w-3xl mx-auto space-y-6">
+            <div className="space-y-6">
 
+                {/* Header */}
                 <div className="flex items-start justify-between gap-4 flex-wrap">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight text-gray-900 flex items-center gap-2">
-                            <TagIcon className="w-7 h-7 text-blue-600" /> Tags d'archivage
+                        <h1 className="text-4xl font-bold tracking-tight text-gray-900 flex items-center gap-3">
+                            <TagIcon className="h-7 w-7 text-blue-600 shrink-0" /> Tags d'archivage
                         </h1>
-                        <p className="mt-2 text-gray-500">{tags.length} tag(s) — organisez les documents par mots-clés réutilisables.</p>
+                        <p className="mt-2 text-lg text-gray-600">Organisez les documents archivés par mots-clés réutilisables.</p>
                     </div>
-                    <Button onClick={openCreate} className="bg-blue-600 hover:bg-blue-700 gap-2">
-                        <Plus className="w-4 h-4" /> Nouveau tag
+                    <Button onClick={openCreate} className="gap-2 bg-blue-600 hover:bg-blue-700">
+                        <Plus className="w-5 h-5" /> Nouveau tag
                     </Button>
                 </div>
 
-                {/* Liste */}
-                <div className="bg-white rounded-2xl shadow-sm ring-1 ring-gray-100 overflow-hidden">
-                    {tags.length === 0 ? (
-                        <div className="text-center py-16 text-gray-400">
-                            <TagIcon className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                            <p className="text-sm">Aucun tag pour le moment.</p>
-                            <Button onClick={openCreate} variant="outline" size="sm" className="mt-4 gap-1">
-                                <Plus className="w-3.5 h-3.5" /> Créer le premier tag
+                {/* Stats */}
+                <div className="bg-linear-to-r from-blue-50 to-cyan-50 rounded-2xl p-6 ring-1 ring-blue-100 shadow-sm">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm font-medium text-gray-600">Tags au total</p>
+                            <p className="text-3xl font-bold text-gray-900 mt-2">{tags.total}</p>
+                        </div>
+                        <TagIcon className="w-12 h-12 text-blue-600 opacity-20" />
+                    </div>
+                </div>
+
+                {/* Search */}
+                <div className="rounded-2xl bg-linear-to-br from-slate-50 to-white p-4 shadow-sm ring-1 ring-slate-100">
+                    <div className="flex gap-2">
+                        <div className="flex-1 relative">
+                            <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                            <Input
+                                placeholder="Rechercher un tag par nom..."
+                                className="pl-10 border-slate-200 focus:border-blue-500"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                            />
+                        </div>
+                        <Button onClick={handleSearch} className="bg-blue-600 hover:bg-blue-700">
+                            <Search className="w-4 h-4" />
+                        </Button>
+                        {searchQuery && (
+                            <Button onClick={handleClearSearch} variant="outline" className="border-slate-200">
+                                <X className="w-4 h-4" />
+                            </Button>
+                        )}
+                    </div>
+                </div>
+
+                {/* Table */}
+                <div className="bg-white rounded-2xl shadow-sm ring-1 ring-slate-100 overflow-hidden">
+                    <Table>
+                        <TableHeader className="bg-gray-50 border-b border-slate-200">
+                            <TableRow>
+                                <TableHead className="text-gray-700 font-semibold">Tag</TableHead>
+                                <TableHead className="text-gray-700 font-semibold">Documents</TableHead>
+                                <TableHead className="text-gray-700 font-semibold">Couleur</TableHead>
+                                <TableHead className="text-gray-700 font-semibold text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {tags.data.length > 0 ? (
+                                tags.data.map((t) => (
+                                    <TableRow key={t.id} className="border-b border-slate-100 hover:bg-blue-50/30">
+                                        <TableCell>
+                                            <span className="text-xs font-medium px-2.5 py-1 rounded-full text-white" style={{ backgroundColor: t.color }}>{t.name}</span>
+                                        </TableCell>
+                                        <TableCell className="text-gray-600">{t.documents_count} document(s)</TableCell>
+                                        <TableCell>
+                                            <div className="flex gap-1" title="Changer la couleur">
+                                                {COLORS.map((c) => (
+                                                    <button key={c} onClick={() => updateColor(t, c)}
+                                                        className={`w-4 h-4 rounded-full transition ${t.color === c ? 'ring-2 ring-offset-1 ring-gray-300' : 'opacity-60 hover:opacity-100'}`}
+                                                        style={{ backgroundColor: c }} aria-label={`Couleur ${c}`} />
+                                                ))}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <div className="flex justify-end gap-2">
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="border-slate-200 text-gray-700 hover:bg-red-50 hover:text-red-600"
+                                                    onClick={() => setDeleteId(t.id)}
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </Button>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="text-center py-10">
+                                        <TagIcon className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+                                        <p className="text-gray-600 font-medium">Aucun tag trouvé</p>
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
+
+                {/* Pagination */}
+                {tags.last_page > 1 && (
+                    <div className="flex items-center justify-between">
+                        <p className="text-sm text-gray-600">
+                            Affichage {tags.from} à {tags.to} sur {tags.total}
+                        </p>
+                        <div className="flex gap-2">
+                            <Button variant="outline" size="sm" className="border-slate-200"
+                                disabled={tags.current_page === 1}
+                                onClick={() => goToPage(tags.current_page - 1)}>
+                                <ChevronLeft className="w-4 h-4" />
+                            </Button>
+                            <Button variant="outline" size="sm" className="border-slate-200"
+                                disabled={tags.current_page === tags.last_page}
+                                onClick={() => goToPage(tags.current_page + 1)}>
+                                <ChevronRight className="w-4 h-4" />
                             </Button>
                         </div>
-                    ) : (
-                        <div className="divide-y divide-gray-50">
-                            {tags.map(t => (
-                                <div key={t.id} className="flex items-center justify-between px-5 py-3.5 hover:bg-gray-50/50">
-                                    <div className="flex items-center gap-3 min-w-0">
-                                        <span className="text-xs font-medium px-2.5 py-1 rounded-full text-white shrink-0" style={{ backgroundColor: t.color }}>{t.name}</span>
-                                        <span className="text-xs text-gray-400">{t.documents_count} document(s)</span>
-                                    </div>
-                                    <div className="flex items-center gap-3 shrink-0">
-                                        <div className="hidden sm:flex gap-1" title="Changer la couleur">
-                                            {COLORS.map(c => (
-                                                <button key={c} onClick={() => updateColor(t, c)}
-                                                    className={`w-4 h-4 rounded-full transition ${t.color === c ? 'ring-2 ring-offset-1 ring-gray-300' : 'opacity-60 hover:opacity-100'}`}
-                                                    style={{ backgroundColor: c }} aria-label={`Couleur ${c}`} />
-                                            ))}
-                                        </div>
-                                        <Button variant="outline" size="sm" className="border-red-200 text-red-500 hover:bg-red-50" onClick={() => setDeleteId(t.id)}>
-                                            <Trash2 className="w-3.5 h-3.5" />
-                                        </Button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
+                    </div>
+                )}
             </div>
 
             {/* Modal de création */}
@@ -102,13 +206,13 @@ export default function Tags({ tags }: Readonly<Props>) {
                     <form onSubmit={create} className="space-y-4 py-1">
                         <div className="space-y-1.5">
                             <label className="text-sm font-medium text-gray-700">Nom du tag *</label>
-                            <Input autoFocus value={data.name} onChange={e => setData('name', e.target.value)} placeholder="Ex: Contrat, Inspection…" className={errors.name ? 'border-red-400' : ''} />
+                            <Input autoFocus value={data.name} onChange={(e) => setData('name', e.target.value)} placeholder="Ex: Contrat, Inspection…" className={errors.name ? 'border-red-400' : ''} />
                             {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
                         </div>
                         <div className="space-y-1.5">
                             <label className="text-sm font-medium text-gray-700">Couleur</label>
                             <div className="flex flex-wrap gap-2">
-                                {COLORS.map(c => (
+                                {COLORS.map((c) => (
                                     <button type="button" key={c} onClick={() => setData('color', c)}
                                         className={`w-7 h-7 rounded-full transition ${data.color === c ? 'ring-2 ring-offset-2 ring-gray-400' : 'hover:scale-110'}`}
                                         style={{ backgroundColor: c }} aria-label={`Couleur ${c}`} />
