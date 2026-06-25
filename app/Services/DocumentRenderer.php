@@ -212,7 +212,7 @@ class DocumentRenderer
         $size   = (int) ($el['fontSize'] ?? 12);
         $weight = ! empty($el['bold']) ? 'bold' : 'normal';
         $italic = ! empty($el['italic']) ? 'italic' : 'normal';
-        $color  = $el['color'] ?? '#1a1a1a';
+        $color  = $this->cssColor($el['color'] ?? null);
 
         return '<div style="' . $base . "font-size:{$size}px;font-weight:{$weight};font-style:{$italic};color:{$color};line-height:1.3;\">" . $content . '</div>';
     }
@@ -238,7 +238,7 @@ class DocumentRenderer
             if (trim($text) === '') {
                 return '';
             }
-            $color   = $wm['color'] ?? '#1a1a1a';
+            $color   = $this->cssColor($wm['color'] ?? null);
             $content = '<div style="font-size:' . $size . 'px;font-weight:bold;color:' . $color . ';white-space:nowrap;">' . $text . '</div>';
         }
 
@@ -281,6 +281,15 @@ class DocumentRenderer
             <hr class="doc-rule">
         </header>
         HTML;
+    }
+
+    /**
+     * N'autorise qu'une couleur hexadécimale (#rgb…#rrggbbaa) dans les attributs `style`,
+     * sinon couleur par défaut — empêche toute injection HTML via le champ couleur.
+     */
+    protected function cssColor(?string $color): string
+    {
+        return preg_match('/^#[0-9a-fA-F]{3,8}$/', (string) $color) === 1 ? $color : '#1a1a1a';
     }
 
     /** Logo de l'école embarqué en data-URI (compatible dompdf, tout disque). */

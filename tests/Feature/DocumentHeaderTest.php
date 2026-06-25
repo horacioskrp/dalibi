@@ -93,6 +93,37 @@ class DocumentHeaderTest extends TestCase
         $this->assertStringContainsString('CONFIDENTIEL', $html);
     }
 
+    public function test_header_color_is_sanitized_against_injection(): void
+    {
+        $school = School::factory()->create(['name' => 'École']);
+        $config = DocumentHeader::defaultLayout($school);
+        $config['layout']['elements'] = [[
+            'id' => 'a', 'type' => 'text', 'x' => 0, 'y' => 0, 'w' => 200,
+            'content' => 'Test', 'fontSize' => 12, 'bold' => false, 'italic' => false, 'align' => 'left',
+            'color' => '#fff;"></div><script>BAD</script>',
+        ]];
+        $config['watermark']['enabled'] = true;
+        $config['watermark']['color'] = 'red;"><img src=x>';
+        $config['watermark']['text'] = 'WM';
+
+        DocumentHeader::create([
+            'school_id' => $school->id,
+            'layout'    => $config['layout'],
+            'watermark' => $config['watermark'],
+        ]);
+
+        $renderer = app(DocumentRenderer::class);
+        $template = new DocumentTemplate(['header_enabled' => true, 'show_signature' => false, 'content' => '']);
+        $template->setRelation('school', $school->load('documentHeader'));
+
+        $html = $renderer->render($template, $renderer->resolveVariables($school));
+
+        // L'injection est neutralisée : pas de balise injectée, couleur par défaut appliquée.
+        $this->assertStringNotContainsString('<script>BAD', $html);
+        $this->assertStringNotContainsString('<img src=x>', $html);
+        $this->assertStringContainsString('color:#1a1a1a', $html);
+    }
+
     public function test_renderer_falls_back_to_default_header_without_config(): void
     {
         $school = School::factory()->create(['name' => 'Sans Config']);
