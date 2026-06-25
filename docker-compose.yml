@@ -18,7 +18,7 @@ x-app: &app
     DB_PORT: "5432"
     DB_DATABASE: ${DB_DATABASE:-dalibi}
     DB_USERNAME: ${DB_USERNAME:-dalibi}
-    DB_PASSWORD: ${DB_PASSWORD:-change-me}
+    DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD requis}
     QUEUE_CONNECTION: database
   volumes:
     # Persistance des fichiers applicatifs (logos, filigranes, archives, photos, sauvegardes).
@@ -26,6 +26,11 @@ x-app: &app
   depends_on:
     db:
       condition: service_healthy
+  # Durcissement : pas d'escalade de privilèges, aucune capability (image non-root sur port 8080).
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
   restart: unless-stopped
 
 services:
@@ -34,7 +39,7 @@ services:
     environment:
       POSTGRES_DB: ${DB_DATABASE:-dalibi}
       POSTGRES_USER: ${DB_USERNAME:-dalibi}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-change-me}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD requis}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:

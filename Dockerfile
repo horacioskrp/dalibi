@@ -69,7 +69,14 @@ COPY --from=build /app /var/www/html
 # + permissions des dossiers inscriptibles pour l'utilisateur non-root www-data.
 RUN ln -sf storage/app/public public/storage \
     && chown -R www-data:www-data storage bootstrap/cache \
-    && chmod -R 775 storage bootstrap/cache
+    && chmod -R 775 storage bootstrap/cache \
+    # nginx non-root : rend inscriptible le chemin du log d'erreur par défaut (ouvert avant lecture de la config)
+    && mkdir -p /var/lib/nginx/logs \
+    && chown -R www-data:www-data /var/lib/nginx
+
+# Défauts sûrs (surchageables) : jamais de debug par défaut.
+ENV APP_ENV=production \
+    APP_DEBUG=false
 
 # Exécution NON-ROOT (compatible PodSecurity « restricted » : runAsNonRoot).
 USER www-data
