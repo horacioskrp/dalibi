@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AcademicPeriod;
 use App\Models\AcademicYear;
 use App\Models\AttendanceRecord;
+use App\Models\BulletinTemplate;
 use App\Models\Classroom;
 use App\Models\ClassSubject;
 use App\Models\Enrollment;
@@ -105,8 +106,10 @@ class BulletinController extends Controller
         $year   = AcademicYear::where('active', true)->first();
         $class  = Classroom::with('classroomType')->findOrFail($validated['class_id']);
         $period = AcademicPeriod::findOrFail($validated['academic_period_id']);
-        $school = School::query()->first();
-        $config = GradingConfig::resolveOrDefault($school, $class->classroomType);
+        $school   = School::query()->first();
+        $config   = GradingConfig::resolveOrDefault($school, $class->classroomType);
+        $template = BulletinTemplate::resolveOrDefault($school, $class->classroomType);
+        $typeIds  = $template->referencedEvaluationTypeIds();
 
         $classSubjects = $this->classSubjects($class, $year?->id);
         $students      = $this->activeStudents($class->id, $year?->id);
@@ -117,13 +120,19 @@ class BulletinController extends Controller
         $comments    = $this->commentsByStudentSubject($classSubjects->pluck('id'), $period->id);
         $absences    = $this->absencesByStudent($class->id, $period);
 
-        // Matrice des moyennes (Classe/Compo/Moyenne) par matière et par élève.
+        // Matrice des valeurs (Classe/Compo/Moyenne + moyennes par type) par matière et par élève.
         $matrix = [];
         foreach ($classSubjects as $cs) {
             foreach ($students as $s) {
                 $cc  = $this->grading->subjectClasseCompo($cs, $s->id, $period->id);
                 $moy = $this->grading->combineClasseCompo($cc['classe'], $cc['compo'], $config);
-                $matrix[$cs->id][$s->id] = ['classe' => $cc['classe'], 'compo' => $cc['compo'], 'moy' => $moy];
+
+                $byType = [];
+                foreach ($typeIds as $typeId) {
+                    $byType[$typeId] = $this->grading->subjectAverageByType($cs, $s->id, $period->id, $typeId);
+                }
+
+                $matrix[$cs->id][$s->id] = ['classe' => $cc['classe'], 'compo' => $cc['compo'], 'moy' => $moy, 'by_type' => $byType];
             }
         }
 
@@ -134,6 +143,15 @@ class BulletinController extends Controller
         ]);
         $ranking = $this->grading->rank($averages);
 
+        // Statistiques de la classe.
+        $values     = $averages->pluck('average')->filter(fn ($v) => $v !== null);
+        $classStats = [
+            'highest' => $values->isNotEmpty() ? $values->max() : null,
+            'lowest'  => $values->isNotEmpty() ? $values->min() : null,
+            'average' => $values->isNotEmpty() ? round($values->avg(), 2) : null,
+        ];
+        $periodSystem = $class->classroomType?->period_system ?? 'trimestre';
+
         $subjectRanks = [];
         foreach ($classSubjects as $cs) {
             $rows = $students->map(fn ($s) => ['student_id' => $s->id, 'average' => $matrix[$cs->id][$s->id]['moy']]);
@@ -142,7 +160,8 @@ class BulletinController extends Controller
 
         DB::transaction(function () use (
             $students, $classSubjects, $matrix, $subjectRanks, $ranking, $config, $teachers,
-            $comments, $absences, $class, $period, $year, $effectif, $school, $request, $validated
+            $comments, $absences, $class, $period, $year, $effectif, $request, $validated,
+            $template, $classStats, $periodSystem
         ): void {
             foreach ($students as $student) {
                 $lines = [];
@@ -166,6 +185,8 @@ class BulletinController extends Controller
                         'compo'        => $cell['compo'],
                         'moyenne'      => $cell['moy'],
                         'points'       => $points,
+                        'definitive'   => $points,
+                        'by_type'      => $cell['by_type'] ?? [],
                         'rang'         => $subjectRanks[$cs->id]->get($student->id)['rank'] ?? null,
                         'appreciation' => $comments[$student->id . '|' . $cs->id] ?? '',
                         'teacher'      => $teachers[$cs->subject_id] ?? '',
@@ -178,7 +199,7 @@ class BulletinController extends Controller
                 $payload = [
                     'student'      => ['name' => $student->lastname . ' ' . $student->firstname, 'matricule' => $student->matricule],
                     'class'        => ['name' => $class->name],
-                    'period'       => ['name' => $period->name],
+                    'period'       => ['name' => $period->name, 'system' => $periodSystem],
                     'year'         => $year?->year,
                     'effectif'     => $effectif,
                     'absences'     => $absences[$student->id] ?? 0,
@@ -189,6 +210,8 @@ class BulletinController extends Controller
                     'rank'         => $info['rank'],
                     'mention'      => $this->grading->mention($average, $config),
                     'observations' => $validated['observations'] ?? '',
+                    'class_stats'  => $classStats,
+                    'template'     => ['columns' => $template->columns, 'options' => $template->options],
                 ];
 
                 $card = ReportCard::firstOrNew([

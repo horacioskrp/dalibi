@@ -143,16 +143,42 @@ class GradingService
      */
     public function subjectClasseCompo(ClassSubject $classSubject, string $studentId, string $periodId): array
     {
+        return [
+            'classe' => $this->subjectAverageByType($classSubject, $studentId, $periodId, null, 'continu'),
+            'compo'  => $this->subjectAverageByType($classSubject, $studentId, $periodId, null, 'composition'),
+        ];
+    }
+
+    /**
+     * Moyenne d'une matière (normalisée /20, pondérée par le coefficient des évaluations) pour une
+     * période, filtrée par type d'évaluation précis ($typeId) ou par catégorie ($category).
+     * Sans filtre, agrège toutes les évaluations de la matière sur la période.
+     */
+    public function subjectAverageByType(
+        ClassSubject $classSubject,
+        string $studentId,
+        string $periodId,
+        ?string $typeId = null,
+        ?string $category = null,
+    ): ?float {
         $evaluations = $classSubject->evaluations()
-            ->whereHas('template', fn ($q) => $q->where('academic_period_id', $periodId))
+            ->whereHas('template', function ($q) use ($periodId, $typeId, $category) {
+                $q->where('academic_period_id', $periodId);
+                if ($typeId) {
+                    $q->where('evaluation_type_id', $typeId);
+                }
+                if ($category) {
+                    $q->whereHas('evaluationType', fn ($t) => $t->where('category', $category));
+                }
+            })
             ->with([
-                'template:id,coefficient,max_score,evaluation_type_id',
-                'template.evaluationType:id,category',
+                'template:id,coefficient,max_score',
                 'marks' => fn ($q) => $q->where('student_id', $studentId),
             ])
             ->get();
 
-        $buckets = ['continu' => ['w' => 0.0, 'sum' => 0.0], 'composition' => ['w' => 0.0, 'sum' => 0.0]];
+        $weight = 0.0;
+        $sum    = 0.0;
 
         foreach ($evaluations as $evaluation) {
             $mark = $evaluation->marks->first();
@@ -160,20 +186,15 @@ class GradingService
                 continue;
             }
 
-            $template   = $evaluation->template;
-            $max        = (float) ($template->max_score ?: 20);
-            $coeff      = (float) ($template->coefficient ?: 1);
-            $category   = $template->evaluationType?->category === 'composition' ? 'composition' : 'continu';
+            $max        = (float) ($evaluation->template->max_score ?: 20);
+            $coeff      = (float) ($evaluation->template->coefficient ?: 1);
             $normalized = $max > 0 ? ((float) $mark->score / $max) * 20 : 0.0;
 
-            $buckets[$category]['w']   += $coeff;
-            $buckets[$category]['sum'] += $normalized * $coeff;
+            $weight += $coeff;
+            $sum    += $normalized * $coeff;
         }
 
-        return [
-            'classe' => $buckets['continu']['w'] > 0 ? round($buckets['continu']['sum'] / $buckets['continu']['w'], 2) : null,
-            'compo'  => $buckets['composition']['w'] > 0 ? round($buckets['composition']['sum'] / $buckets['composition']['w'], 2) : null,
-        ];
+        return $weight > 0 ? round($sum / $weight, 2) : null;
     }
 
     /** Combine note de classe et composition selon la pondération de la configuration. */

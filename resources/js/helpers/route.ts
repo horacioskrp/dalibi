@@ -249,6 +249,8 @@ export function route(name: string, params?: any): string {
         'bulletins.index':    '/bulletins',
         'bulletins.validate': '/bulletins/validate',
         'bulletins.download': `/bulletins/${params}/download`,
+        'bulletin-templates.edit':   '/settings/bulletin-template',
+        'bulletin-templates.update': '/settings/bulletin-template',
 
         // Evaluations lock / date / planning
         'evaluations.toggle-lock':    `/evaluations/${params}/lock`,
