@@ -75,6 +75,7 @@ class BulletinTemplate extends Model
         return [
             'show_class_stats'     => true,
             'show_period_recap'    => false,
+            'show_discipline'      => false,
             'nb_text'              => "Il n'est délivré qu'un seul bulletin.",
             'signataire_titulaire' => 'Le Titulaire',
             'signataire_chef'      => "Le Chef d'Établissement",

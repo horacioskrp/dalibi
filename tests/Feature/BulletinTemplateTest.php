@@ -123,13 +123,48 @@ class BulletinTemplateTest extends TestCase
         return $s;
     }
 
-    private function markFor(Student $student, EvaluationType $type, float $score): void
+    private function markFor(Student $student, EvaluationType $type, float $score, ?ClassSubject $cs = null): void
     {
         $template = EvaluationTemplate::create([
             'academic_period_id' => $this->period->id, 'evaluation_type_id' => $type->id, 'class_type_id' => $this->type->id,
             'name' => Str::random(6), 'coefficient' => 1, 'max_score' => 20, 'date' => '2025-10-01',
         ]);
-        $evaluation = Evaluation::create(['evaluation_template_id' => $template->id, 'class_subject_id' => $this->cs->id, 'date' => '2025-10-01', 'status' => 'published']);
+        $evaluation = Evaluation::create(['evaluation_template_id' => $template->id, 'class_subject_id' => ($cs ?? $this->cs)->id, 'date' => '2025-10-01', 'status' => 'published']);
         Mark::create(['evaluation_id' => $evaluation->id, 'student_id' => $student->id, 'score' => $score, 'absent' => false]);
+    }
+
+    public function test_groups_discipline_and_recap_render(): void
+    {
+        $continu = EvaluationType::create(['name' => 'Devoir', 'category' => 'continu']);
+
+        $optSubject = Subject::create(['name' => 'Dessin', 'code' => 'DES']);
+        $optCs = ClassSubject::create([
+            'class_id' => $this->class->id, 'subject_id' => $optSubject->id,
+            'coefficient' => 1, 'group' => 'facultatif', 'academic_year_id' => $this->year->id,
+        ]);
+
+        $options = BulletinTemplate::defaultOptions();
+        $options['show_discipline'] = true;
+        $options['show_period_recap'] = true;
+        BulletinTemplate::create([
+            'school_id' => $this->school->id, 'classroom_type_id' => null, 'name' => 'Complet',
+            'is_active' => true, 'columns' => BulletinTemplate::defaultColumns(), 'options' => $options,
+        ]);
+
+        $student = $this->student();
+        $this->markFor($student, $continu, 12);                 // Maths (obligatoire)
+        $this->markFor($student, $continu, 14, $optCs);         // Dessin (facultatif)
+
+        $this->actingAs($this->admin())
+            ->post(route('bulletins.validate'), ['class_id' => $this->class->id, 'academic_period_id' => $this->period->id])
+            ->assertRedirect();
+
+        $card = ReportCard::where('student_id', $student->id)->firstOrFail();
+        $html = app(BulletinRenderer::class)->render($card->load('student'), $this->school);
+
+        $this->assertStringContainsString('Matières facultatives', $html);
+        $this->assertStringContainsString('Retards', $html);
+        $this->assertStringContainsString('Moyenne annuelle', $html);
+        $this->assertSame('facultatif', $card->payload['lines'][1]['group']);
     }
 }

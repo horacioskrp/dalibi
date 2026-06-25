@@ -30,11 +30,18 @@ class ClassSubject extends Model
         'class_id',
         'subject_id',
         'coefficient',
+        'group',
         'academic_year_id',
     ];
 
     protected $casts = [
         'coefficient' => 'decimal:2',
+    ];
+
+    /** Groupes de matières (bulletin). */
+    public const GROUPS = [
+        'obligatoire' => 'Matières obligatoires',
+        'facultatif'  => 'Matières facultatives',
     ];
 
     /**

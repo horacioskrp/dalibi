@@ -151,6 +151,22 @@ class BulletinController extends Controller
             'average' => $values->isNotEmpty() ? round($values->avg(), 2) : null,
         ];
         $periodSystem = $class->classroomType?->period_system ?? 'trimestre';
+        $retards      = $this->retardsByStudent($class->id, $period);
+
+        // Récapitulatif inter-périodes + annuel (classements précalculés une fois).
+        $allPeriods     = AcademicPeriod::forClassType($year?->id, $class->classroom_type_id);
+        $periodRankings = [];
+        foreach ($allPeriods as $pp) {
+            $rows = $students->map(fn ($s) => [
+                'student_id' => $s->id,
+                'average'    => $this->grading->periodAverageFromEvaluations($s->id, $pp->id, $classSubjects, $config)['average'],
+            ]);
+            $periodRankings[$pp->id] = $this->grading->rank($rows);
+        }
+        $annualRanking = $this->grading->rank($students->map(fn ($s) => [
+            'student_id' => $s->id,
+            'average'    => $this->grading->annualAverage($s->id, $allPeriods, $classSubjects, $config),
+        ]));
 
         $subjectRanks = [];
         foreach ($classSubjects as $cs) {
@@ -161,7 +177,7 @@ class BulletinController extends Controller
         DB::transaction(function () use (
             $students, $classSubjects, $matrix, $subjectRanks, $ranking, $config, $teachers,
             $comments, $absences, $class, $period, $year, $effectif, $request, $validated,
-            $template, $classStats, $periodSystem
+            $template, $classStats, $periodSystem, $retards, $allPeriods, $periodRankings, $annualRanking
         ): void {
             foreach ($students as $student) {
                 $lines = [];
@@ -180,6 +196,7 @@ class BulletinController extends Controller
 
                     $lines[] = [
                         'subject'      => $cs->subject?->name ?? '',
+                        'group'        => $cs->group ?? 'obligatoire',
                         'coefficient'  => $coeff,
                         'classe'       => $cell['classe'],
                         'compo'        => $cell['compo'],
@@ -196,6 +213,12 @@ class BulletinController extends Controller
                 $info    = $ranking->get($student->id, ['average' => null, 'rank' => null]);
                 $average = $info['average'];
 
+                $recap = ['periods' => [], 'annual' => $annualRanking->get($student->id, ['average' => null, 'rank' => null])];
+                foreach ($allPeriods as $pp) {
+                    $r = $periodRankings[$pp->id]->get($student->id, ['average' => null, 'rank' => null]);
+                    $recap['periods'][] = ['name' => $pp->name, 'average' => $r['average'], 'rank' => $r['rank']];
+                }
+
                 $payload = [
                     'student'      => ['name' => $student->lastname . ' ' . $student->firstname, 'matricule' => $student->matricule],
                     'class'        => ['name' => $class->name],
@@ -203,6 +226,8 @@ class BulletinController extends Controller
                     'year'         => $year?->year,
                     'effectif'     => $effectif,
                     'absences'     => $absences[$student->id] ?? 0,
+                    'retards'      => $retards[$student->id] ?? 0,
+                    'recap'        => $recap,
                     'lines'        => $lines,
                     'total_coeff'  => $totalCoeff,
                     'total_points' => round($totalPoints, 2),
@@ -307,7 +332,19 @@ class BulletinController extends Controller
     /** @return array<string, int> student_id => nombre d'absences sur la période */
     private function absencesByStudent(string $classId, AcademicPeriod $period): array
     {
-        return AttendanceRecord::where('status', 'absent')
+        return $this->attendanceCountByStudent($classId, $period, 'absent');
+    }
+
+    /** @return array<string, int> student_id => nombre de retards sur la période */
+    private function retardsByStudent(string $classId, AcademicPeriod $period): array
+    {
+        return $this->attendanceCountByStudent($classId, $period, 'late');
+    }
+
+    /** @return array<string, int> */
+    private function attendanceCountByStudent(string $classId, AcademicPeriod $period, string $status): array
+    {
+        return AttendanceRecord::where('status', $status)
             ->whereHas('attendance', fn ($q) => $q->where('class_id', $classId)->where('academic_period_id', $period->id))
             ->get(['student_id'])
             ->countBy('student_id')
