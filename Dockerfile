@@ -21,7 +21,6 @@ COPY --from=composer:2.8 /usr/bin/composer /usr/bin/composer
 WORKDIR /app
 
 # 1) Dépendances PHP — couche mise en cache tant que composer.{json,lock} ne changent pas.
-#    --no-scripts/--no-autoloader car le code source n'est pas encore présent.
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --no-scripts --no-autoloader
 
@@ -33,7 +32,6 @@ RUN npm ci
 COPY . .
 
 # 4) Autoload optimisé (déclenche package:discover) + env minimal + clé temporaire + build des assets.
-#    APP_KEY réel fourni au runtime ; la clé de build est jetée avec le .env.
 RUN cp -n .env.example .env 2>/dev/null || true \
     && composer dump-autoload --no-dev --optimize \
     && php artisan key:generate --force \
@@ -41,7 +39,7 @@ RUN cp -n .env.example .env 2>/dev/null || true \
     && rm -rf node_modules .env
 
 ########################################################################
-# Stage 2 — Runtime : PHP-FPM + Nginx + Supervisor
+# Stage 2 — Runtime : PHP-FPM + Nginx (non-root, Kubernetes-ready)
 ########################################################################
 FROM php:8.3-fpm-alpine AS runtime
 
@@ -55,10 +53,11 @@ RUN apk add --no-cache \
     && apk del .build-deps
 
 # Configuration
-COPY docker/php.ini         /usr/local/etc/php/conf.d/zz-app.ini
-COPY docker/nginx.conf      /etc/nginx/nginx.conf
+COPY docker/php.ini          /usr/local/etc/php/conf.d/zz-app.ini
+COPY docker/php-fpm.conf     /usr/local/etc/php-fpm.d/zz-app.conf
+COPY docker/nginx.conf       /etc/nginx/nginx.conf
 COPY docker/supervisord.conf /etc/supervisord.conf
-COPY docker/entrypoint.sh   /usr/local/bin/entrypoint
+COPY docker/entrypoint.sh    /usr/local/bin/entrypoint
 RUN chmod +x /usr/local/bin/entrypoint
 
 WORKDIR /var/www/html
@@ -66,23 +65,25 @@ WORKDIR /var/www/html
 # Application complète (vendor + assets compilés) depuis l'étape build
 COPY --from=build /app /var/www/html
 
-# Permissions des dossiers inscriptibles
-RUN chown -R www-data:www-data storage bootstrap/cache \
+# Lien de stockage public (créé au build, l'utilisateur runtime n'écrit pas dans public/)
+# + permissions des dossiers inscriptibles pour l'utilisateur non-root www-data.
+RUN ln -sf storage/app/public public/storage \
+    && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
-# Lance par défaut le scheduler + le worker de file d'attente (cf. supervisord.conf).
-# À passer à "false" sur les réplicas web supplémentaires (multi-instances).
-ENV RUN_SCHEDULER=true \
-    RUN_QUEUE=true
+# Exécution NON-ROOT (compatible PodSecurity « restricted » : runAsNonRoot).
+USER www-data
 
-EXPOSE 80
+# Port non privilégié (>1024) servi par nginx.
+EXPOSE 8080
 
-# Sonde de santé (route Laravel /up). wget fourni par busybox (alpine).
+# Sonde de santé (locale/Docker ; sous Kubernetes, utilisez des probes httpGet /up).
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
-    CMD wget -qO- http://127.0.0.1/up >/dev/null 2>&1 || exit 1
-
-# Arrêt gracieux de php-fpm
-STOPSIGNAL SIGQUIT
+    CMD wget -qO- http://127.0.0.1:8080/up >/dev/null 2>&1 || exit 1
 
 ENTRYPOINT ["entrypoint"]
+# Rôle par défaut = web (php-fpm + nginx). Pour les autres rôles, surchargez la commande :
+#   worker     : php artisan queue:work --max-time=3600
+#   scheduler  : php artisan schedule:work   (un seul réplica)
+#   migration  : php artisan migrate --force
 CMD ["supervisord", "-c", "/etc/supervisord.conf"]

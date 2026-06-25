@@ -26,21 +26,17 @@ wait_for_db() {
     echo "  base de données disponible."
 }
 
-# Lien symbolique de stockage public (idempotent)
-php artisan storage:link 2>/dev/null || true
+# Dossiers temporaires de nginx (compatibles emptyDir / readOnlyRootFilesystem)
+mkdir -p /tmp/nginx/client /tmp/nginx/proxy /tmp/nginx/fastcgi /tmp/nginx/uwsgi /tmp/nginx/scgi
+
+# La BD doit être joignable AVANT toute commande artisan : le noyau console
+# (routes/console.php) interroge la table backup_settings pour planifier les sauvegardes.
+wait_for_db
 
 # Caches optimisés avec l'environnement réel du conteneur.
 # NB : pas de `route:cache` — le fichier de routes contient des closures.
 php artisan config:cache
 php artisan view:cache
-
-# ── Migrations & seeding (attente BD si l'une des actions est demandée) ───────
-if [ "${RUN_MIGRATIONS:-false}" = "true" ] \
-    || [ "${SEED_DATABASE:-false}" = "true" ] \
-    || [ "${SEED_REFERENCE:-false}" = "true" ] \
-    || [ "${SEED_PERMISSIONS:-false}" = "true" ]; then
-    wait_for_db
-fi
 
 # Migrations optionnelles (RUN_MIGRATIONS=true)
 if [ "${RUN_MIGRATIONS:-false}" = "true" ]; then

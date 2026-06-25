@@ -1,7 +1,5 @@
 # Dalibi - Logiciel de gestion d'école Open Source
 
-## À propos de ce projet de gestion scolaire
-
 Dalibi est un outil complet libre et open-source de gestion pour les établissements scolaires du Togo et d'Afrique (primaire, collège, lycée). Élèves, notes & bulletins, présences, examens officiels, comptabilité & écolage, emploi du temps, documents PDF, stockage local/S3 et sauvegardes planifiées
 
 ## 🛠️ Stack technique
@@ -227,38 +225,62 @@ Pour activer les sauvegardes planifiées, ajoutez le planificateur Laravel au cr
 
 ## 🐳 Docker
 
-Une image de production (multi-stage : build PHP+Node → runtime **PHP-FPM 8.3 + Nginx + Supervisor**) est fournie.
+Image de production **multi-stage** (build PHP+Node → runtime **PHP-FPM 8.3 + Nginx**), **non-root** (utilisateur `www-data`, port non privilégié **8080**) et **prête pour Kubernetes**.
+
+Le **rôle par défaut** de l'image est le **web** (php-fpm + nginx). Les autres rôles s'obtiennent en **surchargeant la commande** de la même image :
+
+| Rôle | Commande |
+| --- | --- |
+| **web** (défaut) | `supervisord` (php-fpm + nginx) |
+| **worker** (file d'attente) | `php artisan queue:work --max-time=3600` |
+| **scheduler** (sauvegardes planifiées) | `php artisan schedule:work` _(un seul exemplaire)_ |
+| **migration** | `php artisan migrate --force` |
+
+### En local, sans Kubernetes (docker compose)
+
+Un `docker-compose.yml` de référence est fourni : il lance **PostgreSQL + web + worker + scheduler**, mirroir de l'architecture k8s.
 
 ```bash
-# Construire l'image
-docker build -t dalibi .
+# 1) Générer une clé applicative
+docker run --rm dalibi php artisan key:generate --show   # ou : openssl rand -base64 32 → APP_KEY="base64:<valeur>"
 
-# Lancer le conteneur (port 80 interne)
-docker run -d --name dalibi -p 8080:80 \
-  -e APP_KEY="base64:..."            \
-  -e APP_ENV=production -e APP_DEBUG=false \
-  -e APP_URL=http://localhost:8080   \
-  -e DB_CONNECTION=pgsql -e DB_HOST=... -e DB_DATABASE=... -e DB_USERNAME=... -e DB_PASSWORD=... \
-  -e RUN_MIGRATIONS=true             \
-  -e SEED_PERMISSIONS=true           \
-  dalibi
+# 2) Démarrer la base + construire l'image
+APP_KEY="base64:..." docker compose up -d --build db
+
+# 3) Migrer + seeder les données de référence (une seule fois)
+APP_KEY="base64:..." docker compose run --rm migrate
+
+# 4) Lancer l'application (web + worker + scheduler)
+APP_KEY="base64:..." docker compose up -d
 ```
 
-- L'**entrypoint** crée le lien de stockage, met en cache la config et les vues, exécute les migrations et seed selon les variables :
-  | Variable | Effet |
-  | --- | --- |
-  | `RUN_MIGRATIONS=true` | `migrate --force` **+ seed automatique des données de référence** (rôles/permissions **et** catalogues) |
-  | `SEED_REFERENCE=true` | Idem ci-dessus sans relancer les migrations |
-  | `SEED_PERMISSIONS=true` | **Rôles & permissions** uniquement |
-  | `SEED_DATABASE=true` | **Seed global** (`DatabaseSeeder`) : référence **+ données de démo** (comptes de test, élèves fictifs) — _démo/staging uniquement_ |
+L'application est disponible sur **http://localhost:8080** (variable `APP_PORT`). Variables utiles : `APP_KEY` (obligatoire), `DB_*`, `APP_URL`, `APP_PORT`.
 
-    Les **données de référence** (`ReferenceDataSeeder`) sont **idempotentes** et seedées **automatiquement** au déploiement (`RUN_MIGRATIONS=true`) : rôles & permissions, niveaux, types de classes, **classes** (PS → Terminale), matières, catégories de frais, types d'évaluation, bourses. `ReferenceDataSeeder` (prod) ⊂ `DatabaseSeeder` (global/démo).
+> Les fichiers (logos, **filigranes**, **archives**, photos, **sauvegardes**) sont persistés dans le volume `app_storage` (monté sur `storage/app`).
 
-    Les **modèles de documents** nécessitent une école : en prod, créez votre établissement puis lancez `php artisan db:seed --class=DocumentTemplateSeeder`.
+L'**entrypoint** attend la base de données, met en cache config/vues, puis migre/seed selon les variables :
 
-- En **production**, `RUN_MIGRATIONS=true` suffit (jamais `SEED_DATABASE`) ; créez ensuite votre administrateur et vos comptes via Administration → Utilisateurs.
-- Générez une clé avec `php artisan key:generate --show` et passez-la via `APP_KEY`.
-- Pour les **sauvegardes planifiées**, exécutez `php artisan schedule:run` chaque minute (cron de l'hôte ou conteneur dédié).
+| Variable | Effet |
+| --- | --- |
+| `RUN_MIGRATIONS=true` | `migrate --force` **+ seed automatique des données de référence** (rôles/permissions **et** catalogues) |
+| `SEED_REFERENCE=true` | Idem ci-dessus sans relancer les migrations |
+| `SEED_PERMISSIONS=true` | **Rôles & permissions** uniquement |
+| `SEED_DATABASE=true` | **Seed global** (`DatabaseSeeder`) : référence **+ données de démo** (comptes de test, élèves fictifs) — _démo/staging uniquement_ |
+
+Les **données de référence** (`ReferenceDataSeeder`) sont **idempotentes** : rôles & permissions, niveaux, types de classes, **classes** (PS → Terminale), matières, catégories de frais, types d'évaluation, bourses, tags d'archivage, en-tête & modèle de bulletin par défaut. Les **modèles de documents** nécessitent une école : créez votre établissement puis lancez `php artisan db:seed --class=DocumentTemplateSeeder`.
+
+### Sous Kubernetes
+
+L'image est **non-root** (`runAsNonRoot: true` compatible PodSecurity « restricted »), expose le port **8080** et journalise sur **stdout/stderr**. Architecture recommandée — une seule image, plusieurs workloads :
+
+- **Deployment `web`** : commande par défaut, `livenessProbe`/`readinessProbe`/`startupProbe` en `httpGet` sur **`/up`** (la `HEALTHCHECK` Docker est ignorée par k8s). Scalable (HPA).
+- **Deployment `worker`** : `command: ["php","artisan","queue:work","--max-time=3600"]`.
+- **Deployment `scheduler`** : `command: ["php","artisan","schedule:work"]`, **`replicas: 1`** (sinon sauvegardes en double).
+- **Job `migrate`** (hook Helm `pre-upgrade`) : `command: ["php","artisan","migrate","--force"]` ; mettez `RUN_MIGRATIONS=false` sur les pods.
+- **Stockage** : en multi-réplicas, utilisez **S3/R2** (`FILESYSTEM_DISK=s3` + `AWS_*`) ou un volume **RWX** ; un PVC `ReadWriteOnce` ne convient qu'à un seul réplica.
+- **Secrets** : `APP_KEY`, `DB_*`, `AWS_*` via `Secret` ; le reste en `ConfigMap`.
+
+> Production : `RUN_MIGRATIONS` via le Job/one-shot uniquement (jamais `SEED_DATABASE`). Générez `APP_KEY` avec `php artisan key:generate --show`.
 
 ## 👥 Comptes de démonstration (seeder)
 

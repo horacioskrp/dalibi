@@ -1,10 +1,32 @@
-# Déploiement de référence (mono-instance). Adaptez les secrets avant la prod.
+# Déploiement local de référence (sans Kubernetes), calqué sur l'architecture k8s :
+# web + worker (file d'attente) + scheduler + base de données.
 #
-#   APP_KEY=base64:...   docker compose up -d --build
+#   APP_KEY=base64:...  docker compose up -d --build
 #
-# Multi-réplicas / HA : mettez RUN_MIGRATIONS=false sur le service `app`, désactivez
-# le scheduler sur les réplicas supplémentaires (RUN_SCHEDULER=false), et lancez les
-# migrations une seule fois via :   docker compose run --rm migrate
+# Migrations : exécutées une seule fois par le service one-shot `migrate`
+#   docker compose run --rm migrate
+
+x-app: &app
+  build: .
+  environment: &app-env
+    APP_ENV: production
+    APP_DEBUG: "false"
+    APP_KEY: ${APP_KEY:?APP_KEY requis (php artisan key:generate --show)}
+    APP_URL: ${APP_URL:-http://localhost:8080}
+    DB_CONNECTION: pgsql
+    DB_HOST: db
+    DB_PORT: "5432"
+    DB_DATABASE: ${DB_DATABASE:-dalibi}
+    DB_USERNAME: ${DB_USERNAME:-dalibi}
+    DB_PASSWORD: ${DB_PASSWORD:-change-me}
+    QUEUE_CONNECTION: database
+  volumes:
+    # Persistance des fichiers applicatifs (logos, filigranes, archives, photos, sauvegardes).
+    - app_storage:/var/www/html/storage/app
+  depends_on:
+    db:
+      condition: service_healthy
+  restart: unless-stopped
 
 services:
   db:
@@ -22,55 +44,31 @@ services:
       retries: 10
     restart: unless-stopped
 
+  # Conteneur web (php-fpm + nginx) — rôle par défaut de l'image.
   app:
-    build: .
-    depends_on:
-      db:
-        condition: service_healthy
-    environment:
-      APP_ENV: production
-      APP_DEBUG: "false"
-      APP_KEY: ${APP_KEY:?APP_KEY requis (php artisan key:generate --show)}
-      APP_URL: ${APP_URL:-http://localhost:8080}
-      DB_CONNECTION: pgsql
-      DB_HOST: db
-      DB_PORT: "5432"
-      DB_DATABASE: ${DB_DATABASE:-dalibi}
-      DB_USERNAME: ${DB_USERNAME:-dalibi}
-      DB_PASSWORD: ${DB_PASSWORD:-change-me}
-      QUEUE_CONNECTION: database
-      # Mono-instance : migre + seed les données de référence au démarrage.
-      RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
-      RUN_SCHEDULER: ${RUN_SCHEDULER:-true}
-      RUN_QUEUE: ${RUN_QUEUE:-true}
+    <<: *app
     ports:
-      - "${APP_PORT:-8080}:80"
-    volumes:
-      # Persistance des fichiers applicatifs (logos, filigranes, archives, photos, sauvegardes).
-      - app_storage:/var/www/html/storage/app
-    restart: unless-stopped
+      - "${APP_PORT:-8080}:8080"
 
-  # Tâche one-shot de migration (recommandée en multi-réplicas).
+  # Worker de file d'attente.
+  worker:
+    <<: *app
+    command: ["php", "artisan", "queue:work", "--max-time=3600", "--sleep=3", "--tries=3"]
+
+  # Scheduler (tâches planifiées : sauvegardes…). Un seul exemplaire.
+  scheduler:
+    <<: *app
+    command: ["php", "artisan", "schedule:work"]
+
+  # Tâche one-shot de migration (+ données de référence). Lancer explicitement :
   #   docker compose run --rm migrate
   migrate:
-    build: .
+    <<: *app
     profiles: ["tools"]
-    depends_on:
-      db:
-        condition: service_healthy
     environment:
-      APP_ENV: production
-      APP_KEY: ${APP_KEY:?APP_KEY requis}
-      DB_CONNECTION: pgsql
-      DB_HOST: db
-      DB_PORT: "5432"
-      DB_DATABASE: ${DB_DATABASE:-dalibi}
-      DB_USERNAME: ${DB_USERNAME:-dalibi}
-      DB_PASSWORD: ${DB_PASSWORD:-change-me}
+      <<: *app-env
       RUN_MIGRATIONS: "true"
       SEED_REFERENCE: "true"
-      RUN_SCHEDULER: "false"
-      RUN_QUEUE: "false"
     command: ["true"]
     restart: "no"
 
