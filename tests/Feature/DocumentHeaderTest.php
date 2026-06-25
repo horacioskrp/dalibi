@@ -6,6 +6,7 @@ use App\Constants\Roles;
 use App\Models\DocumentHeader;
 use App\Models\DocumentTemplate;
 use App\Models\School;
+use App\Models\Student;
 use App\Models\User;
 use App\Services\DocumentRenderer;
 use Database\Seeders\RolesAndPermissionsSeeder;
@@ -122,6 +123,25 @@ class DocumentHeaderTest extends TestCase
         $this->assertStringNotContainsString('<script>BAD', $html);
         $this->assertStringNotContainsString('<img src=x>', $html);
         $this->assertStringContainsString('color:#1a1a1a', $html);
+    }
+
+    public function test_template_body_escapes_variable_values(): void
+    {
+        $school  = School::factory()->create(['name' => 'École']);
+        $student = new Student([
+            'firstname' => '<img src=x onerror=alert(1)>', 'lastname' => 'X', 'matricule' => 'M1',
+        ]);
+
+        $renderer = app(DocumentRenderer::class);
+        $template = new DocumentTemplate([
+            'header_enabled' => false, 'show_signature' => false, 'content' => '<p>{{eleve.prenom}}</p>',
+        ]);
+        $template->setRelation('school', $school);
+
+        $html = $renderer->render($template, $renderer->resolveVariables($school, $student));
+
+        $this->assertStringNotContainsString('<img src=x', $html); // valeur non injectée brute
+        $this->assertStringContainsString('&lt;img', $html);        // échappée
     }
 
     public function test_renderer_falls_back_to_default_header_without_config(): void
