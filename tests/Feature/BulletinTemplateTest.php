@@ -103,6 +103,68 @@ class BulletinTemplateTest extends TestCase
         $this->assertStringContainsString('Moyenne la plus forte', $html);
     }
 
+    public function test_subsubject_renders_parent_header(): void
+    {
+        $continu = EvaluationType::create(['name' => 'Devoir', 'category' => 'continu']);
+
+        $parent = Subject::create(['name' => 'Français', 'code' => 'FR']);
+        $child  = Subject::create(['name' => 'Dictée', 'code' => 'DICT', 'parent_id' => $parent->id]);
+        $childCs = ClassSubject::create([
+            'class_id' => $this->class->id, 'subject_id' => $child->id,
+            'coefficient' => 1, 'academic_year_id' => $this->year->id,
+        ]);
+
+        BulletinTemplate::create([
+            'school_id' => $this->school->id, 'classroom_type_id' => null, 'name' => 'Std',
+            'is_active' => true, 'columns' => BulletinTemplate::defaultColumns(), 'options' => BulletinTemplate::defaultOptions(),
+        ]);
+
+        $student = $this->student();
+        $this->markFor($student, $continu, 12);            // Maths
+        $this->markFor($student, $continu, 15, $childCs);  // Dictée (sous-matière de Français)
+
+        $this->actingAs($this->admin())
+            ->post(route('bulletins.validate'), ['class_id' => $this->class->id, 'academic_period_id' => $this->period->id])
+            ->assertRedirect();
+
+        $card = ReportCard::where('student_id', $student->id)->firstOrFail();
+        $html = app(BulletinRenderer::class)->render($card->load('student'), $this->school);
+
+        $this->assertStringContainsString('Français', $html);   // en-tête de sous-matière
+        $this->assertStringContainsString('» Dictée', $html);   // enfant indenté
+    }
+
+    public function test_edit_card_updates_appreciation_and_discipline(): void
+    {
+        $continu = EvaluationType::create(['name' => 'Devoir', 'category' => 'continu']);
+        BulletinTemplate::create([
+            'school_id' => $this->school->id, 'classroom_type_id' => null, 'name' => 'Std',
+            'is_active' => true, 'columns' => BulletinTemplate::defaultColumns(), 'options' => BulletinTemplate::defaultOptions(),
+        ]);
+
+        $student = $this->student();
+        $this->markFor($student, $continu, 12);
+
+        $admin = $this->admin();
+        $this->actingAs($admin)->post(route('bulletins.validate'), ['class_id' => $this->class->id, 'academic_period_id' => $this->period->id])->assertRedirect();
+
+        $card = ReportCard::where('student_id', $student->id)->firstOrFail();
+
+        $this->actingAs($admin)->put(route('bulletins.update', $card->id), [
+            'appreciations' => [0 => 'Bon travail'],
+            'observations'  => 'RAS',
+            'decision'      => 'Félicitations',
+            'punitions'     => 2,
+            'exclusions'    => 0,
+        ])->assertRedirect();
+
+        $card->refresh();
+        $this->assertSame('Bon travail', $card->payload['lines'][0]['appreciation']);
+        $this->assertSame('Félicitations', $card->payload['decision']);
+        $this->assertSame(2, $card->payload['punitions']);
+        $this->assertSame('RAS', $card->payload['observations']);
+    }
+
     private function admin(): User
     {
         $u = User::factory()->create();
@@ -165,6 +227,6 @@ class BulletinTemplateTest extends TestCase
         $this->assertStringContainsString('Matières facultatives', $html);
         $this->assertStringContainsString('Retards', $html);
         $this->assertStringContainsString('Moyenne annuelle', $html);
-        $this->assertSame('facultatif', $card->payload['lines'][1]['group']);
+        $this->assertTrue(collect($card->payload['lines'])->contains(fn ($l) => ($l['group'] ?? null) === 'facultatif'));
     }
 }

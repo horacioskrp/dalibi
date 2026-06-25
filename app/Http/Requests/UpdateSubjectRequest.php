@@ -24,6 +24,7 @@ class UpdateSubjectRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'code' => ['required', 'string', 'max:50', Rule::unique('subjects', 'code')->ignore($this->subject)],
             'description' => ['nullable', 'string', 'max:1000'],
+            'parent_id' => ['nullable', 'uuid', 'exists:subjects,id', Rule::notIn([$this->route('subject')?->id])],
         ];
     }
 

@@ -18,6 +18,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
@@ -29,6 +30,7 @@ class Subject extends Model
         'name',
         'code',
         'description',
+        'parent_id',
     ];
 
     /**
@@ -37,5 +39,17 @@ class Subject extends Model
     public function classSubjects(): HasMany
     {
         return $this->hasMany(ClassSubject::class);
+    }
+
+    /** Matière parente (si cette matière est une sous-matière). */
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'parent_id');
+    }
+
+    /** Sous-matières. */
+    public function children(): HasMany
+    {
+        return $this->hasMany(self::class, 'parent_id');
     }
 }

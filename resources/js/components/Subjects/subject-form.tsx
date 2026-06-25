@@ -1,29 +1,37 @@
 import { BookOpen, Save, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 
 export interface SubjectFormData {
     name: string;
     code: string;
     description: string;
+    parent_id: string;
 }
+
+interface ParentSubject { id: string; name: string }
 
 interface SubjectFormProps {
     mode: 'create' | 'edit';
     data: SubjectFormData;
     errors: Record<string, string>;
     processing: boolean;
+    parents?: ParentSubject[];
     onCancel: () => void;
     onSubmit: (event: React.SubmitEvent<HTMLFormElement>) => void;
     setData: <K extends keyof SubjectFormData>(key: K, value: SubjectFormData[K]) => void;
 }
+
+const NO_PARENT = '__none__';
 
 export function SubjectForm({
     mode,
     data,
     errors,
     processing,
+    parents = [],
     onCancel,
     onSubmit,
     setData,
@@ -74,6 +82,24 @@ export function SubjectForm({
                             className={errors.name ? 'border-red-500 bg-red-50/40' : 'border-gray-200 bg-white focus-visible:ring-blue-500'}
                         />
                         {errors.name && <p className="text-sm text-red-600 mt-1">{errors.name}</p>}
+                    </div>
+
+                    <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-900 mb-2">Matière parente (sous-matière)</label>
+                        <Select
+                            value={data.parent_id || NO_PARENT}
+                            onValueChange={(v) => setData('parent_id', v === NO_PARENT ? '' : v)}
+                            disabled={processing}
+                        >
+                            <SelectTrigger className="border-gray-200 bg-white">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value={NO_PARENT}>Aucune (matière principale)</SelectItem>
+                                {parents.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                        <p className="text-xs text-gray-500 mt-1">Rattachez cette matière à une matière principale pour en faire une sous-matière (ex. « Dictée » sous « Français »).</p>
                     </div>
 
                     <div className="md:col-span-2">

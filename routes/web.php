@@ -176,6 +176,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('bulletins', [BulletinController::class, 'index'])->middleware('can:view_grades')->name('bulletins.index');
     Route::post('bulletins/validate', [BulletinController::class, 'validateClass'])->middleware('can:create_grades')->name('bulletins.validate');
     Route::get('bulletins/{student}/download', [BulletinController::class, 'download'])->middleware('can:view_grades')->name('bulletins.download');
+    Route::get('bulletins/{reportCard}/edit', [BulletinController::class, 'editCard'])->middleware('can:create_grades')->name('bulletins.edit');
+    Route::put('bulletins/{reportCard}', [BulletinController::class, 'updateCard'])->middleware('can:create_grades')->name('bulletins.update');
 
     // Modèle de bulletin (colonnes configurables)
     Route::get('settings/bulletin-template', [\App\Http\Controllers\Parametres\BulletinTemplateController::class, 'edit'])->middleware('can:view_grades')->name('bulletin-templates.edit');

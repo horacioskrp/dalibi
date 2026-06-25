@@ -88,7 +88,14 @@ class BulletinRenderer
 
             $tc = 0.0;
             $tp = 0.0;
+            $lastParent = null;
             foreach ($grouped[$g] as $line) {
+                $parent = $line['parent'] ?? null;
+                if ($parent && $parent !== $lastParent) {
+                    $html .= "<tr class=\"bul-subhead\"><td class=\"left\" colspan=\"{$colspan}\">" . e($parent) . '</td></tr>';
+                }
+                $lastParent = $parent;
+
                 $html .= '<tr>' . $this->cells($columns, $line) . '</tr>';
                 $tc += (float) ($line['coefficient'] ?? 0);
                 $tp += (float) ($line['definitive'] ?? 0);
@@ -146,7 +153,7 @@ class BulletinRenderer
         $source = $col['source'] ?? null;
 
         return match ($type) {
-            'subject'      => e($line['subject'] ?? ''),
+            'subject'      => (! empty($line['parent']) ? '» ' : '') . e($line['subject'] ?? ''),
             'coefficient'  => $this->num($line['coefficient'] ?? null),
             'definitive'   => $this->num($line['definitive'] ?? null),
             'rang'         => $line['rang'] !== null ? e($this->ordinal((int) $line['rang'])) : '',
@@ -239,16 +246,22 @@ class BulletinRenderer
 
     private function disciplineBlock(array $p): string
     {
-        $retards  = e((string) ($p['retards'] ?? 0));
-        $absences = e((string) ($p['absences'] ?? 0));
-        $decision = e(($p['mention'] ?? '') ?: ($p['observations'] ?? '—'));
+        $retards    = e((string) ($p['retards'] ?? 0));
+        $absences   = e((string) ($p['absences'] ?? 0));
+        $punitions  = e((string) ($p['punitions'] ?? 0));
+        $exclusions = e((string) ($p['exclusions'] ?? 0));
+        $decision   = e(($p['decision'] ?? '') ?: ($p['mention'] ?? '—'));
 
         return <<<HTML
         <table class="bul-disc">
             <tr>
                 <td><strong>Retards :</strong> {$retards}</td>
                 <td><strong>Absences :</strong> {$absences}</td>
-                <td><strong>Décision du conseil :</strong> {$decision}</td>
+                <td><strong>Punitions :</strong> {$punitions}</td>
+                <td><strong>Exclusions :</strong> {$exclusions}</td>
+            </tr>
+            <tr>
+                <td colspan="4"><strong>Décision du conseil :</strong> {$decision}</td>
             </tr>
         </table>
         HTML;
@@ -310,6 +323,7 @@ class BulletinRenderer
         .bul-table td.small { font-size: 9px; font-style: italic; color: #444; }
         .bul-table td.strong, .strong { font-weight: bold; }
         .bul-group td { background: #e9eef5; font-weight: bold; text-transform: uppercase; font-size: 10px; }
+        .bul-subhead td { background: #f7f9fc; font-weight: bold; font-size: 10px; }
         .bul-total-row td { background: #f4f4f4; }
         .bul-summary { width: 100%; border-collapse: collapse; margin-top: 10px; }
         .bul-summary td { padding: 4px; font-size: 12px; }

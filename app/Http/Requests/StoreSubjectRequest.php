@@ -23,6 +23,7 @@ class StoreSubjectRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'code' => ['required', 'string', 'max:50', 'unique:subjects,code'],
             'description' => ['nullable', 'string', 'max:1000'],
+            'parent_id' => ['nullable', 'uuid', 'exists:subjects,id'],
         ];
     }
 
