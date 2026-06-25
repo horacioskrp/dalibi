@@ -43,6 +43,7 @@ interface ClassSubject {
 interface AssignedSubject {
     subject_id: string;
     coefficient: number;
+    group?: string;
 }
 
 interface EditProps {
@@ -68,6 +69,12 @@ export default function Edit({
     const [coefficients, setCoefficients] = useState<Record<string, string>>(
         assignedSubjects.reduce((acc, item) => {
             acc[item.subject_id] = String(item.coefficient);
+            return acc;
+        }, {} as Record<string, string>)
+    );
+    const [groups, setGroups] = useState<Record<string, string>>(
+        assignedSubjects.reduce((acc, item) => {
+            acc[item.subject_id] = item.group ?? 'obligatoire';
             return acc;
         }, {} as Record<string, string>)
     );
@@ -111,6 +118,10 @@ export default function Edit({
         }));
     };
 
+    const updateGroup = (subjectId: string, value: string) => {
+        setGroups((prev) => ({ ...prev, [subjectId]: value }));
+    };
+
     const normalizeCoefficient = (value: string): number => {
         return Number.parseFloat(value.replace(',', '.'));
     };
@@ -142,6 +153,7 @@ export default function Edit({
         const assignments = selectedSubjects.map((subjectId) => ({
             subject_id: subjectId,
             coefficient: normalizeCoefficient(coefficients[subjectId] ?? '0'),
+            group: groups[subjectId] ?? 'obligatoire',
         }));
 
         router.put(
@@ -346,15 +358,22 @@ export default function Edit({
                                             </p>
                                         </button>
                                         {selectedSubjects.includes(subject.id) && (
-                                            <div className="w-32">
+                                            <div className="flex items-center gap-2">
                                                 <Input
                                                     type="text"
                                                     inputMode="decimal"
                                                     value={coefficients[subject.id] ?? '1'}
                                                     onChange={(e) => updateCoefficient(subject.id, e.target.value)}
                                                     placeholder="Coef"
-                                                    className={errors[`coefficient_${subject.id}`] ? 'border-red-500' : ''}
+                                                    className={`w-20 ${errors[`coefficient_${subject.id}`] ? 'border-red-500' : ''}`}
                                                 />
+                                                <Select value={groups[subject.id] ?? 'obligatoire'} onValueChange={(v) => updateGroup(subject.id, v)}>
+                                                    <SelectTrigger className="w-36 h-9"><SelectValue /></SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="obligatoire">Obligatoire</SelectItem>
+                                                        <SelectItem value="facultatif">Facultatif</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
                                             </div>
                                         )}
                                     </div>

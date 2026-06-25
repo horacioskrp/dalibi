@@ -6,6 +6,7 @@ use App\Constants\Roles;
 use App\Models\DocumentHeader;
 use App\Models\DocumentTemplate;
 use App\Models\School;
+use App\Models\Student;
 use App\Models\User;
 use App\Services\DocumentRenderer;
 use Database\Seeders\RolesAndPermissionsSeeder;
@@ -91,6 +92,56 @@ class DocumentHeaderTest extends TestCase
         $this->assertStringContainsString('École Custom', $html);       // {{ecole.nom}} interpolé
         $this->assertStringContainsString('position:fixed', $html);     // filigrane
         $this->assertStringContainsString('CONFIDENTIEL', $html);
+    }
+
+    public function test_header_color_is_sanitized_against_injection(): void
+    {
+        $school = School::factory()->create(['name' => 'École']);
+        $config = DocumentHeader::defaultLayout($school);
+        $config['layout']['elements'] = [[
+            'id' => 'a', 'type' => 'text', 'x' => 0, 'y' => 0, 'w' => 200,
+            'content' => 'Test', 'fontSize' => 12, 'bold' => false, 'italic' => false, 'align' => 'left',
+            'color' => '#fff;"></div><script>BAD</script>',
+        ]];
+        $config['watermark']['enabled'] = true;
+        $config['watermark']['color'] = 'red;"><img src=x>';
+        $config['watermark']['text'] = 'WM';
+
+        DocumentHeader::create([
+            'school_id' => $school->id,
+            'layout'    => $config['layout'],
+            'watermark' => $config['watermark'],
+        ]);
+
+        $renderer = app(DocumentRenderer::class);
+        $template = new DocumentTemplate(['header_enabled' => true, 'show_signature' => false, 'content' => '']);
+        $template->setRelation('school', $school->load('documentHeader'));
+
+        $html = $renderer->render($template, $renderer->resolveVariables($school));
+
+        // L'injection est neutralisée : pas de balise injectée, couleur par défaut appliquée.
+        $this->assertStringNotContainsString('<script>BAD', $html);
+        $this->assertStringNotContainsString('<img src=x>', $html);
+        $this->assertStringContainsString('color:#1a1a1a', $html);
+    }
+
+    public function test_template_body_escapes_variable_values(): void
+    {
+        $school  = School::factory()->create(['name' => 'École']);
+        $student = new Student([
+            'firstname' => '<img src=x onerror=alert(1)>', 'lastname' => 'X', 'matricule' => 'M1',
+        ]);
+
+        $renderer = app(DocumentRenderer::class);
+        $template = new DocumentTemplate([
+            'header_enabled' => false, 'show_signature' => false, 'content' => '<p>{{eleve.prenom}}</p>',
+        ]);
+        $template->setRelation('school', $school);
+
+        $html = $renderer->render($template, $renderer->resolveVariables($school, $student));
+
+        $this->assertStringNotContainsString('<img src=x', $html); // valeur non injectée brute
+        $this->assertStringContainsString('&lt;img', $html);        // échappée
     }
 
     public function test_renderer_falls_back_to_default_header_without_config(): void

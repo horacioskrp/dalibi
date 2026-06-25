@@ -12,17 +12,22 @@ interface Subject {
     name: string;
     code: string;
     description: string | null;
+    parent_id: string | null;
 }
+
+interface ParentSubject { id: string; name: string }
 
 interface EditProps {
     subject: Subject;
+    parents?: ParentSubject[];
 }
 
-export default function Edit({ subject }: Readonly<EditProps>) {
+export default function Edit({ subject, parents = [] }: Readonly<EditProps>) {
     const { data, setData, put, processing, errors } = useForm<SubjectFormData>({
         name: subject.name,
         code: subject.code,
         description: subject.description || '',
+        parent_id: subject.parent_id || '',
     });
 
     const handleSubmit = (event: React.SubmitEvent<HTMLFormElement>) => {
@@ -54,6 +59,7 @@ export default function Edit({ subject }: Readonly<EditProps>) {
                     data={data}
                     errors={errors}
                     processing={processing}
+                    parents={parents}
                     onCancel={() => router.get(route('subjects.index'))}
                     onSubmit={handleSubmit}
                     setData={setData}

@@ -16,30 +16,30 @@ RUN apk add --no-cache \
     && docker-php-ext-install -j"$(nproc)" pdo_pgsql pgsql mbstring bcmath gd zip intl exif pcntl \
     && apk del .build-deps
 
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+COPY --from=composer:2.8 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
 
-# Code source (filtré par .dockerignore)
+# 1) Dépendances PHP — couche mise en cache tant que composer.{json,lock} ne changent pas.
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --no-scripts --no-autoloader
+
+# 2) Dépendances front — couche mise en cache tant que package*.json ne changent pas.
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# 3) Code source (filtré par .dockerignore)
 COPY . .
 
-# Environnement minimal pour booter artisan pendant le build
-RUN cp -n .env.example .env 2>/dev/null || true
-
-# Dépendances PHP (production)
-RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader
-
-# Clé temporaire (le build ne sert rien publiquement ; APP_KEY réel fourni au runtime)
-RUN php artisan key:generate --force
-
-# Dépendances front + build des assets (Wayfinder génère les helpers de routes via php artisan)
-RUN npm ci && npm run build
-
-# Artefacts inutiles au runtime
-RUN rm -rf node_modules .env
+# 4) Autoload optimisé (déclenche package:discover) + env minimal + clé temporaire + build des assets.
+RUN cp -n .env.example .env 2>/dev/null || true \
+    && composer dump-autoload --no-dev --optimize \
+    && php artisan key:generate --force \
+    && npm run build \
+    && rm -rf node_modules .env
 
 ########################################################################
-# Stage 2 — Runtime : PHP-FPM + Nginx + Supervisor
+# Stage 2 — Runtime : PHP-FPM + Nginx (non-root, Kubernetes-ready)
 ########################################################################
 FROM php:8.3-fpm-alpine AS runtime
 
@@ -53,10 +53,11 @@ RUN apk add --no-cache \
     && apk del .build-deps
 
 # Configuration
-COPY docker/php.ini         /usr/local/etc/php/conf.d/zz-app.ini
-COPY docker/nginx.conf      /etc/nginx/nginx.conf
+COPY docker/php.ini          /usr/local/etc/php/conf.d/zz-app.ini
+COPY docker/php-fpm.conf     /usr/local/etc/php-fpm.d/zz-app.conf
+COPY docker/nginx.conf       /etc/nginx/nginx.conf
 COPY docker/supervisord.conf /etc/supervisord.conf
-COPY docker/entrypoint.sh   /usr/local/bin/entrypoint
+COPY docker/entrypoint.sh    /usr/local/bin/entrypoint
 RUN chmod +x /usr/local/bin/entrypoint
 
 WORKDIR /var/www/html
@@ -64,11 +65,32 @@ WORKDIR /var/www/html
 # Application complète (vendor + assets compilés) depuis l'étape build
 COPY --from=build /app /var/www/html
 
-# Permissions des dossiers inscriptibles
-RUN chown -R www-data:www-data storage bootstrap/cache \
-    && chmod -R 775 storage bootstrap/cache
+# Lien de stockage public (créé au build, l'utilisateur runtime n'écrit pas dans public/)
+# + permissions des dossiers inscriptibles pour l'utilisateur non-root www-data.
+RUN ln -sf storage/app/public public/storage \
+    && chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache \
+    # nginx non-root : rend inscriptible le chemin du log d'erreur par défaut (ouvert avant lecture de la config)
+    && mkdir -p /var/lib/nginx/logs \
+    && chown -R www-data:www-data /var/lib/nginx
 
-EXPOSE 80
+# Défauts sûrs (surchageables) : jamais de debug par défaut.
+ENV APP_ENV=production \
+    APP_DEBUG=false
+
+# Exécution NON-ROOT (compatible PodSecurity « restricted » : runAsNonRoot).
+USER www-data
+
+# Port non privilégié (>1024) servi par nginx.
+EXPOSE 8080
+
+# Sonde de santé (locale/Docker ; sous Kubernetes, utilisez des probes httpGet /up).
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
+    CMD wget -qO- http://127.0.0.1:8080/up >/dev/null 2>&1 || exit 1
 
 ENTRYPOINT ["entrypoint"]
+# Rôle par défaut = web (php-fpm + nginx). Pour les autres rôles, surchargez la commande :
+#   worker     : php artisan queue:work --max-time=3600
+#   scheduler  : php artisan schedule:work   (un seul réplica)
+#   migration  : php artisan migrate --force
 CMD ["supervisord", "-c", "/etc/supervisord.conf"]

@@ -102,6 +102,7 @@ class ClassSubjectController extends Controller
                     'academic_year_id' => $validated['academic_year_id'],
                 ], [
                     'coefficient' => $assignment['coefficient'],
+                    'group' => $assignment['group'] ?? 'obligatoire',
                 ]);
             }
         });
@@ -152,6 +153,7 @@ class ClassSubjectController extends Controller
             ->map(fn ($assignment) => [
                 'subject_id' => $assignment->subject_id,
                 'coefficient' => (float) $assignment->coefficient,
+                'group' => $assignment->group ?? 'obligatoire',
                 'subject' => $assignment->subject,
             ])
             ->values();
@@ -199,6 +201,7 @@ class ClassSubjectController extends Controller
                     'subject_id' => $assignment['subject_id'],
                     'academic_year_id' => $newAcademicYearId,
                     'coefficient' => $assignment['coefficient'],
+                    'group' => $assignment['group'] ?? 'obligatoire',
                 ]);
             }
         });

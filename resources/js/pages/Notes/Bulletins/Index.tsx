@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { CheckCircle2, Download, FileSpreadsheet, GraduationCap, Lock } from 'lucide-react';
+import { CheckCircle2, Download, FileSpreadsheet, GraduationCap, Lock, Pencil } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +18,7 @@ interface Row {
     rank: number | null;
     mention: string | null;
     validated: boolean;
+    report_card_id: string | null;
 }
 
 interface Props {
@@ -148,13 +149,22 @@ export default function Index({ classrooms, periods, rows, activeYear, filters }
                                                 )}
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                <Button
-                                                    variant="outline" size="sm" className="gap-1.5"
-                                                    disabled={!r.validated}
-                                                    onClick={() => download(r.student_id)}
-                                                >
-                                                    <Download className="w-3.5 h-3.5" /> PDF
-                                                </Button>
+                                                <div className="flex justify-end gap-2">
+                                                    <Button
+                                                        variant="outline" size="sm" className="gap-1.5"
+                                                        disabled={!r.validated || !r.report_card_id}
+                                                        onClick={() => r.report_card_id && router.get(route('bulletins.edit', r.report_card_id))}
+                                                    >
+                                                        <Pencil className="w-3.5 h-3.5" /> Éditer
+                                                    </Button>
+                                                    <Button
+                                                        variant="outline" size="sm" className="gap-1.5"
+                                                        disabled={!r.validated}
+                                                        onClick={() => download(r.student_id)}
+                                                    >
+                                                        <Download className="w-3.5 h-3.5" /> PDF
+                                                    </Button>
+                                                </div>
                                             </TableCell>
                                         </TableRow>
                                     ))}

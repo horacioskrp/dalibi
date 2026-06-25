@@ -17,7 +17,7 @@ class DocumentHeaderController extends Controller
     /** Affiche l'éditeur drag-and-drop de l'en-tête des documents. */
     public function edit(Request $request): Response
     {
-        abort_unless($request->user()->can('view_documents'), 403);
+        abort_unless($request->user()->can('view_document_headers'), 403);
 
         $school = $this->activeSchool();
         $header = $school->documentHeader;
@@ -42,7 +42,7 @@ class DocumentHeaderController extends Controller
     /** Enregistre la disposition + le filigrane (avec image éventuelle). */
     public function update(Request $request): RedirectResponse
     {
-        abort_unless($request->user()->can('edit_documents'), 403);
+        abort_unless($request->user()->can('edit_document_headers'), 403);
 
         $validated = $request->validate([
             'layout'          => ['required', 'string'],

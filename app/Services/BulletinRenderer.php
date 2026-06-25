@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\BulletinTemplate;
+use App\Models\ClassSubject;
 use App\Models\ReportCard;
 use App\Models\School;
 
@@ -35,22 +36,10 @@ class BulletinRenderer
             $head .= "<th class=\"{$align}\" style=\"{$width}\">{$label}</th>";
         }
 
-        $rows = '';
-        foreach ($p['lines'] ?? [] as $line) {
-            $cells = '';
-            foreach ($columns as $col) {
-                $align  = $this->isLeft($col) ? 'left' : 'center';
-                $strong = ($col['type'] ?? '') === 'note' && ($col['source'] ?? '') === 'moyenne' ? ' strong' : '';
-                $small  = in_array($col['type'] ?? '', ['appreciation', 'teacher'], true) ? ' small' : '';
-                $cells .= "<td class=\"{$align}{$strong}{$small}\">" . $this->cell($line, $col) . '</td>';
-            }
-            $rows .= "<tr>{$cells}</tr>";
-        }
-
-        $total = $this->totalRow($columns, $p);
-        $info  = $this->infoBlock($p);
-        $foot  = $this->footBlock($p, $options);
-        $css   = $this->css();
+        $body = $this->bodyRows($columns, $p);
+        $info = $this->infoBlock($p);
+        $foot = $this->footBlock($p, $options);
+        $css  = $this->css();
         $title = e(mb_strtoupper('Bulletin — ' . ($p['period']['name'] ?? '')));
 
         return <<<HTML
@@ -64,10 +53,7 @@ class BulletinRenderer
             {$info}
             <table class="bul-table">
                 <thead><tr>{$head}</tr></thead>
-                <tbody>
-                    {$rows}
-                    {$total}
-                </tbody>
+                <tbody>{$body}</tbody>
             </table>
             {$foot}
         </body>
@@ -75,26 +61,105 @@ class BulletinRenderer
         HTML;
     }
 
+    /** Corps du tableau, regroupé par groupe de matières (TOTAL par groupe si plusieurs). */
+    private function bodyRows(array $columns, array $p): string
+    {
+        $grouped = [];
+        foreach ($p['lines'] ?? [] as $line) {
+            $grouped[$line['group'] ?? 'obligatoire'][] = $line;
+        }
+
+        $keys = array_values(array_filter(['obligatoire', 'facultatif'], fn ($g) => ! empty($grouped[$g])));
+        foreach (array_keys($grouped) as $g) {
+            if (! in_array($g, $keys, true)) {
+                $keys[] = $g;
+            }
+        }
+
+        $multi   = count($keys) > 1;
+        $colspan = count($columns);
+        $html    = '';
+
+        foreach ($keys as $g) {
+            if ($multi) {
+                $label = e(ClassSubject::GROUPS[$g] ?? ucfirst($g));
+                $html .= "<tr class=\"bul-group\"><td class=\"left\" colspan=\"{$colspan}\">{$label}</td></tr>";
+            }
+
+            $tc = 0.0;
+            $tp = 0.0;
+            $lastParent = null;
+            foreach ($grouped[$g] as $line) {
+                $parent = $line['parent'] ?? null;
+                if ($parent && $parent !== $lastParent) {
+                    $html .= "<tr class=\"bul-subhead\"><td class=\"left\" colspan=\"{$colspan}\">" . e($parent) . '</td></tr>';
+                }
+                $lastParent = $parent;
+
+                $html .= '<tr>' . $this->cells($columns, $line) . '</tr>';
+                $tc += (float) ($line['coefficient'] ?? 0);
+                $tp += (float) ($line['definitive'] ?? 0);
+            }
+
+            $totalLabel = $multi ? 'TOTAL ' . ($g === 'facultatif' ? '(facult.)' : '(oblig.)') : 'TOTAL';
+            $html .= $this->totalRow($columns, $tc, $tp, $totalLabel);
+        }
+
+        return $html;
+    }
+
+    private function cells(array $columns, array $line): string
+    {
+        $cells = '';
+        foreach ($columns as $col) {
+            $align  = $this->isLeft($col) ? 'left' : 'center';
+            $strong = ($col['type'] ?? '') === 'note' && ($col['source'] ?? '') === 'moyenne' ? ' strong' : '';
+            $small  = in_array($col['type'] ?? '', ['appreciation', 'teacher'], true) ? ' small' : '';
+            $cells .= "<td class=\"{$align}{$strong}{$small}\">" . $this->cell($line, $col) . '</td>';
+        }
+
+        return $cells;
+    }
+
+    private function totalRow(array $columns, float $totalCoeff, float $totalPoints, string $label): string
+    {
+        $cells = '';
+        $first = true;
+        foreach ($columns as $col) {
+            if ($first) {
+                $cells .= '<td class="left strong">' . e($label) . '</td>';
+                $first = false;
+                continue;
+            }
+            $value = match ($col['type'] ?? '') {
+                'coefficient' => $this->num($totalCoeff),
+                'definitive'  => $this->num($totalPoints),
+                default       => '',
+            };
+            $cells .= '<td class="center strong">' . $value . '</td>';
+        }
+
+        return "<tr class=\"bul-total-row\">{$cells}</tr>";
+    }
+
     private function isLeft(array $col): bool
     {
         return in_array($col['type'] ?? '', ['subject', 'appreciation', 'teacher', 'text'], true);
     }
 
-    /** Valeur d'une cellule selon le type/source de la colonne. */
     private function cell(array $line, array $col): string
     {
         $type   = $col['type'] ?? 'text';
         $source = $col['source'] ?? null;
 
         return match ($type) {
-            'subject'      => e($line['subject'] ?? ''),
+            'subject'      => (! empty($line['parent']) ? '» ' : '') . e($line['subject'] ?? ''),
             'coefficient'  => $this->num($line['coefficient'] ?? null),
             'definitive'   => $this->num($line['definitive'] ?? null),
             'rang'         => $line['rang'] !== null ? e($this->ordinal((int) $line['rang'])) : '',
             'appreciation' => e($line['appreciation'] ?? ''),
             'teacher'      => e($line['teacher'] ?? ''),
-            'signature'    => '',
-            'text'         => '',
+            'signature', 'text' => '',
             'note'         => $this->noteValue($line, $source),
             default        => '',
         };
@@ -109,29 +174,7 @@ class BulletinRenderer
             return $this->num($line['by_type'][substr($source, 5)] ?? null);
         }
 
-        return $this->num($line[$source] ?? null); // classe | composition | moyenne
-    }
-
-    private function totalRow(array $columns, array $p): string
-    {
-        $cells = '';
-        $first = true;
-        foreach ($columns as $col) {
-            $type = $col['type'] ?? '';
-            if ($first) {
-                $cells .= '<td class="left strong">TOTAL</td>';
-                $first = false;
-                continue;
-            }
-            $value = match ($type) {
-                'coefficient' => $this->num($p['total_coeff'] ?? null),
-                'definitive'  => $this->num($p['total_points'] ?? null),
-                default       => '',
-            };
-            $cells .= '<td class="center strong">' . $value . '</td>';
-        }
-
-        return "<tr class=\"bul-total-row\">{$cells}</tr>";
+        return $this->num($line[$source] ?? null);
     }
 
     private function infoBlock(array $p): string
@@ -139,7 +182,6 @@ class BulletinRenderer
         $eleve    = e($p['student']['name'] ?? '');
         $classe   = e($p['class']['name'] ?? '');
         $effectif = e((string) ($p['effectif'] ?? ''));
-        $absences = e((string) ($p['absences'] ?? '0'));
         $annee    = e($p['year'] ?? '');
 
         return <<<HTML
@@ -148,11 +190,7 @@ class BulletinRenderer
                 <td><strong>Nom de l'élève :</strong> {$eleve}</td>
                 <td><strong>Classe :</strong> {$classe}</td>
                 <td><strong>Effectif :</strong> {$effectif}</td>
-            </tr>
-            <tr>
-                <td><strong>Année scolaire :</strong> {$annee}</td>
-                <td><strong>Absences :</strong> {$absences}</td>
-                <td></td>
+                <td><strong>Année :</strong> {$annee}</td>
             </tr>
         </table>
         HTML;
@@ -177,7 +215,9 @@ class BulletinRenderer
                 . ' — moyenne de la classe : <strong>' . $this->num($cs['average'] ?? null) . '/20</strong></div>';
         }
 
-        $nbHtml = $nb !== '' ? '<div class="bul-nb">N.B. : ' . $nb . '</div>' : '';
+        $discipline = ! empty($options['show_discipline']) ? $this->disciplineBlock($p) : '';
+        $recap      = ! empty($options['show_period_recap']) ? $this->recapBlock($p) : '';
+        $nbHtml     = $nb !== '' ? '<div class="bul-nb">N.B. : ' . $nb . '</div>' : '';
 
         return <<<HTML
         <table class="bul-summary">
@@ -188,6 +228,8 @@ class BulletinRenderer
             </tr>
         </table>
         {$stats}
+        {$recap}
+        {$discipline}
 
         <div class="bul-obs"><strong>Observations du Chef d'Établissement :</strong> {$obs}</div>
 
@@ -199,6 +241,55 @@ class BulletinRenderer
         </table>
 
         {$nbHtml}
+        HTML;
+    }
+
+    private function disciplineBlock(array $p): string
+    {
+        $retards    = e((string) ($p['retards'] ?? 0));
+        $absences   = e((string) ($p['absences'] ?? 0));
+        $punitions  = e((string) ($p['punitions'] ?? 0));
+        $exclusions = e((string) ($p['exclusions'] ?? 0));
+        $decision   = e(($p['decision'] ?? '') ?: ($p['mention'] ?? '—'));
+
+        return <<<HTML
+        <table class="bul-disc">
+            <tr>
+                <td><strong>Retards :</strong> {$retards}</td>
+                <td><strong>Absences :</strong> {$absences}</td>
+                <td><strong>Punitions :</strong> {$punitions}</td>
+                <td><strong>Exclusions :</strong> {$exclusions}</td>
+            </tr>
+            <tr>
+                <td colspan="4"><strong>Décision du conseil :</strong> {$decision}</td>
+            </tr>
+        </table>
+        HTML;
+    }
+
+    private function recapBlock(array $p): string
+    {
+        $recap = $p['recap'] ?? null;
+        if (! $recap) {
+            return '';
+        }
+
+        $rows = '';
+        foreach ($recap['periods'] ?? [] as $period) {
+            $rows .= '<tr><td class="left">' . e($period['name'] ?? '') . '</td>'
+                . '<td>' . $this->num($period['average'] ?? null) . '/20</td>'
+                . '<td>' . ($period['rank'] !== null ? e($this->ordinal((int) $period['rank'])) : '—') . '</td></tr>';
+        }
+        $annual = $recap['annual'] ?? ['average' => null, 'rank' => null];
+        $rows .= '<tr class="bul-total-row"><td class="left strong">Moyenne annuelle</td>'
+            . '<td class="strong">' . $this->num($annual['average'] ?? null) . '/20</td>'
+            . '<td class="strong">' . ($annual['rank'] !== null ? e($this->ordinal((int) $annual['rank'])) : '—') . '</td></tr>';
+
+        return <<<HTML
+        <table class="bul-recap">
+            <thead><tr><th class="left">Période</th><th>Moyenne</th><th>Rang</th></tr></thead>
+            <tbody>{$rows}</tbody>
+        </table>
         HTML;
     }
 
@@ -231,11 +322,18 @@ class BulletinRenderer
         .bul-table td.center { text-align: center; }
         .bul-table td.small { font-size: 9px; font-style: italic; color: #444; }
         .bul-table td.strong, .strong { font-weight: bold; }
+        .bul-group td { background: #e9eef5; font-weight: bold; text-transform: uppercase; font-size: 10px; }
+        .bul-subhead td { background: #f7f9fc; font-weight: bold; font-size: 10px; }
         .bul-total-row td { background: #f4f4f4; }
         .bul-summary { width: 100%; border-collapse: collapse; margin-top: 10px; }
         .bul-summary td { padding: 4px; font-size: 12px; }
         .bul-summary .big { font-size: 16px; font-weight: bold; }
         .bul-stats { margin-top: 6px; font-size: 11px; }
+        .bul-recap { width: 60%; border-collapse: collapse; margin-top: 10px; }
+        .bul-recap th, .bul-recap td { border: 1px solid #333; padding: 3px 5px; text-align: center; font-size: 10px; }
+        .bul-recap th.left, .bul-recap td.left { text-align: left; }
+        .bul-disc { width: 100%; border-collapse: collapse; margin-top: 8px; }
+        .bul-disc td { border: 1px solid #ccc; padding: 4px 6px; font-size: 11px; }
         .bul-obs { margin-top: 12px; min-height: 28px; }
         .bul-sign { width: 100%; margin-top: 24px; }
         .bul-sign td { width: 50%; text-align: center; vertical-align: top; }
