@@ -72,6 +72,35 @@ class BulletinTest extends TestCase
         return $user;
     }
 
+    private function withRole(string $role): User
+    {
+        $user = User::factory()->create();
+        $user->assignRole($role);
+
+        return $user;
+    }
+
+    public function test_bulletin_permissions_by_role(): void
+    {
+        $payload = ['class_id' => $this->class->id, 'academic_period_id' => $this->period->id];
+
+        // Enseignant : peut consulter, ne peut PAS valider ni configurer le modèle.
+        $teacher = $this->withRole(Roles::TEACHER);
+        $this->actingAs($teacher)->get(route('bulletins.index'))->assertOk();
+        $this->actingAs($teacher)->post(route('bulletins.validate'), $payload)->assertForbidden();
+        $this->actingAs($teacher)->get(route('bulletin-templates.edit'))->assertForbidden();
+
+        // Directeur : peut valider les bulletins et ouvrir le modèle.
+        $director = $this->withRole(Roles::DIRECTOR);
+        $this->actingAs($director)->post(route('bulletins.validate'), $payload)->assertRedirect();
+        $this->actingAs($director)->get(route('bulletin-templates.edit'))->assertOk();
+
+        // Secrétariat : peut consulter/télécharger, pas valider.
+        $secretary = $this->withRole(Roles::SECRETARIAT);
+        $this->actingAs($secretary)->get(route('bulletins.index'))->assertOk();
+        $this->actingAs($secretary)->post(route('bulletins.validate'), $payload)->assertForbidden();
+    }
+
     private function student(): Student
     {
         $u = User::factory()->create();

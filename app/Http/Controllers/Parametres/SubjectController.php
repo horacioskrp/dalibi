@@ -41,7 +41,9 @@ class SubjectController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Parametres/Subjects/Create');
+        return Inertia::render('Parametres/Subjects/Create', [
+            'parents' => Subject::whereNull('parent_id')->orderBy('name')->get(['id', 'name']),
+        ]);
     }
 
     /**
@@ -72,6 +74,7 @@ class SubjectController extends Controller
     {
         return Inertia::render('Parametres/Subjects/Edit', [
             'subject' => $subject,
+            'parents' => Subject::whereNull('parent_id')->where('id', '!=', $subject->id)->orderBy('name')->get(['id', 'name']),
         ]);
     }
 

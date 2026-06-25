@@ -1,0 +1,82 @@
+# Déploiement local de référence (sans Kubernetes), calqué sur l'architecture k8s :
+# web + worker (file d'attente) + scheduler + base de données.
+#
+#   APP_KEY=base64:...  docker compose up -d --build
+#
+# Migrations : exécutées une seule fois par le service one-shot `migrate`
+#   docker compose run --rm migrate
+
+x-app: &app
+  build: .
+  environment: &app-env
+    APP_ENV: production
+    APP_DEBUG: "false"
+    APP_KEY: ${APP_KEY:?APP_KEY requis (php artisan key:generate --show)}
+    APP_URL: ${APP_URL:-http://localhost:8080}
+    DB_CONNECTION: pgsql
+    DB_HOST: db
+    DB_PORT: "5432"
+    DB_DATABASE: ${DB_DATABASE:-dalibi}
+    DB_USERNAME: ${DB_USERNAME:-dalibi}
+    DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD requis}
+    QUEUE_CONNECTION: database
+  volumes:
+    # Persistance des fichiers applicatifs (logos, filigranes, archives, photos, sauvegardes).
+    - app_storage:/var/www/html/storage/app
+  depends_on:
+    db:
+      condition: service_healthy
+  # Durcissement : pas d'escalade de privilèges, aucune capability (image non-root sur port 8080).
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  restart: unless-stopped
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-dalibi}
+      POSTGRES_USER: ${DB_USERNAME:-dalibi}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD requis}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-dalibi} -d ${DB_DATABASE:-dalibi}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # Conteneur web (php-fpm + nginx) — rôle par défaut de l'image.
+  app:
+    <<: *app
+    ports:
+      - "${APP_PORT:-8080}:8080"
+
+  # Worker de file d'attente.
+  worker:
+    <<: *app
+    command: ["php", "artisan", "queue:work", "--max-time=3600", "--sleep=3", "--tries=3"]
+
+  # Scheduler (tâches planifiées : sauvegardes…). Un seul exemplaire.
+  scheduler:
+    <<: *app
+    command: ["php", "artisan", "schedule:work"]
+
+  # Tâche one-shot de migration (+ données de référence). Lancer explicitement :
+  #   docker compose run --rm migrate
+  migrate:
+    <<: *app
+    profiles: ["tools"]
+    environment:
+      <<: *app-env
+      RUN_MIGRATIONS: "true"
+      SEED_REFERENCE: "true"
+    command: ["true"]
+    restart: "no"
+
+volumes:
+  pgdata:
+  app_storage:

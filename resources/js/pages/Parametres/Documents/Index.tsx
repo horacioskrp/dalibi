@@ -1,4 +1,4 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { Award, Eye, FileBadge, FileText, GraduationCap, LayoutTemplate, Pencil, Plus, Star, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import {
@@ -31,6 +31,7 @@ const CATEGORY_META: Record<string, { icon: typeof FileText; color: string; bg: 
 
 export default function Index({ templatesByCategory, categories }: Readonly<Props>) {
     const [deleteId, setDeleteId] = useState<string | null>(null);
+    const canHeader = (usePage().props.auth?.permissions ?? []).includes('view_document_headers');
 
     const onDelete = (id: string) => {
         router.delete(route('document-templates.destroy', id), {
@@ -50,9 +51,11 @@ export default function Index({ templatesByCategory, categories }: Readonly<Prop
                         <p className="mt-2 text-gray-500">Gérez les modèles de certificats, attestations et bulletins exportables en PDF.</p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Button variant="outline" className="gap-2" onClick={() => router.get(route('document-header.edit'))}>
-                            <LayoutTemplate className="w-4 h-4" /> En-tête
-                        </Button>
+                        {canHeader && (
+                            <Button variant="outline" className="gap-2" onClick={() => router.get(route('document-header.edit'))}>
+                                <LayoutTemplate className="w-4 h-4" /> En-tête
+                            </Button>
+                        )}
                         <Button variant="outline" className="gap-2" onClick={() => router.get(route('document-templates.registry'))}>
                             <FileText className="w-4 h-4" /> Registre
                         </Button>

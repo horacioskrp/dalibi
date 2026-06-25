@@ -103,6 +103,68 @@ class BulletinTemplateTest extends TestCase
         $this->assertStringContainsString('Moyenne la plus forte', $html);
     }
 
+    public function test_subsubject_renders_parent_header(): void
+    {
+        $continu = EvaluationType::create(['name' => 'Devoir', 'category' => 'continu']);
+
+        $parent = Subject::create(['name' => 'Français', 'code' => 'FR']);
+        $child  = Subject::create(['name' => 'Dictée', 'code' => 'DICT', 'parent_id' => $parent->id]);
+        $childCs = ClassSubject::create([
+            'class_id' => $this->class->id, 'subject_id' => $child->id,
+            'coefficient' => 1, 'academic_year_id' => $this->year->id,
+        ]);
+
+        BulletinTemplate::create([
+            'school_id' => $this->school->id, 'classroom_type_id' => null, 'name' => 'Std',
+            'is_active' => true, 'columns' => BulletinTemplate::defaultColumns(), 'options' => BulletinTemplate::defaultOptions(),
+        ]);
+
+        $student = $this->student();
+        $this->markFor($student, $continu, 12);            // Maths
+        $this->markFor($student, $continu, 15, $childCs);  // Dictée (sous-matière de Français)
+
+        $this->actingAs($this->admin())
+            ->post(route('bulletins.validate'), ['class_id' => $this->class->id, 'academic_period_id' => $this->period->id])
+            ->assertRedirect();
+
+        $card = ReportCard::where('student_id', $student->id)->firstOrFail();
+        $html = app(BulletinRenderer::class)->render($card->load('student'), $this->school);
+
+        $this->assertStringContainsString('Français', $html);   // en-tête de sous-matière
+        $this->assertStringContainsString('» Dictée', $html);   // enfant indenté
+    }
+
+    public function test_edit_card_updates_appreciation_and_discipline(): void
+    {
+        $continu = EvaluationType::create(['name' => 'Devoir', 'category' => 'continu']);
+        BulletinTemplate::create([
+            'school_id' => $this->school->id, 'classroom_type_id' => null, 'name' => 'Std',
+            'is_active' => true, 'columns' => BulletinTemplate::defaultColumns(), 'options' => BulletinTemplate::defaultOptions(),
+        ]);
+
+        $student = $this->student();
+        $this->markFor($student, $continu, 12);
+
+        $admin = $this->admin();
+        $this->actingAs($admin)->post(route('bulletins.validate'), ['class_id' => $this->class->id, 'academic_period_id' => $this->period->id])->assertRedirect();
+
+        $card = ReportCard::where('student_id', $student->id)->firstOrFail();
+
+        $this->actingAs($admin)->put(route('bulletins.update', $card->id), [
+            'appreciations' => [0 => 'Bon travail'],
+            'observations'  => 'RAS',
+            'decision'      => 'Félicitations',
+            'punitions'     => 2,
+            'exclusions'    => 0,
+        ])->assertRedirect();
+
+        $card->refresh();
+        $this->assertSame('Bon travail', $card->payload['lines'][0]['appreciation']);
+        $this->assertSame('Félicitations', $card->payload['decision']);
+        $this->assertSame(2, $card->payload['punitions']);
+        $this->assertSame('RAS', $card->payload['observations']);
+    }
+
     private function admin(): User
     {
         $u = User::factory()->create();
@@ -123,13 +185,48 @@ class BulletinTemplateTest extends TestCase
         return $s;
     }
 
-    private function markFor(Student $student, EvaluationType $type, float $score): void
+    private function markFor(Student $student, EvaluationType $type, float $score, ?ClassSubject $cs = null): void
     {
         $template = EvaluationTemplate::create([
             'academic_period_id' => $this->period->id, 'evaluation_type_id' => $type->id, 'class_type_id' => $this->type->id,
             'name' => Str::random(6), 'coefficient' => 1, 'max_score' => 20, 'date' => '2025-10-01',
         ]);
-        $evaluation = Evaluation::create(['evaluation_template_id' => $template->id, 'class_subject_id' => $this->cs->id, 'date' => '2025-10-01', 'status' => 'published']);
+        $evaluation = Evaluation::create(['evaluation_template_id' => $template->id, 'class_subject_id' => ($cs ?? $this->cs)->id, 'date' => '2025-10-01', 'status' => 'published']);
         Mark::create(['evaluation_id' => $evaluation->id, 'student_id' => $student->id, 'score' => $score, 'absent' => false]);
+    }
+
+    public function test_groups_discipline_and_recap_render(): void
+    {
+        $continu = EvaluationType::create(['name' => 'Devoir', 'category' => 'continu']);
+
+        $optSubject = Subject::create(['name' => 'Dessin', 'code' => 'DES']);
+        $optCs = ClassSubject::create([
+            'class_id' => $this->class->id, 'subject_id' => $optSubject->id,
+            'coefficient' => 1, 'group' => 'facultatif', 'academic_year_id' => $this->year->id,
+        ]);
+
+        $options = BulletinTemplate::defaultOptions();
+        $options['show_discipline'] = true;
+        $options['show_period_recap'] = true;
+        BulletinTemplate::create([
+            'school_id' => $this->school->id, 'classroom_type_id' => null, 'name' => 'Complet',
+            'is_active' => true, 'columns' => BulletinTemplate::defaultColumns(), 'options' => $options,
+        ]);
+
+        $student = $this->student();
+        $this->markFor($student, $continu, 12);                 // Maths (obligatoire)
+        $this->markFor($student, $continu, 14, $optCs);         // Dessin (facultatif)
+
+        $this->actingAs($this->admin())
+            ->post(route('bulletins.validate'), ['class_id' => $this->class->id, 'academic_period_id' => $this->period->id])
+            ->assertRedirect();
+
+        $card = ReportCard::where('student_id', $student->id)->firstOrFail();
+        $html = app(BulletinRenderer::class)->render($card->load('student'), $this->school);
+
+        $this->assertStringContainsString('Matières facultatives', $html);
+        $this->assertStringContainsString('Retards', $html);
+        $this->assertStringContainsString('Moyenne annuelle', $html);
+        $this->assertTrue(collect($card->payload['lines'])->contains(fn ($l) => ($l['group'] ?? null) === 'facultatif'));
     }
 }

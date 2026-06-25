@@ -11,9 +11,12 @@ const initialValues: SubjectFormData = {
     name: '',
     code: '',
     description: '',
+    parent_id: '',
 };
 
-export default function Create() {
+interface ParentSubject { id: string; name: string }
+
+export default function Create({ parents = [] }: Readonly<{ parents?: ParentSubject[] }>) {
     const { data, setData, post, processing, errors } = useForm<SubjectFormData>(initialValues);
 
     const handleSubmit = (event: React.SubmitEvent<HTMLFormElement>) => {
@@ -45,6 +48,7 @@ export default function Create() {
                     data={data}
                     errors={errors}
                     processing={processing}
+                    parents={parents}
                     onCancel={() => router.get(route('subjects.index'))}
                     onSubmit={handleSubmit}
                     setData={setData}

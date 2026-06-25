@@ -140,6 +140,14 @@ export default function Edit({ columns: initialColumns, options: initialOptions,
                         <Checkbox checked={Boolean(options.show_class_stats)} onCheckedChange={(v) => setOptions({ ...options, show_class_stats: Boolean(v) })} />
                         Afficher les statistiques de la classe (moyenne la plus forte / faible / générale)
                     </label>
+                    <label className="flex items-center gap-2 text-sm">
+                        <Checkbox checked={Boolean(options.show_period_recap)} onCheckedChange={(v) => setOptions({ ...options, show_period_recap: Boolean(v) })} />
+                        Afficher le récapitulatif inter-périodes + moyenne annuelle
+                    </label>
+                    <label className="flex items-center gap-2 text-sm">
+                        <Checkbox checked={Boolean(options.show_discipline)} onCheckedChange={(v) => setOptions({ ...options, show_discipline: Boolean(v) })} />
+                        Afficher le bloc discipline (retards, absences, décision du conseil)
+                    </label>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                             <label className="text-sm font-medium text-gray-700">Signataire (gauche)</label>

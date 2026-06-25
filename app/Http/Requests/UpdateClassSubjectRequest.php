@@ -25,6 +25,7 @@ class UpdateClassSubjectRequest extends FormRequest
             'assignments' => ['required', 'array', 'min:1'],
             'assignments.*.subject_id' => ['required', 'uuid', 'exists:subjects,id', 'distinct'],
             'assignments.*.coefficient' => ['required', 'numeric', 'gt:0', 'max:999.99'],
+            'assignments.*.group' => ['nullable', 'in:obligatoire,facultatif'],
             'academic_year_id' => [
                 'required',
                 'uuid',
