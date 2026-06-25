@@ -78,6 +78,8 @@ class Permissions
         'restore'  => 'Restaurer',
         'execute'  => 'Exécuter',
         'manage'   => 'Gérer',
+        'validate' => 'Valider',
+        'download' => 'Télécharger',
     ];
 
     /**
@@ -111,6 +113,8 @@ class Permissions
             // Notes
             'grades'               => ['Notes', 'Notes (trimestre)', $crud],
             'note_reclamations'    => ['Notes', 'Réclamations de notes', ['view', 'create', 'review']],
+            'bulletins'            => ['Notes', 'Bulletins', ['view', 'validate', 'download']],
+            'bulletin_templates'   => ['Notes', 'Modèle de bulletin', ['view', 'edit']],
 
             // Comptabilité
             'finances'             => ['Comptabilité', 'Finances', $crud],
@@ -142,6 +146,7 @@ class Permissions
             'scholarships'         => ['Paramètres', 'Bourses', $crud],
             'grading_configs'      => ['Paramètres', 'Calcul des moyennes', $crud],
             'documents'            => ['Paramètres', 'Modèles de documents', ['view', 'create', 'edit', 'delete', 'generate']],
+            'document_headers'     => ['Paramètres', 'En-tête des documents', ['view', 'edit']],
             'file_storage'         => ['Paramètres', 'Fichiers & stockage', ['manage']],
             'backups'              => ['Paramètres', 'Sauvegardes', ['view', 'create', 'restore', 'delete']],
             'settings'             => ['Paramètres', 'Paramètres généraux', ['manage']],

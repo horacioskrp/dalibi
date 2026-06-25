@@ -173,15 +173,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('grades/student/{student}', [GradeController::class, 'student'])->middleware('can:view_grades')->name('grades.student');
 
     // Bulletins (préparation, validation/snapshot, téléchargement PDF)
-    Route::get('bulletins', [BulletinController::class, 'index'])->middleware('can:view_grades')->name('bulletins.index');
-    Route::post('bulletins/validate', [BulletinController::class, 'validateClass'])->middleware('can:create_grades')->name('bulletins.validate');
-    Route::get('bulletins/{student}/download', [BulletinController::class, 'download'])->middleware('can:view_grades')->name('bulletins.download');
-    Route::get('bulletins/{reportCard}/edit', [BulletinController::class, 'editCard'])->middleware('can:create_grades')->name('bulletins.edit');
-    Route::put('bulletins/{reportCard}', [BulletinController::class, 'updateCard'])->middleware('can:create_grades')->name('bulletins.update');
+    Route::get('bulletins', [BulletinController::class, 'index'])->middleware('can:view_bulletins')->name('bulletins.index');
+    Route::post('bulletins/validate', [BulletinController::class, 'validateClass'])->middleware('can:validate_bulletins')->name('bulletins.validate');
+    Route::get('bulletins/{student}/download', [BulletinController::class, 'download'])->middleware('can:download_bulletins')->name('bulletins.download');
+    Route::get('bulletins/{reportCard}/edit', [BulletinController::class, 'editCard'])->middleware('can:validate_bulletins')->name('bulletins.edit');
+    Route::put('bulletins/{reportCard}', [BulletinController::class, 'updateCard'])->middleware('can:validate_bulletins')->name('bulletins.update');
 
     // Modèle de bulletin (colonnes configurables)
-    Route::get('settings/bulletin-template', [\App\Http\Controllers\Parametres\BulletinTemplateController::class, 'edit'])->middleware('can:view_grades')->name('bulletin-templates.edit');
-    Route::post('settings/bulletin-template', [\App\Http\Controllers\Parametres\BulletinTemplateController::class, 'update'])->middleware('can:create_grades')->name('bulletin-templates.update');
+    Route::get('settings/bulletin-template', [\App\Http\Controllers\Parametres\BulletinTemplateController::class, 'edit'])->middleware('can:view_bulletin_templates')->name('bulletin-templates.edit');
+    Route::post('settings/bulletin-template', [\App\Http\Controllers\Parametres\BulletinTemplateController::class, 'update'])->middleware('can:edit_bulletin_templates')->name('bulletin-templates.update');
 
     // Administration Routes
     Route::resource('roles', RoleController::class)->middleware('can:manage_roles_permissions');
@@ -243,8 +243,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('official-exams/{officialExam}/registrations/{registration}', [OfficialExamController::class, 'removeRegistration'])->name('official-exams.registrations.destroy');
 
     // Document Templates (Settings)
-    Route::get('settings/document-header', [\App\Http\Controllers\Parametres\DocumentHeaderController::class, 'edit'])->middleware('can:view_documents')->name('document-header.edit');
-    Route::post('settings/document-header', [\App\Http\Controllers\Parametres\DocumentHeaderController::class, 'update'])->middleware('can:edit_documents')->name('document-header.update');
+    Route::get('settings/document-header', [\App\Http\Controllers\Parametres\DocumentHeaderController::class, 'edit'])->middleware('can:view_document_headers')->name('document-header.edit');
+    Route::post('settings/document-header', [\App\Http\Controllers\Parametres\DocumentHeaderController::class, 'update'])->middleware('can:edit_document_headers')->name('document-header.update');
     Route::get('settings/documents-registry', [DocumentTemplateController::class, 'registry'])->name('document-templates.registry');
     Route::get('settings/documents', [DocumentTemplateController::class, 'index'])->middleware('can:view_documents')->name('document-templates.index');
     Route::get('settings/documents/create', [DocumentTemplateController::class, 'create'])->name('document-templates.create');

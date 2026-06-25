@@ -35,7 +35,7 @@ class BulletinController extends Controller
 
     public function index(Request $request): Response
     {
-        abort_unless($request->user()->can('view_grades'), 403);
+        abort_unless($request->user()->can('view_bulletins'), 403);
 
         $classId  = $request->string('class_id')->toString();
         $periodId = $request->string('academic_period_id')->toString();
@@ -96,7 +96,7 @@ class BulletinController extends Controller
     /** Valide (fige) les bulletins de toute la classe pour une période. */
     public function validateClass(Request $request): RedirectResponse
     {
-        abort_unless($request->user()->can('create_grades'), 403);
+        abort_unless($request->user()->can('validate_bulletins'), 403);
 
         $validated = $request->validate([
             'class_id'           => ['required', 'uuid', 'exists:classes,id'],
@@ -271,7 +271,7 @@ class BulletinController extends Controller
 
     public function download(Request $request, Student $student)
     {
-        abort_unless($request->user()->can('view_grades'), 403);
+        abort_unless($request->user()->can('download_bulletins'), 403);
 
         $periodId = $request->string('academic_period_id')->toString();
 
@@ -292,7 +292,7 @@ class BulletinController extends Controller
     /** Écran d'édition d'un bulletin validé (appréciations, observations, discipline). */
     public function editCard(Request $request, ReportCard $reportCard): Response
     {
-        abort_unless($request->user()->can('create_grades'), 403);
+        abort_unless($request->user()->can('validate_bulletins'), 403);
 
         $p = $reportCard->payload;
 
@@ -320,7 +320,7 @@ class BulletinController extends Controller
     /** Enregistre les champs éditables dans le snapshot (sans recalcul des notes). */
     public function updateCard(Request $request, ReportCard $reportCard): RedirectResponse
     {
-        abort_unless($request->user()->can('create_grades'), 403);
+        abort_unless($request->user()->can('validate_bulletins'), 403);
 
         $validated = $request->validate([
             'appreciations'   => ['array'],

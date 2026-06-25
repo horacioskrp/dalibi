@@ -15,7 +15,7 @@ class BulletinTemplateController extends Controller
 {
     public function edit(Request $request): Response
     {
-        abort_unless($request->user()->can('view_grades'), 403);
+        abort_unless($request->user()->can('view_bulletin_templates'), 403);
 
         $school = $this->activeSchool();
         $template = BulletinTemplate::where('school_id', $school->id)
@@ -37,7 +37,7 @@ class BulletinTemplateController extends Controller
 
     public function update(Request $request): RedirectResponse
     {
-        abort_unless($request->user()->can('create_grades'), 403);
+        abort_unless($request->user()->can('edit_bulletin_templates'), 403);
 
         $validated = $request->validate([
             'columns'           => ['required', 'array', 'min:1'],
