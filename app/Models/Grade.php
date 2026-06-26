@@ -18,10 +18,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Concerns\Auditable;
 
 class Grade extends Model
 {
-    use HasFactory, HasUuids;
+    use HasFactory, HasUuids, Auditable;
 
     protected $fillable = [
         'student_id',

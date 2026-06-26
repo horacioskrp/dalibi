@@ -32,6 +32,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'classes' => ['view', 'create', 'edit'],
             'classroom_types' => ['view'],
             'levels' => ['view'],
+            'calendar' => ['view', 'create', 'edit', 'delete'],
             'subjects' => ['view', 'create', 'edit'],
             'subject_assignments' => ['view', 'create', 'edit'],
             'class_subjects' => ['view', 'create', 'edit'],
@@ -62,6 +63,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'fee_structures' => ['view'],
             'scholarships' => ['view'],
             'users' => ['view', 'create', 'edit'],
+            'audit_logs' => ['view'],
         ], [Permissions::VIEW_STUDENT_PARENTS_INFO]);
         Role::firstOrCreate(['name' => Roles::DIRECTOR])->syncPermissions($director);
 
@@ -72,6 +74,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'students' => ['view'],
             'timetable' => ['view'],
             'roster' => ['view'],
+            'calendar' => ['view'],
             'grades' => ['view', 'create', 'edit'],
             'bulletins' => ['view'],
             'marks' => ['view', 'create', 'edit'],
@@ -106,6 +109,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'academic_years' => ['view'],
             'academic_periods' => ['view'],
             'classes' => ['view'],
+            'calendar' => ['view', 'create', 'edit'],
             'students' => ['view', 'create', 'edit'],
             'enrollments' => ['view', 'create', 'edit'],
             'roster' => ['view', 'export'],

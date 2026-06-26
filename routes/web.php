@@ -179,6 +179,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('bulletins/{reportCard}/edit', [BulletinController::class, 'editCard'])->middleware('can:validate_bulletins')->name('bulletins.edit');
     Route::put('bulletins/{reportCard}', [BulletinController::class, 'updateCard'])->middleware('can:validate_bulletins')->name('bulletins.update');
 
+    // Journal d'audit (Administration)
+    Route::get('audit-logs', [\App\Http\Controllers\Administration\AuditLogController::class, 'index'])->middleware('can:view_audit_logs')->name('audit-logs.index');
+
+    // Calendrier académique
+    Route::get('calendar', [\App\Http\Controllers\CalendarEventController::class, 'index'])->middleware('can:view_calendar')->name('calendar.index');
+    Route::post('calendar', [\App\Http\Controllers\CalendarEventController::class, 'store'])->middleware('can:create_calendar')->name('calendar.store');
+    Route::put('calendar/{calendarEvent}', [\App\Http\Controllers\CalendarEventController::class, 'update'])->middleware('can:edit_calendar')->name('calendar.update');
+    Route::delete('calendar/{calendarEvent}', [\App\Http\Controllers\CalendarEventController::class, 'destroy'])->middleware('can:delete_calendar')->name('calendar.destroy');
+
     // Modèle de bulletin (colonnes configurables)
     Route::get('settings/bulletin-template', [\App\Http\Controllers\Parametres\BulletinTemplateController::class, 'edit'])->middleware('can:view_bulletin_templates')->name('bulletin-templates.edit');
     Route::post('settings/bulletin-template', [\App\Http\Controllers\Parametres\BulletinTemplateController::class, 'update'])->middleware('can:edit_bulletin_templates')->name('bulletin-templates.update');
