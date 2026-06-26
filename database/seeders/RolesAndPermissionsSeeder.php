@@ -62,6 +62,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'fee_structures' => ['view'],
             'scholarships' => ['view'],
             'users' => ['view', 'create', 'edit'],
+            'audit_logs' => ['view'],
         ], [Permissions::VIEW_STUDENT_PARENTS_INFO]);
         Role::firstOrCreate(['name' => Roles::DIRECTOR])->syncPermissions($director);
 

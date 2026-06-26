@@ -245,6 +245,9 @@ export function route(name: string, params?: any): string {
         'grades.store':   '/grades',
         'grades.student': `/grades/student/${params}`,
 
+        // Audit logs
+        'audit-logs.index': '/audit-logs',
+
         // Bulletins routes
         'bulletins.index':    '/bulletins',
         'bulletins.validate': '/bulletins/validate',

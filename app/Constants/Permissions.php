@@ -130,6 +130,7 @@ class Permissions
             'users'                => ['Administration', 'Utilisateurs', $crud],
             'roles_permissions'    => ['Administration', 'Rôles & permissions', ['manage']],
             'subject_assignments'  => ['Administration', 'Affectations matières', $crud],
+            'audit_logs'           => ['Administration', "Journal d'audit", ['view']],
 
             // Paramètres
             'schools'              => ['Paramètres', 'Écoles', $crud],
