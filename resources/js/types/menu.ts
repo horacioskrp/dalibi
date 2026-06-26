@@ -9,6 +9,12 @@ export const mainNavItems: NavItem[] = [
         icon: LayoutGrid,
     },
     {
+        title: 'Calendrier',
+        href: route('calendar.index'),
+        icon: Calendar,
+        permission: 'view_calendar',
+    },
+    {
         title: 'Élèves',
         href: '#',
         icon: Users,

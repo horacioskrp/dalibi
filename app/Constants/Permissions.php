@@ -100,6 +100,9 @@ class Permissions
             'timetable'            => ['Élèves', 'Emploi du temps', $crud],
             'student_scholarships' => ['Élèves', "Bourses d'élèves", $crud],
 
+            // Calendrier
+            'calendar'             => ['Calendrier', 'Calendrier académique', $crud],
+
             // Présences
             'attendances'          => ['Présences', 'Présences', $crud],
             'absence_permissions'  => ['Présences', 'Demandes de permission', ['view', 'create', 'review', 'delete']],
