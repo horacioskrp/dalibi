@@ -245,6 +245,15 @@ export function route(name: string, params?: any): string {
         'grades.store':   '/grades',
         'grades.student': `/grades/student/${params}`,
 
+        // Audit logs
+        'audit-logs.index': '/audit-logs',
+
+        // Calendar
+        'calendar.index':   '/calendar',
+        'calendar.store':   '/calendar',
+        'calendar.update':  `/calendar/${params}`,
+        'calendar.destroy': `/calendar/${params}`,
+
         // Bulletins routes
         'bulletins.index':    '/bulletins',
         'bulletins.validate': '/bulletins/validate',
