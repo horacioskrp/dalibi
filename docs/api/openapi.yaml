@@ -1,0 +1,370 @@
+openapi: 3.1.0
+info:
+  title: Dalibi — API Portail (parents & élèves)
+  version: "1.0.0"
+  description: |
+    API REST du portail Dalibi consommée par l'application mobile / SPA des familles.
+
+    **Authentification** : token Bearer (Laravel Sanctum). Deux principaux possibles :
+    - **Tuteur** (`guardian`) → accède aux données de **ses enfants** ;
+    - **Élève** (`student`) → accède **à ses propres** données.
+
+    **Autorisation** : chaque ressource « par enfant » est strictement scopée. Un tuteur qui
+    demande un élève qui n'est pas le sien reçoit **404** ; un élève qui demande un autre élève
+    reçoit **403**. Les tokens sont en lecture seule (ability `read`).
+servers:
+  - url: "{base}/api/v1"
+    variables:
+      base:
+        default: https://exemple.dalibi.tg
+        description: URL de l'établissement (APP_URL)
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Auth
+  - name: Enfants
+  - name: Scolarité
+  - name: Calendrier
+
+paths:
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Connexion (tuteur par e-mail, élève par e-mail ou matricule)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [login, password]
+              properties:
+                login: { type: string, example: "parent@exemple.tg" }
+                password: { type: string, example: "motdepasse" }
+      responses:
+        "200":
+          description: Authentifié
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthSession" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "429": { description: Trop de tentatives (throttle) }
+
+  /auth/forgot-password:
+    post:
+      tags: [Auth]
+      summary: Demande de réinitialisation (réponse générique, anti-énumération)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        "200":
+          description: Message générique (qu'un compte existe ou non)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { message: { type: string } }
+
+  /auth/reset-password:
+    post:
+      tags: [Auth]
+      summary: Définit le mot de passe via un jeton (activation ou réinitialisation)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, token, password, password_confirmation]
+              properties:
+                email: { type: string, format: email }
+                token: { type: string }
+                password: { type: string, minLength: 8 }
+                password_confirmation: { type: string }
+      responses:
+        "200":
+          description: Mot de passe défini, session ouverte
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthSession" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Profil du principal authentifié
+      responses:
+        "200":
+          description: Profil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type: { type: string, enum: [guardian, student] }
+                  user: { type: object }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Révoque le token courant
+      responses:
+        "200": { description: Déconnecté }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /children:
+    get:
+      tags: [Enfants]
+      summary: Enfants accessibles (tuteur → ses enfants ; élève → lui-même)
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Student" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /children/{student}/grades:
+    get:
+      tags: [Enfants]
+      summary: Notes d'une période
+      parameters:
+        - { $ref: "#/components/parameters/StudentId" }
+        - name: period
+          in: query
+          required: false
+          schema: { type: string, format: uuid }
+          description: Période (par défaut la période en cours)
+      responses:
+        "200":
+          description: Relevé
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GradeReport" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /children/{student}/bulletins:
+    get:
+      tags: [Enfants]
+      summary: Bulletins validés
+      parameters: [{ $ref: "#/components/parameters/StudentId" }]
+      responses:
+        "200":
+          description: Liste des bulletins
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/ReportCard" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /children/{student}/bulletins/{reportCard}/pdf:
+    get:
+      tags: [Enfants]
+      summary: Télécharge le bulletin (PDF)
+      parameters:
+        - { $ref: "#/components/parameters/StudentId" }
+        - name: reportCard
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Fichier PDF
+          content:
+            application/pdf:
+              schema: { type: string, format: binary }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /children/{student}/attendance:
+    get:
+      tags: [Enfants]
+      summary: Synthèse de présence
+      parameters:
+        - { $ref: "#/components/parameters/StudentId" }
+        - { name: period, in: query, required: false, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Compteurs
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AttendanceSummary" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /children/{student}/fees:
+    get:
+      tags: [Scolarité]
+      summary: Scolarité, paiements et solde
+      parameters: [{ $ref: "#/components/parameters/StudentId" }]
+      responses:
+        "200":
+          description: Récapitulatif financier
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FeeSummary" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /calendar:
+    get:
+      tags: [Calendrier]
+      summary: Événements de l'année active
+      parameters:
+        - { name: type, in: query, required: false, schema: { type: string, enum: [holiday, exam, meeting, event, other] } }
+      responses:
+        "200":
+          description: Liste d'événements
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/CalendarEvent" }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: "En-tête : `Authorization: Bearer <token>`"
+
+  parameters:
+    StudentId:
+      name: student
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
+  responses:
+    Unauthorized: { description: Token manquant ou invalide }
+    Forbidden: { description: Accès refusé (ressource d'un autre principal) }
+    NotFound: { description: Ressource introuvable ou non accessible }
+    ValidationError:
+      description: Erreur de validation
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message: { type: string }
+              errors: { type: object, additionalProperties: { type: array, items: { type: string } } }
+
+  schemas:
+    AuthSession:
+      type: object
+      properties:
+        token: { type: string, description: "Token Bearer à réutiliser" }
+        type: { type: string, enum: [guardian, student] }
+        user: { type: object }
+    Student:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        matricule: { type: string }
+        firstname: { type: string }
+        lastname: { type: string }
+        gender: { type: string, enum: [male, female] }
+        class: { type: string, nullable: true }
+        relationship: { type: string, nullable: true, description: "Lien (uniquement côté tuteur)" }
+    GradeReport:
+      type: object
+      properties:
+        enrolled: { type: boolean }
+        class: { type: string, nullable: true }
+        period_id: { type: string, nullable: true }
+        periods:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string }
+              name: { type: string }
+              is_current: { type: boolean }
+        average: { type: number, nullable: true }
+        rank: { type: integer, nullable: true }
+        mention: { type: string, nullable: true }
+        subjects:
+          type: array
+          items:
+            type: object
+            properties:
+              subject: { type: string }
+              coefficient: { type: number }
+              score: { type: number, nullable: true }
+              rank: { type: integer, nullable: true }
+              comment: { type: string, nullable: true }
+    ReportCard:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        reference: { type: string }
+        period: { type: string, nullable: true }
+        average: { type: number, nullable: true }
+        rank: { type: integer, nullable: true }
+        mention: { type: string, nullable: true }
+        issued_at: { type: string, format: date-time, nullable: true }
+    AttendanceSummary:
+      type: object
+      properties:
+        present: { type: integer }
+        absent: { type: integer }
+        late: { type: integer }
+        excused: { type: integer }
+        total: { type: integer }
+    FeeSummary:
+      type: object
+      properties:
+        year: { type: string, nullable: true }
+        summary:
+          type: object
+          properties:
+            billed: { type: number }
+            paid: { type: number }
+            balance: { type: number }
+        invoices:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string, format: uuid }
+              number: { type: string, nullable: true }
+              total: { type: number }
+              paid: { type: number }
+              remaining: { type: number }
+              due_date: { type: string, format: date, nullable: true }
+              status: { type: string, enum: [paid, partial, unpaid] }
+    CalendarEvent:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        type: { type: string, enum: [holiday, exam, meeting, event, other] }
+        start_date: { type: string, format: date }
+        end_date: { type: string, format: date, nullable: true }
+        all_day: { type: boolean }
+        start_time: { type: string, nullable: true }
+        end_time: { type: string, nullable: true }
