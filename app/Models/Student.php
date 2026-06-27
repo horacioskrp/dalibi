@@ -23,12 +23,16 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Auth\Authenticatable as AuthenticatableTrait;
+use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
+use Laravel\Sanctum\HasApiTokens;
 use App\Concerns\Auditable;
 use App\Services\MatriculeService;
 
-class Student extends Model
+class Student extends Model implements AuthenticatableContract
 {
-    use HasFactory, HasUuids, SoftDeletes, Auditable;
+    use HasFactory, HasUuids, SoftDeletes, Auditable, HasApiTokens, AuthenticatableTrait;
 
     protected $fillable = [
         'user_id',
@@ -50,7 +54,26 @@ class Student extends Model
     protected $casts = [
         'active' => 'boolean',
         'birth_date' => 'date',
+        'portal_active' => 'boolean',
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
     ];
+
+    protected $hidden = [
+        'password',
+    ];
+
+    /** Tuteurs liés à cet élève. */
+    public function guardians(): BelongsToMany
+    {
+        return $this->belongsToMany(Guardian::class, 'guardian_student')->withPivot('relationship');
+    }
+
+    /** Inscriptions de l'élève. */
+    public function enrollments(): HasMany
+    {
+        return $this->hasMany(Enrollment::class);
+    }
 
     /**
      * Get the user account for this student.
