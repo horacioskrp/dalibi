@@ -1,4 +1,4 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
     Pencil,
@@ -44,6 +44,7 @@ interface Student {
     email?: string | null;
     profile_photo?: string | null;
     active: boolean;
+    portal_active?: boolean;
     created_at: string;
     updated_at: string;
     user?: {
@@ -200,6 +201,9 @@ export default function Show({ student, documentContext, issuedDocuments, curren
         setTimeout(() => router.reload({ only: ['issuedDocuments'] }), 800);
     };
 
+    const canPortal = ((usePage().props.auth?.permissions ?? []) as string[]).includes('edit_students');
+    const [portalPwd, setPortalPwd] = useState('');
+
     return (
         <AppLayout>
             <Head title="Détail élève" />
@@ -307,6 +311,33 @@ export default function Show({ student, documentContext, issuedDocuments, curren
                         </p>
                     </div>
                 </div>
+
+                {canPortal && (
+                    <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 shadow-sm">
+                        <div className="flex items-center justify-between flex-wrap gap-3">
+                            <div>
+                                <p className="text-xs uppercase tracking-wide text-indigo-700 font-semibold">Portail élève</p>
+                                <p className="mt-1 text-sm text-indigo-900">
+                                    {student.portal_active ? 'Accès activé' : 'Accès non activé'} · connexion avec le matricule{' '}
+                                    <span className="font-mono">{student.matricule ?? '—'}</span>
+                                </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Input type="password" value={portalPwd} onChange={(e) => setPortalPwd(e.target.value)} placeholder="Mot de passe (min 8)" className="w-52 bg-white" />
+                                <Button className="bg-indigo-600 hover:bg-indigo-700" disabled={portalPwd.length < 8}
+                                    onClick={() => router.post(route('students.portal.activate', student.id), { password: portalPwd }, { preserveScroll: true, onSuccess: () => setPortalPwd('') })}>
+                                    {student.portal_active ? 'Réinitialiser' : 'Activer'}
+                                </Button>
+                                {student.portal_active && (
+                                    <Button variant="outline" className="border-red-200 text-red-600 hover:bg-red-50"
+                                        onClick={() => router.post(route('students.portal.deactivate', student.id), {}, { preserveScroll: true })}>
+                                        Désactiver
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="rounded-xl border border-blue-100 bg-linear-to-br from-blue-50 to-white p-6 shadow-sm space-y-4">

@@ -133,6 +133,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('students/{student}/documents/{document}', [\App\Http\Controllers\Eleves\StudentDocumentController::class, 'download'])->name('students.documents.download');
     Route::delete('students/{student}/documents/{document}', [\App\Http\Controllers\Eleves\StudentDocumentController::class, 'destroy'])->name('students.documents.destroy');
 
+    // Accès portail de l'élève (espace élève)
+    Route::post('students/{student}/portal/activate', [\App\Http\Controllers\Eleves\StudentPortalController::class, 'activate'])->middleware('can:edit_students')->name('students.portal.activate');
+    Route::post('students/{student}/portal/deactivate', [\App\Http\Controllers\Eleves\StudentPortalController::class, 'deactivate'])->middleware('can:edit_students')->name('students.portal.deactivate');
+
     Route::get('students/{student}/photo', [StudentController::class, 'photo'])
         ->name('students.photo.view');
     Route::post('students/{student}/photo', [StudentController::class, 'uploadPhoto'])
@@ -181,6 +185,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Journal d'audit (Administration)
     Route::get('audit-logs', [\App\Http\Controllers\Administration\AuditLogController::class, 'index'])->middleware('can:view_audit_logs')->name('audit-logs.index');
+
+    // Accès portail (comptes tuteurs)
+    Route::get('portal-accounts', [\App\Http\Controllers\Administration\GuardianController::class, 'index'])->middleware('can:view_portal_accounts')->name('guardians.index');
+    Route::post('portal-accounts', [\App\Http\Controllers\Administration\GuardianController::class, 'store'])->middleware('can:create_portal_accounts')->name('guardians.store');
+    Route::put('portal-accounts/{guardian}', [\App\Http\Controllers\Administration\GuardianController::class, 'update'])->middleware('can:edit_portal_accounts')->name('guardians.update');
+    Route::delete('portal-accounts/{guardian}', [\App\Http\Controllers\Administration\GuardianController::class, 'destroy'])->middleware('can:delete_portal_accounts')->name('guardians.destroy');
+    Route::post('portal-accounts/{guardian}/invite', [\App\Http\Controllers\Administration\GuardianController::class, 'invite'])->middleware('can:edit_portal_accounts')->name('guardians.invite');
 
     // Calendrier académique
     Route::get('calendar', [\App\Http\Controllers\CalendarEventController::class, 'index'])->middleware('can:view_calendar')->name('calendar.index');

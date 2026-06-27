@@ -84,6 +84,15 @@ Dalibi est un outil complet libre et open-source de gestion pour les établissem
 - **Code-barres de vérification** unique sur les documents pour éviter la falsification
 - Traçabilité des documents délivrés par élève
 
+### Portail parents & élèves (API)
+
+- **API REST** (`/api/v1`) pour l'application mobile / SPA des familles, **authentifiée par token** (Laravel Sanctum)
+- Deux profils : **tuteur** (consulte ses enfants) et **élève** (ses propres données), avec **isolation stricte** (un tuteur n'accède qu'à ses enfants)
+- Lecture : **notes** par période, **bulletins** (liste + **PDF**), **présences**, **scolarité / solde**, **calendrier**
+- **Onboarding** : le secrétariat crée le compte tuteur, le lie aux élèves et envoie une **invitation par e-mail** (lien signé) ; l'accès élève est activé par l'établissement (connexion par **matricule**)
+- **Journal d'audit** des actions sensibles (création/modification/suppression) et **calendrier académique** d'événements
+- Documentation : [`docs/api/openapi.yaml`](docs/api/openapi.yaml) (OpenAPI 3.1)
+
 ### Gestion des présences
 
 - **Saisie de l'appel** : grille par classe / date / session (journée, matin, après-midi)
@@ -413,11 +422,13 @@ dalibi/
 
 ## 🗺️ Roadmap
 
-- [ ] Portail des parents
-- [ ] Application mobile
-- [ ] Bulletins électroniques (PDF)
-- [ ] Système de communication école-parents
-- [ ] Calendrier académique interactif
+- [x] Bulletins électroniques (PDF) — bulletin configurable (colonnes, groupes, mentions) fidèle au format togolais
+- [x] Portail parents & élèves (API REST + onboarding)
+- [x] Calendrier académique
+- [x] Journal d'audit
+- [ ] Application mobile (consomme l'API du portail)
+- [ ] Notifications & communication école-parents (e-mail / SMS / push)
+- [ ] Paiement en ligne (mobile money : Flooz / T-Money…)
 - [ ] Rapports et statistiques avancées
 - [ ] Intégration avec le système éducatif togolais
 

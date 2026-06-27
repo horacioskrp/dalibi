@@ -1,0 +1,131 @@
+<?php
+
+namespace App\Http\Controllers\Administration;
+
+use App\Http\Controllers\Controller;
+use App\Mail\GuardianInvitation;
+use App\Models\Guardian;
+use App\Models\Student;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\Rule;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class GuardianController extends Controller
+{
+    public function index(Request $request): Response
+    {
+        $search = trim((string) $request->query('search', ''));
+
+        $guardians = Guardian::query()
+            ->withCount('children')
+            ->with('children:id,matricule')
+            ->when($search !== '', fn ($q) => $q->where(fn ($q) => $q
+                ->where('first_name', 'like', "%{$search}%")
+                ->orWhere('last_name', 'like', "%{$search}%")
+                ->orWhere('email', 'like', "%{$search}%")))
+            ->orderBy('last_name')
+            ->paginate(20)->withQueryString()
+            ->through(fn (Guardian $g) => [
+                'id'             => $g->id,
+                'first_name'     => $g->first_name,
+                'last_name'      => $g->last_name,
+                'name'           => $g->fullName(),
+                'email'          => $g->email,
+                'phone'          => $g->phone,
+                'children_count' => $g->children_count,
+                'matricules'     => $g->children->pluck('matricule')->all(),
+                'is_active'      => $g->is_active,
+                'activated'      => $g->password !== null,
+            ]);
+
+        return Inertia::render('Administration/Guardians/Index', [
+            'guardians' => $guardians,
+            'filters'   => ['search' => $search],
+        ]);
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        $data = $this->validateData($request);
+
+        $guardian = Guardian::create([
+            'first_name' => $data['first_name'],
+            'last_name'  => $data['last_name'],
+            'email'      => $data['email'],
+            'phone'      => $data['phone'] ?? null,
+            'is_active'  => true,
+        ]);
+
+        $guardian->children()->sync($this->resolveStudentIds($data['student_matricules'] ?? []));
+
+        if (! empty($data['send_invitation'])) {
+            $this->sendInvitation($guardian, isReset: false);
+        }
+
+        return back()->with('message', 'Compte tuteur créé.');
+    }
+
+    public function update(Request $request, Guardian $guardian): RedirectResponse
+    {
+        $data = $this->validateData($request, $guardian->id);
+
+        $guardian->update([
+            'first_name' => $data['first_name'],
+            'last_name'  => $data['last_name'],
+            'email'      => $data['email'],
+            'phone'      => $data['phone'] ?? null,
+        ]);
+        $guardian->children()->sync($this->resolveStudentIds($data['student_matricules'] ?? []));
+
+        return back()->with('message', 'Compte tuteur mis à jour.');
+    }
+
+    public function destroy(Guardian $guardian): RedirectResponse
+    {
+        $guardian->delete();
+
+        return back()->with('message', 'Compte tuteur supprimé.');
+    }
+
+    /** (Re)envoie l'invitation / lien d'activation. */
+    public function invite(Guardian $guardian): RedirectResponse
+    {
+        $this->sendInvitation($guardian, isReset: $guardian->password !== null);
+
+        return back()->with('message', "Invitation envoyée à {$guardian->email}.");
+    }
+
+    private function sendInvitation(Guardian $guardian, bool $isReset): void
+    {
+        $token = $guardian->issueResetToken();
+        $url   = rtrim(config('app.url'), '/') . '/portal/reset?email=' . urlencode($guardian->email) . '&token=' . $token;
+
+        Mail::to($guardian->email)->send(new GuardianInvitation($guardian, $url, $isReset));
+    }
+
+    /** @return array<int,string> */
+    private function resolveStudentIds(array $matricules): array
+    {
+        if ($matricules === []) {
+            return [];
+        }
+
+        return Student::whereIn('matricule', $matricules)->pluck('id')->all();
+    }
+
+    private function validateData(Request $request, ?string $ignoreId = null): array
+    {
+        return $request->validate([
+            'first_name'           => ['required', 'string', 'max:100'],
+            'last_name'            => ['required', 'string', 'max:100'],
+            'email'                => ['required', 'email', Rule::unique('guardians', 'email')->ignore($ignoreId)],
+            'phone'                => ['nullable', 'string', 'max:30'],
+            'student_matricules'   => ['array'],
+            'student_matricules.*' => ['string', 'exists:students,matricule'],
+            'send_invitation'      => ['boolean'],
+        ]);
+    }
+}

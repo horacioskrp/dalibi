@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\HasResetToken;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -10,7 +11,7 @@ use Laravel\Sanctum\HasApiTokens;
 
 class Guardian extends Authenticatable
 {
-    use HasApiTokens, HasUuids, Notifiable;
+    use HasApiTokens, HasUuids, Notifiable, HasResetToken;
 
     protected $fillable = [
         'first_name',
@@ -23,11 +24,13 @@ class Guardian extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'reset_token',
     ];
 
     protected $casts = [
         'is_active'         => 'boolean',
         'email_verified_at' => 'datetime',
+        'reset_expires_at'  => 'datetime',
         'password'          => 'hashed',
     ];
 
@@ -42,3 +45,4 @@ class Guardian extends Authenticatable
         return trim($this->first_name . ' ' . $this->last_name);
     }
 }
+
