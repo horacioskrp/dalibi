@@ -125,6 +125,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'document_headers' => ['view', 'edit'],
             'archives' => ['view', 'create', 'edit', 'delete'],
             'users' => ['view', 'create', 'edit'],
+            'portal_accounts' => ['view', 'create', 'edit', 'delete'],
             'reports' => ['view'],
         ], [Permissions::VIEW_STUDENT_PARENTS_INFO]);
         Role::firstOrCreate(['name' => Roles::SECRETARIAT])->syncPermissions($secretary);

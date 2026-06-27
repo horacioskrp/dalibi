@@ -248,6 +248,13 @@ export function route(name: string, params?: any): string {
         // Audit logs
         'audit-logs.index': '/audit-logs',
 
+        // Portal accounts (guardians)
+        'guardians.index':   '/portal-accounts',
+        'guardians.store':   '/portal-accounts',
+        'guardians.update':  `/portal-accounts/${params}`,
+        'guardians.destroy': `/portal-accounts/${params}`,
+        'guardians.invite':  `/portal-accounts/${params}/invite`,
+
         // Calendar
         'calendar.index':   '/calendar',
         'calendar.store':   '/calendar',
@@ -313,6 +320,10 @@ export function route(name: string, params?: any): string {
 
         // Student class change
         'students.change-class': `/students/${params}/change-class`,
+
+        // Student portal access
+        'students.portal.activate':   `/students/${params}/portal/activate`,
+        'students.portal.deactivate': `/students/${params}/portal/deactivate`,
 
         // Student documents
         'students.documents.store': `/students/${params}/documents`,

@@ -121,6 +121,27 @@ class PortalApiTest extends TestCase
         $this->getJson('/api/v1/children')->assertUnauthorized();
     }
 
+    public function test_attendance_fees_calendar_endpoints(): void
+    {
+        $childA = $this->student();
+        $childB = $this->student();
+        $guardianA = $this->guardianFor($childA);
+
+        Sanctum::actingAs($guardianA, ['read']);
+
+        $this->getJson("/api/v1/children/{$childA->id}/attendance")
+            ->assertOk()->assertJsonStructure(['present', 'absent', 'late', 'excused', 'total']);
+
+        $this->getJson("/api/v1/children/{$childA->id}/fees")
+            ->assertOk()->assertJsonStructure(['summary' => ['billed', 'paid', 'balance'], 'invoices']);
+
+        $this->getJson('/api/v1/calendar')->assertOk()->assertJsonStructure(['data']);
+
+        // Scope : enfant d'un autre tuteur
+        $this->getJson("/api/v1/children/{$childB->id}/attendance")->assertNotFound();
+        $this->getJson("/api/v1/children/{$childB->id}/fees")->assertNotFound();
+    }
+
     private function reportCardFor(Student $student): ReportCard
     {
         return ReportCard::create([

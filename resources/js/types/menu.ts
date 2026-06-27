@@ -91,6 +91,7 @@ export const mainNavItems: NavItem[] = [
             { title: 'Permissions', href: route('permissions.index'), icon: Lock, permission: 'manage_roles_permissions' },
             { title: 'Affectations', href: route('subject-assignments.index'), icon: ClipboardList, permission: 'view_subject_assignments' },
             { title: "Journal d'audit", href: route('audit-logs.index'), icon: ScanLine, permission: 'view_audit_logs' },
+            { title: 'Accès portail', href: route('guardians.index'), icon: UserCheck, permission: 'view_portal_accounts' },
         ],
     },
     {
