@@ -15,6 +15,9 @@ return [
 
     'name' => env('APP_NAME', 'Laravel'),
 
+    // Exposition du visualiseur de doc API (Redoc). Faux par défaut ; activé en local.
+    'api_docs_enabled' => env('API_DOCS_ENABLED', false),
+
     /*
     |--------------------------------------------------------------------------
     | Application Environment

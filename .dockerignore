@@ -44,3 +44,9 @@ database/*.sqlite
 Dockerfile
 .dockerignore
 docker-compose*.yml
+
+# Documentation — non embarquée dans l'image, sauf la spec OpenAPI
+# requise par le viewer Redoc en staging (API_DOCS_ENABLED=true).
+docs/
+!docs/api/
+!docs/api/openapi.yaml
