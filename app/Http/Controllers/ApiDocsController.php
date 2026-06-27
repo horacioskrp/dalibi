@@ -49,8 +49,9 @@ class ApiDocsController extends Controller
 
     public function spec(): BinaryFileResponse
     {
-        return response()->file(base_path('docs/api/openapi.yaml'), [
-            'Content-Type' => 'application/yaml',
-        ]);
+        $path = base_path('docs/api/openapi.yaml');
+        abort_unless(is_file($path), 404);
+
+        return response()->file($path, ['Content-Type' => 'application/yaml']);
     }
 }
