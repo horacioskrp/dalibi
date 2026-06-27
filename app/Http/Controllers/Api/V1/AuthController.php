@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\LoginRequest;
+use App\Mail\GuardianInvitation;
 use App\Models\Guardian;
 use App\Models\Student;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -48,6 +50,50 @@ class AuthController extends Controller
         $request->user()->currentAccessToken()->delete();
 
         return response()->json(['message' => 'Déconnecté.']);
+    }
+
+    /** Demande de réinitialisation (réponse générique : pas d'énumération de comptes). */
+    public function forgotPassword(Request $request): JsonResponse
+    {
+        $request->validate(['email' => ['required', 'email']]);
+
+        $guardian = Guardian::where('email', $request->string('email'))->where('is_active', true)->first();
+        if ($guardian) {
+            $this->sendResetLink($guardian, isReset: true);
+        }
+
+        return response()->json(['message' => 'Si un compte existe pour cet e-mail, un lien a été envoyé.']);
+    }
+
+    /** Définit le mot de passe via un jeton valide (activation ou réinitialisation). */
+    public function resetPassword(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'email'    => ['required', 'email'],
+            'token'    => ['required', 'string'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $guardian = Guardian::where('email', $data['email'])->first();
+        if (! $guardian || ! $guardian->isResetTokenValid($data['token'])) {
+            throw ValidationException::withMessages(['token' => ['Lien invalide ou expiré.']]);
+        }
+
+        $guardian->password = $data['password'];
+        $guardian->email_verified_at = now();
+        $guardian->save();
+        $guardian->clearResetToken();
+
+        return $this->tokenResponse($guardian, 'guardian');
+    }
+
+    /** Émet un jeton et envoie l'e-mail d'invitation / réinitialisation. */
+    public function sendResetLink(Guardian $guardian, bool $isReset): void
+    {
+        $token = $guardian->issueResetToken();
+        $url   = rtrim(config('app.url'), '/') . '/portal/reset?email=' . urlencode($guardian->email) . '&token=' . $token;
+
+        Mail::to($guardian->email)->send(new GuardianInvitation($guardian, $url, $isReset));
     }
 
     private function tokenResponse(Guardian|Student $user, string $type): JsonResponse

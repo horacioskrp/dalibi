@@ -248,6 +248,13 @@ export function route(name: string, params?: any): string {
         // Audit logs
         'audit-logs.index': '/audit-logs',
 
+        // Portal accounts (guardians)
+        'guardians.index':   '/portal-accounts',
+        'guardians.store':   '/portal-accounts',
+        'guardians.update':  `/portal-accounts/${params}`,
+        'guardians.destroy': `/portal-accounts/${params}`,
+        'guardians.invite':  `/portal-accounts/${params}/invite`,
+
         // Calendar
         'calendar.index':   '/calendar',
         'calendar.store':   '/calendar',
