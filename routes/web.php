@@ -133,6 +133,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('students/{student}/documents/{document}', [\App\Http\Controllers\Eleves\StudentDocumentController::class, 'download'])->name('students.documents.download');
     Route::delete('students/{student}/documents/{document}', [\App\Http\Controllers\Eleves\StudentDocumentController::class, 'destroy'])->name('students.documents.destroy');
 
+    // Accès portail de l'élève (espace élève)
+    Route::post('students/{student}/portal/activate', [\App\Http\Controllers\Eleves\StudentPortalController::class, 'activate'])->middleware('can:edit_students')->name('students.portal.activate');
+    Route::post('students/{student}/portal/deactivate', [\App\Http\Controllers\Eleves\StudentPortalController::class, 'deactivate'])->middleware('can:edit_students')->name('students.portal.deactivate');
+
     Route::get('students/{student}/photo', [StudentController::class, 'photo'])
         ->name('students.photo.view');
     Route::post('students/{student}/photo', [StudentController::class, 'uploadPhoto'])

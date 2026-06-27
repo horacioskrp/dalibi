@@ -28,11 +28,12 @@ use Illuminate\Auth\Authenticatable as AuthenticatableTrait;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Laravel\Sanctum\HasApiTokens;
 use App\Concerns\Auditable;
+use App\Concerns\HasResetToken;
 use App\Services\MatriculeService;
 
 class Student extends Model implements AuthenticatableContract
 {
-    use HasFactory, HasUuids, SoftDeletes, Auditable, HasApiTokens, AuthenticatableTrait;
+    use HasFactory, HasUuids, SoftDeletes, Auditable, HasApiTokens, AuthenticatableTrait, HasResetToken;
 
     protected $fillable = [
         'user_id',
@@ -56,11 +57,13 @@ class Student extends Model implements AuthenticatableContract
         'birth_date' => 'date',
         'portal_active' => 'boolean',
         'email_verified_at' => 'datetime',
+        'reset_expires_at' => 'datetime',
         'password' => 'hashed',
     ];
 
     protected $hidden = [
         'password',
+        'reset_token',
     ];
 
     /** Tuteurs liés à cet élève. */

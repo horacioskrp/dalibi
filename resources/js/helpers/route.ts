@@ -321,6 +321,10 @@ export function route(name: string, params?: any): string {
         // Student class change
         'students.change-class': `/students/${params}/change-class`,
 
+        // Student portal access
+        'students.portal.activate':   `/students/${params}/portal/activate`,
+        'students.portal.deactivate': `/students/${params}/portal/deactivate`,
+
         // Student documents
         'students.documents.store': `/students/${params}/documents`,
 
