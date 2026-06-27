@@ -48,6 +48,10 @@ Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
 
+// Documentation API (Redoc) — gardée par l'environnement : 404 en production.
+Route::get('docs/api', [\App\Http\Controllers\ApiDocsController::class, 'index'])->name('api-docs');
+Route::get('docs/api/openapi.yaml', [\App\Http\Controllers\ApiDocsController::class, 'spec'])->name('api-docs.spec');
+
 Route::get('dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard');

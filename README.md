@@ -93,6 +93,19 @@ Dalibi est un outil complet libre et open-source de gestion pour les établissem
 - **Journal d'audit** des actions sensibles (création/modification/suppression) et **calendrier académique** d'événements
 - Documentation : [`docs/api/openapi.yaml`](docs/api/openapi.yaml) (OpenAPI 3.1)
 
+#### Documentation interactive & environnements
+
+Un visualiseur **Redoc** est exposé sur **`/docs/api`**, mais **gardé par l'environnement** : il décrit toute la surface d'API et **ne doit pas être public**.
+
+| Environnement | `/docs/api` | Configuration |
+| --- | --- | --- |
+| **Production** | ❌ `404` | rien à faire (désactivé par défaut) |
+| **Staging** | ✅ visible | `API_DOCS_ENABLED=true` **uniquement sur cet environnement** |
+| **Local / dev** | ✅ visible | activé automatiquement (`APP_ENV=local`) |
+
+- En prod, le viewer renvoie **404** (gardé dans le contrôleur) ; en complément, l'image Docker **n'embarque pas** `docs/` (sauf la spec `docs/api/openapi.yaml`, nécessaire au viewer staging).
+- Variable d'env : **`API_DOCS_ENABLED`** (défaut `false`). À ne mettre à `true` **que sur staging** ; ne **jamais** l'activer en production.
+
 ### Gestion des présences
 
 - **Saisie de l'appel** : grille par classe / date / session (journée, matin, après-midi)
