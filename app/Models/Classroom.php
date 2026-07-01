@@ -32,12 +32,14 @@ class Classroom extends Model
         'name',
         'code',
         'capacity',
+        'expected_age',
         'active',
         'classroom_type_id',
     ];
 
     protected $casts = [
         'capacity' => 'integer',
+        'expected_age' => 'integer',
         'active' => 'boolean',
     ];
 

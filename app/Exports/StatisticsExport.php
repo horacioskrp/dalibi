@@ -54,6 +54,8 @@ class StatisticsExport implements WithMultipleSheets
                 ['Taux de redoublement (%)', $d['rates']['redoublement']],
                 ["Taux d'abandon (%)", $d['rates']['abandon']],
                 ['Âge moyen', $d['age_moyen']],
+                ['Taux de sur-âge (%)', $d['over_age']['evaluated'] ? $d['over_age']['rate'] : null],
+                ['Élèves en sur-âge', $d['over_age']['count']],
             ]),
             new SheetFromArray('Effectifs par classe', ['Classe', 'Garçons', 'Filles', 'Total'],
                 $this->rows($d['by_class'], fn ($c) => [$c->name, $c->male, $c->female, $c->total])),

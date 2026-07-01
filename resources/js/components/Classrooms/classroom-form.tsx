@@ -11,6 +11,7 @@ export interface ClassroomFormData {
     name: string;
     code: string;
     capacity: number;
+    expected_age: number | null;
     classroom_type_id: string;
 }
 
@@ -98,6 +99,26 @@ export function ClassroomForm({
                             className={errors.capacity ? 'border-red-500 bg-red-50/40' : 'border-gray-200 bg-white focus-visible:ring-blue-500'}
                         />
                         {errors.capacity && <p className="text-sm text-red-600 mt-1">{errors.capacity}</p>}
+                    </div>
+
+                    <div>
+                        <label htmlFor="expected_age" className="block text-sm font-medium text-gray-900 mb-2">Âge attendu</label>
+                        <Input
+                            id="expected_age"
+                            type="number"
+                            min={3}
+                            max={30}
+                            placeholder="Ex. 12"
+                            value={data.expected_age ?? ''}
+                            onChange={(event) => {
+                                const v = event.target.value;
+                                setData('expected_age', v === '' ? null : Number(v));
+                            }}
+                            disabled={processing}
+                            className={errors.expected_age ? 'border-red-500 bg-red-50/40' : 'border-gray-200 bg-white focus-visible:ring-blue-500'}
+                        />
+                        <p className="text-xs text-gray-400 mt-1">Âge officiel attendu (base du calcul de sur-âge).</p>
+                        {errors.expected_age && <p className="text-sm text-red-600 mt-1">{errors.expected_age}</p>}
                     </div>
 
                     <div>
