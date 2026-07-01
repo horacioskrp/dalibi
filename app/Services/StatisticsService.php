@@ -282,15 +282,131 @@ class StatisticsService
         ];
     }
 
+    /* ================= Assiduité (phase 2) ================= */
+
+    public function attendanceStats(array $filters): array
+    {
+        $f = $this->filters($filters);
+        $threshold = 10; // seuil « absentéisme chronique »
+
+        $base = DB::table('attendance_records AS ar')
+            ->join('attendances AS a', 'ar.attendance_id', '=', 'a.id')
+            ->join('academic_periods AS p', 'a.academic_period_id', '=', 'p.id')
+            ->when($f['year'], fn ($q) => $q->where('p.academic_year_id', $f['year']))
+            ->when($f['class'], fn ($q) => $q->where('a.class_id', $f['class']));
+
+        if ($f['gender']) {
+            $base->join('students AS s', 'ar.student_id', '=', 's.id')->where('s.gender', $f['gender']);
+        }
+
+        $c = (clone $base)->selectRaw("
+            COUNT(*) AS total,
+            COUNT(CASE WHEN ar.status = 'present' THEN 1 END) AS present,
+            COUNT(CASE WHEN ar.status = 'absent' THEN 1 END) AS absent,
+            COUNT(CASE WHEN ar.status = 'late' THEN 1 END) AS late,
+            COUNT(CASE WHEN ar.status = 'excused' THEN 1 END) AS excused
+        ")->first();
+
+        $total = (int) ($c->total ?? 0);
+        $rate  = fn (int $n) => $total > 0 ? round($n / $total * 100, 1) : 0.0;
+
+        $byPeriod = (clone $base)
+            ->selectRaw("p.name AS name,
+                COUNT(CASE WHEN ar.status = 'present' THEN 1 END) AS present,
+                COUNT(CASE WHEN ar.status = 'absent' THEN 1 END) AS absent,
+                COUNT(CASE WHEN ar.status = 'late' THEN 1 END) AS late")
+            ->groupBy('p.name')
+            ->orderByRaw('MIN(a.date)')
+            ->get()
+            ->map(fn ($r) => ['name' => $r->name, 'present' => (int) $r->present, 'absent' => (int) $r->absent, 'late' => (int) $r->late]);
+
+        $byClass = (clone $base)
+            ->join('classes AS c', 'a.class_id', '=', 'c.id')
+            ->selectRaw("c.name AS name, COUNT(*) AS total, COUNT(CASE WHEN ar.status = 'absent' THEN 1 END) AS absent")
+            ->groupBy('c.name')
+            ->get()
+            ->map(fn ($r) => ['name' => $r->name, 'absence_rate' => $r->total > 0 ? round($r->absent / $r->total * 100, 1) : 0.0])
+            ->sortByDesc('absence_rate')
+            ->values();
+
+        $chronic = (clone $base)
+            ->where('ar.status', 'absent')
+            ->groupBy('ar.student_id')
+            ->havingRaw('COUNT(*) > ?', [$threshold])
+            ->get()
+            ->count();
+
+        return [
+            'total'         => $total,
+            'present'       => (int) ($c->present ?? 0),
+            'absent'        => (int) ($c->absent ?? 0),
+            'late'          => (int) ($c->late ?? 0),
+            'excused'       => (int) ($c->excused ?? 0),
+            'presence_rate' => $rate((int) ($c->present ?? 0)),
+            'absence_rate'  => $rate((int) ($c->absent ?? 0)),
+            'late_rate'     => $rate((int) ($c->late ?? 0)),
+            'chronic_absentees' => $chronic,
+            'chronic_threshold' => $threshold,
+            'by_period'     => $byPeriod,
+            'by_class'      => $byClass,
+        ];
+    }
+
+    /* ================= Encadrement & ressources (phase 2) ================= */
+
+    public function resourcesStats(array $filters): array
+    {
+        $f = $this->filters($filters);
+        $threshold = 50; // seuil « classe pléthorique »
+
+        $students = DB::table('enrollments')
+            ->when($f['year'], fn ($q) => $q->where('academic_year_id', $f['year']))
+            ->when($f['class'], fn ($q) => $q->where('class_id', $f['class']))
+            ->distinct()
+            ->count('student_id');
+
+        // Enseignants affectés (à l'échelle de l'école, sur l'année)
+        $teachers = DB::table('subject_assignments')
+            ->when($f['year'], fn ($q) => $q->where('academic_year_id', $f['year']))
+            ->where('active', true)
+            ->distinct()
+            ->count('teacher_id');
+
+        $sizes = DB::table('enrollments')
+            ->join('classes', 'enrollments.class_id', '=', 'classes.id')
+            ->when($f['year'], fn ($q) => $q->where('enrollments.academic_year_id', $f['year']))
+            ->when($f['class'], fn ($q) => $q->where('enrollments.class_id', $f['class']))
+            ->selectRaw('classes.name AS name, COUNT(*) AS total')
+            ->groupBy('classes.name')
+            ->orderByDesc('total')
+            ->get()
+            ->map(fn ($r) => ['name' => $r->name, 'total' => (int) $r->total]);
+
+        $overcrowded = $sizes->filter(fn ($c) => $c['total'] > $threshold)->values();
+
+        return [
+            'total_students' => $students,
+            'total_teachers' => $teachers,
+            'rem'            => $teachers > 0 ? round($students / $teachers, 1) : null,
+            'class_count'    => $sizes->count(),
+            'avg_class_size' => $sizes->count() ? round($sizes->avg('total'), 1) : 0,
+            'threshold'      => $threshold,
+            'overcrowded'    => $overcrowded,
+            'class_sizes'    => $sizes,
+        ];
+    }
+
     /* ================= Aiguillage ================= */
 
     /** Renvoie les données d'une section. */
     public function section(string $section, array $filters): array
     {
         return match ($section) {
-            'finances' => $this->financeStats($filters),
-            'reussite' => $this->successStats($filters),
-            default    => $this->enrollmentStats($filters),
+            'finances'    => $this->financeStats($filters),
+            'reussite'    => $this->successStats($filters),
+            'encadrement' => $this->resourcesStats($filters),
+            'assiduite'   => $this->attendanceStats($filters),
+            default       => $this->enrollmentStats($filters),
         };
     }
 }
