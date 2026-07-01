@@ -15,6 +15,8 @@ const defaultValues: StudentFormPayload = {
     nationality: '',
     address: '',
     city: '',
+    region: '',
+    prefecture: '',
     phone: '',
     email: '',
     profile_photo: '',

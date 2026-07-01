@@ -424,6 +424,47 @@ class StatisticsService
         return ['series' => $series];
     }
 
+    /* ================= Géographie (préfectures du Togo) ================= */
+
+    public function geographyStats(array $filters): array
+    {
+        $f = $this->filters($filters);
+
+        $base = DB::table('enrollments')
+            ->join('students', 'enrollments.student_id', '=', 'students.id')
+            ->when($f['year'], fn ($q) => $q->where('enrollments.academic_year_id', $f['year']))
+            ->when($f['class'], fn ($q) => $q->where('enrollments.class_id', $f['class']))
+            ->when($f['gender'], fn ($q) => $q->where('students.gender', $f['gender']));
+
+        $byRegion = (clone $base)
+            ->whereNotNull('students.region')->where('students.region', '!=', '')
+            ->selectRaw('students.region AS name, COUNT(DISTINCT students.id) AS total')
+            ->groupBy('students.region')
+            ->orderByDesc('total')
+            ->get()
+            ->map(fn ($r) => ['name' => $r->name, 'total' => (int) $r->total]);
+
+        $byPrefecture = (clone $base)
+            ->whereNotNull('students.prefecture')->where('students.prefecture', '!=', '')
+            ->selectRaw('students.prefecture AS name, students.region AS region, COUNT(DISTINCT students.id) AS total')
+            ->groupBy('students.prefecture', 'students.region')
+            ->orderByDesc('total')
+            ->limit(20)
+            ->get()
+            ->map(fn ($r) => ['name' => $r->name, 'region' => $r->region, 'total' => (int) $r->total]);
+
+        $total     = (clone $base)->distinct()->count('students.id');
+        $localized = (clone $base)->whereNotNull('students.region')->where('students.region', '!=', '')->distinct()->count('students.id');
+
+        return [
+            'total'         => $total,
+            'localized'     => $localized,
+            'coverage'      => $total > 0 ? round($localized / $total * 100, 1) : 0.0,
+            'by_region'     => $byRegion,
+            'by_prefecture' => $byPrefecture,
+        ];
+    }
+
     /* ================= Aiguillage ================= */
 
     /** Renvoie les données d'une section. */
@@ -435,6 +476,7 @@ class StatisticsService
             'encadrement'  => $this->resourcesStats($filters),
             'assiduite'    => $this->attendanceStats($filters),
             'comparaisons' => $this->trendsStats($filters),
+            'geographie'   => $this->geographyStats($filters),
             default        => $this->enrollmentStats($filters),
         };
     }

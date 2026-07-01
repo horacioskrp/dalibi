@@ -29,6 +29,7 @@ class StatisticsExport implements WithMultipleSheets
             'encadrement'  => $this->resources(),
             'assiduite'    => $this->attendance(),
             'comparaisons' => $this->trends(),
+            'geographie'   => $this->geography(),
             default        => $this->enrollment(),
         };
     }
@@ -161,6 +162,18 @@ class StatisticsExport implements WithMultipleSheets
                     $r['year'], $r['effectif'], $r['part_filles'], $r['redoublement'],
                     $r['abandon'], $r['recouvrement'], $r['reussite'], $r['admission'],
                 ])),
+        ];
+    }
+
+    private function geography(): array
+    {
+        $d = $this->data;
+
+        return [
+            new SheetFromArray('Par région', ['Région', 'Élèves'],
+                $this->rows($d['by_region'], fn ($r) => [$r['name'], $r['total']])),
+            new SheetFromArray('Par préfecture', ['Préfecture', 'Région', 'Élèves'],
+                $this->rows($d['by_prefecture'], fn ($p) => [$p['name'], $p['region'], $p['total']])),
         ];
     }
 }

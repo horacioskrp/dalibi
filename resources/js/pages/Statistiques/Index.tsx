@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { BarChart3, Download, FileSpreadsheet, GraduationCap, Layers, PieChart as PieIcon, School, TrendingUp, UserCheck, Users, Wallet } from 'lucide-react';
+import { BarChart3, Download, FileSpreadsheet, GraduationCap, Layers, MapPin, PieChart as PieIcon, School, TrendingUp, UserCheck, Users, Wallet } from 'lucide-react';
 import { useState } from 'react';
 import {
     Area, AreaChart, Bar, BarChart, Cell, Legend, Line, LineChart, Pie, PieChart,
@@ -56,6 +56,11 @@ interface Attendance {
 }
 interface TrendPoint { year: string; effectif: number; part_filles: number; redoublement: number; abandon: number; recouvrement: number; reussite: number; admission: number }
 interface Trends { series: TrendPoint[] }
+interface Geography {
+    total: number; localized: number; coverage: number;
+    by_region: { name: string; total: number }[];
+    by_prefecture: { name: string; region: string; total: number }[];
+}
 interface Props {
     filters: Filters;
     academicYears: YearOption[];
@@ -66,6 +71,7 @@ interface Props {
     resources: Resources;
     attendance: Attendance;
     trends: Trends;
+    geography: Geography;
 }
 
 /* ---------------- Helpers ---------------- */
@@ -102,9 +108,9 @@ function Card({ title, icon, children }: { title: string; icon?: React.ReactNode
 }
 
 /* ---------------- Page ---------------- */
-type Tab = 'effectifs' | 'finances' | 'reussite' | 'encadrement' | 'assiduite' | 'comparaisons';
+type Tab = 'effectifs' | 'finances' | 'reussite' | 'encadrement' | 'assiduite' | 'comparaisons' | 'geographie';
 
-export default function StatisticsIndex({ filters, academicYears, classes, enrollment, finance, success, resources, attendance, trends }: Readonly<Props>) {
+export default function StatisticsIndex({ filters, academicYears, classes, enrollment, finance, success, resources, attendance, trends, geography }: Readonly<Props>) {
     const [tab, setTab] = useState<Tab>('effectifs');
 
     const setFilter = (key: keyof Filters, value: string) => {
@@ -129,6 +135,7 @@ export default function StatisticsIndex({ filters, academicYears, classes, enrol
         { key: 'encadrement', label: 'Encadrement', icon: School },
         { key: 'assiduite', label: 'Assiduité', icon: UserCheck },
         { key: 'comparaisons', label: 'Comparaisons', icon: TrendingUp },
+        { key: 'geographie', label: 'Géographie', icon: MapPin },
     ];
 
     return (
@@ -463,6 +470,44 @@ export default function StatisticsIndex({ filters, academicYears, classes, enrol
                                 </table>
                             </div>
                         </Card>
+                    </div>
+                )}
+
+                {/* ---- Géographie ---- */}
+                {tab === 'geographie' && (
+                    <div className="space-y-6">
+                        <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-sm px-4 py-3">
+                            Origine renseignée pour <strong>{geography.coverage}%</strong> des élèves ({geography.localized} / {geography.total}). Complétez la région/préfecture sur la fiche élève pour affiner.
+                        </div>
+                        {geography.by_region.length === 0 ? (
+                            <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-card p-12 text-center text-gray-400">
+                                Aucune origine géographique renseignée.
+                            </div>
+                        ) : (
+                            <div className="grid lg:grid-cols-3 gap-5">
+                                <Card title="Par région" icon={<MapPin className="w-4 h-4" />}>
+                                    <ResponsiveContainer width="100%" height={260}>
+                                        <PieChart>
+                                            <Pie dataKey="total" nameKey="name" innerRadius={50} outerRadius={90} paddingAngle={2} data={geography.by_region}>
+                                                {geography.by_region.map((_, i) => <Cell key={i} fill={[BLUE, GREEN, VIOLET, ORANGE, PINK, SLATE][i % 6]} />)}
+                                            </Pie>
+                                            <RTooltip />
+                                            <Legend wrapperStyle={{ fontSize: 11 }} />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                </Card>
+                                <div className="lg:col-span-2"><Card title="Top préfectures d'origine" icon={<BarChart3 className="w-4 h-4" />}>
+                                    <ResponsiveContainer width="100%" height={280}>
+                                        <BarChart data={geography.by_prefecture} layout="vertical" margin={{ left: 20 }}>
+                                            <XAxis type="number" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} allowDecimals={false} />
+                                            <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} width={90} />
+                                            <RTooltip />
+                                            <Bar dataKey="total" name="Élèves" fill={BLUE} radius={[0, 4, 4, 0]} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </Card></div>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

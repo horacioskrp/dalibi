@@ -142,7 +142,7 @@
                 @endforeach
             </table>
         @endif
-    @else
+    @elseif ($section === 'comparaisons')
         <h2>Comparaison pluriannuelle</h2>
         <table>
             <tr><th>Année</th><th class="n">Effectif</th><th class="n">% filles</th><th class="n">Redoubl.</th><th class="n">Abandon</th><th class="n">Recouvr.</th><th class="n">Réussite</th><th class="n">Admission</th></tr>
@@ -152,6 +152,24 @@
                     <td class="n">{{ $r['reussite'] }}%</td><td class="n">{{ $r['admission'] }}%</td></tr>
             @endforeach
         </table>
+    @else
+        <h2>Origine géographique (Togo)</h2>
+        <p class="sub">Couverture : {{ $data['coverage'] }} % des élèves localisés ({{ $data['localized'] }} / {{ $data['total'] }})</p>
+        <table>
+            <tr><th>Région</th><th class="n">Élèves</th></tr>
+            @foreach ($data['by_region'] as $r)
+                <tr><td>{{ $r['name'] }}</td><td class="n">{{ $r['total'] }}</td></tr>
+            @endforeach
+        </table>
+        @if (count($data['by_prefecture']))
+            <h2>Par préfecture</h2>
+            <table>
+                <tr><th>Préfecture</th><th>Région</th><th class="n">Élèves</th></tr>
+                @foreach ($data['by_prefecture'] as $p)
+                    <tr><td>{{ $p['name'] }}</td><td>{{ $p['region'] }}</td><td class="n">{{ $p['total'] }}</td></tr>
+                @endforeach
+            </table>
+        @endif
     @endif
 </body>
 </html>
