@@ -24,9 +24,10 @@ class StatisticsExport implements WithMultipleSheets
     public function sheets(): array
     {
         return match ($this->section) {
-            'finances' => $this->finance(),
-            'reussite' => $this->success(),
-            default    => $this->enrollment(),
+            'finances'    => $this->finance(),
+            'reussite'    => $this->success(),
+            'encadrement' => $this->resources(),
+            default       => $this->enrollment(),
         };
     }
 
@@ -103,6 +104,24 @@ class StatisticsExport implements WithMultipleSheets
                     $e['name'], $e['type'], $e['center'], $e['registered'], $e['admitted'],
                     $e['failed'], $e['absent'], $e['admission_rate'], $e['presentation_rate'],
                 ])),
+        ];
+    }
+
+    private function resources(): array
+    {
+        $d = $this->data;
+
+        return [
+            new SheetFromArray('Synthèse', ['Indicateur', 'Valeur'], [
+                ['Effectif total', $d['total_students']],
+                ['Enseignants affectés', $d['total_teachers']],
+                ['Ratio élèves / enseignant (REM)', $d['rem']],
+                ['Nombre de classes', $d['class_count']],
+                ['Taille moyenne des classes', $d['avg_class_size']],
+                ["Classes pléthoriques (> {$d['threshold']})", $d['overcrowded']->count()],
+            ]),
+            new SheetFromArray('Taille des classes', ['Classe', 'Effectif'],
+                $this->rows($d['class_sizes'], fn ($c) => [$c['name'], $c['total']])),
         ];
     }
 }

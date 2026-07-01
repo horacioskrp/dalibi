@@ -79,6 +79,23 @@ class StatisticsTest extends TestCase
         $this->assertSame(25.0, $stats['rates']['abandon']);       // 1 abandon / 4
     }
 
+    public function test_resources_aggregates_are_correct(): void
+    {
+        $this->enrolled('male', 'valide');
+        $this->enrolled('female', 'valide');
+        $this->enrolled('male', 'en_cours');
+        $this->enrolled('female', 'en_cours');
+
+        $stats = app(StatisticsService::class)->resourcesStats(['academic_year_id' => $this->year->id]);
+
+        $this->assertSame(4, $stats['total_students']);
+        $this->assertSame(0, $stats['total_teachers']);
+        $this->assertNull($stats['rem']);                 // aucun enseignant affecté
+        $this->assertSame(1, $stats['class_count']);
+        $this->assertSame(4.0, $stats['avg_class_size']);
+        $this->assertCount(0, $stats['overcrowded']);     // 4 < seuil 50
+    }
+
     public function test_export_requires_export_permission(): void
     {
         $this->enrolled('female', 'valide');

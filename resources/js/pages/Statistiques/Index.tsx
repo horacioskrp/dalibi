@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { BarChart3, Download, FileSpreadsheet, GraduationCap, PieChart as PieIcon, TrendingUp, Users, Wallet } from 'lucide-react';
+import { BarChart3, Download, FileSpreadsheet, GraduationCap, Layers, PieChart as PieIcon, School, TrendingUp, Users, Wallet } from 'lucide-react';
 import { useState } from 'react';
 import {
     Area, AreaChart, Bar, BarChart, Cell, Pie, PieChart,
@@ -41,6 +41,12 @@ interface Success {
     exams: { name: string; type: string; center: string | null; registered: number; admitted: number; failed: number; absent: number; admission_rate: number; presentation_rate: number }[];
     exams_summary: { registered: number; admitted: number; admission_rate: number };
 }
+interface Resources {
+    total_students: number; total_teachers: number; rem: number | null;
+    class_count: number; avg_class_size: number; threshold: number;
+    overcrowded: { name: string; total: number }[];
+    class_sizes: { name: string; total: number }[];
+}
 interface Props {
     filters: Filters;
     academicYears: YearOption[];
@@ -48,6 +54,7 @@ interface Props {
     enrollment: Enrollment;
     finance: Finance;
     success: Success;
+    resources: Resources;
 }
 
 /* ---------------- Helpers ---------------- */
@@ -84,9 +91,9 @@ function Card({ title, icon, children }: { title: string; icon?: React.ReactNode
 }
 
 /* ---------------- Page ---------------- */
-type Tab = 'effectifs' | 'finances' | 'reussite';
+type Tab = 'effectifs' | 'finances' | 'reussite' | 'encadrement';
 
-export default function StatisticsIndex({ filters, academicYears, classes, enrollment, finance, success }: Readonly<Props>) {
+export default function StatisticsIndex({ filters, academicYears, classes, enrollment, finance, success, resources }: Readonly<Props>) {
     const [tab, setTab] = useState<Tab>('effectifs');
 
     const setFilter = (key: keyof Filters, value: string) => {
@@ -108,6 +115,7 @@ export default function StatisticsIndex({ filters, academicYears, classes, enrol
         { key: 'effectifs', label: 'Effectifs & parité', icon: Users },
         { key: 'finances', label: 'Finances & recouvrement', icon: Wallet },
         { key: 'reussite', label: 'Réussite & examens', icon: GraduationCap },
+        { key: 'encadrement', label: 'Encadrement', icon: School },
     ];
 
     return (
@@ -302,6 +310,42 @@ export default function StatisticsIndex({ filters, academicYears, classes, enrol
                                 )}
                             </Card></div>
                         </div>
+                    </div>
+                )}
+
+                {/* ---- Encadrement ---- */}
+                {tab === 'encadrement' && (
+                    <div className="space-y-6">
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            <Kpi label="Ratio élèves / enseignant" value={resources.rem ?? '—'} sub={`${resources.total_teachers} enseignants`} icon={GraduationCap} tone="text-blue-600" />
+                            <Kpi label="Effectif total" value={resources.total_students} icon={Users} tone="text-violet-600" />
+                            <Kpi label="Taille moyenne / classe" value={resources.avg_class_size} sub={`${resources.class_count} classes`} icon={Layers} tone="text-green-600" />
+                            <Kpi label="Classes pléthoriques" value={resources.overcrowded.length} sub={`> ${resources.threshold} élèves`} icon={School} tone="text-orange-600" />
+                        </div>
+                        <Card title="Effectif par classe (rouge = pléthorique)" icon={<Layers className="w-4 h-4" />}>
+                            <ResponsiveContainer width="100%" height={300}>
+                                <BarChart data={resources.class_sizes}>
+                                    <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} interval={0} angle={-15} textAnchor="end" height={50} />
+                                    <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} width={30} allowDecimals={false} />
+                                    <RTooltip />
+                                    <Bar dataKey="total" name="Élèves" radius={[4, 4, 0, 0]}>
+                                        {resources.class_sizes.map((c, i) => <Cell key={i} fill={c.total > resources.threshold ? ORANGE : BLUE} />)}
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </Card>
+                        {resources.overcrowded.length > 0 && (
+                            <Card title="Classes pléthoriques à surveiller" icon={<School className="w-4 h-4" />}>
+                                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                    {resources.overcrowded.map((c) => (
+                                        <div key={c.name} className="flex items-center justify-between rounded-lg bg-orange-50 dark:bg-orange-900/20 px-4 py-2.5">
+                                            <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{c.name}</span>
+                                            <span className="text-sm font-bold text-orange-600">{c.total} élèves</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </Card>
+                        )}
                     </div>
                 )}
             </div>

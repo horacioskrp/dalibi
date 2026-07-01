@@ -84,7 +84,7 @@
                 <tr><td>{{ $methodLabels[$m['method']] ?? $m['method'] }}</td><td class="n">{{ $money($m['total']) }}</td><td class="n">{{ $m['count'] }}</td></tr>
             @endforeach
         </table>
-    @else
+    @elseif ($section === 'reussite')
         <h2>Réussite interne</h2>
         <table class="kpis">
             <tr><td>Bulletins validés</td><td class="n">{{ $data['bulletins'] }}</td>
@@ -104,6 +104,24 @@
         </table>
         <p class="sub">Taux d'admission global : <strong>{{ $data['exams_summary']['admission_rate'] }} %</strong>
             ({{ $data['exams_summary']['admitted'] }} admis / {{ $data['exams_summary']['registered'] }} inscrits)</p>
+    @else
+        <h2>Encadrement</h2>
+        <table class="kpis">
+            <tr><td>Effectif total</td><td class="n">{{ $data['total_students'] }}</td>
+                <td>Enseignants affectés</td><td class="n">{{ $data['total_teachers'] }}</td></tr>
+            <tr><td>Ratio élèves / enseignant (REM)</td><td class="n">{{ $data['rem'] ?? '—' }}</td>
+                <td>Taille moyenne des classes</td><td class="n">{{ $data['avg_class_size'] }}</td></tr>
+            <tr><td>Nombre de classes</td><td class="n">{{ $data['class_count'] }}</td>
+                <td>Classes pléthoriques (> {{ $data['threshold'] }})</td><td class="n">{{ $data['overcrowded']->count() }}</td></tr>
+        </table>
+
+        <h2>Taille des classes</h2>
+        <table>
+            <tr><th>Classe</th><th class="n">Effectif</th></tr>
+            @foreach ($data['class_sizes'] as $c)
+                <tr><td>{{ $c['name'] }}</td><td class="n">{{ $c['total'] }}</td></tr>
+            @endforeach
+        </table>
     @endif
 </body>
 </html>

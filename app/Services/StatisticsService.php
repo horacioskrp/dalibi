@@ -282,15 +282,60 @@ class StatisticsService
         ];
     }
 
+    /* ================= Encadrement & ressources (phase 2) ================= */
+
+    public function resourcesStats(array $filters): array
+    {
+        $f = $this->filters($filters);
+        $threshold = 50; // seuil « classe pléthorique »
+
+        $students = DB::table('enrollments')
+            ->when($f['year'], fn ($q) => $q->where('academic_year_id', $f['year']))
+            ->when($f['class'], fn ($q) => $q->where('class_id', $f['class']))
+            ->distinct()
+            ->count('student_id');
+
+        // Enseignants affectés (à l'échelle de l'école, sur l'année)
+        $teachers = DB::table('subject_assignments')
+            ->when($f['year'], fn ($q) => $q->where('academic_year_id', $f['year']))
+            ->where('active', true)
+            ->distinct()
+            ->count('teacher_id');
+
+        $sizes = DB::table('enrollments')
+            ->join('classes', 'enrollments.class_id', '=', 'classes.id')
+            ->when($f['year'], fn ($q) => $q->where('enrollments.academic_year_id', $f['year']))
+            ->when($f['class'], fn ($q) => $q->where('enrollments.class_id', $f['class']))
+            ->selectRaw('classes.name AS name, COUNT(*) AS total')
+            ->groupBy('classes.name')
+            ->orderByDesc('total')
+            ->get()
+            ->map(fn ($r) => ['name' => $r->name, 'total' => (int) $r->total]);
+
+        $overcrowded = $sizes->filter(fn ($c) => $c['total'] > $threshold)->values();
+
+        return [
+            'total_students' => $students,
+            'total_teachers' => $teachers,
+            'rem'            => $teachers > 0 ? round($students / $teachers, 1) : null,
+            'class_count'    => $sizes->count(),
+            'avg_class_size' => $sizes->count() ? round($sizes->avg('total'), 1) : 0,
+            'threshold'      => $threshold,
+            'overcrowded'    => $overcrowded,
+            'class_sizes'    => $sizes,
+        ];
+    }
+
     /* ================= Aiguillage ================= */
 
     /** Renvoie les données d'une section. */
     public function section(string $section, array $filters): array
     {
         return match ($section) {
-            'finances' => $this->financeStats($filters),
-            'reussite' => $this->successStats($filters),
-            default    => $this->enrollmentStats($filters),
+            'finances'    => $this->financeStats($filters),
+            'reussite'    => $this->successStats($filters),
+            'encadrement' => $this->resourcesStats($filters),
+            default       => $this->enrollmentStats($filters),
         };
     }
 }
