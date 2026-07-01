@@ -396,17 +396,88 @@ class StatisticsService
         ];
     }
 
+    /* ================= Comparaisons pluriannuelles (phase 2) ================= */
+
+    /** Évolution des indicateurs clés d'une année à l'autre. */
+    public function trendsStats(array $filters = []): array
+    {
+        $years = DB::table('academic_years')->orderBy('start_date')->get(['id', 'year']);
+
+        $series = $years->map(function ($y) {
+            $f   = ['academic_year_id' => $y->id];
+            $e   = $this->enrollmentStats($f);
+            $fin = $this->financeStats($f);
+            $s   = $this->successStats($f);
+
+            return [
+                'year'         => $y->year,
+                'effectif'     => $e['total'],
+                'part_filles'  => $e['part_filles'],
+                'redoublement' => $e['rates']['redoublement'],
+                'abandon'      => $e['rates']['abandon'],
+                'recouvrement' => $fin['recovery_rate'],
+                'reussite'     => $s['pass_rate'],
+                'admission'    => $s['exams_summary']['admission_rate'],
+            ];
+        })->values();
+
+        return ['series' => $series];
+    }
+
+    /* ================= Géographie (préfectures du Togo) ================= */
+
+    public function geographyStats(array $filters): array
+    {
+        $f = $this->filters($filters);
+
+        $base = DB::table('enrollments')
+            ->join('students', 'enrollments.student_id', '=', 'students.id')
+            ->when($f['year'], fn ($q) => $q->where('enrollments.academic_year_id', $f['year']))
+            ->when($f['class'], fn ($q) => $q->where('enrollments.class_id', $f['class']))
+            ->when($f['gender'], fn ($q) => $q->where('students.gender', $f['gender']));
+
+        $byRegion = (clone $base)
+            ->whereNotNull('students.region')->where('students.region', '!=', '')
+            ->selectRaw('students.region AS name, COUNT(DISTINCT students.id) AS total')
+            ->groupBy('students.region')
+            ->orderByDesc('total')
+            ->get()
+            ->map(fn ($r) => ['name' => $r->name, 'total' => (int) $r->total]);
+
+        $byPrefecture = (clone $base)
+            ->whereNotNull('students.prefecture')->where('students.prefecture', '!=', '')
+            ->selectRaw('students.prefecture AS name, students.region AS region, COUNT(DISTINCT students.id) AS total')
+            ->groupBy('students.prefecture', 'students.region')
+            ->orderByDesc('total')
+            ->limit(20)
+            ->get()
+            ->map(fn ($r) => ['name' => $r->name, 'region' => $r->region, 'total' => (int) $r->total]);
+
+        $total     = (clone $base)->distinct()->count('students.id');
+        $localized = (clone $base)->whereNotNull('students.region')->where('students.region', '!=', '')->distinct()->count('students.id');
+
+        return [
+            'total'         => $total,
+            'localized'     => $localized,
+            'coverage'      => $total > 0 ? round($localized / $total * 100, 1) : 0.0,
+            'by_region'     => $byRegion,
+            'by_prefecture' => $byPrefecture,
+        ];
+    }
+
     /* ================= Aiguillage ================= */
 
     /** Renvoie les données d'une section. */
     public function section(string $section, array $filters): array
     {
         return match ($section) {
-            'finances'    => $this->financeStats($filters),
-            'reussite'    => $this->successStats($filters),
-            'encadrement' => $this->resourcesStats($filters),
-            'assiduite'   => $this->attendanceStats($filters),
-            default       => $this->enrollmentStats($filters),
+            'finances'     => $this->financeStats($filters),
+            'reussite'     => $this->successStats($filters),
+            'encadrement'  => $this->resourcesStats($filters),
+            'assiduite'    => $this->attendanceStats($filters),
+            'comparaisons' => $this->trendsStats($filters),
+            'geographie'   => $this->geographyStats($filters),
+            default        => $this->enrollmentStats($filters),
         };
     }
 }

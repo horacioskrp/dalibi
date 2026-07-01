@@ -16,6 +16,8 @@ interface Student {
     nationality?: string | null;
     address?: string | null;
     city?: string | null;
+    region?: string | null;
+    prefecture?: string | null;
     phone?: string | null;
     email?: string | null;
     profile_photo?: string | null;
@@ -69,6 +71,8 @@ export default function Edit({ student }: Readonly<EditProps>) {
         nationality: student.nationality ?? '',
         address: student.address ?? '',
         city: student.city ?? '',
+        region: student.region ?? '',
+        prefecture: student.prefecture ?? '',
         phone: student.phone ?? '',
         email: student.email ?? '',
         profile_photo: student.profile_photo ?? '',

@@ -38,10 +38,10 @@ class StatisticsTest extends TestCase
         $this->class  = Classroom::factory()->create(['classroom_type_id' => $this->type->id]);
     }
 
-    private function enrolled(string $gender, string $academicStatus): Student
+    private function enrolled(string $gender, string $academicStatus, ?string $region = null): Student
     {
         $u = User::factory()->create();
-        $s = Student::create(['user_id' => $u->id, 'matricule' => 'M' . Str::random(6), 'firstname' => 'A', 'lastname' => Str::random(5), 'gender' => $gender, 'birth_date' => '2010-01-01']);
+        $s = Student::create(['user_id' => $u->id, 'matricule' => 'M' . Str::random(6), 'firstname' => 'A', 'lastname' => Str::random(5), 'gender' => $gender, 'birth_date' => '2010-01-01', 'region' => $region]);
         Enrollment::create([
             'school_id' => $this->school->id, 'student_id' => $s->id, 'class_id' => $this->class->id,
             'academic_year_id' => $this->year->id, 'enrollment_code' => 'E' . Str::random(8),
@@ -116,6 +116,35 @@ class StatisticsTest extends TestCase
         $this->assertSame(1, $stats['absent']);
         $this->assertSame(50.0, $stats['presence_rate']);
         $this->assertSame(50.0, $stats['absence_rate']);
+    }
+
+    public function test_trends_include_current_year(): void
+    {
+        $this->enrolled('male', 'valide');
+        $this->enrolled('female', 'valide');
+
+        $stats = app(StatisticsService::class)->trendsStats();
+        $current = collect($stats['series'])->firstWhere('year', $this->year->year);
+
+        $this->assertNotNull($current);
+        $this->assertSame(2, $current['effectif']);
+    }
+
+    public function test_geography_aggregates_by_region(): void
+    {
+        $this->enrolled('male', 'en_cours', 'Maritime');
+        $this->enrolled('female', 'en_cours', 'Maritime');
+        $this->enrolled('male', 'en_cours', 'Kara');
+        $this->enrolled('female', 'en_cours', null); // non renseigné
+
+        $stats = app(StatisticsService::class)->geographyStats(['academic_year_id' => $this->year->id]);
+
+        $this->assertSame(4, $stats['total']);
+        $this->assertSame(3, $stats['localized']);
+        $this->assertSame(75.0, $stats['coverage']);
+        $byRegion = collect($stats['by_region']);
+        $this->assertSame(2, $byRegion->firstWhere('name', 'Maritime')['total']);
+        $this->assertSame(1, $byRegion->firstWhere('name', 'Kara')['total']);
     }
 
     public function test_export_requires_export_permission(): void

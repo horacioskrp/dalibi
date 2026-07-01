@@ -1,8 +1,8 @@
 import { Head, router } from '@inertiajs/react';
-import { BarChart3, Download, FileSpreadsheet, GraduationCap, Layers, PieChart as PieIcon, School, TrendingUp, UserCheck, Users, Wallet } from 'lucide-react';
+import { BarChart3, Download, FileSpreadsheet, GraduationCap, Layers, MapPin, PieChart as PieIcon, School, TrendingUp, UserCheck, Users, Wallet } from 'lucide-react';
 import { useState } from 'react';
 import {
-    Area, AreaChart, Bar, BarChart, Cell, Pie, PieChart,
+    Area, AreaChart, Bar, BarChart, Cell, Legend, Line, LineChart, Pie, PieChart,
     ResponsiveContainer, Tooltip as RTooltip, XAxis, YAxis,
 } from 'recharts';
 import { Button } from '@/components/ui/button';
@@ -54,6 +54,13 @@ interface Attendance {
     by_period: { name: string; present: number; absent: number; late: number }[];
     by_class: { name: string; absence_rate: number }[];
 }
+interface TrendPoint { year: string; effectif: number; part_filles: number; redoublement: number; abandon: number; recouvrement: number; reussite: number; admission: number }
+interface Trends { series: TrendPoint[] }
+interface Geography {
+    total: number; localized: number; coverage: number;
+    by_region: { name: string; total: number }[];
+    by_prefecture: { name: string; region: string; total: number }[];
+}
 interface Props {
     filters: Filters;
     academicYears: YearOption[];
@@ -63,6 +70,8 @@ interface Props {
     success: Success;
     resources: Resources;
     attendance: Attendance;
+    trends: Trends;
+    geography: Geography;
 }
 
 /* ---------------- Helpers ---------------- */
@@ -99,9 +108,9 @@ function Card({ title, icon, children }: { title: string; icon?: React.ReactNode
 }
 
 /* ---------------- Page ---------------- */
-type Tab = 'effectifs' | 'finances' | 'reussite' | 'encadrement' | 'assiduite';
+type Tab = 'effectifs' | 'finances' | 'reussite' | 'encadrement' | 'assiduite' | 'comparaisons' | 'geographie';
 
-export default function StatisticsIndex({ filters, academicYears, classes, enrollment, finance, success, resources, attendance }: Readonly<Props>) {
+export default function StatisticsIndex({ filters, academicYears, classes, enrollment, finance, success, resources, attendance, trends, geography }: Readonly<Props>) {
     const [tab, setTab] = useState<Tab>('effectifs');
 
     const setFilter = (key: keyof Filters, value: string) => {
@@ -125,6 +134,8 @@ export default function StatisticsIndex({ filters, academicYears, classes, enrol
         { key: 'reussite', label: 'Réussite & examens', icon: GraduationCap },
         { key: 'encadrement', label: 'Encadrement', icon: School },
         { key: 'assiduite', label: 'Assiduité', icon: UserCheck },
+        { key: 'comparaisons', label: 'Comparaisons', icon: TrendingUp },
+        { key: 'geographie', label: 'Géographie', icon: MapPin },
     ];
 
     return (
@@ -405,6 +416,97 @@ export default function StatisticsIndex({ filters, academicYears, classes, enrol
                                     </Card>
                                 </div>
                             </>
+                        )}
+                    </div>
+                )}
+
+                {/* ---- Comparaisons pluriannuelles ---- */}
+                {tab === 'comparaisons' && (
+                    <div className="space-y-6">
+                        {trends.series.length < 2 && (
+                            <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-sm px-4 py-3">
+                                Les tendances se précisent avec au moins deux années académiques renseignées.
+                            </div>
+                        )}
+                        <div className="grid lg:grid-cols-2 gap-5">
+                            <Card title="Évolution de l'effectif" icon={<Users className="w-4 h-4" />}>
+                                <ResponsiveContainer width="100%" height={260}>
+                                    <LineChart data={trends.series}>
+                                        <XAxis dataKey="year" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+                                        <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} width={36} allowDecimals={false} />
+                                        <RTooltip />
+                                        <Line type="monotone" dataKey="effectif" name="Effectif" stroke={BLUE} strokeWidth={2.5} dot={{ r: 3 }} />
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            </Card>
+                            <Card title="Évolution des taux (%)" icon={<TrendingUp className="w-4 h-4" />}>
+                                <ResponsiveContainer width="100%" height={260}>
+                                    <LineChart data={trends.series}>
+                                        <XAxis dataKey="year" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+                                        <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} width={36} />
+                                        <RTooltip />
+                                        <Legend wrapperStyle={{ fontSize: 11 }} />
+                                        <Line type="monotone" dataKey="recouvrement" name="Recouvrement" stroke={GREEN} strokeWidth={2} dot={{ r: 2 }} />
+                                        <Line type="monotone" dataKey="reussite" name="Réussite" stroke={BLUE} strokeWidth={2} dot={{ r: 2 }} />
+                                        <Line type="monotone" dataKey="redoublement" name="Redoublement" stroke={ORANGE} strokeWidth={2} dot={{ r: 2 }} />
+                                        <Line type="monotone" dataKey="abandon" name="Abandon" stroke="#ef4444" strokeWidth={2} dot={{ r: 2 }} />
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            </Card>
+                        </div>
+                        <Card title="Tableau comparatif" icon={<BarChart3 className="w-4 h-4" />}>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead><tr className="text-left text-xs text-gray-500 uppercase border-b border-gray-100 dark:border-gray-700">
+                                        <th className="py-2">Année</th><th className="py-2 text-right">Effectif</th><th className="py-2 text-right">% filles</th>
+                                        <th className="py-2 text-right">Redoubl.</th><th className="py-2 text-right">Abandon</th><th className="py-2 text-right">Recouvr.</th>
+                                        <th className="py-2 text-right">Réussite</th><th className="py-2 text-right">Admission</th></tr></thead>
+                                    <tbody>{trends.series.map((r) => (
+                                        <tr key={r.year} className="border-b border-gray-50 dark:border-gray-700/50">
+                                            <td className="py-2 font-medium">{r.year}</td><td className="py-2 text-right">{r.effectif}</td><td className="py-2 text-right">{r.part_filles}%</td>
+                                            <td className="py-2 text-right">{r.redoublement}%</td><td className="py-2 text-right">{r.abandon}%</td><td className="py-2 text-right">{r.recouvrement}%</td>
+                                            <td className="py-2 text-right">{r.reussite}%</td><td className="py-2 text-right">{r.admission}%</td>
+                                        </tr>))}</tbody>
+                                </table>
+                            </div>
+                        </Card>
+                    </div>
+                )}
+
+                {/* ---- Géographie ---- */}
+                {tab === 'geographie' && (
+                    <div className="space-y-6">
+                        <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-sm px-4 py-3">
+                            Origine renseignée pour <strong>{geography.coverage}%</strong> des élèves ({geography.localized} / {geography.total}). Complétez la région/préfecture sur la fiche élève pour affiner.
+                        </div>
+                        {geography.by_region.length === 0 ? (
+                            <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-card p-12 text-center text-gray-400">
+                                Aucune origine géographique renseignée.
+                            </div>
+                        ) : (
+                            <div className="grid lg:grid-cols-3 gap-5">
+                                <Card title="Par région" icon={<MapPin className="w-4 h-4" />}>
+                                    <ResponsiveContainer width="100%" height={260}>
+                                        <PieChart>
+                                            <Pie dataKey="total" nameKey="name" innerRadius={50} outerRadius={90} paddingAngle={2} data={geography.by_region}>
+                                                {geography.by_region.map((_, i) => <Cell key={i} fill={[BLUE, GREEN, VIOLET, ORANGE, PINK, SLATE][i % 6]} />)}
+                                            </Pie>
+                                            <RTooltip />
+                                            <Legend wrapperStyle={{ fontSize: 11 }} />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                </Card>
+                                <div className="lg:col-span-2"><Card title="Top préfectures d'origine" icon={<BarChart3 className="w-4 h-4" />}>
+                                    <ResponsiveContainer width="100%" height={280}>
+                                        <BarChart data={geography.by_prefecture} layout="vertical" margin={{ left: 20 }}>
+                                            <XAxis type="number" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} allowDecimals={false} />
+                                            <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} width={90} />
+                                            <RTooltip />
+                                            <Bar dataKey="total" name="Élèves" fill={BLUE} radius={[0, 4, 4, 0]} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </Card></div>
+                            </div>
                         )}
                     </div>
                 )}
