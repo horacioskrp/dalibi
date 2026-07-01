@@ -103,6 +103,9 @@ class Permissions
             // Calendrier
             'calendar'             => ['Calendrier', 'Calendrier académique', $crud],
 
+            // Statistiques
+            'statistics'           => ['Statistiques', 'Statistiques', ['view', 'export']],
+
             // Présences
             'attendances'          => ['Présences', 'Présences', $crud],
             'absence_permissions'  => ['Présences', 'Demandes de permission', ['view', 'create', 'review', 'delete']],

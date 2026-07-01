@@ -10,6 +10,7 @@ export function route(name: string, params?: any): string {
     const baseUrl = globalThis.location.origin;
     const routeMap: Record<string, string> = {
         'dashboard': '/dashboard',
+        'statistics.index': '/statistiques',
 
         // Schools routes
         'schools.index': '/schools',
