@@ -396,17 +396,46 @@ class StatisticsService
         ];
     }
 
+    /* ================= Comparaisons pluriannuelles (phase 2) ================= */
+
+    /** Évolution des indicateurs clés d'une année à l'autre. */
+    public function trendsStats(array $filters = []): array
+    {
+        $years = DB::table('academic_years')->orderBy('start_date')->get(['id', 'year']);
+
+        $series = $years->map(function ($y) {
+            $f   = ['academic_year_id' => $y->id];
+            $e   = $this->enrollmentStats($f);
+            $fin = $this->financeStats($f);
+            $s   = $this->successStats($f);
+
+            return [
+                'year'         => $y->year,
+                'effectif'     => $e['total'],
+                'part_filles'  => $e['part_filles'],
+                'redoublement' => $e['rates']['redoublement'],
+                'abandon'      => $e['rates']['abandon'],
+                'recouvrement' => $fin['recovery_rate'],
+                'reussite'     => $s['pass_rate'],
+                'admission'    => $s['exams_summary']['admission_rate'],
+            ];
+        })->values();
+
+        return ['series' => $series];
+    }
+
     /* ================= Aiguillage ================= */
 
     /** Renvoie les données d'une section. */
     public function section(string $section, array $filters): array
     {
         return match ($section) {
-            'finances'    => $this->financeStats($filters),
-            'reussite'    => $this->successStats($filters),
-            'encadrement' => $this->resourcesStats($filters),
-            'assiduite'   => $this->attendanceStats($filters),
-            default       => $this->enrollmentStats($filters),
+            'finances'     => $this->financeStats($filters),
+            'reussite'     => $this->successStats($filters),
+            'encadrement'  => $this->resourcesStats($filters),
+            'assiduite'    => $this->attendanceStats($filters),
+            'comparaisons' => $this->trendsStats($filters),
+            default        => $this->enrollmentStats($filters),
         };
     }
 }

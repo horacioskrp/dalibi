@@ -26,9 +26,10 @@ class StatisticsExport implements WithMultipleSheets
         return match ($this->section) {
             'finances'    => $this->finance(),
             'reussite'    => $this->success(),
-            'encadrement' => $this->resources(),
-            'assiduite'   => $this->attendance(),
-            default       => $this->enrollment(),
+            'encadrement'  => $this->resources(),
+            'assiduite'    => $this->attendance(),
+            'comparaisons' => $this->trends(),
+            default        => $this->enrollment(),
         };
     }
 
@@ -146,6 +147,20 @@ class StatisticsExport implements WithMultipleSheets
                 $this->rows($d['by_period'], fn ($p) => [$p['name'], $p['present'], $p['absent'], $p['late']])),
             new SheetFromArray("Taux d'absence par classe", ['Classe', "Taux d'absence (%)"],
                 $this->rows($d['by_class'], fn ($c) => [$c['name'], $c['absence_rate']])),
+        ];
+    }
+
+    private function trends(): array
+    {
+        $d = $this->data;
+
+        return [
+            new SheetFromArray('Comparaison pluriannuelle',
+                ['Année', 'Effectif', '% filles', 'Redoublement (%)', 'Abandon (%)', 'Recouvrement (%)', 'Réussite (%)', 'Admission (%)'],
+                $this->rows($d['series'], fn ($r) => [
+                    $r['year'], $r['effectif'], $r['part_filles'], $r['redoublement'],
+                    $r['abandon'], $r['recouvrement'], $r['reussite'], $r['admission'],
+                ])),
         ];
     }
 }

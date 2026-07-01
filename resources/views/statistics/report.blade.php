@@ -122,7 +122,7 @@
                 <tr><td>{{ $c['name'] }}</td><td class="n">{{ $c['total'] }}</td></tr>
             @endforeach
         </table>
-    @else
+    @elseif ($section === 'assiduite')
         <h2>Assiduité</h2>
         <table class="kpis">
             <tr><td>Taux de présence</td><td class="n">{{ $data['presence_rate'] }} %</td>
@@ -142,6 +142,16 @@
                 @endforeach
             </table>
         @endif
+    @else
+        <h2>Comparaison pluriannuelle</h2>
+        <table>
+            <tr><th>Année</th><th class="n">Effectif</th><th class="n">% filles</th><th class="n">Redoubl.</th><th class="n">Abandon</th><th class="n">Recouvr.</th><th class="n">Réussite</th><th class="n">Admission</th></tr>
+            @foreach ($data['series'] as $r)
+                <tr><td>{{ $r['year'] }}</td><td class="n">{{ $r['effectif'] }}</td><td class="n">{{ $r['part_filles'] }}%</td>
+                    <td class="n">{{ $r['redoublement'] }}%</td><td class="n">{{ $r['abandon'] }}%</td><td class="n">{{ $r['recouvrement'] }}%</td>
+                    <td class="n">{{ $r['reussite'] }}%</td><td class="n">{{ $r['admission'] }}%</td></tr>
+            @endforeach
+        </table>
     @endif
 </body>
 </html>

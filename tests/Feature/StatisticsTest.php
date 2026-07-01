@@ -118,6 +118,18 @@ class StatisticsTest extends TestCase
         $this->assertSame(50.0, $stats['absence_rate']);
     }
 
+    public function test_trends_include_current_year(): void
+    {
+        $this->enrolled('male', 'valide');
+        $this->enrolled('female', 'valide');
+
+        $stats = app(StatisticsService::class)->trendsStats();
+        $current = collect($stats['series'])->firstWhere('year', $this->year->year);
+
+        $this->assertNotNull($current);
+        $this->assertSame(2, $current['effectif']);
+    }
+
     public function test_export_requires_export_permission(): void
     {
         $this->enrolled('female', 'valide');
