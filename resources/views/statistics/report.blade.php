@@ -122,7 +122,7 @@
                 <tr><td>{{ $c['name'] }}</td><td class="n">{{ $c['total'] }}</td></tr>
             @endforeach
         </table>
-    @else
+    @elseif ($section === 'assiduite')
         <h2>Assiduité</h2>
         <table class="kpis">
             <tr><td>Taux de présence</td><td class="n">{{ $data['presence_rate'] }} %</td>
@@ -139,6 +139,34 @@
                 <tr><th>Période</th><th class="n">Présents</th><th class="n">Absents</th><th class="n">Retards</th></tr>
                 @foreach ($data['by_period'] as $p)
                     <tr><td>{{ $p['name'] }}</td><td class="n">{{ $p['present'] }}</td><td class="n">{{ $p['absent'] }}</td><td class="n">{{ $p['late'] }}</td></tr>
+                @endforeach
+            </table>
+        @endif
+    @elseif ($section === 'comparaisons')
+        <h2>Comparaison pluriannuelle</h2>
+        <table>
+            <tr><th>Année</th><th class="n">Effectif</th><th class="n">% filles</th><th class="n">Redoubl.</th><th class="n">Abandon</th><th class="n">Recouvr.</th><th class="n">Réussite</th><th class="n">Admission</th></tr>
+            @foreach ($data['series'] as $r)
+                <tr><td>{{ $r['year'] }}</td><td class="n">{{ $r['effectif'] }}</td><td class="n">{{ $r['part_filles'] }}%</td>
+                    <td class="n">{{ $r['redoublement'] }}%</td><td class="n">{{ $r['abandon'] }}%</td><td class="n">{{ $r['recouvrement'] }}%</td>
+                    <td class="n">{{ $r['reussite'] }}%</td><td class="n">{{ $r['admission'] }}%</td></tr>
+            @endforeach
+        </table>
+    @else
+        <h2>Origine géographique (Togo)</h2>
+        <p class="sub">Couverture : {{ $data['coverage'] }} % des élèves localisés ({{ $data['localized'] }} / {{ $data['total'] }})</p>
+        <table>
+            <tr><th>Région</th><th class="n">Élèves</th></tr>
+            @foreach ($data['by_region'] as $r)
+                <tr><td>{{ $r['name'] }}</td><td class="n">{{ $r['total'] }}</td></tr>
+            @endforeach
+        </table>
+        @if (count($data['by_prefecture']))
+            <h2>Par préfecture</h2>
+            <table>
+                <tr><th>Préfecture</th><th>Région</th><th class="n">Élèves</th></tr>
+                @foreach ($data['by_prefecture'] as $p)
+                    <tr><td>{{ $p['name'] }}</td><td>{{ $p['region'] }}</td><td class="n">{{ $p['total'] }}</td></tr>
                 @endforeach
             </table>
         @endif

@@ -17,6 +17,9 @@ import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
+import { TOGO_REGIONS, prefecturesOf } from '@/data/togo';
+
+const selectCls = 'flex h-10 w-full rounded-md border border-gray-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400';
 
 export interface StudentFormPayload {
     matricule: string;
@@ -25,6 +28,8 @@ export interface StudentFormPayload {
     gender: 'male' | 'female' | '';
     birth_date: string;
     place_of_birth: string;
+    region: string;
+    prefecture: string;
     nationality: string;
     address: string;
     city: string;
@@ -329,6 +334,42 @@ export function StudentFormSteps({
                                         value={formData.city}
                                         onChange={(event) => setField('city', event.target.value)}
                                     />
+                                </div>
+
+                                <div>
+                                    <label htmlFor="region" className="flex items-center gap-2 text-sm font-medium text-gray-900 mb-2">
+                                        <MapPin className="w-4 h-4 text-violet-600" />
+                                        Région
+                                    </label>
+                                    <select
+                                        id="region"
+                                        className={selectCls}
+                                        value={formData.region}
+                                        onChange={(event) => {
+                                            setField('region', event.target.value);
+                                            setField('prefecture', '');
+                                        }}
+                                    >
+                                        <option value="">—</option>
+                                        {TOGO_REGIONS.map((r) => <option key={r.name} value={r.name}>{r.name}</option>)}
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label htmlFor="prefecture" className="flex items-center gap-2 text-sm font-medium text-gray-900 mb-2">
+                                        <MapPin className="w-4 h-4 text-violet-600" />
+                                        Préfecture
+                                    </label>
+                                    <select
+                                        id="prefecture"
+                                        className={selectCls}
+                                        value={formData.prefecture}
+                                        disabled={!formData.region}
+                                        onChange={(event) => setField('prefecture', event.target.value)}
+                                    >
+                                        <option value="">—</option>
+                                        {prefecturesOf(formData.region).map((p) => <option key={p} value={p}>{p}</option>)}
+                                    </select>
                                 </div>
 
                                 <div>

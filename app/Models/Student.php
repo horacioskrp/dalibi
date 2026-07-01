@@ -46,6 +46,8 @@ class Student extends Model implements AuthenticatableContract
         'nationality',
         'address',
         'city',
+        'region',
+        'prefecture',
         'phone',
         'email',
         'profile_photo',

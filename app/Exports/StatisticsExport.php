@@ -26,9 +26,11 @@ class StatisticsExport implements WithMultipleSheets
         return match ($this->section) {
             'finances'    => $this->finance(),
             'reussite'    => $this->success(),
-            'encadrement' => $this->resources(),
-            'assiduite'   => $this->attendance(),
-            default       => $this->enrollment(),
+            'encadrement'  => $this->resources(),
+            'assiduite'    => $this->attendance(),
+            'comparaisons' => $this->trends(),
+            'geographie'   => $this->geography(),
+            default        => $this->enrollment(),
         };
     }
 
@@ -146,6 +148,32 @@ class StatisticsExport implements WithMultipleSheets
                 $this->rows($d['by_period'], fn ($p) => [$p['name'], $p['present'], $p['absent'], $p['late']])),
             new SheetFromArray("Taux d'absence par classe", ['Classe', "Taux d'absence (%)"],
                 $this->rows($d['by_class'], fn ($c) => [$c['name'], $c['absence_rate']])),
+        ];
+    }
+
+    private function trends(): array
+    {
+        $d = $this->data;
+
+        return [
+            new SheetFromArray('Comparaison pluriannuelle',
+                ['Année', 'Effectif', '% filles', 'Redoublement (%)', 'Abandon (%)', 'Recouvrement (%)', 'Réussite (%)', 'Admission (%)'],
+                $this->rows($d['series'], fn ($r) => [
+                    $r['year'], $r['effectif'], $r['part_filles'], $r['redoublement'],
+                    $r['abandon'], $r['recouvrement'], $r['reussite'], $r['admission'],
+                ])),
+        ];
+    }
+
+    private function geography(): array
+    {
+        $d = $this->data;
+
+        return [
+            new SheetFromArray('Par région', ['Région', 'Élèves'],
+                $this->rows($d['by_region'], fn ($r) => [$r['name'], $r['total']])),
+            new SheetFromArray('Par préfecture', ['Préfecture', 'Région', 'Élèves'],
+                $this->rows($d['by_prefecture'], fn ($p) => [$p['name'], $p['region'], $p['total']])),
         ];
     }
 }
