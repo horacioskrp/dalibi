@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { BarChart3, Download, FileSpreadsheet, GraduationCap, Layers, PieChart as PieIcon, School, TrendingUp, Users, Wallet } from 'lucide-react';
+import { BarChart3, Download, FileSpreadsheet, GraduationCap, Layers, PieChart as PieIcon, School, TrendingUp, UserCheck, Users, Wallet } from 'lucide-react';
 import { useState } from 'react';
 import {
     Area, AreaChart, Bar, BarChart, Cell, Pie, PieChart,
@@ -47,6 +47,13 @@ interface Resources {
     overcrowded: { name: string; total: number }[];
     class_sizes: { name: string; total: number }[];
 }
+interface Attendance {
+    total: number; present: number; absent: number; late: number; excused: number;
+    presence_rate: number; absence_rate: number; late_rate: number;
+    chronic_absentees: number; chronic_threshold: number;
+    by_period: { name: string; present: number; absent: number; late: number }[];
+    by_class: { name: string; absence_rate: number }[];
+}
 interface Props {
     filters: Filters;
     academicYears: YearOption[];
@@ -55,6 +62,7 @@ interface Props {
     finance: Finance;
     success: Success;
     resources: Resources;
+    attendance: Attendance;
 }
 
 /* ---------------- Helpers ---------------- */
@@ -91,9 +99,9 @@ function Card({ title, icon, children }: { title: string; icon?: React.ReactNode
 }
 
 /* ---------------- Page ---------------- */
-type Tab = 'effectifs' | 'finances' | 'reussite' | 'encadrement';
+type Tab = 'effectifs' | 'finances' | 'reussite' | 'encadrement' | 'assiduite';
 
-export default function StatisticsIndex({ filters, academicYears, classes, enrollment, finance, success, resources }: Readonly<Props>) {
+export default function StatisticsIndex({ filters, academicYears, classes, enrollment, finance, success, resources, attendance }: Readonly<Props>) {
     const [tab, setTab] = useState<Tab>('effectifs');
 
     const setFilter = (key: keyof Filters, value: string) => {
@@ -116,6 +124,7 @@ export default function StatisticsIndex({ filters, academicYears, classes, enrol
         { key: 'finances', label: 'Finances & recouvrement', icon: Wallet },
         { key: 'reussite', label: 'Réussite & examens', icon: GraduationCap },
         { key: 'encadrement', label: 'Encadrement', icon: School },
+        { key: 'assiduite', label: 'Assiduité', icon: UserCheck },
     ];
 
     return (
@@ -345,6 +354,57 @@ export default function StatisticsIndex({ filters, academicYears, classes, enrol
                                     ))}
                                 </div>
                             </Card>
+                        )}
+                    </div>
+                )}
+
+                {/* ---- Assiduité ---- */}
+                {tab === 'assiduite' && (
+                    <div className="space-y-6">
+                        {attendance.total === 0 ? (
+                            <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-card p-12 text-center text-gray-400">
+                                Aucune donnée de présence pour cette période.
+                            </div>
+                        ) : (
+                            <>
+                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <Kpi label="Taux de présence" value={`${attendance.presence_rate}%`} sub={`${attendance.present} présences`} icon={UserCheck} tone="text-green-600" />
+                                    <Kpi label="Taux d'absence" value={`${attendance.absence_rate}%`} sub={`${attendance.absent} absences`} icon={TrendingUp} tone="text-red-600" />
+                                    <Kpi label="Taux de retard" value={`${attendance.late_rate}%`} sub={`${attendance.late} retards`} icon={BarChart3} tone="text-orange-600" />
+                                    <Kpi label="Absentéisme chronique" value={attendance.chronic_absentees} sub={`> ${attendance.chronic_threshold} absences`} icon={Users} tone="text-violet-600" />
+                                </div>
+                                <div className="grid lg:grid-cols-2 gap-5">
+                                    <Card title="Présences par période" icon={<UserCheck className="w-4 h-4" />}>
+                                        <ResponsiveContainer width="100%" height={260}>
+                                            <BarChart data={attendance.by_period}>
+                                                <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+                                                <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} width={30} allowDecimals={false} />
+                                                <RTooltip />
+                                                <Bar dataKey="present" name="Présents" stackId="a" fill={GREEN} />
+                                                <Bar dataKey="absent" name="Absents" stackId="a" fill="#ef4444" />
+                                                <Bar dataKey="late" name="Retards" stackId="a" fill={ORANGE} radius={[4, 4, 0, 0]} />
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </Card>
+                                    <Card title="Taux d'absence par classe" icon={<BarChart3 className="w-4 h-4" />}>
+                                        {attendance.by_class.length === 0 ? <p className="text-sm text-gray-400 text-center py-8">—</p> : (
+                                            <div className="space-y-2.5">
+                                                {attendance.by_class.slice(0, 8).map((c) => (
+                                                    <div key={c.name}>
+                                                        <div className="flex items-center justify-between text-sm mb-1">
+                                                            <span className="text-gray-700 dark:text-gray-300">{c.name}</span>
+                                                            <span className="font-semibold">{c.absence_rate}%</span>
+                                                        </div>
+                                                        <div className="w-full h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                                                            <div className={`h-full rounded-full ${c.absence_rate >= 20 ? 'bg-red-400' : c.absence_rate >= 10 ? 'bg-orange-400' : 'bg-green-500'}`} style={{ width: `${Math.min(100, c.absence_rate)}%` }} />
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </Card>
+                                </div>
+                            </>
                         )}
                     </div>
                 )}

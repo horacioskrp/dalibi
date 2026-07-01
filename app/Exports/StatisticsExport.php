@@ -27,6 +27,7 @@ class StatisticsExport implements WithMultipleSheets
             'finances'    => $this->finance(),
             'reussite'    => $this->success(),
             'encadrement' => $this->resources(),
+            'assiduite'   => $this->attendance(),
             default       => $this->enrollment(),
         };
     }
@@ -122,6 +123,29 @@ class StatisticsExport implements WithMultipleSheets
             ]),
             new SheetFromArray('Taille des classes', ['Classe', 'Effectif'],
                 $this->rows($d['class_sizes'], fn ($c) => [$c['name'], $c['total']])),
+        ];
+    }
+
+    private function attendance(): array
+    {
+        $d = $this->data;
+
+        return [
+            new SheetFromArray('Synthèse', ['Indicateur', 'Valeur'], [
+                ['Enregistrements', $d['total']],
+                ['Taux de présence (%)', $d['presence_rate']],
+                ["Taux d'absence (%)", $d['absence_rate']],
+                ['Taux de retard (%)', $d['late_rate']],
+                ['Présents', $d['present']],
+                ['Absents', $d['absent']],
+                ['Retards', $d['late']],
+                ['Excusés', $d['excused']],
+                ["Absentéisme chronique (> {$d['chronic_threshold']} abs.)", $d['chronic_absentees']],
+            ]),
+            new SheetFromArray('Par période', ['Période', 'Présents', 'Absents', 'Retards'],
+                $this->rows($d['by_period'], fn ($p) => [$p['name'], $p['present'], $p['absent'], $p['late']])),
+            new SheetFromArray("Taux d'absence par classe", ['Classe', "Taux d'absence (%)"],
+                $this->rows($d['by_class'], fn ($c) => [$c['name'], $c['absence_rate']])),
         ];
     }
 }

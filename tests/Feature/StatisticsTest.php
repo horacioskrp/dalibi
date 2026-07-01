@@ -3,7 +3,10 @@
 namespace Tests\Feature;
 
 use App\Constants\Roles;
+use App\Models\AcademicPeriod;
 use App\Models\AcademicYear;
+use App\Models\Attendance;
+use App\Models\AttendanceRecord;
 use App\Models\Classroom;
 use App\Models\ClassroomType;
 use App\Models\Enrollment;
@@ -23,6 +26,7 @@ class StatisticsTest extends TestCase
     private School $school;
     private AcademicYear $year;
     private Classroom $class;
+    private ClassroomType $type;
 
     protected function setUp(): void
     {
@@ -30,8 +34,8 @@ class StatisticsTest extends TestCase
         $this->seed(RolesAndPermissionsSeeder::class);
         $this->school = School::factory()->create();
         $this->year   = AcademicYear::create(['year' => '2025-2026', 'start_date' => '2025-09-01', 'end_date' => '2026-07-31', 'active' => true]);
-        $type         = ClassroomType::factory()->create(['period_system' => 'trimestre']);
-        $this->class  = Classroom::factory()->create(['classroom_type_id' => $type->id]);
+        $this->type   = ClassroomType::factory()->create(['period_system' => 'trimestre']);
+        $this->class  = Classroom::factory()->create(['classroom_type_id' => $this->type->id]);
     }
 
     private function enrolled(string $gender, string $academicStatus): Student
@@ -94,6 +98,24 @@ class StatisticsTest extends TestCase
         $this->assertSame(1, $stats['class_count']);
         $this->assertSame(4.0, $stats['avg_class_size']);
         $this->assertCount(0, $stats['overcrowded']);     // 4 < seuil 50
+    }
+
+    public function test_attendance_aggregates_are_correct(): void
+    {
+        $period = AcademicPeriod::create(['name' => 'Trimestre 1', 'start_date' => '2025-09-01', 'end_date' => '2025-12-31', 'type' => 'trimestre', 'order' => 1, 'weight' => 1, 'is_current' => true, 'academic_year_id' => $this->year->id, 'class_type_id' => $this->type->id]);
+        $s1 = $this->enrolled('male', 'en_cours');
+        $s2 = $this->enrolled('female', 'en_cours');
+        $att = Attendance::create(['class_id' => $this->class->id, 'academic_period_id' => $period->id, 'date' => '2025-10-01', 'session' => 'journee']);
+        AttendanceRecord::create(['attendance_id' => $att->id, 'student_id' => $s1->id, 'status' => 'present']);
+        AttendanceRecord::create(['attendance_id' => $att->id, 'student_id' => $s2->id, 'status' => 'absent']);
+
+        $stats = app(StatisticsService::class)->attendanceStats(['academic_year_id' => $this->year->id]);
+
+        $this->assertSame(2, $stats['total']);
+        $this->assertSame(1, $stats['present']);
+        $this->assertSame(1, $stats['absent']);
+        $this->assertSame(50.0, $stats['presence_rate']);
+        $this->assertSame(50.0, $stats['absence_rate']);
     }
 
     public function test_export_requires_export_permission(): void

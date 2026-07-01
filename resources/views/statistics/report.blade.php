@@ -104,7 +104,7 @@
         </table>
         <p class="sub">Taux d'admission global : <strong>{{ $data['exams_summary']['admission_rate'] }} %</strong>
             ({{ $data['exams_summary']['admitted'] }} admis / {{ $data['exams_summary']['registered'] }} inscrits)</p>
-    @else
+    @elseif ($section === 'encadrement')
         <h2>Encadrement</h2>
         <table class="kpis">
             <tr><td>Effectif total</td><td class="n">{{ $data['total_students'] }}</td>
@@ -122,6 +122,26 @@
                 <tr><td>{{ $c['name'] }}</td><td class="n">{{ $c['total'] }}</td></tr>
             @endforeach
         </table>
+    @else
+        <h2>Assiduité</h2>
+        <table class="kpis">
+            <tr><td>Taux de présence</td><td class="n">{{ $data['presence_rate'] }} %</td>
+                <td>Taux d'absence</td><td class="n">{{ $data['absence_rate'] }} %</td></tr>
+            <tr><td>Taux de retard</td><td class="n">{{ $data['late_rate'] }} %</td>
+                <td>Absentéisme chronique (> {{ $data['chronic_threshold'] }})</td><td class="n">{{ $data['chronic_absentees'] }}</td></tr>
+            <tr><td>Présents / Absents / Retards / Excusés</td>
+                <td class="n" colspan="3">{{ $data['present'] }} / {{ $data['absent'] }} / {{ $data['late'] }} / {{ $data['excused'] }}</td></tr>
+        </table>
+
+        @if (count($data['by_period']))
+            <h2>Par période</h2>
+            <table>
+                <tr><th>Période</th><th class="n">Présents</th><th class="n">Absents</th><th class="n">Retards</th></tr>
+                @foreach ($data['by_period'] as $p)
+                    <tr><td>{{ $p['name'] }}</td><td class="n">{{ $p['present'] }}</td><td class="n">{{ $p['absent'] }}</td><td class="n">{{ $p['late'] }}</td></tr>
+                @endforeach
+            </table>
+        @endif
     @endif
 </body>
 </html>
