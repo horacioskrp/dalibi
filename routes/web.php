@@ -58,6 +58,12 @@ Route::get('dashboard', [DashboardController::class, 'index'])
 
 // Schools Routes
 Route::middleware(['auth', 'verified'])->group(function () {
+    // Statistiques
+    Route::middleware('can:view_statistics')->prefix('statistiques')->name('statistics.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Statistics\StatisticsController::class, 'index'])->name('index');
+        Route::get('/{section}/export/{format}', [\App\Http\Controllers\Statistics\StatisticsController::class, 'export'])->name('export');
+    });
+
     Route::post('schools/bulk-activate', [SchoolController::class, 'bulkActivate'])
         ->middleware('can:edit_schools')->name('schools.bulk-activate');
     Route::post('schools/bulk-deactivate', [SchoolController::class, 'bulkDeactivate'])

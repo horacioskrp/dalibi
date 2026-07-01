@@ -55,6 +55,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'note_reclamations' => ['view', 'review'],
             'finances' => ['view'],
             'reports' => ['view', 'export'],
+            'statistics' => ['view', 'export'],
             'archives' => ['view'],
             'documents' => ['view', 'generate'],
             'document_headers' => ['view', 'edit'],
@@ -99,6 +100,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'fee_categories' => ['view', 'create', 'edit'],
             'fee_structures' => ['view', 'create', 'edit'],
             'reports' => ['view', 'export'],
+            'statistics' => ['view', 'export'],
             'users' => ['view'],
         ]);
         Role::firstOrCreate(['name' => Roles::ACCOUNTING])->syncPermissions($accounting);
@@ -127,6 +129,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'users' => ['view', 'create', 'edit'],
             'portal_accounts' => ['view', 'create', 'edit', 'delete'],
             'reports' => ['view'],
+            'statistics' => ['view', 'export'],
         ], [Permissions::VIEW_STUDENT_PARENTS_INFO]);
         Role::firstOrCreate(['name' => Roles::SECRETARIAT])->syncPermissions($secretary);
 
