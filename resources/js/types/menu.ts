@@ -15,6 +15,12 @@ export const mainNavItems: NavItem[] = [
         permission: 'view_calendar',
     },
     {
+        title: 'Statistiques',
+        href: route('statistics.index'),
+        icon: PieChart,
+        permission: 'view_statistics',
+    },
+    {
         title: 'Élèves',
         href: '#',
         icon: Users,
