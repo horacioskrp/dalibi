@@ -17,7 +17,7 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class StatisticsController extends Controller
 {
-    private const SECTIONS = ['effectifs', 'finances', 'reussite'];
+    private const SECTIONS = ['effectifs', 'finances', 'reussite', 'encadrement', 'assiduite'];
 
     public function __construct(private readonly StatisticsService $stats)
     {
@@ -34,6 +34,8 @@ class StatisticsController extends Controller
             'enrollment'    => $this->stats->enrollmentStats($filters),
             'finance'       => $this->stats->financeStats($filters),
             'success'       => $this->stats->successStats($filters),
+            'resources'     => $this->stats->resourcesStats($filters),
+            'attendance'    => $this->stats->attendanceStats($filters),
         ]);
     }
 
@@ -73,9 +75,11 @@ class StatisticsController extends Controller
     private function mapSection(string $section): string
     {
         return match ($section) {
-            'finances' => 'finances',
-            'reussite' => 'reussite',
-            default    => 'effectifs',
+            'finances'    => 'finances',
+            'reussite'    => 'reussite',
+            'encadrement' => 'encadrement',
+            'assiduite'   => 'assiduite',
+            default       => 'effectifs',
         };
     }
 
