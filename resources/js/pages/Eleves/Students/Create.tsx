@@ -82,8 +82,8 @@ export default function Create() {
                         <ArrowLeft className="w-5 h-5 text-gray-600" />
                     </button>
                     <div>
-                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Créer un élève</h1>
-                        <p className="mt-2 text-gray-600">Suivez les étapes pour enregistrer un nouvel élève.</p>
+                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Ajouter un élève</h1>
+                        <p className="mt-2 text-gray-600">Suivez les étapes pour ajouter un nouvel élève.</p>
                     </div>
                 </div>
 

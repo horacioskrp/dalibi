@@ -75,7 +75,7 @@ export default function Edit({ student }: Readonly<EditProps>) {
         prefecture: student.prefecture ?? '',
         phone: student.phone ?? '',
         email: student.email ?? '',
-        profile_photo: student.profile_photo ?? '',
+        profile_photo: '',
         active: student.active,
         information: {
             birth_certificate_number: student.information?.birth_certificate_number ?? '',

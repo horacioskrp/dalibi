@@ -35,7 +35,7 @@ export interface StudentFormPayload {
     city: string;
     phone: string;
     email: string;
-    profile_photo: string;
+    profile_photo: File | string;
     active: boolean;
     information: {
         birth_certificate_number: string;
@@ -77,6 +77,7 @@ const stepLabels = [
     'Dossier administratif',
     'Parents',
     'Santé',
+    'Récapitulatif',
 ];
 
 export function StudentFormSteps({
@@ -92,7 +93,7 @@ export function StudentFormSteps({
 
     const buttonLabel = useMemo(() => {
         if (mode === 'create') {
-            return isSubmitting ? 'Création...' : 'Créer';
+            return isSubmitting ? 'Ajout...' : 'Ajouter';
         }
 
         return isSubmitting ? 'Enregistrement...' : 'Enregistrer';
@@ -396,12 +397,22 @@ export function StudentFormSteps({
                             </div>
                             <div className="space-y-4">
                                 <div>
-                                    <label htmlFor="profile_photo" className="block text-sm font-medium text-gray-900 mb-2">Lien photo de profil</label>
-                                    <Input
+                                    <label htmlFor="profile_photo" className="block text-sm font-medium text-gray-900 mb-2">Photo de profil</label>
+                                    <input
                                         id="profile_photo"
-                                        value={formData.profile_photo}
-                                        onChange={(event) => setField('profile_photo', event.target.value)}
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(event) => setField('profile_photo', event.target.files?.[0] ?? '')}
+                                        className="block w-full text-sm text-gray-600 file:mr-3 file:rounded-md file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:font-medium file:text-blue-700 hover:file:bg-blue-100"
                                     />
+                                    {formData.profile_photo instanceof File ? (
+                                        <p className="text-xs text-emerald-600 mt-1">Sélectionné : {formData.profile_photo.name}</p>
+                                    ) : (
+                                        <p className="text-xs text-gray-400 mt-1">
+                                            Image (JPG, PNG…), 4 Mo max.{mode === 'edit' ? ' Laissez vide pour conserver la photo actuelle.' : ''}
+                                        </p>
+                                    )}
+                                    {getError('profile_photo') && <p className="text-sm text-red-600 mt-1">{getError('profile_photo')}</p>}
                                 </div>
 
                                 <div className="flex items-center space-x-3 pt-2">
@@ -700,6 +711,56 @@ export function StudentFormSteps({
                         </div>
                     </div>
                 )}
+
+                {currentStep === 4 && (() => {
+                    const genderLabel = ({ male: 'Masculin', female: 'Féminin', '': '—' } as Record<string, string>)[formData.gender] ?? '—';
+                    const admissionLabel = ({ new: 'Nouvelle inscription', transfer: 'Transfert', re_admission: 'Réadmission' } as Record<string, string>)[formData.information.admission_type] ?? '—';
+                    const photoLabel = formData.profile_photo instanceof File
+                        ? formData.profile_photo.name
+                        : (formData.profile_photo ? 'Photo actuelle conservée' : 'Aucune');
+                    const val = (v: string) => (v && v.trim() !== '' ? v : '—');
+                    const full = (last: string, first: string) => val(`${last} ${first}`.trim());
+                    const sections: { title: string; rows: [string, string][] }[] = [
+                        { title: 'Identité', rows: [['Matricule', val(formData.matricule)], ['Nom', val(formData.lastname)], ['Prénom', val(formData.firstname)], ['Genre', genderLabel]] },
+                        { title: 'Naissance', rows: [['Date', val(formData.birth_date)], ['Lieu', val(formData.place_of_birth)]] },
+                        { title: 'Origine & contact', rows: [['Région', val(formData.region)], ['Préfecture', val(formData.prefecture)], ['Ville', val(formData.city)], ['Adresse', val(formData.address)], ['Nationalité', val(formData.nationality)], ['Téléphone', val(formData.phone)], ['E-mail', val(formData.email)]] },
+                        { title: 'Dossier administratif', rows: [["Type d'admission", admissionLabel], ['N° extrait de naissance', val(formData.information.birth_certificate_number)]] },
+                        { title: 'Parents', rows: [['Père', full(formData.parent.father_lastname, formData.parent.father_firstname)], ['Tél. père', val(formData.parent.father_phone)], ['Mère', full(formData.parent.mother_lastname, formData.parent.mother_firstname)], ['Tél. mère', val(formData.parent.mother_phone)]] },
+                        { title: 'Santé', rows: [['Groupe sanguin', val(formData.medical.blood_group)], ["Contact d'urgence", val(formData.medical.emergency_contact_name)], ['Tél. urgence', val(formData.medical.emergency_contact_phone)]] },
+                        { title: 'Photo & statut', rows: [['Photo', photoLabel], ['Statut', formData.active ? 'Actif' : 'Inactif']] },
+                    ];
+
+                    return (
+                        <div className="space-y-5">
+                            <div className="border border-blue-100 rounded-xl p-5 bg-linear-to-br from-blue-50/50 to-transparent">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center">
+                                        <FileText className="w-5 h-5 text-blue-600" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-semibold text-gray-900">Récapitulatif</h3>
+                                        <p className="text-sm text-gray-500">Vérifiez les informations avant d'ajouter l'élève.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="grid md:grid-cols-2 gap-4">
+                                {sections.map((s) => (
+                                    <div key={s.title} className="rounded-xl border border-gray-100 p-4">
+                                        <h4 className="font-semibold text-sm text-gray-900 mb-3">{s.title}</h4>
+                                        <dl className="space-y-1.5">
+                                            {s.rows.map(([label, value]) => (
+                                                <div key={label} className="flex justify-between gap-3 text-sm">
+                                                    <dt className="text-gray-500 shrink-0">{label}</dt>
+                                                    <dd className="text-gray-900 font-medium text-right break-words">{value}</dd>
+                                                </div>
+                                            ))}
+                                        </dl>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    );
+                })()}
             </div>
 
             <div className="flex items-center justify-between gap-3">
