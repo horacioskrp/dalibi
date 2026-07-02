@@ -13,6 +13,7 @@ interface Classroom {
     name: string;
     code: string;
     capacity: number;
+    expected_age?: number | null;
     classroom_type_id?: string | null;
     type?: ClassroomTypeOption | null;
 }
@@ -27,6 +28,7 @@ export default function Edit({ classroom, classroomTypes }: Readonly<EditProps>)
         name: classroom.name,
         code: classroom.code,
         capacity: classroom.capacity,
+        expected_age: classroom.expected_age ?? null,
         classroom_type_id: classroom.classroom_type_id || classroom.type?.id || '',
     });
 

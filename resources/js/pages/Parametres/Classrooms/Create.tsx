@@ -16,6 +16,7 @@ const initialValues: ClassroomFormData = {
     name: '',
     code: '',
     capacity: 40,
+    expected_age: null,
     classroom_type_id: '',
 };
 
