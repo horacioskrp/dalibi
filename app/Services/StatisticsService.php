@@ -349,6 +349,7 @@ class StatisticsService
             ->where('ar.status', 'absent')
             ->groupBy('ar.student_id')
             ->havingRaw('COUNT(*) > ?', [$threshold])
+            ->select('ar.student_id')
             ->get()
             ->count();
 
