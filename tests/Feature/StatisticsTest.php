@@ -130,6 +130,20 @@ class StatisticsTest extends TestCase
         $this->assertSame(2, $current['effectif']);
     }
 
+    public function test_over_age_is_computed_from_class_expected_age(): void
+    {
+        $this->class->update(['expected_age' => 12]);
+        // Élèves nés en 2010 → ~16 ans, soit +4 par rapport à 12 → sur-âge.
+        $this->enrolled('male', 'en_cours');
+        $this->enrolled('female', 'en_cours');
+
+        $stats = app(StatisticsService::class)->enrollmentStats(['academic_year_id' => $this->year->id]);
+
+        $this->assertSame(2, $stats['over_age']['evaluated']);
+        $this->assertSame(2, $stats['over_age']['count']);
+        $this->assertSame(100.0, $stats['over_age']['rate']);
+    }
+
     public function test_geography_aggregates_by_region(): void
     {
         $this->enrolled('male', 'en_cours', 'Maritime');

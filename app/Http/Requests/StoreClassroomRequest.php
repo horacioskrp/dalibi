@@ -21,6 +21,7 @@ class StoreClassroomRequest extends FormRequest
             'name' => ['required', 'string', 'max:255', 'unique:classes,name'],
             'code' => ['required', 'string', 'max:50', 'unique:classes,code'],
             'capacity' => ['required', 'integer', 'min:1', 'max:200'],
+            'expected_age' => ['nullable', 'integer', 'min:3', 'max:30'],
             'classroom_type_id' => ['nullable', 'uuid', 'exists:classroom_types,id'],
         ];
     }

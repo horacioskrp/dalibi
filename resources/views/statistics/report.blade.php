@@ -38,6 +38,9 @@
                 <td>Taux de redoublement</td><td class="n">{{ $data['rates']['redoublement'] }} %</td></tr>
             <tr><td>Taux d'abandon</td><td class="n">{{ $data['rates']['abandon'] }} %</td>
                 <td>Âge moyen</td><td class="n">{{ $data['age_moyen'] ?? '—' }}</td></tr>
+            <tr><td>Taux de sur-âge (≥ +{{ $data['over_age']['threshold'] }} ans)</td>
+                <td class="n">{{ $data['over_age']['evaluated'] ? $data['over_age']['rate'] . ' %' : '—' }}</td>
+                <td>Élèves en sur-âge</td><td class="n">{{ $data['over_age']['count'] }} / {{ $data['over_age']['evaluated'] }}</td></tr>
         </table>
 
         <h2>Effectifs par classe</h2>

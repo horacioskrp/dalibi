@@ -22,6 +22,7 @@ class UpdateClassroomRequest extends FormRequest
             'name' => ['required', 'string', 'max:255', Rule::unique('classes', 'name')->ignore($this->route('classroom'))],
             'code' => ['required', 'string', 'max:50', Rule::unique('classes', 'code')->ignore($this->route('classroom'))],
             'capacity' => ['required', 'integer', 'min:1', 'max:200'],
+            'expected_age' => ['nullable', 'integer', 'min:3', 'max:30'],
             'classroom_type_id' => ['nullable', 'uuid', 'exists:classroom_types,id'],
         ];
     }

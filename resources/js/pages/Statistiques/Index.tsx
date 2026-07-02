@@ -27,6 +27,7 @@ interface Enrollment {
     age_distribution: { age: number; total: number }[];
     age_moyen: number | null;
     by_city: { city: string; total: number }[];
+    over_age: { evaluated: number; count: number; rate: number; threshold: number };
 }
 interface Finance {
     billed: number; collected: number; remaining: number; recovery_rate: number;
@@ -217,7 +218,7 @@ export default function StatisticsIndex({ filters, academicYears, classes, enrol
                         </div>
                         <div className="grid lg:grid-cols-2 gap-5">
                             <Card title="Pyramide des âges" icon={<BarChart3 className="w-4 h-4" />}>
-                                <ResponsiveContainer width="100%" height={220}>
+                                <ResponsiveContainer width="100%" height={200}>
                                     <BarChart data={enrollment.age_distribution}>
                                         <XAxis dataKey="age" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
                                         <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} width={30} allowDecimals={false} />
@@ -225,6 +226,14 @@ export default function StatisticsIndex({ filters, academicYears, classes, enrol
                                         <Bar dataKey="total" name="Élèves" fill={VIOLET} radius={[4, 4, 0, 0]} />
                                     </BarChart>
                                 </ResponsiveContainer>
+                                <div className="mt-3 flex items-center justify-between rounded-lg bg-amber-50 dark:bg-amber-900/20 px-3 py-2 text-sm">
+                                    <span className="text-amber-700 dark:text-amber-300">Taux de sur-âge (≥ +{enrollment.over_age.threshold} ans)</span>
+                                    <span className="font-bold text-amber-700 dark:text-amber-300">
+                                        {enrollment.over_age.evaluated === 0 ? '—' : `${enrollment.over_age.rate}%`}
+                                        {enrollment.over_age.evaluated > 0 && <span className="text-xs font-normal ml-1">({enrollment.over_age.count}/{enrollment.over_age.evaluated})</span>}
+                                    </span>
+                                </div>
+                                {enrollment.over_age.evaluated === 0 && <p className="text-xs text-gray-400 mt-1.5">Renseignez l'âge attendu sur les classes pour activer ce calcul.</p>}
                             </Card>
                             <Card title="Origine géographique (top villes)" icon={<Users className="w-4 h-4" />}>
                                 {enrollment.by_city.length === 0 ? <p className="text-sm text-gray-400 text-center py-8">Non renseigné</p> : (

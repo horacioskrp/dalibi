@@ -18,6 +18,24 @@ Dalibi est un outil complet libre et open-source de gestion pour les établissem
 - Évolution des paiements par mois et derniers paiements
 - Filtrage par année académique, contenu adapté au rôle de l'utilisateur
 
+### Statistiques & pilotage
+
+Un menu **Statistiques** dédié, avec filtres (année, classe, sexe) et **export PDF & Excel** sur
+chaque section, aligné sur les indicateurs de l'annuaire statistique / carte scolaire (MEPSTA) :
+
+- **Effectifs & parité** : effectifs par classe/sexe, **indice de parité (IPS)**, répartition des
+  statuts (**promotion / redoublement / abandon**), pyramide des âges et **taux de sur-âge**
+  (retard scolaire, via l'âge attendu par classe)
+- **Finances & recouvrement** : facturé / encaissé / reste, **taux de recouvrement**, répartition
+  par mode de paiement (**Mobile Money**, espèces, virement, chèque), évolution mensuelle
+- **Réussite & examens** : réussite interne, **mentions**, résultats aux **examens officiels**
+  (CEPD, BEPC, BAC) avec taux d'admission par centre
+- **Encadrement** : **ratio élèves/enseignant (REM)**, taille moyenne des classes, classes
+  pléthoriques
+- **Assiduité** : taux de présence / absence / retard, absentéisme chronique
+- **Comparaisons pluriannuelles** : évolution des indicateurs clés d'une année à l'autre
+- **Géographie** : origine des élèves par **région et préfecture** du Togo
+
 ### Gestion des établissements
 
 - Support multi-écoles (primaire, collège, lycée)
@@ -439,10 +457,10 @@ dalibi/
 - [x] Portail parents & élèves (API REST + onboarding)
 - [x] Calendrier académique
 - [x] Journal d'audit
+- [x] Statistiques & pilotage (parité, réussite, recouvrement, encadrement, assiduité, géographie) + export PDF/Excel
 - [ ] Application mobile (consomme l'API du portail)
 - [ ] Notifications & communication école-parents (e-mail / SMS / push)
 - [ ] Paiement en ligne (mobile money : Flooz / T-Money…)
-- [ ] Rapports et statistiques avancées
 - [ ] Intégration avec le système éducatif togolais
 
 ## 🧪 Tests

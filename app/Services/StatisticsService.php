@@ -97,6 +97,16 @@ class StatisticsService
 
         $rate = fn (int $n, int $d) => $d > 0 ? round($n / $d * 100, 1) : 0.0;
 
+        // Sur-âge (retard scolaire) : âge de l'élève supérieur à l'âge attendu de sa classe.
+        $overAgeThreshold = 2;
+        $ageRows = (clone $base)
+            ->join('classes', 'enrollments.class_id', '=', 'classes.id')
+            ->whereNotNull('students.birth_date')
+            ->whereNotNull('classes.expected_age')
+            ->get(['students.birth_date', 'classes.expected_age']);
+        $overEval  = $ageRows->count();
+        $overCount = $ageRows->filter(fn ($r) => (Carbon::parse($r->birth_date)->age - (int) $r->expected_age) >= $overAgeThreshold)->count();
+
         return [
             'total'   => $total,
             'gender'  => ['male' => $male, 'female' => $female, 'other' => $other],
@@ -115,6 +125,12 @@ class StatisticsService
             'age_distribution' => $ageDistribution,
             'age_moyen'        => $ages->count() ? round($ages->avg(), 1) : null,
             'by_city'          => $byCity,
+            'over_age'         => [
+                'evaluated' => $overEval,
+                'count'     => $overCount,
+                'rate'      => $overEval > 0 ? round($overCount / $overEval * 100, 1) : 0.0,
+                'threshold' => $overAgeThreshold,
+            ],
         ];
     }
 
