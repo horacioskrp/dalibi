@@ -72,7 +72,7 @@ export default function Create() {
         <AppLayout>
             <Head title="Nouvel élève" />
 
-            <div className="space-y-6 max-w-6xl">
+            <div className="space-y-6 w-full">
                 <div className="flex items-center gap-4">
                     <button
                         type="button"
