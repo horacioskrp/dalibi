@@ -105,18 +105,26 @@ class StudentController extends Controller
 
     public function store(StoreStudentRequest $request): RedirectResponse
     {
-        $data = $request->validated();
+        $data  = $request->validated();
+        $photo = $request->file('profile_photo');
 
-        DB::transaction(function () use ($data): void {
+        DB::transaction(function () use ($data, $photo): void {
             $studentFillable = array_filter(
                 (new Student())->getFillable(),
                 static fn (string $column): bool => $column !== 'user_id'
             );
 
-            $studentData = Arr::only($data, $studentFillable);
+            // La photo est un fichier (upload) → gérée à part, jamais en assignation de masse.
+            $studentData = Arr::except(Arr::only($data, $studentFillable), ['profile_photo']);
             $studentData['active'] = (bool) ($studentData['active'] ?? true);
 
             $student = Student::create($studentData);
+
+            if ($photo) {
+                $student->update([
+                    'profile_photo' => $photo->store($student->storageFolder() . '/photo', 'secure'),
+                ]);
+            }
 
             $student->information()->create($data['information']);
             $student->parentInfo()->create($data['parent']);
@@ -281,18 +289,29 @@ class StudentController extends Controller
 
     public function update(UpdateStudentRequest $request, Student $student): RedirectResponse
     {
-        $data = $request->validated();
+        $data  = $request->validated();
+        $photo = $request->file('profile_photo');
 
-        DB::transaction(function () use ($data, $student): void {
+        DB::transaction(function () use ($data, $student, $photo): void {
             $studentFillable = array_filter(
                 (new Student())->getFillable(),
                 static fn (string $column): bool => $column !== 'user_id'
             );
 
-            $studentData = Arr::only($data, $studentFillable);
+            // La photo (fichier) est gérée à part ; on ne l'assigne pas en masse.
+            $studentData = Arr::except(Arr::only($data, $studentFillable), ['profile_photo']);
             $studentData['active'] = (bool) ($studentData['active'] ?? $student->active);
 
             $student->update($studentData);
+
+            if ($photo) {
+                if ($student->profile_photo) {
+                    Storage::disk('secure')->delete($student->profile_photo);
+                }
+                $student->update([
+                    'profile_photo' => $photo->store($student->storageFolder() . '/photo', 'secure'),
+                ]);
+            }
 
             $student->information()->updateOrCreate([], $data['information']);
             $student->parentInfo()->updateOrCreate([], $data['parent']);

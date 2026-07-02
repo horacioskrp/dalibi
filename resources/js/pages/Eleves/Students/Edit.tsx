@@ -75,7 +75,7 @@ export default function Edit({ student }: Readonly<EditProps>) {
         prefecture: student.prefecture ?? '',
         phone: student.phone ?? '',
         email: student.email ?? '',
-        profile_photo: student.profile_photo ?? '',
+        profile_photo: '',
         active: student.active,
         information: {
             birth_certificate_number: student.information?.birth_certificate_number ?? '',
@@ -124,7 +124,7 @@ export default function Edit({ student }: Readonly<EditProps>) {
         <AppLayout>
             <Head title="Modifier élève" />
 
-            <div className="space-y-6 max-w-6xl">
+            <div className="space-y-6 w-full">
                 <div className="flex items-center gap-4">
                     <button
                         type="button"

@@ -31,7 +31,7 @@ class UpdateStudentRequest extends FormRequest
             'prefecture' => ['nullable', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255', Rule::unique('students', 'email')->ignore($studentId)],
-            'profile_photo' => ['nullable', 'string', 'max:255'],
+            'profile_photo' => ['nullable', 'image', 'max:4096'],
             'active' => ['nullable', 'boolean'],
 
             'information.birth_certificate_number' => ['nullable', 'string', 'max:255'],
