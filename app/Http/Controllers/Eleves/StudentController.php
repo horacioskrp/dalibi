@@ -65,7 +65,9 @@ class StudentController extends Controller
             'students' => $students,
             'perPage'  => $perPage,
             'filters' => $request->only(['search', 'gender', 'nationality', 'status', 'per_page']),
-            'stats' => Student::selectRaw("
+            // Query builder (sans casts Eloquent) : l'alias "active" entrerait sinon en
+            // collision avec le cast booléen du modèle et renverrait true au lieu du compte.
+            'stats' => DB::table('students')->whereNull('deleted_at')->selectRaw("
                 COUNT(*) as total,
                 SUM(CASE WHEN active = true  THEN 1 ELSE 0 END) as active,
                 SUM(CASE WHEN active = false THEN 1 ELSE 0 END) as inactive,
