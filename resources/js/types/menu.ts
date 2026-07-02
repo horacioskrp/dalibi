@@ -15,12 +15,6 @@ export const mainNavItems: NavItem[] = [
         permission: 'view_calendar',
     },
     {
-        title: 'Statistiques',
-        href: route('statistics.index'),
-        icon: PieChart,
-        permission: 'view_statistics',
-    },
-    {
         title: 'Élèves',
         href: '#',
         icon: Users,
@@ -99,6 +93,12 @@ export const mainNavItems: NavItem[] = [
             { title: "Journal d'audit", href: route('audit-logs.index'), icon: ScanLine, permission: 'view_audit_logs' },
             { title: 'Accès portail', href: route('guardians.index'), icon: UserCheck, permission: 'view_portal_accounts' },
         ],
+    },
+    {
+        title: 'Statistiques',
+        href: route('statistics.index'),
+        icon: PieChart,
+        permission: 'view_statistics',
     },
     {
         title: 'Paramètres',
