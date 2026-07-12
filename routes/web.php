@@ -194,6 +194,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Bulletins (préparation, validation/snapshot, téléchargement PDF)
     Route::get('bulletins', [BulletinController::class, 'index'])->middleware('can:view_bulletins')->name('bulletins.index');
     Route::post('bulletins/validate', [BulletinController::class, 'validateClass'])->middleware('can:validate_bulletins')->name('bulletins.validate');
+    // Doit précéder bulletins/{student}/download (sinon « class » serait pris pour un élève).
+    Route::get('bulletins/class/download', [BulletinController::class, 'downloadClass'])->middleware('can:download_bulletins')->name('bulletins.download-class');
     Route::get('bulletins/{student}/download', [BulletinController::class, 'download'])->middleware('can:download_bulletins')->name('bulletins.download');
     Route::get('bulletins/{reportCard}/edit', [BulletinController::class, 'editCard'])->middleware('can:validate_bulletins')->name('bulletins.edit');
     Route::put('bulletins/{reportCard}', [BulletinController::class, 'updateCard'])->middleware('can:validate_bulletins')->name('bulletins.update');

@@ -72,6 +72,10 @@ export default function Index({ classrooms, periods, rows, activeYear, filters }
         window.open(`${route('bulletins.download', studentId)}?academic_period_id=${periodId}`, '_blank');
     };
 
+    const downloadClass = () => {
+        window.open(`${route('bulletins.download-class')}?class_id=${classId}&academic_period_id=${periodId}`, '_blank');
+    };
+
     const ready = classId !== '' && periodId !== '';
     const validatedCount = rows.filter((r) => r.validated).length;
 
@@ -88,6 +92,11 @@ export default function Index({ classrooms, periods, rows, activeYear, filters }
                             Générez et figez les bulletins par classe et période{activeYear ? ` — ${activeYear.year}` : ''}.
                         </p>
                     </div>
+                    {ready && validatedCount > 0 && (
+                        <Button onClick={downloadClass} variant="outline" className="gap-2">
+                            <Download className="h-4 w-4" /> Télécharger toute la classe ({validatedCount})
+                        </Button>
+                    )}
                 </div>
 
                 {/* Filtres */}

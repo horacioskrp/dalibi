@@ -364,6 +364,34 @@ class BulletinController extends Controller
         return Pdf::loadHTML($html)->setPaper('a4', 'portrait')->download($filename);
     }
 
+    /** Télécharge en un seul PDF tous les bulletins validés d'une classe pour une période. */
+    public function downloadClass(Request $request)
+    {
+        abort_unless($request->user()->can('download_bulletins'), 403);
+
+        $classId  = $request->string('class_id')->toString();
+        $periodId = $request->string('academic_period_id')->toString();
+
+        $class  = Classroom::findOrFail($classId);
+        $period = AcademicPeriod::findOrFail($periodId);
+
+        $cards = ReportCard::with('student')
+            ->where('class_id', $classId)
+            ->where('academic_period_id', $periodId)
+            ->get()
+            ->sortBy(fn ($c) => $c->payload['student']['name'] ?? '')
+            ->values();
+
+        abort_if($cards->isEmpty(), 404, 'Aucun bulletin validé pour cette classe et cette période.');
+
+        $school = School::query()->first() ?? new School();
+        $html   = app(BulletinRenderer::class)->renderClass($cards, $school);
+
+        $filename = Str::slug('bulletins-' . $class->name . '-' . ($period->name ?? '')) . '.pdf';
+
+        return Pdf::loadHTML($html)->setPaper('a4', 'portrait')->download($filename);
+    }
+
     /** Écran d'édition d'un bulletin validé (appréciations, observations, discipline). */
     public function editCard(Request $request, ReportCard $reportCard): Response
     {
