@@ -1,9 +1,9 @@
-export default function AppLogo() {
+export default function AppLogo({ className = 'h-7 w-auto fill-white' }: { className?: string }) {
     return (
         <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 239.85 52.06"
-            className="h-7 w-auto fill-white"
+            className={className}
             aria-label="Dalibi"
         >
             {/* Wordmark */}
