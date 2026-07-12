@@ -269,6 +269,7 @@ export function route(name: string, params?: any): string {
         'bulletins.download':       `/bulletins/${params}/download`,
         'bulletins.edit':     `/bulletins/${params}/edit`,
         'bulletins.update':   `/bulletins/${params}`,
+        'bulletins.destroy':  `/bulletins/${params}`,
         'bulletin-templates.edit':   '/settings/bulletin-template',
         'bulletin-templates.update': '/settings/bulletin-template',
 

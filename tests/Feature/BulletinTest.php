@@ -317,6 +317,32 @@ class BulletinTest extends TestCase
         $this->assertSame('application/pdf', $response->headers->get('content-type'));
     }
 
+    public function test_can_devalidate_a_bulletin(): void
+    {
+        $continu = EvaluationType::create(['name' => 'Devoir', 'category' => 'continu']);
+        $student = $this->student();
+        $this->mark($student, $continu, 13);
+        $admin = $this->admin();
+
+        $this->actingAs($admin)->post(route('bulletins.validate'), [
+            'class_id' => $this->class->id, 'academic_period_id' => $this->period->id,
+        ])->assertRedirect();
+
+        $card = ReportCard::where('student_id', $student->id)->firstOrFail();
+
+        // Le secrétariat (pas de validate_bulletins) ne peut pas dévalider.
+        $this->actingAs($this->withRole(Roles::SECRETARIAT))
+            ->delete(route('bulletins.destroy', $card->id))
+            ->assertForbidden();
+
+        // Le directeur peut dévalider.
+        $this->actingAs($this->withRole(Roles::DIRECTOR))
+            ->delete(route('bulletins.destroy', $card->id))
+            ->assertRedirect();
+
+        $this->assertDatabaseMissing('report_cards', ['id' => $card->id]);
+    }
+
     public function test_download_class_404_when_no_bulletins(): void
     {
         $this->actingAs($this->admin())->get(
