@@ -19,6 +19,7 @@ use App\Models\SubjectAssignment;
 use App\Services\BulletinRenderer;
 use App\Services\GradingService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -197,15 +198,24 @@ class BulletinController extends Controller
                 ->whereIn('student_id', $students->pluck('id'))
                 ->get()
                 ->keyBy('student_id');
+        $refPrefix      = $this->referencePrefix($year?->year);
         $preservedCount = 0;
+        $attempts       = 0;
 
-        DB::transaction(function () use (
-            $students, $classSubjects, $matrix, $subjectRanks, $ranking, $config, $teachers,
-            $comments, $absences, $class, $period, $year, $effectif, $request, $validated,
-            $template, $classStats, $periodSystem, $retards, $allPeriods, $periodRankings, $annualRanking,
-            $existing, &$preservedCount
-        ): void {
-            foreach ($students as $student) {
+        // Filet de sécurité concurrence : deux validations simultanées pourraient calculer la
+        // même séquence de référence (colonne unique) ; on réessaie avec une séquence recalculée.
+        while (true) {
+            try {
+                $preservedCount = 0;
+                $nextSeq = $this->nextReferenceSequence($refPrefix);
+
+                DB::transaction(function () use (
+                    $students, $classSubjects, $matrix, $subjectRanks, $ranking, $config, $teachers,
+                    $comments, $absences, $class, $period, $year, $effectif, $request, $validated,
+                    $template, $classStats, $periodSystem, $retards, $allPeriods, $periodRankings, $annualRanking,
+                    $existing, $refPrefix, &$preservedCount, &$nextSeq
+                ): void {
+                    foreach ($students as $student) {
                 $lines = [];
                 $totalCoeff = 0.0;
                 $totalPoints = 0.0;
@@ -281,7 +291,7 @@ class BulletinController extends Controller
                 ]);
 
                 if (! $card->exists) {
-                    $card->reference = $this->reference($year?->year);
+                    $card->reference = sprintf('%s%04d', $refPrefix, $nextSeq++);
                 }
 
                 $card->fill([
@@ -295,7 +305,15 @@ class BulletinController extends Controller
                     'generated_by'     => $request->user()->id,
                 ])->save();
             }
-        });
+                });
+
+                break;
+            } catch (UniqueConstraintViolationException $e) {
+                if (++$attempts >= 3) {
+                    throw $e;
+                }
+            }
+        }
 
         $message = "Bulletins validés pour {$effectif} élève(s).";
         if ($preservedCount > 0) {
@@ -526,11 +544,17 @@ class BulletinController extends Controller
             ->toArray();
     }
 
-    private function reference(?string $year): string
+    /** Préfixe de référence des bulletins pour une année (ex. « BUL-2026- »). */
+    private function referencePrefix(?string $year): string
     {
-        $y = $year ? preg_replace('/\D/', '', substr($year, 0, 4)) : Carbon::now()->year;
-        $count = ReportCard::where('reference', 'like', "BUL-{$y}-%")->count() + 1;
+        $y = $year ? preg_replace('/\D/', '', substr($year, 0, 4)) : (string) Carbon::now()->year;
 
-        return sprintf('BUL-%s-%04d', $y, $count);
+        return "BUL-{$y}-";
+    }
+
+    /** Prochain numéro de séquence disponible pour ce préfixe. */
+    private function nextReferenceSequence(string $prefix): int
+    {
+        return ReportCard::where('reference', 'like', $prefix . '%')->count() + 1;
     }
 }

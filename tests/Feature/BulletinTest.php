@@ -216,6 +216,13 @@ class BulletinTest extends TestCase
         $this->assertSame(1, $cardA->rank);
         $this->assertSame(2, $cardB->rank);
 
+        // Références allouées de façon unique et séquentielle (pas de collision intra-lot).
+        $this->assertNotSame($cardA->reference, $cardB->reference);
+        $this->assertSame(
+            ['BUL-2025-0001', 'BUL-2025-0002'],
+            ReportCard::orderBy('reference')->pluck('reference')->all()
+        );
+
         // Budget de requêtes borné : ne doit PAS croître avec matières × élèves × types.
         // (Avant optimisation : plusieurs centaines de requêtes pour ce même cas.)
         $this->assertLessThan(60, $queries, "Trop de requêtes ({$queries}) : régression N+1 sur la validation des bulletins.");
