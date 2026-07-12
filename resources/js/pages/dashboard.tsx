@@ -1,4 +1,4 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { Users, Banknote, TrendingUp, TrendingDown, Wallet, CheckCircle2, AlertCircle, XCircle, AlertTriangle, BookOpen, ClipboardList, ArrowRight, CalendarDays, GraduationCap, UserCheck, ShieldCheck, FileBadge, LayoutGrid, User, Layers } from 'lucide-react';
 import {
     Area, AreaChart, Bar, BarChart, Cell, Pie, PieChart,
@@ -65,8 +65,26 @@ interface RecentEnrollment {
 interface Assignment {
     id: string;
     subject: string;
+    class_id: string;
     class_name: string;
     class_code: string;
+}
+
+interface TodaySlot {
+    id: string;
+    start_time: string;
+    end_time: string;
+    subject: string;
+    class_name: string;
+    room: string | null;
+}
+
+interface PendingEval {
+    id: string;
+    name: string;
+    subject: string;
+    class_name: string;
+    date: string | null;
 }
 
 interface PendingPermission {
@@ -112,6 +130,8 @@ interface DashboardProps {
     };
     teaching?: {
         assignments: Assignment[];
+        today: TodaySlot[];
+        pendingMarks: { count: number; items: PendingEval[] };
     };
     academic?: {
         present_today:       number;
@@ -742,29 +762,95 @@ export default function Dashboard({ activeYear, selectedYearId, selectedYear, ac
 
                 {/* ── Section enseignant ───────────────────────────────── */}
                 {isTeacher && (
-                    <SectionCard
-                        title="Mes affectations"
-                        icon={<BookOpen className="w-4 h-4" />}
-                        count={teaching.assignments.length}
-                        action={{ label: 'Affectations', href: route('subject-assignments.index') }}
-                    >
-                        {teaching.assignments.length === 0 ? (
-                            <p className="text-sm text-gray-400 text-center py-6 px-5">
-                                Aucune affectation pour l'année {activeYear?.year ?? 'courante'}
-                            </p>
-                        ) : (
-                            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 p-5">
-                                {teaching.assignments.map(a => (
-                                    <div key={a.id} className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
-                                        <p className="font-semibold text-blue-700 dark:text-blue-300 text-sm">{a.subject}</p>
-                                        <p className="text-xs text-blue-500 dark:text-blue-400 mt-1">
-                                            {a.class_name} <span className="opacity-60">({a.class_code})</span>
-                                        </p>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </SectionCard>
+                    <>
+                        <div className="grid lg:grid-cols-2 gap-4">
+                            {/* Emploi du temps du jour */}
+                            <SectionCard
+                                title="Mon emploi du temps — aujourd'hui"
+                                icon={<CalendarDays className="w-4 h-4" />}
+                                count={teaching.today.length}
+                                action={{ label: 'Emploi du temps', href: route('timetable.index') }}
+                            >
+                                {teaching.today.length === 0 ? (
+                                    <p className="text-sm text-gray-400 text-center py-6 px-5">Aucun cours programmé aujourd'hui.</p>
+                                ) : (
+                                    <ul className="divide-y divide-gray-100 dark:divide-gray-700">
+                                        {teaching.today.map(s => (
+                                            <li key={s.id} className="flex items-center gap-3 px-5 py-3">
+                                                <span className="font-mono text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                                    {s.start_time}–{s.end_time}
+                                                </span>
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="font-medium text-gray-800 dark:text-gray-200 text-sm truncate">{s.subject}</p>
+                                                    <p className="text-xs text-gray-400">{s.class_name}{s.room ? ` · salle ${s.room}` : ''}</p>
+                                                </div>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </SectionCard>
+
+                            {/* Notes à saisir */}
+                            <SectionCard
+                                title="Notes à saisir"
+                                icon={<ClipboardList className="w-4 h-4" />}
+                                count={teaching.pendingMarks.count}
+                                action={{ label: 'Évaluations', href: route('evaluations.index') }}
+                            >
+                                {teaching.pendingMarks.items.length === 0 ? (
+                                    <p className="text-sm text-gray-400 text-center py-6 px-5">Toutes vos évaluations sont saisies. 🎉</p>
+                                ) : (
+                                    <ul className="divide-y divide-gray-100 dark:divide-gray-700">
+                                        {teaching.pendingMarks.items.map(e => (
+                                            <li key={e.id}>
+                                                <Link
+                                                    href={route('marks.index', e.id)}
+                                                    className="flex items-center gap-3 px-5 py-3 hover:bg-amber-50/60 dark:hover:bg-amber-900/10"
+                                                >
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="font-medium text-gray-800 dark:text-gray-200 text-sm truncate">{e.name}</p>
+                                                        <p className="text-xs text-gray-400">{e.subject} · {e.class_name}{e.date ? ` · ${e.date}` : ''}</p>
+                                                    </div>
+                                                    <ArrowRight className="w-4 h-4 text-amber-500 shrink-0" />
+                                                </Link>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </SectionCard>
+                        </div>
+
+                        {/* Mes classes & matières */}
+                        <SectionCard
+                            title="Mes classes & matières"
+                            icon={<BookOpen className="w-4 h-4" />}
+                            count={teaching.assignments.length}
+                            action={{ label: 'Affectations', href: route('subject-assignments.index') }}
+                        >
+                            {teaching.assignments.length === 0 ? (
+                                <p className="text-sm text-gray-400 text-center py-6 px-5">
+                                    Aucune affectation pour l'année {activeYear?.year ?? 'courante'}
+                                </p>
+                            ) : (
+                                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 p-5">
+                                    {teaching.assignments.map(a => (
+                                        <div key={a.id} className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+                                            <p className="font-semibold text-blue-700 dark:text-blue-300 text-sm">{a.subject}</p>
+                                            <p className="text-xs text-blue-500 dark:text-blue-400 mt-1">
+                                                {a.class_name} <span className="opacity-60">({a.class_code})</span>
+                                            </p>
+                                            <Link
+                                                href={route('attendances.index')}
+                                                className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-300 hover:gap-2 transition-all"
+                                            >
+                                                <UserCheck className="w-3.5 h-3.5" /> Faire l'appel
+                                            </Link>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </SectionCard>
+                    </>
                 )}
 
                 {/* ── État vide ────────────────────────────────────────── */}
