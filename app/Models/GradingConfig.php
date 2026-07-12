@@ -44,14 +44,16 @@ class GradingConfig extends Model
         return $this->belongsTo(ClassroomType::class, 'classroom_type_id');
     }
 
-    /** Mentions par défaut (seuils décroissants). */
+    /** Mentions par défaut (seuils décroissants), incluant les paliers d'avertissement. */
     public static function defaultMentions(): array
     {
         return [
-            ['label' => "Tableau d'honneur", 'min' => 18],
-            ['label' => 'Félicitations',     'min' => 16],
-            ['label' => 'Encouragements',    'min' => 14],
-            ['label' => 'Passable',          'min' => 10],
+            ['label' => "Tableau d'honneur",      'min' => 18],
+            ['label' => 'Félicitations',          'min' => 16],
+            ['label' => 'Encouragements',         'min' => 14],
+            ['label' => 'Passable',               'min' => 10],
+            ['label' => 'Insuffisant',            'min' => 8],
+            ['label' => 'Avertissement (travail)', 'min' => 0],
         ];
     }
 
