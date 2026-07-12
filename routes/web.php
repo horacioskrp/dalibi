@@ -94,11 +94,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Évaluations par classe/matière
     Route::resource('evaluations', EvaluationController::class)->only(['index', 'show', 'destroy'])->middleware('can:view_evaluations');
     Route::patch('evaluations/{evaluation}/status', [EvaluationController::class, 'updateStatus'])
-        ->name('evaluations.update-status');
+        ->middleware('can:edit_evaluations')->name('evaluations.update-status');
     Route::patch('evaluations/{evaluation}/lock', [EvaluationController::class, 'toggleLock'])
-        ->name('evaluations.toggle-lock');
+        ->middleware('can:edit_evaluations')->name('evaluations.toggle-lock');
     Route::patch('evaluations/{evaluation}/date', [EvaluationController::class, 'updateDate'])
-        ->name('evaluations.update-date');
+        ->middleware('can:edit_evaluations')->name('evaluations.update-date');
 
     // Planning des examens
     Route::get('evaluations-planning', [EvaluationController::class, 'planning'])
@@ -113,20 +113,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Réclamations de notes
     Route::resource('note-reclamations', NoteReclamationController::class)->only(['index', 'create', 'store', 'show'])->middleware('can:view_note_reclamations');
     Route::patch('note-reclamations/{noteReclamation}/review', [NoteReclamationController::class, 'review'])
-        ->name('note-reclamations.review');
+        ->middleware('can:review_note_reclamations')->name('note-reclamations.review');
 
     // Configurations de calcul des moyennes
     Route::resource('grading-configs', GradingConfigController::class)->except(['show'])->middleware('can:view_grading_configs');
     Route::patch('grading-configs/{gradingConfig}/activate', [GradingConfigController::class, 'activate'])
-        ->name('grading-configs.activate');
+        ->middleware('can:edit_grading_configs')->name('grading-configs.activate');
     Route::resource('academic-years', AcademicYearController::class)->middleware('can:view_academic_years');
     Route::resource('academic-periods', AcademicPeriodController::class)->middleware('can:view_academic_periods');
     Route::resource('fee-categories', FeeCategorieController::class)->middleware('can:view_fee_categories');
     Route::post('fee-structures/replicate', [FeeStructureController::class, 'replicate'])
-        ->name('fee-structures.replicate');
+        ->middleware('can:create_fee_structures')->name('fee-structures.replicate');
     Route::resource('fee-structures', FeeStructureController::class)->middleware('can:view_fee_structures');
     Route::post('fee-structures/{feeStructure}/installments', [\App\Http\Controllers\Parametres\InstallmentController::class, 'storeMultiple'])
-        ->name('fee-structures.installments.store-multiple');
+        ->middleware('can:edit_fee_structures')->name('fee-structures.installments.store-multiple');
     Route::resource('scholarships', ScholarshipController::class)->middleware('can:view_scholarships');
     Route::resource('student-scholarships', StudentScholarshipController::class)->middleware('can:view_student_scholarships');
     Route::post('students/bulk-status', [StudentController::class, 'bulkStatus'])
@@ -136,8 +136,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Import d'élèves (CSV)
     Route::get('students-import', [\App\Http\Controllers\Eleves\StudentImportController::class, 'index'])->middleware('can:view_students')->name('students.import');
-    Route::get('students-import/template', [\App\Http\Controllers\Eleves\StudentImportController::class, 'template'])->name('students.import.template');
-    Route::post('students-import', [\App\Http\Controllers\Eleves\StudentImportController::class, 'store'])->name('students.import.store');
+    Route::get('students-import/template', [\App\Http\Controllers\Eleves\StudentImportController::class, 'template'])->middleware('can:view_students')->name('students.import.template');
+    Route::post('students-import', [\App\Http\Controllers\Eleves\StudentImportController::class, 'store'])->middleware('can:create_students')->name('students.import.store');
 
     Route::get('students/{student}/history', [StudentController::class, 'history'])
         ->name('students.history');
@@ -171,7 +171,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('cash-accounts/{cashAccount}', [CashAccountController::class, 'destroy'])->middleware('can:delete_cash_accounts')->name('cash-accounts.destroy');
     Route::resource('enrollments', EnrollmentController::class)->middleware('can:view_enrollments');
     Route::get('enrollments/{enrollment}/invoice', [InvoiceController::class, 'show'])->middleware('can:view_invoices')->name('enrollments.invoice');
-    Route::post('enrollments/{enrollment}/payments', [InvoiceController::class, 'storePayment'])->name('enrollments.payments.store');
+    Route::post('enrollments/{enrollment}/payments', [InvoiceController::class, 'storePayment'])->middleware('can:create_invoices')->name('enrollments.payments.store');
     Route::get('payments/{payment}/receipt', [InvoiceController::class, 'receipt'])->middleware('can:view_invoices')->name('payments.receipt');
     Route::get('receipts/verify', [InvoiceController::class, 'verifyReceipt'])
         ->middleware('throttle:30,1')
@@ -184,7 +184,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('attendances/stats', [AttendanceController::class, 'stats'])->middleware('can:view_attendances')->name('attendances.stats');
     Route::resource('absence-permissions', AbsencePermissionController::class)->only(['index', 'create', 'store', 'show', 'destroy'])->middleware('can:view_absence_permissions');
     Route::patch('absence-permissions/{absencePermission}/review', [AbsencePermissionController::class, 'review'])
-        ->name('absence-permissions.review');
+        ->middleware('can:review_absence_permissions')->name('absence-permissions.review');
 
     // Grades Routes
     Route::get('grades', [GradeController::class, 'index'])->middleware('can:view_grades')->name('grades.index');
@@ -225,8 +225,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // File Storage Settings
     Route::get('settings/file-storage', [FileStorageController::class, 'index'])->middleware('can:manage_file_storage')->name('file-storage.index');
-    Route::post('settings/file-storage', [FileStorageController::class, 'update'])->name('file-storage.update');
-    Route::post('settings/file-storage/test', [FileStorageController::class, 'test'])->name('file-storage.test');
+    Route::post('settings/file-storage', [FileStorageController::class, 'update'])->middleware('can:manage_file_storage')->name('file-storage.update');
+    Route::post('settings/file-storage/test', [FileStorageController::class, 'test'])->middleware('can:manage_file_storage')->name('file-storage.test');
 
     // Archives documentaires
     Route::get('archives', [\App\Http\Controllers\Archives\ArchiveController::class, 'index'])->middleware('can:view_archives')->name('archives.index');
@@ -252,44 +252,44 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Passage de classe / réinscription en masse
     Route::get('promotion', [PromotionController::class, 'index'])->middleware('can:execute_promotion')->name('promotion.index');
-    Route::post('promotion', [PromotionController::class, 'store'])->name('promotion.store');
+    Route::post('promotion', [PromotionController::class, 'store'])->middleware('can:execute_promotion')->name('promotion.store');
 
     // Effectifs / Listes de classe
     Route::get('roster', [RosterController::class, 'index'])->middleware('can:view_roster')->name('roster.index');
-    Route::get('roster/export', [RosterController::class, 'export'])->name('roster.export');
-    Route::patch('roster/{enrollment}/status', [RosterController::class, 'updateStatus'])->name('roster.update-status');
-    Route::post('roster/bulk-status', [RosterController::class, 'bulkStatus'])->name('roster.bulk-status');
+    Route::get('roster/export', [RosterController::class, 'export'])->middleware('can:export_roster')->name('roster.export');
+    Route::patch('roster/{enrollment}/status', [RosterController::class, 'updateStatus'])->middleware('can:edit_enrollments')->name('roster.update-status');
+    Route::post('roster/bulk-status', [RosterController::class, 'bulkStatus'])->middleware('can:edit_enrollments')->name('roster.bulk-status');
 
     // Timetable (emploi du temps)
     Route::get('timetable', [TimetableController::class, 'index'])->middleware('can:view_timetable')->name('timetable.index');
     Route::get('timetable/{classId}/export', [TimetableController::class, 'export'])->name('timetable.export');
-    Route::post('timetable', [TimetableController::class, 'store'])->name('timetable.store');
-    Route::put('timetable/{timetableSlot}', [TimetableController::class, 'update'])->name('timetable.update');
-    Route::delete('timetable/{timetableSlot}', [TimetableController::class, 'destroy'])->name('timetable.destroy');
+    Route::post('timetable', [TimetableController::class, 'store'])->middleware('can:create_timetable')->name('timetable.store');
+    Route::put('timetable/{timetableSlot}', [TimetableController::class, 'update'])->middleware('can:edit_timetable')->name('timetable.update');
+    Route::delete('timetable/{timetableSlot}', [TimetableController::class, 'destroy'])->middleware('can:delete_timetable')->name('timetable.destroy');
 
     // Official Exams (CEPD, BEPC, BAC)
     Route::get('official-exams', [OfficialExamController::class, 'index'])->middleware('can:view_official_exams')->name('official-exams.index');
-    Route::post('official-exams', [OfficialExamController::class, 'store'])->name('official-exams.store');
-    Route::get('official-exams/{officialExam}', [OfficialExamController::class, 'show'])->name('official-exams.show');
-    Route::put('official-exams/{officialExam}', [OfficialExamController::class, 'update'])->name('official-exams.update');
-    Route::delete('official-exams/{officialExam}', [OfficialExamController::class, 'destroy'])->name('official-exams.destroy');
-    Route::post('official-exams/{officialExam}/register', [OfficialExamController::class, 'registerStudents'])->name('official-exams.register');
-    Route::put('official-exams/{officialExam}/results', [OfficialExamController::class, 'updateResults'])->name('official-exams.results');
-    Route::delete('official-exams/{officialExam}/registrations/{registration}', [OfficialExamController::class, 'removeRegistration'])->name('official-exams.registrations.destroy');
+    Route::post('official-exams', [OfficialExamController::class, 'store'])->middleware('can:create_official_exams')->name('official-exams.store');
+    Route::get('official-exams/{officialExam}', [OfficialExamController::class, 'show'])->middleware('can:view_official_exams')->name('official-exams.show');
+    Route::put('official-exams/{officialExam}', [OfficialExamController::class, 'update'])->middleware('can:edit_official_exams')->name('official-exams.update');
+    Route::delete('official-exams/{officialExam}', [OfficialExamController::class, 'destroy'])->middleware('can:delete_official_exams')->name('official-exams.destroy');
+    Route::post('official-exams/{officialExam}/register', [OfficialExamController::class, 'registerStudents'])->middleware('can:edit_official_exams')->name('official-exams.register');
+    Route::put('official-exams/{officialExam}/results', [OfficialExamController::class, 'updateResults'])->middleware('can:edit_official_exams')->name('official-exams.results');
+    Route::delete('official-exams/{officialExam}/registrations/{registration}', [OfficialExamController::class, 'removeRegistration'])->middleware('can:delete_official_exams')->name('official-exams.registrations.destroy');
 
     // Document Templates (Settings)
     Route::get('settings/document-header', [\App\Http\Controllers\Parametres\DocumentHeaderController::class, 'edit'])->middleware('can:view_document_headers')->name('document-header.edit');
     Route::post('settings/document-header', [\App\Http\Controllers\Parametres\DocumentHeaderController::class, 'update'])->middleware('can:edit_document_headers')->name('document-header.update');
-    Route::get('settings/documents-registry', [DocumentTemplateController::class, 'registry'])->name('document-templates.registry');
+    Route::get('settings/documents-registry', [DocumentTemplateController::class, 'registry'])->middleware('can:view_documents')->name('document-templates.registry');
     Route::get('settings/documents', [DocumentTemplateController::class, 'index'])->middleware('can:view_documents')->name('document-templates.index');
-    Route::get('settings/documents/create', [DocumentTemplateController::class, 'create'])->name('document-templates.create');
-    Route::get('settings/documents/{documentTemplate}', [DocumentTemplateController::class, 'show'])->name('document-templates.show');
-    Route::post('settings/documents', [DocumentTemplateController::class, 'store'])->name('document-templates.store');
-    Route::get('settings/documents/{documentTemplate}/edit', [DocumentTemplateController::class, 'edit'])->name('document-templates.edit');
-    Route::put('settings/documents/{documentTemplate}', [DocumentTemplateController::class, 'update'])->name('document-templates.update');
-    Route::delete('settings/documents/{documentTemplate}', [DocumentTemplateController::class, 'destroy'])->name('document-templates.destroy');
-    Route::post('settings/documents/preview', [DocumentTemplateController::class, 'preview'])->name('document-templates.preview');
-    Route::post('settings/documents/{documentTemplate}/generate', [DocumentTemplateController::class, 'generate'])->name('document-templates.generate');
+    Route::get('settings/documents/create', [DocumentTemplateController::class, 'create'])->middleware('can:create_documents')->name('document-templates.create');
+    Route::get('settings/documents/{documentTemplate}', [DocumentTemplateController::class, 'show'])->middleware('can:view_documents')->name('document-templates.show');
+    Route::post('settings/documents', [DocumentTemplateController::class, 'store'])->middleware('can:create_documents')->name('document-templates.store');
+    Route::get('settings/documents/{documentTemplate}/edit', [DocumentTemplateController::class, 'edit'])->middleware('can:edit_documents')->name('document-templates.edit');
+    Route::put('settings/documents/{documentTemplate}', [DocumentTemplateController::class, 'update'])->middleware('can:edit_documents')->name('document-templates.update');
+    Route::delete('settings/documents/{documentTemplate}', [DocumentTemplateController::class, 'destroy'])->middleware('can:delete_documents')->name('document-templates.destroy');
+    Route::post('settings/documents/preview', [DocumentTemplateController::class, 'preview'])->middleware('can:create_documents')->name('document-templates.preview');
+    Route::post('settings/documents/{documentTemplate}/generate', [DocumentTemplateController::class, 'generate'])->middleware('can:generate_documents')->name('document-templates.generate');
 });
 
 require __DIR__.'/settings.php';

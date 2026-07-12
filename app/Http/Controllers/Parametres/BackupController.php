@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Parametres;
 use App\Http\Controllers\Controller;
 
 use App\Constants\Roles;
+use App\Jobs\RunBackupJob;
 use App\Models\Backup;
 use App\Models\BackupSetting;
 use App\Models\FileStorageSetting;
@@ -64,15 +65,11 @@ class BackupController extends Controller
             'formats.required' => 'Choisissez au moins un format.',
         ]);
 
-        $results = $this->service->run($validated['formats'], $request->user()->id);
-
-        $failed = $results->where('status', 'failed');
+        RunBackupJob::dispatch($validated['formats'], $request->user()->id);
 
         return back()->with(
-            $failed->isEmpty() ? 'success' : 'error',
-            $failed->isEmpty()
-                ? 'Sauvegarde générée avec succès.'
-                : 'Échec de la sauvegarde : ' . $failed->first()->error
+            'success',
+            'Sauvegarde lancée. Elle apparaîtra dans la liste une fois terminée.'
         );
     }
 
