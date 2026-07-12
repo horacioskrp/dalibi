@@ -36,9 +36,14 @@ return Application::configure(basePath: dirname(__DIR__))
                 return back()->with('message', 'Votre session a expiré, veuillez réessayer.');
             }
 
-            // Hors développement, on affiche la page d'erreur intégrée pour les statuts connus.
-            if (! app()->environment(['local', 'testing'])
-                && in_array($status, [403, 404, 429, 500, 503], true)) {
+            $isDev = app()->environment(['local', 'testing']);
+
+            // Erreurs « client » (403/404/429/503) : page intégrée partout, y compris en dev.
+            // Erreur serveur (500) : on conserve la page de debug en dev, page intégrée en prod.
+            $showCustom = in_array($status, [403, 404, 429, 503], true)
+                || (! $isDev && $status === 500);
+
+            if ($showCustom) {
                 return Inertia::render('Error', ['status' => $status])
                     ->toResponse($request)
                     ->setStatusCode($status);
