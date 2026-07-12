@@ -103,6 +103,9 @@ class BulletinController extends Controller
             'class_id'           => ['required', 'uuid', 'exists:classes,id'],
             'academic_period_id' => ['required', 'uuid', 'exists:academic_periods,id'],
             'observations'       => ['nullable', 'string', 'max:1000'],
+            // Par défaut, une re-validation conserve les éditions manuelles (appréciations,
+            // observations, décision, discipline). `regenerate=true` repart de zéro.
+            'regenerate'         => ['sometimes', 'boolean'],
         ]);
 
         $year   = AcademicYear::where('active', true)->first();
@@ -186,10 +189,21 @@ class BulletinController extends Controller
             $subjectRanks[$cs->id] = $this->grading->rank($rows);
         }
 
+        // Re-validation : sauf « tout régénérer », on conserve les éditions manuelles des cartes existantes.
+        $regenerate = $request->boolean('regenerate');
+        $existing   = $regenerate
+            ? collect()
+            : ReportCard::where('academic_period_id', $period->id)
+                ->whereIn('student_id', $students->pluck('id'))
+                ->get()
+                ->keyBy('student_id');
+        $preservedCount = 0;
+
         DB::transaction(function () use (
             $students, $classSubjects, $matrix, $subjectRanks, $ranking, $config, $teachers,
             $comments, $absences, $class, $period, $year, $effectif, $request, $validated,
-            $template, $classStats, $periodSystem, $retards, $allPeriods, $periodRankings, $annualRanking
+            $template, $classStats, $periodSystem, $retards, $allPeriods, $periodRankings, $annualRanking,
+            $existing, &$preservedCount
         ): void {
             foreach ($students as $student) {
                 $lines = [];
@@ -255,6 +269,12 @@ class BulletinController extends Controller
                     'template'     => ['columns' => $template->columns, 'options' => $template->options],
                 ];
 
+                // Conserve les champs saisis à la main lors d'une re-validation.
+                if (isset($existing[$student->id])) {
+                    $payload = $this->preserveManualEdits($payload, $existing[$student->id]->payload ?? []);
+                    $preservedCount++;
+                }
+
                 $card = ReportCard::firstOrNew([
                     'student_id'         => $student->id,
                     'academic_period_id' => $period->id,
@@ -277,7 +297,51 @@ class BulletinController extends Controller
             }
         });
 
-        return back()->with('message', "Bulletins validés pour {$effectif} élève(s).");
+        $message = "Bulletins validés pour {$effectif} élève(s).";
+        if ($preservedCount > 0) {
+            $message .= " Éditions manuelles conservées sur {$preservedCount} bulletin(s).";
+        }
+
+        return back()->with('message', $message);
+    }
+
+    /**
+     * Réapplique, sur un payload fraîchement calculé, les champs saisis à la main via l'écran
+     * d'édition (appréciations par matière, observations, décision, discipline) afin qu'une
+     * re-validation ne les efface pas.
+     *
+     * @param  array<string, mixed>  $payload  payload recalculé
+     * @param  array<string, mixed>  $old      payload existant (potentiellement édité)
+     * @return array<string, mixed>
+     */
+    private function preserveManualEdits(array $payload, array $old): array
+    {
+        if (($old['observations'] ?? '') !== '') {
+            $payload['observations'] = $old['observations'];
+        }
+        if (($old['decision'] ?? '') !== '') {
+            $payload['decision'] = $old['decision'];
+        }
+        $payload['punitions']  = (int) ($old['punitions'] ?? $payload['punitions']);
+        $payload['exclusions'] = (int) ($old['exclusions'] ?? $payload['exclusions']);
+
+        // Appréciations éditées, réappliquées par matière (les autres restent recalculées).
+        $editedBySubject = [];
+        foreach ($old['lines'] ?? [] as $line) {
+            if (($line['appreciation'] ?? '') !== '') {
+                $editedBySubject[$line['subject'] ?? ''] = $line['appreciation'];
+            }
+        }
+        if ($editedBySubject !== []) {
+            foreach ($payload['lines'] as $i => $line) {
+                $subject = $line['subject'] ?? '';
+                if (isset($editedBySubject[$subject])) {
+                    $payload['lines'][$i]['appreciation'] = $editedBySubject[$subject];
+                }
+            }
+        }
+
+        return $payload;
     }
 
     public function download(Request $request, Student $student)
