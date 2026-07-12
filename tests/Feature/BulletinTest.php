@@ -288,4 +288,32 @@ class BulletinTest extends TestCase
         $response->assertOk();
         $this->assertSame('application/pdf', $response->headers->get('content-type'));
     }
+
+    public function test_download_class_returns_single_pdf_for_all_bulletins(): void
+    {
+        $continu = EvaluationType::create(['name' => 'Devoir', 'category' => 'continu']);
+        $a = $this->student();
+        $b = $this->student();
+        $this->mark($a, $continu, 14);
+        $this->mark($b, $continu, 11);
+
+        $admin = $this->admin();
+        $this->actingAs($admin)->post(route('bulletins.validate'), [
+            'class_id' => $this->class->id, 'academic_period_id' => $this->period->id,
+        ])->assertRedirect();
+
+        $response = $this->actingAs($admin)->get(
+            route('bulletins.download-class') . '?class_id=' . $this->class->id . '&academic_period_id=' . $this->period->id
+        );
+
+        $response->assertOk();
+        $this->assertSame('application/pdf', $response->headers->get('content-type'));
+    }
+
+    public function test_download_class_404_when_no_bulletins(): void
+    {
+        $this->actingAs($this->admin())->get(
+            route('bulletins.download-class') . '?class_id=' . $this->class->id . '&academic_period_id=' . $this->period->id
+        )->assertNotFound();
+    }
 }

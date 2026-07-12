@@ -19,6 +19,44 @@ class BulletinRenderer
 
     public function render(ReportCard $reportCard, School $school): string
     {
+        $css  = $this->css();
+        $body = $this->documentBody($reportCard, $school);
+
+        return <<<HTML
+        <!DOCTYPE html>
+        <html lang="fr">
+        <head><meta charset="utf-8"><style>{$css}</style></head>
+        <body>{$body}</body>
+        </html>
+        HTML;
+    }
+
+    /**
+     * Rendu groupé : tous les bulletins fournis dans un seul PDF, un par page.
+     *
+     * @param  iterable<int, ReportCard>  $cards
+     */
+    public function renderClass(iterable $cards, School $school): string
+    {
+        $css   = $this->css();
+        $pages = [];
+        foreach ($cards as $card) {
+            $pages[] = '<div class="bul-page">' . $this->documentBody($card, $school) . '</div>';
+        }
+        $content = implode("\n", $pages);
+
+        return <<<HTML
+        <!DOCTYPE html>
+        <html lang="fr">
+        <head><meta charset="utf-8"><style>{$css} .bul-page{page-break-after:always;} .bul-page:last-child{page-break-after:auto;}</style></head>
+        <body>{$content}</body>
+        </html>
+        HTML;
+    }
+
+    /** Contenu d'un bulletin (hors &lt;html&gt;/&lt;head&gt;) : filigrane, en-tête, tableau, pied. */
+    private function documentBody(ReportCard $reportCard, School $school): string
+    {
         $p        = $reportCard->payload;
         $columns  = $p['template']['columns'] ?? BulletinTemplate::defaultColumns();
         $options  = $p['template']['options'] ?? BulletinTemplate::defaultOptions();
@@ -36,17 +74,12 @@ class BulletinRenderer
             $head .= "<th class=\"{$align}\" style=\"{$width}\">{$label}</th>";
         }
 
-        $body = $this->bodyRows($columns, $p);
-        $info = $this->infoBlock($p);
-        $foot = $this->footBlock($p, $options);
-        $css  = $this->css();
+        $body  = $this->bodyRows($columns, $p);
+        $info  = $this->infoBlock($p);
+        $foot  = $this->footBlock($p, $options);
         $title = e(mb_strtoupper('Bulletin — ' . ($p['period']['name'] ?? '')));
 
         return <<<HTML
-        <!DOCTYPE html>
-        <html lang="fr">
-        <head><meta charset="utf-8"><style>{$css}</style></head>
-        <body>
             {$watermark}
             {$header}
             <div class="bul-title">{$title}</div>
@@ -56,8 +89,6 @@ class BulletinRenderer
                 <tbody>{$body}</tbody>
             </table>
             {$foot}
-        </body>
-        </html>
         HTML;
     }
 

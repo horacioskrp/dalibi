@@ -263,9 +263,10 @@ export function route(name: string, params?: any): string {
         'calendar.destroy': `/calendar/${params}`,
 
         // Bulletins routes
-        'bulletins.index':    '/bulletins',
-        'bulletins.validate': '/bulletins/validate',
-        'bulletins.download': `/bulletins/${params}/download`,
+        'bulletins.index':          '/bulletins',
+        'bulletins.validate':       '/bulletins/validate',
+        'bulletins.download-class': '/bulletins/class/download',
+        'bulletins.download':       `/bulletins/${params}/download`,
         'bulletins.edit':     `/bulletins/${params}/edit`,
         'bulletins.update':   `/bulletins/${params}`,
         'bulletin-templates.edit':   '/settings/bulletin-template',
