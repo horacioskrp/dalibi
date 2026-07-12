@@ -17,6 +17,12 @@ class ReportCardPolicy
         return $user->can('validate_bulletins');
     }
 
+    /** Dévalider (supprimer) un bulletin figé. */
+    public function delete(User $user, ReportCard $reportCard): bool
+    {
+        return $user->can('validate_bulletins');
+    }
+
     public function download(User $user, ReportCard $reportCard): bool
     {
         return $user->can('download_bulletins');
