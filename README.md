@@ -186,6 +186,7 @@ Un visualiseur **Redoc** est exposé sur **`/docs/api`**, mais **gardé par l'en
 - Historique des sauvegardes (taille, statut, origine manuelle/planifiée), téléchargement et suppression
 - **Restauration** : import d'un fichier `.json` ou `.sql` pour réécrire la base ; une **sauvegarde de sécurité** est générée automatiquement avant l'opération
 - Commande CLI : `php artisan backup:run --formats=json,sql`
+- Les sauvegardes **manuelles** (interface) sont traitées en arrière-plan : un **worker** de file d'attente doit tourner (voir _Installation → étape 7_). Les sauvegardes **planifiées** et la commande CLI s'exécutent, elles, de façon synchrone.
 - Page réservée aux administrateurs
 
 ## 📋 Prérequis
@@ -262,6 +263,38 @@ Pour activer les sauvegardes planifiées, ajoutez le planificateur Laravel au cr
 ```cron
 * * * * * cd /chemin/vers/dalibi && php artisan schedule:run >> /dev/null 2>&1
 ```
+
+### 7. File d'attente (worker) — requis en production
+
+Certaines tâches sont traitées **en arrière-plan** via la file d'attente (`QUEUE_CONNECTION=database` par défaut, table `jobs` créée par les migrations) :
+
+- l'**envoi des e-mails** (invitations au portail parents/élèves, réinitialisation de mot de passe) ;
+- la **génération des sauvegardes lancées manuellement** depuis l'interface (le bouton _Créer une sauvegarde_).
+
+> Sans worker actif, ces tâches restent en attente et **ne s'exécutent jamais**. Les sauvegardes **planifiées** (via le scheduler de l'étape 6) ne sont **pas** concernées : elles s'exécutent de façon synchrone.
+
+En production, gardez un worker en permanence avec un superviseur de processus (ex. **supervisor**) :
+
+```ini
+; /etc/supervisor/conf.d/dalibi-worker.conf
+[program:dalibi-worker]
+command=php /chemin/vers/dalibi/artisan queue:work --max-time=3600 --tries=3
+autostart=true
+autorestart=true
+user=www-data
+numprocs=1
+redirect_stderr=true
+stdout_logfile=/var/log/dalibi-worker.log
+stopwaitsecs=3600
+```
+
+```bash
+sudo supervisorctl reread && sudo supervisorctl update && sudo supervisorctl start dalibi-worker
+```
+
+> En développement, un simple `php artisan queue:work` suffit. Après un déploiement, redémarrez le worker (`php artisan queue:restart`) pour qu'il charge le nouveau code.
+
+_(En Docker/Kubernetes, ce rôle est déjà fourni par le workload **worker** — voir ci-dessous.)_
 
 ## 🐳 Docker
 

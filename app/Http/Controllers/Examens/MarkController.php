@@ -14,6 +14,7 @@ use App\Models\Evaluation;
 use App\Models\Mark;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -90,10 +91,9 @@ class MarkController extends Controller
      */
     public function store(Request $request, Evaluation $evaluation)
     {
-        if ($evaluation->locked_at !== null) {
-            return back()->withErrors([
-                'locked' => 'Cette évaluation est clôturée. Veuillez déposer une réclamation pour modifier les notes.',
-            ]);
+        $decision = Gate::inspect('enterMarks', $evaluation);
+        if ($decision->denied()) {
+            return back()->withErrors(['locked' => $decision->message()]);
         }
 
         $maxScore = (float) ($evaluation->template?->max_score ?? 20);

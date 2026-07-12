@@ -276,11 +276,13 @@ php artisan config:cache
 MATRICULE_CACHE_DRIVER=redis
 ```
 
-2. **Queue** pour les générations en masse:
+2. **Queue (worker)** — **requis** : traite les e-mails (invitations portail, réinitialisation) et les sauvegardes manuelles, en plus des générations en masse. À superviser en permanence (voir README, étape 7) :
 
 ```bash
-php artisan queue:work
+php artisan queue:work --max-time=3600 --tries=3
 ```
+
+> Après chaque déploiement : `php artisan queue:restart`. Sans worker, e-mails et sauvegardes manuelles restent en file sans jamais s'exécuter.
 
 3. **Indexes** sur les colonnes:
 

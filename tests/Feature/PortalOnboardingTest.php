@@ -56,7 +56,8 @@ class PortalOnboardingTest extends TestCase
 
         $guardian = Guardian::where('email', 'jean@ex.com')->firstOrFail();
         $this->assertSame(1, $guardian->children()->count());
-        Mail::assertSent(GuardianInvitation::class);
+        // Le mail d'invitation est mis en file (GuardianInvitation implémente ShouldQueue).
+        Mail::assertQueued(GuardianInvitation::class);
     }
 
     public function test_teacher_cannot_manage_portal_accounts(): void
@@ -92,10 +93,10 @@ class PortalOnboardingTest extends TestCase
         $guardian = $this->guardian();
 
         $this->postJson('/api/v1/auth/forgot-password', ['email' => $guardian->email])->assertOk();
-        Mail::assertSent(GuardianInvitation::class);
+        Mail::assertQueued(GuardianInvitation::class);
 
         // E-mail inconnu : réponse identique, aucun envoi
         $this->postJson('/api/v1/auth/forgot-password', ['email' => 'inconnu@ex.com'])->assertOk();
-        Mail::assertSentCount(1);
+        Mail::assertQueuedCount(1);
     }
 }

@@ -12,6 +12,7 @@ use App\Models\NoteReclamation;
 use App\Models\Student;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -144,8 +145,9 @@ class NoteReclamationController extends Controller
 
     public function review(ReviewNoteReclamationRequest $request, NoteReclamation $noteReclamation): RedirectResponse
     {
-        if ($noteReclamation->status !== 'pending') {
-            return back()->withErrors(['status' => 'Cette réclamation a déjà été traitée.']);
+        $decision = Gate::inspect('review', $noteReclamation);
+        if ($decision->denied()) {
+            return back()->withErrors(['status' => $decision->message()]);
         }
 
         $data       = $request->validated();
