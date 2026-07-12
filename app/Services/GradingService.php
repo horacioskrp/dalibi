@@ -6,6 +6,7 @@ use App\Models\AcademicPeriod;
 use App\Models\Classroom;
 use App\Models\ClassSubject;
 use App\Models\Enrollment;
+use App\Models\Evaluation;
 use App\Models\Grade;
 use App\Models\GradingConfig;
 use Illuminate\Support\Collection;
@@ -195,6 +196,171 @@ class GradingService
         }
 
         return $weight > 0 ? round($sum / $weight, 2) : null;
+    }
+
+    /*
+    |---------------------------------------------------------------------------
+    | Calcul par lot (index préchargé) — évite une requête par cellule.
+    |---------------------------------------------------------------------------
+    | Pour un bulletin de classe, les mêmes évaluations/notes sont sollicitées des
+    | milliers de fois (matières × élèves × types × périodes). On précharge tout en
+    | une requête puis on calcule 100 % en mémoire. La formule est identique à
+    | {@see subjectAverageByType} : note normalisée /20, pondérée par le coefficient
+    | du modèle d'évaluation.
+    */
+
+    /**
+     * Précharge toutes les évaluations (modèle, type, notes des élèves ciblés) d'un ensemble de
+     * matières sur un ensemble de périodes, en UNE requête. Retourne un index :
+     * `[class_subject_id][period_id] = array<int, array{type_id, category, coeff, max, scores}>`.
+     *
+     * @param  Collection<int, ClassSubject>  $classSubjects
+     * @param  array<int, string>  $studentIds
+     * @param  array<int, string>  $periodIds
+     * @return array<string, array<string, array<int, array{type_id: ?string, category: ?string, coeff: float, max: float, scores: array<string, float>}>>>
+     */
+    public function loadEvaluationIndex(Collection $classSubjects, array $studentIds, array $periodIds): array
+    {
+        if ($classSubjects->isEmpty() || $studentIds === [] || $periodIds === []) {
+            return [];
+        }
+
+        $evaluations = Evaluation::whereIn('class_subject_id', $classSubjects->pluck('id'))
+            ->whereHas('template', fn ($q) => $q->whereIn('academic_period_id', $periodIds))
+            ->with([
+                'template:id,academic_period_id,evaluation_type_id,coefficient,max_score',
+                'template.evaluationType:id,category',
+                'marks' => fn ($q) => $q->whereIn('student_id', $studentIds),
+            ])
+            ->get();
+
+        $index = [];
+        foreach ($evaluations as $evaluation) {
+            $template = $evaluation->template;
+            $periodId = $template?->academic_period_id;
+            if ($periodId === null) {
+                continue;
+            }
+
+            $scores = [];
+            foreach ($evaluation->marks as $mark) {
+                // Absent ou non noté : exclu (comme subjectAverageByType).
+                if ($mark->absent || $mark->score === null) {
+                    continue;
+                }
+                $scores[$mark->student_id] = (float) $mark->score;
+            }
+
+            $index[$evaluation->class_subject_id][$periodId][] = [
+                'type_id'  => $template->evaluation_type_id,
+                'category' => $template->evaluationType?->category,
+                'coeff'    => (float) ($template->coefficient ?: 1),
+                'max'      => (float) ($template->max_score ?: 20),
+                'scores'   => $scores,
+            ];
+        }
+
+        return $index;
+    }
+
+    /**
+     * Moyenne d'une matière depuis l'index, filtrée par type précis ($typeId) ou catégorie
+     * ($category). Équivalent en mémoire de {@see subjectAverageByType}.
+     *
+     * @param  array<string, array<string, array<int, array<string, mixed>>>>  $index
+     */
+    public function subjectAverageFromIndex(array $index, string $classSubjectId, string $studentId, string $periodId, ?string $typeId = null, ?string $category = null): ?float
+    {
+        $entries = $index[$classSubjectId][$periodId] ?? [];
+
+        $weight = 0.0;
+        $sum    = 0.0;
+
+        foreach ($entries as $e) {
+            if ($typeId !== null && $e['type_id'] !== $typeId) {
+                continue;
+            }
+            if ($category !== null && $e['category'] !== $category) {
+                continue;
+            }
+            if (! array_key_exists($studentId, $e['scores'])) {
+                continue;
+            }
+
+            $max        = $e['max'] > 0 ? $e['max'] : 20;
+            $coeff      = $e['coeff'] > 0 ? $e['coeff'] : 1;
+            $normalized = ($e['scores'][$studentId] / $max) * 20;
+
+            $weight += $coeff;
+            $sum    += $normalized * $coeff;
+        }
+
+        return $weight > 0 ? round($sum / $weight, 2) : null;
+    }
+
+    /**
+     * Notes Classe (continu) et Composition depuis l'index.
+     *
+     * @param  array<string, array<string, array<int, array<string, mixed>>>>  $index
+     * @return array{classe: float|null, compo: float|null}
+     */
+    public function subjectClasseCompoFromIndex(array $index, string $classSubjectId, string $studentId, string $periodId): array
+    {
+        return [
+            'classe' => $this->subjectAverageFromIndex($index, $classSubjectId, $studentId, $periodId, null, 'continu'),
+            'compo'  => $this->subjectAverageFromIndex($index, $classSubjectId, $studentId, $periodId, null, 'composition'),
+        ];
+    }
+
+    /**
+     * Moyenne générale de période (Classe/Compo) depuis l'index.
+     *
+     * @param  array<string, array<string, array<int, array<string, mixed>>>>  $index
+     * @param  Collection<int, ClassSubject>  $classSubjects
+     */
+    public function periodAverageFromIndex(array $index, string $studentId, string $periodId, Collection $classSubjects, GradingConfig $config): ?float
+    {
+        $totalCoeff = 0.0;
+        $weighted   = 0.0;
+
+        foreach ($classSubjects as $cs) {
+            $cc  = $this->subjectClasseCompoFromIndex($index, $cs->id, $studentId, $periodId);
+            $moy = $this->combineClasseCompo($cc['classe'], $cc['compo'], $config);
+            if ($moy === null) {
+                continue;
+            }
+            $coeff       = (float) $cs->coefficient;
+            $totalCoeff += $coeff;
+            $weighted   += $moy * $coeff;
+        }
+
+        return $totalCoeff > 0 ? $this->round($weighted / $totalCoeff, $config) : null;
+    }
+
+    /**
+     * Moyenne annuelle (pondérée par le poids des périodes) depuis l'index — cohérente avec les
+     * moyennes de période (même source « évaluations », contrairement à {@see annualAverage}).
+     *
+     * @param  array<string, array<string, array<int, array<string, mixed>>>>  $index
+     * @param  Collection<int, AcademicPeriod>  $periods
+     * @param  Collection<int, ClassSubject>  $classSubjects
+     */
+    public function annualAverageFromIndex(array $index, string $studentId, Collection $periods, Collection $classSubjects, GradingConfig $config): ?float
+    {
+        $totalWeight = 0.0;
+        $weighted    = 0.0;
+
+        foreach ($periods as $period) {
+            $avg = $this->periodAverageFromIndex($index, $studentId, $period->id, $classSubjects, $config);
+            if ($avg === null) {
+                continue;
+            }
+            $weight       = (float) ($period->weight ?? 1);
+            $totalWeight += $weight;
+            $weighted    += $avg * $weight;
+        }
+
+        return $totalWeight > 0 ? $this->round($weighted / $totalWeight, $config) : null;
     }
 
     /** Combine note de classe et composition selon la pondération de la configuration. */
