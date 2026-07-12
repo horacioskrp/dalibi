@@ -1,9 +1,11 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
-    Archive, ArrowRight, BarChart3, Calendar, GraduationCap, LayoutGrid,
-    LogIn, NotebookPen, UserCheck, Users, Wallet,
+    AlertCircle, Archive, ArrowRight, BarChart3, Calendar, CalendarRange, GraduationCap,
+    LayoutGrid, Lock, LogIn, LogOut, NotebookPen, Percent, ScanLine, Shield, ShieldCheck,
+    UserCheck, Users, Wallet,
 } from 'lucide-react';
-import { dashboard, login } from '@/routes';
+import AppLogo from '@/components/app-logo';
+import { dashboard, login, logout } from '@/routes';
 import { route } from '@/helpers/route';
 
 interface AuthProps {
@@ -29,6 +31,13 @@ const modules: ModuleCard[] = [
     { title: 'Documents & Archives', description: 'Certificats et archivage', icon: Archive, href: route('archives.index'), permission: 'view_archives', color: 'from-rose-500 to-pink-600' },
     { title: 'Statistiques', description: 'Indicateurs et pilotage', icon: BarChart3, href: route('statistics.index'), permission: 'view_statistics', color: 'from-cyan-500 to-blue-600' },
     { title: 'Calendrier', description: "Événements de l'année scolaire", icon: Calendar, href: route('calendar.index'), permission: 'view_calendar', color: 'from-fuchsia-500 to-purple-600' },
+    { title: 'Emploi du temps', description: 'Grille hebdomadaire par classe', icon: CalendarRange, href: route('timetable.index'), permission: 'view_timetable', color: 'from-sky-500 to-cyan-600' },
+    { title: 'Bourses', description: "Bourses et aides d'étudiants", icon: Percent, href: route('student-scholarships.index'), permission: 'view_student_scholarships', color: 'from-lime-500 to-emerald-600' },
+    { title: 'Réclamations de notes', description: 'Demandes et révisions de notes', icon: AlertCircle, href: route('note-reclamations.index'), permission: 'view_note_reclamations', color: 'from-orange-500 to-red-500' },
+    { title: "Permissions d'absence", description: 'Demandes et justificatifs', icon: ShieldCheck, href: route('absence-permissions.index'), permission: 'view_absence_permissions', color: 'from-teal-500 to-emerald-600' },
+    { title: 'Accès portail', description: 'Comptes parents et élèves', icon: Lock, href: route('guardians.index'), permission: 'view_portal_accounts', color: 'from-slate-500 to-slate-700' },
+    { title: 'Utilisateurs', description: 'Comptes et rôles du personnel', icon: Shield, href: route('users.index'), permission: 'view_users', color: 'from-indigo-500 to-violet-600' },
+    { title: "Journal d'audit", description: 'Traçabilité des actions', icon: ScanLine, href: route('audit-logs.index'), permission: 'view_audit_logs', color: 'from-gray-500 to-gray-700' },
 ];
 
 export default function Welcome() {
@@ -48,17 +57,25 @@ export default function Welcome() {
                 {/* Barre supérieure */}
                 <header className="sticky top-0 z-10 border-b border-gray-200/70 bg-white/80 backdrop-blur dark:border-gray-800 dark:bg-[#0a0a0a]/80">
                     <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
-                        <div className="flex items-center gap-2.5">
-                            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white">
-                                <GraduationCap className="h-5 w-5" />
-                            </span>
-                            <span className="text-lg font-bold tracking-tight">Dalibi</span>
-                        </div>
+                        <Link href={isAuthed ? dashboard() : login()} className="flex items-center" aria-label="Dalibi">
+                            <AppLogo className="h-8 w-auto fill-gray-900 dark:fill-white" />
+                        </Link>
 
                         {isAuthed ? (
-                            <Link href={dashboard()} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700">
-                                <LayoutGrid className="h-4 w-4" /> Tableau de bord
-                            </Link>
+                            <div className="flex items-center gap-2">
+                                <Link href={dashboard()} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700">
+                                    <LayoutGrid className="h-4 w-4" /> Tableau de bord
+                                </Link>
+                                <button
+                                    type="button"
+                                    onClick={() => router.post(logout.url())}
+                                    title="Se déconnecter"
+                                    aria-label="Se déconnecter"
+                                    className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:bg-red-50 hover:text-red-600 dark:border-gray-700 dark:hover:bg-red-950/40"
+                                >
+                                    <LogOut className="h-[18px] w-[18px]" />
+                                </button>
+                            </div>
                         ) : (
                             <Link href={login()} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700">
                                 <LogIn className="h-4 w-4" /> Se connecter
