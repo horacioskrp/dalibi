@@ -8,8 +8,10 @@ use App\Models\AcademicYear;
 use App\Models\AttendanceRecord;
 use App\Models\CashAccount;
 use App\Models\Classroom;
+use App\Models\ClassSubject;
 use App\Models\DocumentIssuance;
 use App\Models\Enrollment;
+use App\Models\Evaluation;
 use App\Models\User;
 use App\Models\Invoice;
 use App\Models\OfficialExam;
@@ -17,6 +19,7 @@ use App\Models\OfficialExamRegistration;
 use App\Models\Payment;
 use App\Models\Student;
 use App\Models\SubjectAssignment;
+use App\Models\TimetableSlot;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -254,22 +257,75 @@ class DashboardController extends Controller
             ];
         }
 
-        /* ── Section enseignant : capacité de saisie des notes (create_marks) ─ */
+        /* ── Section enseignant : personnalisée (create_marks) ──────────── */
         if ($user->can('create_marks')) {
-            $myAssignments = SubjectAssignment::with(['subject:id,name', 'classroom:id,name,code'])
+            $assignments = SubjectAssignment::with(['subject:id,name', 'classroom:id,name,code'])
                 ->where('teacher_id', $user->id)
                 ->when($yearId, fn ($q) => $q->where('academic_year_id', $yearId))
                 ->where('active', true)
+                ->get();
+
+            $myAssignments = $assignments->map(fn ($a) => [
+                'id'         => $a->id,
+                'subject'    => $a->subject?->name ?? '—',
+                'class_id'   => $a->class_id,
+                'class_name' => $a->classroom?->name ?? '—',
+                'class_code' => $a->classroom?->code ?? '—',
+            ]);
+
+            /* Emploi du temps du jour (1=lundi … 6=samedi) */
+            $dow = (int) now()->dayOfWeekIso;
+            $todaySlots = TimetableSlot::with(['subject:id,name', 'classroom:id,name'])
+                ->where('teacher_id', $user->id)
+                ->when($yearId, fn ($q) => $q->where('academic_year_id', $yearId))
+                ->where('day_of_week', $dow)
+                ->orderBy('start_time')
                 ->get()
-                ->map(fn ($a) => [
-                    'id'         => $a->id,
-                    'subject'    => $a->subject?->name ?? '—',
-                    'class_name' => $a->classroom?->name ?? '—',
-                    'class_code' => $a->classroom?->code ?? '—',
+                ->map(fn ($s) => [
+                    'id'         => $s->id,
+                    'start_time' => substr((string) $s->start_time, 0, 5),
+                    'end_time'   => substr((string) $s->end_time, 0, 5),
+                    'subject'    => $s->subject?->name ?? '—',
+                    'class_name' => $s->classroom?->name ?? '—',
+                    'room'       => $s->room,
+                ]);
+
+            /* Notes à saisir : ses évaluations non « terminées » (statut != completed) */
+            $classSubjectIds = collect();
+            if ($assignments->isNotEmpty()) {
+                $classSubjectIds = \App\Models\ClassSubject::query()
+                    ->when($yearId, fn ($q) => $q->where('academic_year_id', $yearId))
+                    ->where(function ($q) use ($assignments) {
+                        foreach ($assignments as $a) {
+                            $q->orWhere(fn ($w) => $w->where('class_id', $a->class_id)->where('subject_id', $a->subject_id));
+                        }
+                    })
+                    ->pluck('id');
+            }
+
+            $pendingQuery = \App\Models\Evaluation::whereIn('class_subject_id', $classSubjectIds)
+                ->where('status', '!=', 'completed');
+
+            $pendingItems = (clone $pendingQuery)
+                ->with(['classSubject.subject:id,name', 'classSubject.class:id,name', 'template:id,name'])
+                ->orderByDesc('date')
+                ->limit(6)
+                ->get()
+                ->map(fn ($e) => [
+                    'id'         => $e->id,
+                    'name'       => $e->template?->name ?? 'Évaluation',
+                    'subject'    => $e->classSubject?->subject?->name ?? '—',
+                    'class_name' => $e->classSubject?->class?->name ?? '—',
+                    'date'       => $e->date?->format('d/m/Y'),
                 ]);
 
             $data['teaching'] = [
                 'assignments' => $myAssignments,
+                'today'       => $todaySlots,
+                'pendingMarks' => [
+                    'count' => (clone $pendingQuery)->count(),
+                    'items' => $pendingItems,
+                ],
             ];
         }
 
