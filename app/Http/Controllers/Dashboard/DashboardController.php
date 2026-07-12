@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Dashboard;
 use App\Http\Controllers\Controller;
 
 use App\Models\AbsencePermission;
+use App\Models\AccountingTransaction;
 use App\Models\AcademicYear;
 use App\Models\AttendanceRecord;
 use App\Models\CashAccount;
@@ -136,12 +137,44 @@ class DashboardController extends Controller
                 ->limit(5)
                 ->get();
 
+            /* Ce mois-ci : encaissé, dépenses, solde net */
+            $startMonth = now()->startOfMonth();
+            $endMonth   = now()->endOfMonth();
+
+            $incomeMonth = DB::table('payments')
+                ->join('invoices', 'payments.invoice_id', '=', 'invoices.id')
+                ->join('enrollments', 'invoices.enrollment_id', '=', 'enrollments.id')
+                ->when($yearId, fn ($q) => $q->where('enrollments.academic_year_id', $yearId))
+                ->whereBetween('payments.paid_at', [$startMonth, $endMonth])
+                ->sum('payments.amount');
+
+            $expensesMonth = AccountingTransaction::where('type', 'EXPENSE')
+                ->whereBetween('transaction_date', [$startMonth, $endMonth])
+                ->sum('amount');
+
+            /* Répartition des encaissements par moyen de paiement (année sélectionnée) */
+            $methodRows = DB::table('payments')
+                ->join('invoices', 'payments.invoice_id', '=', 'invoices.id')
+                ->join('enrollments', 'invoices.enrollment_id', '=', 'enrollments.id')
+                ->when($yearId, fn ($q) => $q->where('enrollments.academic_year_id', $yearId))
+                ->selectRaw('payments.payment_method AS method, COALESCE(SUM(payments.amount), 0) AS total')
+                ->groupBy('payments.payment_method')
+                ->orderByDesc('total')
+                ->get()
+                ->map(fn ($r) => ['method' => $r->method ?? 'AUTRE', 'total' => (float) $r->total]);
+
             $data['financial'] = [
                 'stats'          => $stats,
                 'monthlyPayments'=> $monthlyPayments,
                 'cashAccounts'   => $cashAccounts,
                 'recentPayments' => $recentPayments,
                 'studentsNoPay'  => $studentsNoPay,
+                'month'          => [
+                    'income'   => (float) $incomeMonth,
+                    'expenses' => (float) $expensesMonth,
+                    'net'      => (float) $incomeMonth - (float) $expensesMonth,
+                ],
+                'paymentMethods' => $methodRows,
             ];
         }
 
