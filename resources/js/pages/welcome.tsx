@@ -87,9 +87,6 @@ export default function Welcome() {
                 <main className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
                     {/* Hero */}
                     <div className="mb-12 text-center">
-                        <span className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300">
-                            Logiciel de gestion scolaire
-                        </span>
                         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
                             {isAuthed ? (
                                 <>Bonjour{auth?.user?.name ? `, ${auth.user.name}` : ''} 👋</>
