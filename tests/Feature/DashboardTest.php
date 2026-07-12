@@ -61,6 +61,11 @@ class DashboardTest extends TestCase
                 ->has('enrollments.students_by_gender.female')
                 ->where('enrollments.active_classrooms', 1)
                 ->where('enrollments.total_users', User::count())
+                // Section comptable enrichie : ce mois-ci + moyens de paiement.
+                ->has('financial.month.income')
+                ->has('financial.month.expenses')
+                ->has('financial.month.net')
+                ->has('financial.paymentMethods')
             );
     }
 
