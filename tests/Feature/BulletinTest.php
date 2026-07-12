@@ -221,6 +221,54 @@ class BulletinTest extends TestCase
         $this->assertLessThan(60, $queries, "Trop de requêtes ({$queries}) : régression N+1 sur la validation des bulletins.");
     }
 
+    public function test_revalidation_preserves_manual_edits_unless_regenerate(): void
+    {
+        $continu = EvaluationType::create(['name' => 'Devoir', 'category' => 'continu']);
+        $student = $this->student();
+        $this->mark($student, $continu, 15);
+        $admin = $this->admin();
+
+        // 1) Validation initiale.
+        $this->actingAs($admin)->post(route('bulletins.validate'), [
+            'class_id' => $this->class->id, 'academic_period_id' => $this->period->id,
+        ])->assertRedirect();
+
+        $card = ReportCard::where('student_id', $student->id)->firstOrFail();
+
+        // 2) Édition manuelle (appréciation, observations, décision, discipline).
+        $this->actingAs($admin)->put(route('bulletins.update', $card->id), [
+            'appreciations' => [0 => 'Élève très sérieux'],
+            'observations'  => 'Félicitations du conseil',
+            'decision'      => 'Admis en classe supérieure',
+            'punitions'     => 2,
+            'exclusions'    => 1,
+        ])->assertRedirect();
+
+        // 3) Re-validation par défaut : les éditions sont conservées.
+        $this->actingAs($admin)->post(route('bulletins.validate'), [
+            'class_id' => $this->class->id, 'academic_period_id' => $this->period->id,
+        ])->assertRedirect();
+
+        $card->refresh();
+        $this->assertSame('Élève très sérieux', $card->payload['lines'][0]['appreciation']);
+        $this->assertSame('Félicitations du conseil', $card->payload['observations']);
+        $this->assertSame('Admis en classe supérieure', $card->payload['decision']);
+        $this->assertSame(2, $card->payload['punitions']);
+        $this->assertSame(1, $card->payload['exclusions']);
+        $this->assertSame(15.0, (float) $card->average); // recalcul effectué
+
+        // 4) Re-validation avec regenerate=true : les éditions sont effacées.
+        $this->actingAs($admin)->post(route('bulletins.validate'), [
+            'class_id' => $this->class->id, 'academic_period_id' => $this->period->id, 'regenerate' => true,
+        ])->assertRedirect();
+
+        $card->refresh();
+        $this->assertSame('', $card->payload['lines'][0]['appreciation']);
+        $this->assertSame('', $card->payload['observations']);
+        $this->assertSame(0, $card->payload['punitions']);
+        $this->assertSame(0, $card->payload['exclusions']);
+    }
+
     public function test_download_returns_pdf_after_validation(): void
     {
         $continu = EvaluationType::create(['name' => 'Devoir', 'category' => 'continu']);
