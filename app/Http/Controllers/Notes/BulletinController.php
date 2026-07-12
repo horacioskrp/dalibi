@@ -58,9 +58,10 @@ class BulletinController extends Controller
             $classSubjects = $this->classSubjects($class, $year?->id);
             $students      = $this->activeStudents($classId, $year?->id);
 
+            $index = $this->grading->loadEvaluationIndex($classSubjects, $students->pluck('id')->all(), [$periodId]);
             $averages = $students->map(fn ($s) => [
                 'student_id' => $s->id,
-                'average'    => $this->grading->periodAverageFromEvaluations($s->id, $periodId, $classSubjects, $config)['average'],
+                'average'    => $this->grading->periodAverageFromIndex($index, $s->id, $periodId, $classSubjects, $config),
             ]);
             $ranking = $this->grading->rank($averages);
 
@@ -116,6 +117,17 @@ class BulletinController extends Controller
         $students      = $this->activeStudents($class->id, $year?->id);
         $effectif      = $students->count();
 
+        // Toutes les périodes du type de classe (récap inter-périodes + moyenne annuelle).
+        $allPeriods = AcademicPeriod::forClassType($year?->id, $class->classroom_type_id);
+
+        // Préchargement en mémoire (UNE requête) de toutes les évaluations/notes utiles :
+        // tous les calculs ci-dessous se font ensuite sans requête par cellule.
+        $index = $this->grading->loadEvaluationIndex(
+            $classSubjects,
+            $students->pluck('id')->all(),
+            $allPeriods->pluck('id')->all(),
+        );
+
         // Professeur par matière + appréciations (commentaires saisis) + absences.
         $teachers    = $this->teachersBySubject($class->id, $year?->id);
         $comments    = $this->commentsByStudentSubject($classSubjects->pluck('id'), $period->id);
@@ -125,12 +137,12 @@ class BulletinController extends Controller
         $matrix = [];
         foreach ($classSubjects as $cs) {
             foreach ($students as $s) {
-                $cc  = $this->grading->subjectClasseCompo($cs, $s->id, $period->id);
+                $cc  = $this->grading->subjectClasseCompoFromIndex($index, $cs->id, $s->id, $period->id);
                 $moy = $this->grading->combineClasseCompo($cc['classe'], $cc['compo'], $config);
 
                 $byType = [];
                 foreach ($typeIds as $typeId) {
-                    $byType[$typeId] = $this->grading->subjectAverageByType($cs, $s->id, $period->id, $typeId);
+                    $byType[$typeId] = $this->grading->subjectAverageFromIndex($index, $cs->id, $s->id, $period->id, $typeId);
                 }
 
                 $matrix[$cs->id][$s->id] = ['classe' => $cc['classe'], 'compo' => $cc['compo'], 'moy' => $moy, 'by_type' => $byType];
@@ -140,7 +152,7 @@ class BulletinController extends Controller
         // Classements (global + par matière).
         $averages = $students->map(fn ($s) => [
             'student_id' => $s->id,
-            'average'    => $this->grading->periodAverageFromEvaluations($s->id, $period->id, $classSubjects, $config)['average'],
+            'average'    => $this->grading->periodAverageFromIndex($index, $s->id, $period->id, $classSubjects, $config),
         ]);
         $ranking = $this->grading->rank($averages);
 
@@ -154,19 +166,18 @@ class BulletinController extends Controller
         $periodSystem = $class->classroomType?->period_system ?? 'trimestre';
         $retards      = $this->retardsByStudent($class->id, $period);
 
-        // Récapitulatif inter-périodes + annuel (classements précalculés une fois).
-        $allPeriods     = AcademicPeriod::forClassType($year?->id, $class->classroom_type_id);
+        // Récapitulatif inter-périodes + annuel (classements précalculés une fois, depuis l'index).
         $periodRankings = [];
         foreach ($allPeriods as $pp) {
             $rows = $students->map(fn ($s) => [
                 'student_id' => $s->id,
-                'average'    => $this->grading->periodAverageFromEvaluations($s->id, $pp->id, $classSubjects, $config)['average'],
+                'average'    => $this->grading->periodAverageFromIndex($index, $s->id, $pp->id, $classSubjects, $config),
             ]);
             $periodRankings[$pp->id] = $this->grading->rank($rows);
         }
         $annualRanking = $this->grading->rank($students->map(fn ($s) => [
             'student_id' => $s->id,
-            'average'    => $this->grading->annualAverage($s->id, $allPeriods, $classSubjects, $config),
+            'average'    => $this->grading->annualAverageFromIndex($index, $s->id, $allPeriods, $classSubjects, $config),
         ]));
 
         $subjectRanks = [];

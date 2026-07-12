@@ -160,6 +160,67 @@ class BulletinTest extends TestCase
         $this->assertEquals(14, $line['moyenne']);
     }
 
+    /** Marque une note sur une matière donnée (modèle + évaluation dédiés). */
+    private function markOn(Student $student, ClassSubject $cs, EvaluationType $type, float $score): void
+    {
+        $template = EvaluationTemplate::create([
+            'academic_period_id' => $this->period->id, 'evaluation_type_id' => $type->id,
+            'class_type_id' => $this->type->id, 'name' => Str::random(6),
+            'coefficient' => 1, 'max_score' => 20, 'date' => '2025-10-01',
+        ]);
+        $evaluation = Evaluation::create([
+            'evaluation_template_id' => $template->id, 'class_subject_id' => $cs->id,
+            'date' => '2025-10-01', 'status' => 'published',
+        ]);
+        Mark::create(['evaluation_id' => $evaluation->id, 'student_id' => $student->id, 'score' => $score, 'absent' => false]);
+    }
+
+    public function test_validation_is_correct_and_query_budget_stays_flat(): void
+    {
+        $continu = EvaluationType::create(['name' => 'Devoir', 'category' => 'continu']);
+        $compo   = EvaluationType::create(['name' => 'Composition', 'category' => 'composition']);
+
+        // 2e matière (coefficient 1).
+        $subject2 = Subject::create(['name' => 'Français', 'code' => 'FR']);
+        $cs2 = ClassSubject::create([
+            'class_id' => $this->class->id, 'subject_id' => $subject2->id,
+            'coefficient' => 1, 'academic_year_id' => $this->year->id,
+        ]);
+
+        // Élève A : Maths 12/16 → 14 (coef 2) ; Français 10 (coef 1) → (14*2+10)/3 = 12.67
+        $a = $this->student();
+        $this->markOn($a, $this->cs, $continu, 12);
+        $this->markOn($a, $this->cs, $compo, 16);
+        $this->markOn($a, $cs2, $continu, 10);
+
+        // Élève B : Maths 8/8 → 8 (coef 2) ; Français 18 (coef 1) → (8*2+18)/3 = 11.33
+        $b = $this->student();
+        $this->markOn($b, $this->cs, $continu, 8);
+        $this->markOn($b, $this->cs, $compo, 8);
+        $this->markOn($b, $cs2, $continu, 18);
+
+        \Illuminate\Support\Facades\DB::enableQueryLog();
+
+        $this->actingAs($this->admin())->post(route('bulletins.validate'), [
+            'class_id' => $this->class->id, 'academic_period_id' => $this->period->id,
+        ])->assertRedirect();
+
+        $queries = count(\Illuminate\Support\Facades\DB::getQueryLog());
+        \Illuminate\Support\Facades\DB::disableQueryLog();
+
+        // Classement + moyennes.
+        $cardA = ReportCard::where('student_id', $a->id)->firstOrFail();
+        $cardB = ReportCard::where('student_id', $b->id)->firstOrFail();
+        $this->assertSame(12.67, (float) $cardA->average);
+        $this->assertSame(11.33, (float) $cardB->average);
+        $this->assertSame(1, $cardA->rank);
+        $this->assertSame(2, $cardB->rank);
+
+        // Budget de requêtes borné : ne doit PAS croître avec matières × élèves × types.
+        // (Avant optimisation : plusieurs centaines de requêtes pour ce même cas.)
+        $this->assertLessThan(60, $queries, "Trop de requêtes ({$queries}) : régression N+1 sur la validation des bulletins.");
+    }
+
     public function test_download_returns_pdf_after_validation(): void
     {
         $continu = EvaluationType::create(['name' => 'Devoir', 'category' => 'continu']);
