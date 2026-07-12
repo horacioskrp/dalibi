@@ -292,7 +292,7 @@ class BulletinController extends Controller
     /** Écran d'édition d'un bulletin validé (appréciations, observations, discipline). */
     public function editCard(Request $request, ReportCard $reportCard): Response
     {
-        abort_unless($request->user()->can('validate_bulletins'), 403);
+        $this->authorize('update', $reportCard);
 
         $p = $reportCard->payload;
 
@@ -320,7 +320,7 @@ class BulletinController extends Controller
     /** Enregistre les champs éditables dans le snapshot (sans recalcul des notes). */
     public function updateCard(Request $request, ReportCard $reportCard): RedirectResponse
     {
-        abort_unless($request->user()->can('validate_bulletins'), 403);
+        $this->authorize('update', $reportCard);
 
         $validated = $request->validate([
             'appreciations'   => ['array'],

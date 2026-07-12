@@ -9,6 +9,7 @@ use App\Models\AcademicYear;
 use App\Models\Student;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -120,7 +121,8 @@ class AbsencePermissionController extends Controller
             403
         );
 
-        abort_if($absencePermission->status !== 'pending', 422, 'Cette demande a déjà été traitée.');
+        // Règle « en attente » centralisée dans AbsencePermissionPolicy@review.
+        abort_if(Gate::inspect('review', $absencePermission)->denied(), 422, 'Cette demande a déjà été traitée.');
 
         $validated = $request->validate([
             'decision'       => ['required', 'in:approved,rejected'],
