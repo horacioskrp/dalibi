@@ -410,6 +410,22 @@ class BulletinController extends Controller
         return Pdf::loadHTML($html)->setPaper('a4', 'portrait')->download($filename);
     }
 
+    /** Dévalide (supprime) un bulletin figé — ex. validation par erreur ou élève parti. */
+    public function destroyCard(Request $request, ReportCard $reportCard): RedirectResponse
+    {
+        $this->authorize('delete', $reportCard);
+
+        $classId  = $reportCard->class_id;
+        $periodId = $reportCard->academic_period_id;
+
+        $reportCard->delete();
+
+        return redirect()->route('bulletins.index', [
+            'class_id'           => $classId,
+            'academic_period_id' => $periodId,
+        ])->with('message', 'Bulletin dévalidé.');
+    }
+
     /** Écran d'édition d'un bulletin validé (appréciations, observations, discipline). */
     public function editCard(Request $request, ReportCard $reportCard): Response
     {

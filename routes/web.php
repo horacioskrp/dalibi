@@ -199,6 +199,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('bulletins/{student}/download', [BulletinController::class, 'download'])->middleware('can:download_bulletins')->name('bulletins.download');
     Route::get('bulletins/{reportCard}/edit', [BulletinController::class, 'editCard'])->middleware('can:validate_bulletins')->name('bulletins.edit');
     Route::put('bulletins/{reportCard}', [BulletinController::class, 'updateCard'])->middleware('can:validate_bulletins')->name('bulletins.update');
+    Route::delete('bulletins/{reportCard}', [BulletinController::class, 'destroyCard'])->middleware('can:validate_bulletins')->name('bulletins.destroy');
 
     // Journal d'audit (Administration)
     Route::get('audit-logs', [\App\Http\Controllers\Administration\AuditLogController::class, 'index'])->middleware('can:view_audit_logs')->name('audit-logs.index');

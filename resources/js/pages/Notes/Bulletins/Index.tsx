@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { CheckCircle2, Download, FileSpreadsheet, GraduationCap, Lock, Pencil } from 'lucide-react';
+import { CheckCircle2, Download, FileSpreadsheet, GraduationCap, Lock, Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import {
     AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
@@ -42,6 +42,7 @@ export default function Index({ classrooms, periods, rows, activeYear, filters }
     const [observations, setObservations] = useState('');
     const [regenerate, setRegenerate] = useState(false);
     const [confirmOpen, setConfirmOpen] = useState(false);
+    const [deleteTarget, setDeleteTarget] = useState<Row | null>(null);
 
     const reload = (next: { class_id?: string; academic_period_id?: string }) => {
         router.get(route('bulletins.index'), {
@@ -74,6 +75,14 @@ export default function Index({ classrooms, periods, rows, activeYear, filters }
 
     const downloadClass = () => {
         window.open(`${route('bulletins.download-class')}?class_id=${classId}&academic_period_id=${periodId}`, '_blank');
+    };
+
+    const confirmDelete = () => {
+        if (!deleteTarget?.report_card_id) return;
+        router.delete(route('bulletins.destroy', deleteTarget.report_card_id), {
+            preserveScroll: true,
+            onFinish: () => setDeleteTarget(null),
+        });
     };
 
     const ready = classId !== '' && periodId !== '';
@@ -167,6 +176,24 @@ export default function Index({ classrooms, periods, rows, activeYear, filters }
                             </AlertDialogContent>
                         </AlertDialog>
 
+                        <AlertDialog open={deleteTarget !== null} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Dévalider le bulletin de {deleteTarget?.name} ?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        Le bulletin figé sera supprimé, y compris ses éditions manuelles. L'élève repassera
+                                        en « brouillon » et pourra être re-validé. Cette action est irréversible.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Annuler</AlertDialogCancel>
+                                    <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+                                        Dévalider
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+
                         {/* Liste */}
                         <div className="bg-white rounded-2xl shadow-sm ring-1 ring-slate-100 overflow-hidden">
                             <Table>
@@ -223,6 +250,15 @@ export default function Index({ classrooms, periods, rows, activeYear, filters }
                                                         onClick={() => download(r.student_id)}
                                                     >
                                                         <Download className="w-3.5 h-3.5" /> PDF
+                                                    </Button>
+                                                    <Button
+                                                        variant="outline" size="sm"
+                                                        className="gap-1.5 text-red-600 hover:bg-red-50 hover:text-red-700"
+                                                        disabled={!r.validated || !r.report_card_id}
+                                                        onClick={() => setDeleteTarget(r)}
+                                                        title="Dévalider ce bulletin"
+                                                    >
+                                                        <Trash2 className="w-3.5 h-3.5" />
                                                     </Button>
                                                 </div>
                                             </TableCell>
