@@ -115,7 +115,13 @@ class GradingServiceTest extends TestCase
         $this->assertSame('Félicitations', $config->mentionFor(16));
         $this->assertSame('Encouragements', $config->mentionFor(15));
         $this->assertSame('Passable', $config->mentionFor(10));
-        $this->assertNull($config->mentionFor(9.5));
+        // Paliers bas : Insuffisant (8–10) puis Avertissement (travail) (< 8).
+        $this->assertSame('Insuffisant', $config->mentionFor(9.5));
+        $this->assertSame('Insuffisant', $config->mentionFor(8));
+        $this->assertSame('Avertissement (travail)', $config->mentionFor(7.9));
+        $this->assertSame('Avertissement (travail)', $config->mentionFor(0));
+        // Aucune note saisie : pas de mention.
+        $this->assertNull($config->mentionFor(null));
     }
 
     public function test_resolve_prefers_class_type_over_school_default(): void
