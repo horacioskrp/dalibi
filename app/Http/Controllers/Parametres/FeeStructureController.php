@@ -254,6 +254,8 @@ class FeeStructureController extends Controller
      */
     public function destroy(FeeStructure $feeStructure)
     {
+        abort_unless(auth()->user()->can('delete_fee_structures'), 403);
+
         $feeStructure->delete();
 
         return redirect()->route('fee-structures.index')

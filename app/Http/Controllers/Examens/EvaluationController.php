@@ -183,6 +183,8 @@ class EvaluationController extends Controller
 
     public function updateDate(Request $request, Evaluation $evaluation): RedirectResponse
     {
+        abort_unless($request->user()->can('edit_evaluations'), 403);
+
         $validated = $request->validate([
             'date'       => ['nullable', 'date'],
             'start_time' => ['nullable', 'date_format:H:i'],
