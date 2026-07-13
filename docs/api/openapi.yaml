@@ -125,6 +125,67 @@ paths:
         "200": { description: Déconnecté }
         "401": { $ref: "#/components/responses/Unauthorized" }
 
+  /dashboard:
+    get:
+      tags: [Tableau de bord]
+      summary: Synthèse du portail (par enfant + prochains événements)
+      description: >
+        Une carte de synthèse par enfant accessible (moyenne du trimestre en cours,
+        assiduité, écolage, dernier bulletin) et les 5 prochains événements.
+      responses:
+        "200":
+          description: Synthèse
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  year: { type: string, nullable: true, example: "2025-2026" }
+                  children:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string }
+                        name: { type: string }
+                        matricule: { type: string, nullable: true }
+                        class: { type: string, nullable: true }
+                        enrolled: { type: boolean }
+                        average: { type: number, nullable: true }
+                        rank: { type: integer, nullable: true }
+                        mention: { type: string, nullable: true }
+                        attendance:
+                          type: object
+                          properties:
+                            present: { type: integer }
+                            absent: { type: integer }
+                            late: { type: integer }
+                            excused: { type: integer }
+                            total: { type: integer }
+                            rate: { type: integer, nullable: true }
+                        fees:
+                          type: object
+                          properties:
+                            billed: { type: number }
+                            paid: { type: number }
+                            balance: { type: number }
+                        latest_bulletin:
+                          type: object
+                          nullable: true
+                          properties:
+                            id: { type: string }
+                            period: { type: string, nullable: true }
+                  upcoming_events:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string }
+                        title: { type: string }
+                        type: { type: string }
+                        start_date: { type: string, format: date }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
   /children:
     get:
       tags: [Enfants]
