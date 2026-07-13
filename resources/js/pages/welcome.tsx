@@ -58,7 +58,7 @@ export default function Welcome() {
                 <header className="sticky top-0 z-10 border-b border-gray-200/70 bg-white/80 backdrop-blur dark:border-gray-800 dark:bg-[#0a0a0a]/80">
                     <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
                         <Link href={isAuthed ? dashboard() : login()} className="flex items-center" aria-label="Dalibi">
-                            <AppLogo className="h-8 w-auto fill-gray-900 dark:fill-white" />
+                            <AppLogo className="h-8 w-auto fill-blue-600 dark:fill-blue-500" />
                         </Link>
 
                         {isAuthed ? (
