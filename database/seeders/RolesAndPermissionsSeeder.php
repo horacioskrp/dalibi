@@ -46,7 +46,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'absence_permissions' => ['view', 'review'],
             'evaluations' => ['view'],
             'evaluation_templates' => ['view', 'generate'],
-            'evaluation_types' => ['view'],
+            'evaluation_types' => ['view', 'create', 'edit', 'delete'],
             'marks' => ['view'],
             'official_exams' => ['view', 'create', 'edit'],
             'grades' => ['view'],

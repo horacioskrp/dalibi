@@ -29,6 +29,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Préfixes de matricule par rôle
+    |--------------------------------------------------------------------------
+    | Étend/surcharge les préfixes par défaut (ADM, DIR, PROF, COMPT, SEC).
+    | Pour un rôle personnalisé, ajoutez « nom_du_role => PREFIXE » ; sinon les
+    | utilisateurs de ce rôle reçoivent le préfixe générique « USR ».
+    | Ex. : 'censeur' => 'CENS', 'surveillant' => 'SURV'.
+    */
+    'role_prefixes' => [
+        // 'censeur' => 'CENS',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Student Matricule Settings
     |--------------------------------------------------------------------------
     */
