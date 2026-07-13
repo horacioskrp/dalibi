@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Eleves;
 use App\Http\Controllers\Controller;
 
-use App\Constants\Roles;
 use App\Models\AcademicYear;
 use App\Models\Classroom;
 use App\Models\School;
@@ -19,15 +18,13 @@ use Inertia\Response;
 
 class TimetableController extends Controller
 {
-    private const MANAGE_ROLES = [Roles::ADMINISTRATOR, Roles::DIRECTOR, Roles::SECRETARIAT];
-
     public function index(Request $request): Response
     {
         $classId = $request->string('class_id')->toString();
 
         $classrooms = Classroom::orderBy('name')->get(['id', 'name', 'code']);
         $subjects   = Subject::orderBy('name')->get(['id', 'name']);
-        $teachers   = User::role(Roles::TEACHER)
+        $teachers   = User::permission('create_marks')
             ->orderBy('lastname')->orderBy('firstname')
             ->get(['id', 'firstname', 'lastname'])
             ->map(fn ($u) => ['id' => $u->id, 'name' => $u->name]);

@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 
 class MatriculeService
 {
+    /** Préfixes par défaut (surchargés/étendus par config('matricule.role_prefixes')). */
     protected const ROLE_PREFIXES = [
         Roles::ADMINISTRATOR => 'ADM',
         Roles::DIRECTOR      => 'DIR',
@@ -18,9 +19,20 @@ class MatriculeService
         Roles::SECRETARIAT   => 'SEC',
     ];
 
+    /**
+     * Préfixes effectifs : défauts + surcharges de configuration. Permet d'attribuer un préfixe
+     * à un rôle personnalisé sans toucher au code (config/matricule.php → role_prefixes).
+     *
+     * @return array<string, string>
+     */
+    public static function rolePrefixes(): array
+    {
+        return array_merge(self::ROLE_PREFIXES, (array) config('matricule.role_prefixes', []));
+    }
+
     public function generateUserMatricule(string $role): string
     {
-        $prefix   = self::ROLE_PREFIXES[$role] ?? 'USR';
+        $prefix   = self::rolePrefixes()[$role] ?? 'USR';
         $year     = date('y');
         $sequence = $this->getNextUserSequence($prefix, $year);
 
@@ -81,7 +93,7 @@ class MatriculeService
             return null;
         }
 
-        $role = array_search($matches[1], self::ROLE_PREFIXES, true);
+        $role = array_search($matches[1], self::rolePrefixes(), true);
 
         return $role !== false ? $role : null;
     }
@@ -98,6 +110,6 @@ class MatriculeService
 
     public static function getPrefixes(): array
     {
-        return self::ROLE_PREFIXES;
+        return self::rolePrefixes();
     }
 }

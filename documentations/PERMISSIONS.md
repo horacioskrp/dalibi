@@ -242,6 +242,38 @@ $customRole->givePermissionTo(['view_custom', 'create_custom', 'edit_custom']);
 $user->assignRole('custom_role');
 ```
 
+## Ajouter un rôle personnalisé (sans code)
+
+Le contrôle d'accès est **piloté par les permissions**, pas par les rôles : un rôle
+personnalisé doté des bonnes permissions fonctionne automatiquement pour les menus,
+les routes (`can:*`), les cartes d'accueil et les sections du tableau de bord.
+
+1. **Créer le rôle et lui accorder des permissions** depuis l'interface
+   (Administration → Rôles & permissions, gardée par `manage_roles_permissions`).
+2. **Assigner le rôle** à des utilisateurs (Administration → Utilisateurs) : la liste
+   des rôles est lue depuis la base, votre rôle y apparaît immédiatement.
+
+> Il n'existe **pas** de super-rôle « magique » : même l'administrateur tire son accès
+> de permissions accordées par le seeder. Ajouter une permission à un rôle suffit.
+
+### Préfixe de matricule pour un rôle personnalisé
+
+Par défaut, les utilisateurs d'un rôle inconnu reçoivent le préfixe générique `USR`.
+Pour attribuer un préfixe dédié, ajoutez une entrée dans `config/matricule.php` :
+
+```php
+'role_prefixes' => [
+    'censeur'     => 'CENS',
+    'surveillant' => 'SURV',
+],
+```
+
+### Limites connues (couplages spécifiques au métier)
+
+- Les listes déroulantes « enseignant » (affectations, emploi du temps) recensent les
+  utilisateurs ayant la permission **`create_marks`** — donnez cette permission au rôle
+  pour qu'il soit sélectionnable comme enseignant.
+
 ## Cache
 
 Les rôles et permissions sont cachés. Après les avoir modifiés en base de données, actualisez le cache:

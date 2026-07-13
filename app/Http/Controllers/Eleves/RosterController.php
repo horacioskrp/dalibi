@@ -18,7 +18,6 @@ use Inertia\Response;
 
 class RosterController extends Controller
 {
-    private const MANAGE_ROLES = [Roles::ADMINISTRATOR, Roles::DIRECTOR, Roles::SECRETARIAT];
 
     public function index(Request $request): Response
     {

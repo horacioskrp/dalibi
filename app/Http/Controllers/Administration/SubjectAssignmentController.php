@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Administration;
 use App\Http\Controllers\Controller;
 
-use App\Constants\Roles;
 use App\Http\Requests\StoreSubjectAssignmentRequest;
 use App\Http\Requests\UpdateSubjectAssignmentRequest;
 use App\Models\AcademicYear;
@@ -59,7 +58,7 @@ class SubjectAssignmentController extends Controller
     public function create(): Response
     {
         $subjects      = Subject::orderBy('name')->get();
-        $teachers      = User::role(Roles::TEACHER)->orderBy('firstname')->orderBy('lastname')->get();
+        $teachers      = User::permission('create_marks')->orderBy('firstname')->orderBy('lastname')->get();
         $academicYears = AcademicYear::where('active', true)->orderBy('year', 'desc')->get();
         $classrooms    = Classroom::where('active', true)->orderBy('name')->get();
 
@@ -93,7 +92,7 @@ class SubjectAssignmentController extends Controller
         $subjectAssignment->load(['subject', 'teacher', 'academicYear', 'classroom']);
 
         $subjects      = Subject::orderBy('name')->get();
-        $teachers      = User::role(Roles::TEACHER)->orderBy('firstname')->orderBy('lastname')->get();
+        $teachers      = User::permission('create_marks')->orderBy('firstname')->orderBy('lastname')->get();
         $academicYears = AcademicYear::where('active', true)->orderBy('year', 'desc')->get();
         $classrooms    = Classroom::where('active', true)->orderBy('name')->get();
 
