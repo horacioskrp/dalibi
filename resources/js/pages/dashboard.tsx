@@ -1,4 +1,4 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { Users, Banknote, TrendingUp, TrendingDown, Wallet, CheckCircle2, AlertCircle, XCircle, AlertTriangle, BookOpen, ClipboardList, ArrowRight, CalendarDays, GraduationCap, UserCheck, ShieldCheck, FileBadge, LayoutGrid, User, Layers } from 'lucide-react';
 import {
     Area, AreaChart, Bar, BarChart, Cell, Pie, PieChart,
@@ -65,8 +65,26 @@ interface RecentEnrollment {
 interface Assignment {
     id: string;
     subject: string;
+    class_id: string;
     class_name: string;
     class_code: string;
+}
+
+interface TodaySlot {
+    id: string;
+    start_time: string;
+    end_time: string;
+    subject: string;
+    class_name: string;
+    room: string | null;
+}
+
+interface PendingEval {
+    id: string;
+    name: string;
+    subject: string;
+    class_name: string;
+    date: string | null;
 }
 
 interface PendingPermission {
@@ -98,6 +116,8 @@ interface DashboardProps {
         cashAccounts:    CashAccount[];
         recentPayments:  RecentPayment[];
         studentsNoPay:   StudentNoPay[];
+        month:           { income: number; expenses: number; net: number };
+        paymentMethods:  { method: string; total: number }[];
     };
     enrollments?: {
         total_students:    number;
@@ -112,6 +132,8 @@ interface DashboardProps {
     };
     teaching?: {
         assignments: Assignment[];
+        today: TodaySlot[];
+        pendingMarks: { count: number; items: PendingEval[] };
     };
     academic?: {
         present_today:       number;
@@ -131,6 +153,14 @@ interface DashboardProps {
 
 const fmt = (n: number) =>
     new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0 }).format(n ?? 0) + ' F';
+
+const PAYMENT_METHOD_LABELS: Record<string, string> = {
+    CASH: 'Espèces',
+    MOBILE_MONEY: 'Mobile Money',
+    BANK_TRANSFER: 'Virement bancaire',
+    CHEQUE: 'Chèque',
+    AUTRE: 'Autre',
+};
 
 const pct = (paid: number, total: number) =>
     total > 0 ? Math.min(100, Math.round((paid / total) * 100)) : 0;
@@ -342,6 +372,50 @@ export default function Dashboard({ activeYear, selectedYearId, selectedYear, ac
                             icon={XCircle}
                             color="red"
                         />
+                    </div>
+                )}
+
+                {/* ── Comptabilité : ce mois-ci + moyens de paiement ────────── */}
+                {isFinancial && (
+                    <div className="grid lg:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-3 gap-4">
+                            <KpiCard title="Encaissé (mois)" value={fmt(financial.month.income)} sub="Ce mois-ci" icon={TrendingUp} color="green" />
+                            <KpiCard title="Dépenses (mois)" value={fmt(financial.month.expenses)} sub="Ce mois-ci" icon={TrendingDown} color="red" />
+                            <KpiCard
+                                title="Solde net (mois)"
+                                value={fmt(financial.month.net)}
+                                sub={financial.month.net >= 0 ? 'Excédent' : 'Déficit'}
+                                icon={Wallet}
+                                color={financial.month.net >= 0 ? 'blue' : 'orange'}
+                            />
+                        </div>
+
+                        <div className="bg-white dark:bg-card rounded-xl border border-gray-100 dark:border-gray-700 p-5 shadow-sm">
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">Moyens de paiement — {selectedYear?.year ?? activeYear?.year ?? ''}</p>
+                            {(() => {
+                                const total = financial.paymentMethods.reduce((s, m) => s + m.total, 0);
+                                if (total === 0) return <p className="text-sm text-gray-400 py-4 text-center">Aucun encaissement.</p>;
+                                return (
+                                    <ul className="space-y-3">
+                                        {financial.paymentMethods.map(m => {
+                                            const pct = Math.round((m.total / total) * 100);
+                                            const isMomo = m.method === 'MOBILE_MONEY';
+                                            return (
+                                                <li key={m.method}>
+                                                    <div className="flex justify-between text-sm mb-1">
+                                                        <span className={isMomo ? 'font-semibold text-emerald-600 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300'}>
+                                                            {PAYMENT_METHOD_LABELS[m.method] ?? m.method}{isMomo ? ' ★' : ''}
+                                                        </span>
+                                                        <span className="text-gray-500">{fmt(m.total)} · {pct}%</span>
+                                                    </div>
+                                                    <ProgressBar value={pct} color={isMomo ? 'green' : 'blue'} />
+                                                </li>
+                                            );
+                                        })}
+                                    </ul>
+                                );
+                            })()}
+                        </div>
                     </div>
                 )}
 
@@ -742,29 +816,95 @@ export default function Dashboard({ activeYear, selectedYearId, selectedYear, ac
 
                 {/* ── Section enseignant ───────────────────────────────── */}
                 {isTeacher && (
-                    <SectionCard
-                        title="Mes affectations"
-                        icon={<BookOpen className="w-4 h-4" />}
-                        count={teaching.assignments.length}
-                        action={{ label: 'Affectations', href: route('subject-assignments.index') }}
-                    >
-                        {teaching.assignments.length === 0 ? (
-                            <p className="text-sm text-gray-400 text-center py-6 px-5">
-                                Aucune affectation pour l'année {activeYear?.year ?? 'courante'}
-                            </p>
-                        ) : (
-                            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 p-5">
-                                {teaching.assignments.map(a => (
-                                    <div key={a.id} className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
-                                        <p className="font-semibold text-blue-700 dark:text-blue-300 text-sm">{a.subject}</p>
-                                        <p className="text-xs text-blue-500 dark:text-blue-400 mt-1">
-                                            {a.class_name} <span className="opacity-60">({a.class_code})</span>
-                                        </p>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </SectionCard>
+                    <>
+                        <div className="grid lg:grid-cols-2 gap-4">
+                            {/* Emploi du temps du jour */}
+                            <SectionCard
+                                title="Mon emploi du temps — aujourd'hui"
+                                icon={<CalendarDays className="w-4 h-4" />}
+                                count={teaching.today.length}
+                                action={{ label: 'Emploi du temps', href: route('timetable.index') }}
+                            >
+                                {teaching.today.length === 0 ? (
+                                    <p className="text-sm text-gray-400 text-center py-6 px-5">Aucun cours programmé aujourd'hui.</p>
+                                ) : (
+                                    <ul className="divide-y divide-gray-100 dark:divide-gray-700">
+                                        {teaching.today.map(s => (
+                                            <li key={s.id} className="flex items-center gap-3 px-5 py-3">
+                                                <span className="font-mono text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                                    {s.start_time}–{s.end_time}
+                                                </span>
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="font-medium text-gray-800 dark:text-gray-200 text-sm truncate">{s.subject}</p>
+                                                    <p className="text-xs text-gray-400">{s.class_name}{s.room ? ` · salle ${s.room}` : ''}</p>
+                                                </div>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </SectionCard>
+
+                            {/* Notes à saisir */}
+                            <SectionCard
+                                title="Notes à saisir"
+                                icon={<ClipboardList className="w-4 h-4" />}
+                                count={teaching.pendingMarks.count}
+                                action={{ label: 'Évaluations', href: route('evaluations.index') }}
+                            >
+                                {teaching.pendingMarks.items.length === 0 ? (
+                                    <p className="text-sm text-gray-400 text-center py-6 px-5">Toutes vos évaluations sont saisies. 🎉</p>
+                                ) : (
+                                    <ul className="divide-y divide-gray-100 dark:divide-gray-700">
+                                        {teaching.pendingMarks.items.map(e => (
+                                            <li key={e.id}>
+                                                <Link
+                                                    href={route('marks.index', e.id)}
+                                                    className="flex items-center gap-3 px-5 py-3 hover:bg-amber-50/60 dark:hover:bg-amber-900/10"
+                                                >
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="font-medium text-gray-800 dark:text-gray-200 text-sm truncate">{e.name}</p>
+                                                        <p className="text-xs text-gray-400">{e.subject} · {e.class_name}{e.date ? ` · ${e.date}` : ''}</p>
+                                                    </div>
+                                                    <ArrowRight className="w-4 h-4 text-amber-500 shrink-0" />
+                                                </Link>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </SectionCard>
+                        </div>
+
+                        {/* Mes classes & matières */}
+                        <SectionCard
+                            title="Mes classes & matières"
+                            icon={<BookOpen className="w-4 h-4" />}
+                            count={teaching.assignments.length}
+                            action={{ label: 'Affectations', href: route('subject-assignments.index') }}
+                        >
+                            {teaching.assignments.length === 0 ? (
+                                <p className="text-sm text-gray-400 text-center py-6 px-5">
+                                    Aucune affectation pour l'année {activeYear?.year ?? 'courante'}
+                                </p>
+                            ) : (
+                                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 p-5">
+                                    {teaching.assignments.map(a => (
+                                        <div key={a.id} className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+                                            <p className="font-semibold text-blue-700 dark:text-blue-300 text-sm">{a.subject}</p>
+                                            <p className="text-xs text-blue-500 dark:text-blue-400 mt-1">
+                                                {a.class_name} <span className="opacity-60">({a.class_code})</span>
+                                            </p>
+                                            <Link
+                                                href={route('attendances.index')}
+                                                className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-300 hover:gap-2 transition-all"
+                                            >
+                                                <UserCheck className="w-3.5 h-3.5" /> Faire l'appel
+                                            </Link>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </SectionCard>
+                    </>
                 )}
 
                 {/* ── État vide ────────────────────────────────────────── */}

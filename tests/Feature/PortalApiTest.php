@@ -95,6 +95,35 @@ class PortalApiTest extends TestCase
         $this->getJson("/api/v1/children/{$other->id}/grades")->assertForbidden();
     }
 
+    public function test_guardian_dashboard_summarizes_all_children(): void
+    {
+        $guardian = $this->guardianFor($this->student(), $this->student());
+        Sanctum::actingAs($guardian, ['read']);
+
+        $this->getJson('/api/v1/dashboard')
+            ->assertOk()
+            ->assertJsonCount(2, 'children')
+            ->assertJsonStructure([
+                'year',
+                'children' => [[
+                    'id', 'name', 'matricule', 'class', 'enrolled', 'average', 'rank', 'mention',
+                    'attendance' => ['present', 'absent', 'late', 'excused', 'total', 'rate'],
+                    'fees'       => ['billed', 'paid', 'balance'],
+                    'latest_bulletin',
+                ]],
+                'upcoming_events',
+            ]);
+    }
+
+    public function test_student_dashboard_returns_self_only(): void
+    {
+        $me = $this->student();
+        Sanctum::actingAs($me, ['read']);
+
+        $res = $this->getJson('/api/v1/dashboard')->assertOk()->assertJsonCount(1, 'children');
+        $this->assertSame($me->id, $res->json('children.0.id'));
+    }
+
     public function test_bulletin_pdf_is_scoped(): void
     {
         $childA = $this->student();
