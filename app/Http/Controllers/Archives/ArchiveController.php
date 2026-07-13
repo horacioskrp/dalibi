@@ -17,7 +17,6 @@ use Inertia\Response;
 
 class ArchiveController extends Controller
 {
-    private const MANAGE_ROLES = [Roles::ADMINISTRATOR, Roles::DIRECTOR, Roles::SECRETARIAT];
 
     private const TYPES = ['student' => Student::class, 'classroom' => Classroom::class];
 

@@ -13,7 +13,6 @@ use Inertia\Response;
 
 class StudentImportController extends Controller
 {
-    private const MANAGE_ROLES = [Roles::ADMINISTRATOR, Roles::DIRECTOR, Roles::SECRETARIAT];
 
     /** Colonnes attendues (clé canonique => libellé). */
     private const COLUMNS = ['prenom', 'nom', 'sexe', 'date_naissance', 'lieu_naissance', 'nationalite', 'telephone', 'email', 'matricule'];

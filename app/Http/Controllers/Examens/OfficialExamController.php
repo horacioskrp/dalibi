@@ -16,7 +16,6 @@ use Inertia\Response;
 
 class OfficialExamController extends Controller
 {
-    private const MANAGE_ROLES = [Roles::ADMINISTRATOR, Roles::DIRECTOR, Roles::SECRETARIAT];
 
     public function index(Request $request): Response
     {

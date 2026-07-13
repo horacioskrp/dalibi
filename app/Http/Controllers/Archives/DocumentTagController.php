@@ -14,7 +14,6 @@ use Inertia\Response;
 
 class DocumentTagController extends Controller
 {
-    private const MANAGE_ROLES = [Roles::ADMINISTRATOR, Roles::DIRECTOR, Roles::SECRETARIAT];
 
     private function authorizeManage(Request $request): void
     {
