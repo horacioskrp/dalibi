@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BulletinController;
 use App\Http\Controllers\Api\V1\CalendarController;
 use App\Http\Controllers\Api\V1\ChildrenController;
+use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\FeeController;
 use App\Http\Controllers\Api\V1\GradeController;
 use Illuminate\Support\Facades\Route;
@@ -26,6 +27,9 @@ Route::prefix('v1')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('auth/me', [AuthController::class, 'me']);
         Route::post('auth/logout', [AuthController::class, 'logout']);
+
+        // Tableau de bord synthétique (synthèse par enfant + prochains événements)
+        Route::get('dashboard', [DashboardController::class, 'index']);
 
         // Enfants accessibles (tuteur → ses enfants ; élève → lui-même)
         Route::get('children', [ChildrenController::class, 'index']);
