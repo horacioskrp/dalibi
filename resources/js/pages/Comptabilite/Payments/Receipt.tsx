@@ -1,4 +1,5 @@
 import { Head } from '@inertiajs/react';
+import { useMoney } from '@/helpers/money';
 import Barcode from 'react-barcode';
 
 type PaymentMethod = 'CASH' | 'MOBILE_MONEY' | 'BANK_TRANSFER' | 'CHEQUE';
@@ -48,8 +49,6 @@ interface Payment {
 
 interface Props { payment: Payment; }
 
-const fmt = (n: number) =>
-    new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0 }).format(n) + ' F CFA';
 
 const methodLabel: Record<PaymentMethod, string> = {
     CASH: 'Espèces',
@@ -59,6 +58,7 @@ const methodLabel: Record<PaymentMethod, string> = {
 };
 
 export default function PaymentReceipt({ payment }: Readonly<Props>) {
+    const fmt = useMoney();
     const { invoice } = payment;
     const { enrollment } = invoice;
 

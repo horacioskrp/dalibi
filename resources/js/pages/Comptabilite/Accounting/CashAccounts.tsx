@@ -1,5 +1,6 @@
 import { Head, router } from '@inertiajs/react';
 import { Wallet, Plus, Pencil, Trash2, Banknote, Smartphone, Building2, CheckCircle2, XCircle } from 'lucide-react';
+import { useMoney } from '@/helpers/money';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,8 +31,6 @@ interface Props { accounts: CashAccount[]; }
 /* ------------------------------------------------------------------ */
 /* Helpers                                                             */
 /* ------------------------------------------------------------------ */
-const fmt = (n: number) =>
-    new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0 }).format(n ?? 0) + ' F';
 
 const typeConfig: Record<AccountType, { label: string; icon: React.ReactNode; bg: string; color: string }> = {
     CASH:         { label: 'Espèces',      icon: <Banknote className="w-5 h-5" />,    bg: 'bg-green-50 dark:bg-green-900/20',  color: 'text-green-600 dark:text-green-400' },
@@ -88,6 +87,7 @@ function AccountForm({ initial, onSubmit, onCancel, submitLabel }: {
 /* Composant principal                                                  */
 /* ------------------------------------------------------------------ */
 export default function CashAccounts({ accounts }: Readonly<Props>) {
+    const fmt = useMoney();
     const [showCreate, setShowCreate] = useState(false);
     const [editingId, setEditingId]   = useState<string | null>(null);
     const [deletingId, setDeletingId] = useState<string | null>(null);

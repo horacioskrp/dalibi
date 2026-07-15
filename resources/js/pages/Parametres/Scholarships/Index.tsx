@@ -1,4 +1,5 @@
 import { Head, router } from '@inertiajs/react';
+import { useMoney } from '@/helpers/money';
 import { Plus, Pencil, Trash2, Search, CheckCircle2, Eye, ChevronLeft, ChevronRight, X, Percent, Wallet } from 'lucide-react';
 import { useState } from 'react';
 import {
@@ -51,6 +52,7 @@ interface IndexProps {
 }
 
 export default function Index({ scholarships, message, filters }: Readonly<IndexProps>) {
+    const fmtMoney = useMoney();
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
@@ -116,12 +118,7 @@ export default function Index({ scholarships, message, filters }: Readonly<Index
             return `${numericValue}%`;
         }
 
-        return new Intl.NumberFormat('fr-FR', {
-            style: 'currency',
-            currency: 'XOF',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-        }).format(numericValue);
+        return fmtMoney(numericValue);
     };
 
     const formatDate = (date: string) => {

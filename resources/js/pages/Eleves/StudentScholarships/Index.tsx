@@ -1,4 +1,5 @@
 import { Head, router } from '@inertiajs/react';
+import { useMoney } from '@/helpers/money';
 import { Plus, Pencil, Trash2, Search, Award, Eye, ChevronLeft, ChevronRight, X, Users, Calendar, GraduationCap } from 'lucide-react';
 import { useState, useCallback } from 'react';
 import {
@@ -94,14 +95,7 @@ export default function Index({ studentScholarships, scholarships, academicYears
         per_page: perPage || undefined,
     };
 
-    const formatMoney = (amount: number) => {
-        return new Intl.NumberFormat('fr-FR', {
-            style: 'currency',
-            currency: 'XAF',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-        }).format(amount);
-    };
+    const formatMoney = useMoney();
 
     const handleSearch = useCallback(() => {
         router.get(route('student-scholarships.index'), currentFilters, {

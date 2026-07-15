@@ -1,4 +1,5 @@
 import { Head, router } from '@inertiajs/react';
+import { useMoney } from '@/helpers/money';
 import {
     TrendingUp, TrendingDown, Users, AlertTriangle,
     CheckCircle2, Clock, AlertCircle, ChevronDown,
@@ -72,9 +73,6 @@ interface DashboardProps {
 /* ------------------------------------------------------------------ */
 /* Helpers                                                             */
 /* ------------------------------------------------------------------ */
-
-const fmt = (n: number) =>
-    new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0 }).format(n ?? 0) + ' F';
 
 const pct = (paid: number, total: number) =>
     total > 0 ? Math.min(100, Math.round((paid / total) * 100)) : 0;
@@ -163,7 +161,7 @@ function SectionHeader({ icon, title, count }: { icon: React.ReactNode; title: s
 export default function AccountingDashboard({
     academicYears, classrooms, filters, globalStats, monthlyPayments, byClass, studentsUnpaid,
 }: Readonly<DashboardProps>) {
-
+    const fmt = useMoney();
     const [yearId,  setYearId]  = useState(filters.academic_year_id ?? '');
     const [classId, setClassId] = useState(filters.class_id ?? '');
 

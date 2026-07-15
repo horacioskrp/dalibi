@@ -1,4 +1,5 @@
 import { Head, router } from '@inertiajs/react';
+import { useMoney } from '@/helpers/money';
 import { ArrowLeft, Percent, Calendar, FileText, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { route } from '@/helpers/route';
@@ -21,6 +22,7 @@ interface ShowProps {
 }
 
 export default function Show({ scholarship }: Readonly<ShowProps>) {
+    const fmtMoney = useMoney();
     const formatDate = (date: string) => {
         return new Date(date).toLocaleDateString('fr-FR', {
             year: 'numeric',
@@ -31,12 +33,7 @@ export default function Show({ scholarship }: Readonly<ShowProps>) {
 
     const formattedValue = scholarship.type === 'percentage'
         ? `${Number(scholarship.value)}%`
-        : new Intl.NumberFormat('fr-FR', {
-            style: 'currency',
-            currency: 'XOF',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-        }).format(Number(scholarship.value));
+        : fmtMoney(Number(scholarship.value));
 
     return (
         <AppLayout>

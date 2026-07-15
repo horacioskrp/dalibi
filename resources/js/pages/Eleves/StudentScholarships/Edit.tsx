@@ -1,4 +1,5 @@
 import { Head, router, useForm } from '@inertiajs/react';
+import { useCurrencySymbol } from '@/helpers/money';
 import { ArrowLeft, Save, User, Award, Calendar, FileText, Search, ChevronDown, Check } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
@@ -205,6 +206,7 @@ function StudentSearchSelect({ students, value, onChange, placeholder = "Sélect
 }
 
 export default function Edit({ studentScholarship, students, scholarships, academicYears }: Readonly<EditProps>) {
+    const currency = useCurrencySymbol();
     const { data, setData, put, processing, errors } = useForm({
         student_id: studentScholarship.student_id,
         scholarship_id: studentScholarship.scholarship_id,
@@ -284,7 +286,7 @@ export default function Edit({ studentScholarship, students, scholarships, acade
                                         <SelectContent>
                                             {scholarships.map((scholarship) => (
                                                 <SelectItem key={scholarship.id} value={scholarship.id}>
-                                                    {scholarship.name} ({scholarship.value.toLocaleString()} FCFA)
+                                                    {scholarship.name} ({scholarship.value.toLocaleString()} {currency})
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>

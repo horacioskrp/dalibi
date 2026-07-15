@@ -9,14 +9,20 @@ Dalibi est un outil complet libre et open-source de gestion pour les établissem
 - **Pont** : Inertia.js (SPA sans API REST séparée)
 - **Base de données** : PostgreSQL 12+
 - **Auth** : Laravel Sanctum + 2FA, Spatie Laravel Permission
+- **Files d'attente** : e-mails et sauvegardes manuelles traités en arrière-plan (worker)
+- **Observabilité** (optionnelle) : logs JSON pour Loki/Grafana + capture d'exceptions Sentry/GlitchTip — voir [`documentations/OBSERVABILITY.md`](documentations/OBSERVABILITY.md)
 
 ## 🎓 Fonctionnalités
 
 ### Tableau de bord
 
-- Vue d'ensemble avec indicateurs clés (effectifs, inscriptions, encaissements)
-- Évolution des paiements par mois et derniers paiements
-- Filtrage par année académique, contenu adapté au rôle de l'utilisateur
+- **Composé par permission** : chaque profil ne voit que les sections auxquelles il a droit
+- **Finances** (direction / comptabilité) : facturé / encaissé / reste, évolution mensuelle, caisses, **synthèse du mois** (encaissé / dépenses / **solde net**) et **répartition par moyen de paiement** (Mobile Money en avant)
+- **Inscriptions & effectifs** : totaux, parité, inscriptions récentes, répartition par classe
+- **Vie scolaire** : présences du jour, permissions en attente, prochains examens
+- **Enseignant (personnalisé)** : **emploi du temps du jour**, **notes à saisir** (lien direct), ses classes avec accès rapide « Faire l'appel »
+- **Parents & élèves** : synthèse par enfant via l'**API portail** (`GET /api/v1/dashboard`)
+- Filtrage par année académique
 
 ### Statistiques & pilotage
 
@@ -46,10 +52,11 @@ chaque section, aligné sur les indicateurs de l'annuaire statistique / carte sc
 
 ### Gestion des utilisateurs & rôles
 
-- **Rôles** : Administrateur, Directeur, Enseignant, Comptable, Secrétariat
-- Authentification email/mot de passe
-- Two-Factor Authentication (2FA)
-- Affectation des enseignants aux classes et matières
+- **Rôles par défaut** : Administrateur, Directeur, Enseignant, Comptable, Secrétariat
+- **Accès piloté par les permissions** (Spatie) : on peut **créer un rôle personnalisé** (censeur, surveillant…) et lui accorder des permissions **depuis l'interface**, sans code — menus, routes et tableau de bord s'adaptent automatiquement
+- **Préfixe de matricule configurable par rôle** (`config/matricule.php`), repli générique `USR`
+- Authentification email/mot de passe, **Two-Factor Authentication (2FA)**
+- Affectation des enseignants aux classes et matières (tout rôle disposant de la permission de saisie des notes est sélectionnable)
 
 ### Gestion académique
 
@@ -106,6 +113,7 @@ chaque section, aligné sur les indicateurs de l'annuaire statistique / carte sc
 
 - **API REST** (`/api/v1`) pour l'application mobile / SPA des familles, **authentifiée par token** (Laravel Sanctum)
 - Deux profils : **tuteur** (consulte ses enfants) et **élève** (ses propres données), avec **isolation stricte** (un tuteur n'accède qu'à ses enfants)
+- **Tableau de bord** (`GET /api/v1/dashboard`) : synthèse par enfant (moyenne/rang du trimestre, assiduité, écolage, dernier bulletin) + prochains événements
 - Lecture : **notes** par période, **bulletins** (liste + **PDF**), **présences**, **scolarité / solde**, **calendrier**
 - **Onboarding** : le secrétariat crée le compte tuteur, le lie aux élèves et envoie une **invitation par e-mail** (lien signé) ; l'accès élève est activé par l'établissement (connexion par **matricule**)
 - **Journal d'audit** des actions sensibles (création/modification/suppression) et **calendrier académique** d'événements
@@ -161,11 +169,17 @@ Un visualiseur **Redoc** est exposé sur **`/docs/api`**, mais **gardé par l'en
 - Inscriptions et paiements des écolages avec cycle de facturation (émise / partiellement payée / payée)
 - **Reçus de paiement** : numérotation séquentielle (REC-AAAA-0001), **code-barres** avec code de vérification unique anti-falsification, page de vérification réservée à la comptabilité ; garde-fou anti trop-perçu
 
-### Notes et réclamations
+### Notes, bulletins & réclamations
 
-- Saisie des notes par trimestre
-- Système de réclamations sur les notes
-- Suivi des performances et commentaires
+- Saisie des notes par période (contrôle continu **Classe** / **Composition**), moyennes pondérées par coefficient
+- **Bulletins figés** (snapshot) par classe et période : moyennes, rangs (global + par matière), mentions, récapitulatif inter-périodes et **moyenne annuelle**
+- **Calcul par lot performant** : la validation d'une classe précharge tout en mémoire (fini les milliers de requêtes)
+- **Barème de mentions configurable** — de « Tableau d'honneur » à « Avertissement (travail) »
+- **Édition d'un bulletin** (appréciations par matière, observations, décision, discipline) **conservée lors d'une re-validation** (option « tout régénérer » pour repartir de zéro)
+- **Téléchargement PDF individuel** ou **groupé** (toute la classe en un seul PDF)
+- **Dévalidation** d'un bulletin figé (créé par erreur / élève parti)
+- Réclamations sur les notes : dépôt et traitement (uniquement si « en attente »), report automatique de la note corrigée
+- Référence de bulletin unique, robuste à la concurrence (`BUL-AAAA-0001`)
 
 ### Fichiers & Stockage
 
