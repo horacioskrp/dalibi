@@ -9,6 +9,7 @@ interface School {
     name: string;
     code: string;
     logo: string | null;
+    logo_url: string | null;
     devise: string | null;
     terme: string | null;
     email: string | null;
@@ -27,7 +28,7 @@ interface ShowProps {
 }
 
 export default function Show({ school }: Readonly<ShowProps>) {
-    const logoUrl = school.logo ? `/storage/${school.logo}` : null;
+    const logoUrl = school.logo_url ?? null;
 
     return (
         <AppLayout>

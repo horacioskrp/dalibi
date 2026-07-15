@@ -9,6 +9,7 @@ interface School {
     name: string;
     code: string;
     logo: string | null;
+    logo_url: string | null;
     devise: string | null;
     currency: string | null;
     terme: string | null;
@@ -31,7 +32,7 @@ interface EditProps {
 }
 
 export default function Edit({ school, classroomTypes = [], selectedClassTypes = [], currencies = [] }: Readonly<EditProps>) {
-    const currentLogoUrl = school.logo ? `/storage/${school.logo}` : null;
+    const currentLogoUrl = school.logo_url ?? null;
 
     const { data, setData, post, transform, processing, errors } = useForm<SchoolFormData>({
         name: school.name,

@@ -29,6 +29,7 @@ interface School {
     name: string;
     code: string;
     logo: string | null;
+    logo_url: string | null;
     email: string | null;
     phone: string | null;
     address: string | null;
@@ -342,9 +343,9 @@ export default function Index({ schools, activeSchoolsCount, message }: Readonly
                                                 />
                                             </TableCell>
                                             <TableCell>
-                                                {school.logo ? (
+                                                {school.logo_url ? (
                                                     <img
-                                                        src={school.logo}
+                                                        src={school.logo_url}
                                                         alt={`Logo ${school.name}`}
                                                         className="h-10 w-10 rounded-xl object-cover ring-1 ring-gray-100"
                                                     />
