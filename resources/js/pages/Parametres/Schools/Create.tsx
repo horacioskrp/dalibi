@@ -1,6 +1,6 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
-import { SchoolForm, type SchoolFormData } from '@/components/Schools/school-form';
+import { SchoolForm, type SchoolFormData, type CurrencyOption } from '@/components/Schools/school-form';
 import { route } from '@/helpers/route';
 import AppLayout from '@/layouts/app-layout';
 
@@ -9,6 +9,7 @@ const initialValues: SchoolFormData = {
     code: '',
     logo: null,
     devise: '',
+    currency: 'XOF',
     terme: 'République Togolaise',
     email: '',
     phone: '',
@@ -22,7 +23,7 @@ const initialValues: SchoolFormData = {
 
 interface ClassroomTypeOption { id: string; name: string; period_system: string; }
 
-export default function Create({ classroomTypes = [] }: Readonly<{ classroomTypes?: ClassroomTypeOption[] }>) {
+export default function Create({ classroomTypes = [], currencies = [] }: Readonly<{ classroomTypes?: ClassroomTypeOption[]; currencies?: CurrencyOption[] }>) {
     const { data, setData, post, processing, errors } = useForm<SchoolFormData>(initialValues);
 
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -51,6 +52,7 @@ export default function Create({ classroomTypes = [] }: Readonly<{ classroomType
                     errors={errors}
                     processing={processing}
                     classroomTypes={classroomTypes}
+                    currencies={currencies}
                     onCancel={() => router.get(route('schools.index'))}
                     onSubmit={handleSubmit}
                     setData={setData}

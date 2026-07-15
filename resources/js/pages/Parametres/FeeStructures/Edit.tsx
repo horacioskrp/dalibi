@@ -1,4 +1,5 @@
 import { Head, router, useForm } from '@inertiajs/react';
+import { useCurrencySymbol } from '@/helpers/money';
 import { ArrowLeft, Banknote, CalendarDays, Layers, School, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,6 +40,7 @@ interface EditProps {
 }
 
 export default function Edit({ feeStructure, academicYears, feeCategories, classrooms }: Readonly<EditProps>) {
+    const currency = useCurrencySymbol();
     const { data, setData, put, processing, errors } = useForm({
         academic_year_id: feeStructure.academic_year_id,
         fee_category_id: feeStructure.fee_category_id,
@@ -176,7 +178,7 @@ export default function Edit({ feeStructure, academicYears, feeCategories, class
                         </div>
                         <div className="space-y-2">
                         <Label htmlFor="amount">
-                            Montant (FCFA) <span className="text-red-600">*</span>
+                            Montant ({currency}) <span className="text-red-600">*</span>
                         </Label>
                         <Input
                             id="amount"

@@ -34,6 +34,7 @@ class School extends Model
         'code',
         'logo',
         'devise',
+        'currency',
         'terme',
         'address',
         'region',
@@ -49,6 +50,12 @@ class School extends Model
     protected $casts = [
         'active' => 'boolean',
     ];
+
+    /** Symbole d'affichage de la monnaie de l'établissement (ex. « FCFA »). */
+    public function currencySymbol(): string
+    {
+        return \App\Constants\Currencies::symbol($this->currency);
+    }
 
     /**
      * Get all subjects for the school.

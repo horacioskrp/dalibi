@@ -1,4 +1,5 @@
 import { Head, router } from '@inertiajs/react';
+import { useMoney } from '@/helpers/money';
 import { ArrowLeft, Plus, Printer, Receipt, CheckCircle2, Clock, AlertCircle, XCircle } from 'lucide-react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
@@ -77,8 +78,6 @@ interface InvoicePageProps {
 /* Helpers                                                             */
 /* ------------------------------------------------------------------ */
 
-const fmt = (n: number) =>
-    new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n) + ' F';
 
 const statusConfig: Record<InvoiceStatus, { label: string; icon: React.ReactNode; badge: string }> = {
     ISSUED:          { label: 'Non payé',         icon: <Clock className="w-4 h-4" />,        badge: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' },
@@ -103,6 +102,7 @@ const cashAccountTypeIcon: Record<string, string> = {
 };
 
 export default function InvoicePage({ enrollment, invoice, cashAccounts }: Readonly<InvoicePageProps>) {
+    const fmt = useMoney();
     const [showForm, setShowForm] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});

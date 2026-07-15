@@ -56,6 +56,7 @@ class SchoolController extends Controller
     {
         return Inertia::render('Parametres/Schools/Create', [
             'classroomTypes' => ClassroomType::where('active', true)->orderBy('name')->get(['id', 'name', 'period_system']),
+            'currencies' => \App\Constants\Currencies::options(),
         ]);
     }
 
@@ -99,6 +100,7 @@ class SchoolController extends Controller
             'school' => $school,
             'classroomTypes' => ClassroomType::where('active', true)->orderBy('name')->get(['id', 'name', 'period_system']),
             'selectedClassTypes' => $school->classTypes()->pluck('classroom_types.id'),
+            'currencies' => \App\Constants\Currencies::options(),
         ]);
     }
 

@@ -6,12 +6,14 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
 export interface ClassroomTypeOption { id: string; name: string; period_system: string; }
+export interface CurrencyOption { code: string; label: string; symbol: string; }
 
 export interface SchoolFormData {
     name: string;
     code: string;
     logo: File | null;
     devise: string;
+    currency: string;
     terme: string;
     email: string;
     phone: string;
@@ -30,12 +32,13 @@ interface SchoolFormProps {
     processing: boolean;
     currentLogoUrl?: string | null;
     classroomTypes?: ClassroomTypeOption[];
+    currencies?: CurrencyOption[];
     onCancel: () => void;
     onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
     setData: <K extends keyof SchoolFormData>(key: K, value: SchoolFormData[K]) => void;
 }
 
-export function SchoolForm({ mode, data, errors, processing, currentLogoUrl, classroomTypes = [], onCancel, onSubmit, setData }: Readonly<SchoolFormProps>) {
+export function SchoolForm({ mode, data, errors, processing, currentLogoUrl, classroomTypes = [], currencies = [], onCancel, onSubmit, setData }: Readonly<SchoolFormProps>) {
     const toggleClassType = (id: string) => {
         const current = data.class_type_ids ?? [];
         setData('class_type_ids', current.includes(id) ? current.filter(x => x !== id) : [...current, id]);
@@ -106,10 +109,10 @@ export function SchoolForm({ mode, data, errors, processing, currentLogoUrl, cla
                         {errors.terme && <p className="text-sm text-red-600 mt-1">{errors.terme}</p>}
                     </div>
 
-                    <div className="md:col-span-2">
+                    <div>
                         <label htmlFor="devise" className="flex items-center gap-2 text-sm font-medium text-gray-900 mb-2">
                             <Quote className="w-4 h-4 text-blue-500" />
-                            Devise de l'école
+                            Devise (slogan) de l'école
                         </label>
                         <Input
                             id="devise"
@@ -120,6 +123,25 @@ export function SchoolForm({ mode, data, errors, processing, currentLogoUrl, cla
                             placeholder="Ex: Travail, Liberté, Patrie"
                         />
                         {errors.devise && <p className="text-sm text-red-600 mt-1">{errors.devise}</p>}
+                    </div>
+
+                    <div>
+                        <label htmlFor="currency" className="flex items-center gap-2 text-sm font-medium text-gray-900 mb-2">
+                            <WalletCards className="w-4 h-4 text-emerald-500" />
+                            Monnaie (comptabilité)
+                        </label>
+                        <select
+                            id="currency"
+                            value={data.currency}
+                            onChange={e => setData('currency', e.target.value)}
+                            disabled={processing}
+                            className={`w-full h-10 rounded-md border bg-white px-3 text-sm ${errors.currency ? 'border-red-500 bg-red-50/40' : 'border-gray-300'}`}
+                        >
+                            {currencies.map(c => (
+                                <option key={c.code} value={c.code}>{c.label} — {c.symbol}</option>
+                            ))}
+                        </select>
+                        {errors.currency && <p className="text-sm text-red-600 mt-1">{errors.currency}</p>}
                     </div>
                 </div>
             </div>

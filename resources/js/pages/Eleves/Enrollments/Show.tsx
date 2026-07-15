@@ -1,4 +1,5 @@
 import { Head, router } from '@inertiajs/react';
+import { useMoney } from '@/helpers/money';
 import { ArrowLeft, FileText, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { route } from '@/helpers/route';
@@ -67,7 +68,6 @@ const invoiceStatusConfig: Record<InvoiceStatus, { label: string; icon: React.Re
     CANCELLED:      { label: 'Annulé',             icon: null,                                      badge: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
 };
 
-const fmt = (n: number) => new Intl.NumberFormat('fr-FR').format(n) + ' F';
 
 const statusMap: Record<Enrollment['status'], string> = {
     PENDING:   'En attente',
@@ -82,6 +82,7 @@ const statusBadgeClass: Record<Enrollment['status'], string> = {
 };
 
 export default function Show({ enrollment, invoice }: Readonly<ShowProps>) {
+    const fmt = useMoney();
     const enrolledByName = [enrollment.enrolled_by?.firstname, enrollment.enrolled_by?.lastname].filter(Boolean).join(' ');
 
     return (

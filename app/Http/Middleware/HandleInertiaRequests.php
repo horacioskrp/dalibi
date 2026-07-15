@@ -47,6 +47,30 @@ class HandleInertiaRequests extends Middleware
                 'permissions' => $user ? $user->getAllPermissions()->pluck('name')->values() : [],
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            // Réglages d'établissement partagés (monnaie pour l'affichage des montants).
+            'settings' => [
+                'currency' => $user ? $this->currency() : self::defaultCurrency(),
+            ],
         ];
+    }
+
+    /**
+     * Monnaie de l'établissement (code + symbole) pour le formatage des montants côté front.
+     *
+     * @return array{code: string, symbol: string}
+     */
+    private function currency(): array
+    {
+        $code = \App\Models\School::query()->value('currency') ?: \App\Constants\Currencies::DEFAULT;
+
+        return ['code' => $code, 'symbol' => \App\Constants\Currencies::symbol($code)];
+    }
+
+    /** @return array{code: string, symbol: string} */
+    private static function defaultCurrency(): array
+    {
+        $code = \App\Constants\Currencies::DEFAULT;
+
+        return ['code' => $code, 'symbol' => \App\Constants\Currencies::symbol($code)];
     }
 }
