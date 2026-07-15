@@ -1,4 +1,5 @@
 import { Head, router } from '@inertiajs/react';
+import { useMoney } from '@/helpers/money';
 import { ArrowLeft, Pencil, Trash2, DollarSign, Layers, Calendar, BookOpen, Users, Clock, CreditCard } from 'lucide-react';
 import { useState } from 'react';
 import {
@@ -132,13 +133,9 @@ export default function Show({ feeStructure }: Readonly<ShowProps>) {
         }
     };
 
+    const fmtMoney = useMoney();
     const formatMoney = (amount: number) => {
-        return new Intl.NumberFormat('fr-FR', {
-            style: 'currency',
-            currency: 'XOF',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-        }).format(amount);
+        return fmtMoney(amount);
     };
 
     const getCategoryColor = (categoryName: string): string => {

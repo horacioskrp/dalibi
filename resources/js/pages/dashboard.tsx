@@ -1,4 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
+import { useMoney } from '@/helpers/money';
 import { Users, Banknote, TrendingUp, TrendingDown, Wallet, CheckCircle2, AlertCircle, XCircle, AlertTriangle, BookOpen, ClipboardList, ArrowRight, CalendarDays, GraduationCap, UserCheck, ShieldCheck, FileBadge, LayoutGrid, User, Layers } from 'lucide-react';
 import {
     Area, AreaChart, Bar, BarChart, Cell, Pie, PieChart,
@@ -151,8 +152,6 @@ interface DashboardProps {
 /* Helpers                                                             */
 /* ------------------------------------------------------------------ */
 
-const fmt = (n: number) =>
-    new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0 }).format(n ?? 0) + ' F';
 
 const PAYMENT_METHOD_LABELS: Record<string, string> = {
     CASH: 'Espèces',
@@ -266,6 +265,7 @@ function SectionCard({ title, icon, count, children, action }: {
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Tableau de bord', href: '/dashboard' }];
 
 export default function Dashboard({ activeYear, selectedYearId, selectedYear, academicYears, userRole, financial, enrollments, teaching, academic }: Readonly<DashboardProps>) {
+    const fmt = useMoney();
 
     const changeYear = (id: string) => {
         router.get(route('dashboard'), { academic_year_id: id }, { preserveScroll: true, preserveState: false });

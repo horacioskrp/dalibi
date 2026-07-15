@@ -1,6 +1,6 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
-import { SchoolForm, type SchoolFormData } from '@/components/Schools/school-form';
+import { SchoolForm, type SchoolFormData, type CurrencyOption } from '@/components/Schools/school-form';
 import { route } from '@/helpers/route';
 import AppLayout from '@/layouts/app-layout';
 
@@ -10,6 +10,7 @@ interface School {
     code: string;
     logo: string | null;
     devise: string | null;
+    currency: string | null;
     terme: string | null;
     email: string | null;
     phone: string | null;
@@ -26,9 +27,10 @@ interface EditProps {
     school: School;
     classroomTypes?: ClassroomTypeOption[];
     selectedClassTypes?: string[];
+    currencies?: CurrencyOption[];
 }
 
-export default function Edit({ school, classroomTypes = [], selectedClassTypes = [] }: Readonly<EditProps>) {
+export default function Edit({ school, classroomTypes = [], selectedClassTypes = [], currencies = [] }: Readonly<EditProps>) {
     const currentLogoUrl = school.logo ? `/storage/${school.logo}` : null;
 
     const { data, setData, post, transform, processing, errors } = useForm<SchoolFormData>({
@@ -36,6 +38,7 @@ export default function Edit({ school, classroomTypes = [], selectedClassTypes =
         code: school.code,
         logo: null,
         devise: school.devise || '',
+        currency: school.currency || 'XOF',
         terme: school.terme || 'République Togolaise',
         email: school.email || '',
         phone: school.phone || '',
@@ -76,6 +79,7 @@ export default function Edit({ school, classroomTypes = [], selectedClassTypes =
                     processing={processing}
                     currentLogoUrl={currentLogoUrl}
                     classroomTypes={classroomTypes}
+                    currencies={currencies}
                     onCancel={() => router.get(route('schools.index'))}
                     onSubmit={handleSubmit}
                     setData={setData}

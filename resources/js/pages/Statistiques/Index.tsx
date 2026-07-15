@@ -1,4 +1,5 @@
 import { Head, router } from '@inertiajs/react';
+import { useMoney } from '@/helpers/money';
 import { BarChart3, Download, FileSpreadsheet, GraduationCap, Layers, MapPin, PieChart as PieIcon, School, TrendingUp, UserCheck, Users, Wallet } from 'lucide-react';
 import { useState } from 'react';
 import {
@@ -76,7 +77,6 @@ interface Props {
 }
 
 /* ---------------- Helpers ---------------- */
-const money = (n: number) => new Intl.NumberFormat('fr-FR').format(Math.round(n)) + ' F';
 const methodLabel: Record<string, string> = { CASH: 'Espèces', MOBILE_MONEY: 'Mobile Money', BANK_TRANSFER: 'Virement', CHEQUE: 'Chèque' };
 const BLUE = '#2563eb', PINK = '#db2777', GREEN = '#16a34a', ORANGE = '#ea580c', VIOLET = '#7c3aed', SLATE = '#94a3b8';
 
@@ -112,6 +112,7 @@ function Card({ title, icon, children }: { title: string; icon?: React.ReactNode
 type Tab = 'effectifs' | 'finances' | 'reussite' | 'encadrement' | 'assiduite' | 'comparaisons' | 'geographie';
 
 export default function StatisticsIndex({ filters, academicYears, classes, enrollment, finance, success, resources, attendance, trends, geography }: Readonly<Props>) {
+    const money = useMoney();
     const [tab, setTab] = useState<Tab>('effectifs');
 
     const setFilter = (key: keyof Filters, value: string) => {

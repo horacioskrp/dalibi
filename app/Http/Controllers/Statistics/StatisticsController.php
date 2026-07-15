@@ -61,11 +61,12 @@ class StatisticsController extends Controller
             $vars     = $renderer->resolveVariables($school);
 
             $html = view('statistics.report', [
-                'header'  => $renderer->headerHtml($school, $vars),
-                'section' => $section,
-                'data'    => $data,
-                'year'    => optional(AcademicYear::find($filters['academic_year_id']))->year,
-                'date'    => now()->locale('fr')->isoFormat('D MMMM YYYY'),
+                'header'   => $renderer->headerHtml($school, $vars),
+                'section'  => $section,
+                'data'     => $data,
+                'year'     => optional(AcademicYear::find($filters['academic_year_id']))->year,
+                'date'     => now()->locale('fr')->isoFormat('D MMMM YYYY'),
+                'currency' => $school->currencySymbol(),
             ])->render();
 
             return Pdf::loadHTML($html)->setPaper('a4', 'portrait')->download("{$file}.pdf");

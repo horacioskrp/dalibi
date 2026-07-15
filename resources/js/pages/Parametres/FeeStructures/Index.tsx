@@ -1,4 +1,5 @@
 import { Head, router } from '@inertiajs/react';
+import { useMoney } from '@/helpers/money';
 import { Plus, Pencil, Trash2, Search, DollarSign, Eye, ChevronLeft, ChevronRight, X, Layers, School, TrendingUp, Copy } from 'lucide-react';
 import { useState } from 'react';
 import {
@@ -118,14 +119,7 @@ export default function Index({ feeStructures, academicYears, feeCategories, cla
         });
     };
 
-    const formatMoney = (amount: number) => {
-        return new Intl.NumberFormat('fr-FR', {
-            style: 'currency',
-            currency: 'XOF',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-        }).format(amount);
-    };
+    const formatMoney = useMoney();
 
     const getCategoryColor = (categoryName: string): string => {
         const colorMap: Record<string, string> = {

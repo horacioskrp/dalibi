@@ -1,4 +1,5 @@
 import { Head, router } from '@inertiajs/react';
+import { useMoney } from '@/helpers/money';
 import { CheckCircle2, ScanLine, Search, XCircle, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -22,9 +23,9 @@ interface Props {
     result: VerifyResult | null;
 }
 
-const fmt = (n?: number) => new Intl.NumberFormat('fr-FR').format(n ?? 0) + ' F CFA';
 
 export default function Verify({ code, result }: Readonly<Props>) {
+    const fmt = useMoney();
     const [value, setValue] = useState(code ?? '');
 
     const search = () => {

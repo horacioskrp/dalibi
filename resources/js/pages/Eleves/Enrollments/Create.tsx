@@ -1,4 +1,5 @@
 import { Head, router } from '@inertiajs/react';
+import { useMoney } from '@/helpers/money';
 import {
     ArrowLeft, ArrowRight, Check, Info,
     Building2, GraduationCap, BookOpen, CalendarDays,
@@ -33,8 +34,6 @@ interface CreateProps {
 
 type PaymentMethod = 'CASH' | 'MOBILE_MONEY' | 'BANK_TRANSFER' | 'CHEQUE';
 
-const fmt = (n: number) =>
-    new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0 }).format(n) + ' F';
 
 /* ------------------------------------------------------------------ */
 /* Helpers UI                                                          */
@@ -343,6 +342,7 @@ function SectionHeader({ icon, title, subtitle, color = 'blue' }: {
 /* ------------------------------------------------------------------ */
 
 export default function Create({ schools, students, classrooms, academicYears, feeStructures }: Readonly<CreateProps>) {
+    const fmt = useMoney();
     const [step, setStep]               = useState(1);
     const [errors, setErrors]           = useState<Record<string, string>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);

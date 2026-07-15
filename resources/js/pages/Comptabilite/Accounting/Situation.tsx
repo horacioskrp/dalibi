@@ -1,4 +1,5 @@
 import { Head, router } from '@inertiajs/react';
+import { useMoney } from '@/helpers/money';
 import {
     PieChart, Users, CheckCircle2, AlertCircle, XCircle,
     ChevronDown, Filter, Download, BookOpen,
@@ -67,8 +68,6 @@ interface Props {
 /* ------------------------------------------------------------------ */
 /* Helpers                                                             */
 /* ------------------------------------------------------------------ */
-const fmt = (n: number) =>
-    new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0 }).format(n ?? 0) + ' F';
 
 const pct = (paid: number, total: number) =>
     total > 0 ? Math.min(100, Math.round((paid / total) * 100)) : 0;
@@ -124,7 +123,7 @@ function ProgressBar({ value, color = 'blue' }: { value: number; color?: 'blue' 
 export default function Situation({
     academicYears, classrooms, filters, globalStats, byClass, students,
 }: Readonly<Props>) {
-
+    const fmt = useMoney();
     const [yearId,  setYearId]  = useState(filters.academic_year_id ?? '');
     const [classId, setClassId] = useState(filters.class_id ?? '');
 

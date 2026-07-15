@@ -1,4 +1,5 @@
 import { Head, router } from '@inertiajs/react';
+import { useCurrencySymbol } from '@/helpers/money';
 import { ArrowLeft, Pencil, Trash2, Calendar, User, Award, FileText, Clock } from 'lucide-react';
 import { useState } from 'react';
 import {
@@ -59,6 +60,7 @@ interface ShowProps {
 }
 
 export default function Show({ studentScholarship }: Readonly<ShowProps>) {
+    const currency = useCurrencySymbol();
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
     const handleDelete = () => {
@@ -188,7 +190,7 @@ export default function Show({ studentScholarship }: Readonly<ShowProps>) {
                                     <div>
                                         <label className="text-sm font-medium text-gray-500">Valeur maximale</label>
                                         <p className="text-lg font-semibold text-green-600">
-                                            {studentScholarship.scholarship.value.toLocaleString()} FCFA
+                                            {studentScholarship.scholarship.value.toLocaleString()} {currency}
                                         </p>
                                     </div>
                                     {studentScholarship.scholarship.description && (

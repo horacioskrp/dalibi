@@ -2,7 +2,7 @@
     $titles = ['effectifs' => 'Effectifs & parité', 'finances' => 'Finances & recouvrement', 'reussite' => 'Réussite & examens officiels'];
     $title = $titles[$section] ?? 'Statistiques';
     $methodLabels = ['CASH' => 'Espèces', 'MOBILE_MONEY' => 'Mobile Money', 'BANK_TRANSFER' => 'Virement', 'CHEQUE' => 'Chèque'];
-    $money = fn ($n) => number_format((float) $n, 0, ',', ' ') . ' F';
+    $money = fn ($n) => number_format((float) $n, 0, ',', ' ') . ' ' . ($currency ?? 'FCFA');
 @endphp
 <!DOCTYPE html>
 <html lang="fr">

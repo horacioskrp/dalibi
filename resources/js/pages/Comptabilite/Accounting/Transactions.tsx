@@ -1,4 +1,5 @@
 import { Head, router } from '@inertiajs/react';
+import { useMoney } from '@/helpers/money';
 import {
     ArrowLeftRight, TrendingUp, TrendingDown,
     ChevronLeft, ChevronRight, XCircle,
@@ -58,8 +59,6 @@ interface Props {
 /* ------------------------------------------------------------------ */
 /* Helpers                                                             */
 /* ------------------------------------------------------------------ */
-const fmt = (n: number) =>
-    new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0 }).format(n ?? 0) + ' F';
 
 const todayStr      = () => new Date().toISOString().slice(0, 10);
 const firstOfMonth  = () => { const d = new Date(); d.setDate(1); return d.toISOString().slice(0, 10); };
@@ -305,6 +304,7 @@ function ExpenseForm({
 const PER_PAGE_OPTIONS = [10, 25, 50, 100];
 
 export default function Transactions({ transactions, cashAccounts, cashSummary, totals, perPage, filters }: Readonly<Props>) {
+    const fmt = useMoney();
 
     const [type,          setType]          = useState(filters.type ?? '');
     const [refType,       setRefType]       = useState(filters.reference_type ?? '');

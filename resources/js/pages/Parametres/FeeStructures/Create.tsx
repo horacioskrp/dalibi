@@ -1,4 +1,5 @@
 import { Head, router, useForm } from '@inertiajs/react';
+import { useCurrencySymbol } from '@/helpers/money';
 import { ArrowLeft, Banknote, CalendarDays, Layers, School, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +26,7 @@ interface CreateProps {
 }
 
 export default function Create({ activeYear, feeCategories, classrooms }: Readonly<CreateProps>) {
+    const currency = useCurrencySymbol();
     const { data, setData, post, processing, errors } = useForm({
         academic_year_id: activeYear?.id ?? '',
         fee_category_id: '',
@@ -154,7 +156,7 @@ export default function Create({ activeYear, feeCategories, classrooms }: Readon
                         </div>
                         <div className="space-y-2">
                         <Label htmlFor="amount">
-                            Montant (FCFA) <span className="text-red-600">*</span>
+                            Montant ({currency}) <span className="text-red-600">*</span>
                         </Label>
                         <Input
                             id="amount"
