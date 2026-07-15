@@ -7,6 +7,7 @@ use App\Models\School;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia;
 use Tests\TestCase;
 
@@ -20,6 +21,18 @@ class SchoolCurrencyTest extends TestCase
         $this->assertSame('FCFA', School::factory()->make(['currency' => 'XOF'])->currencySymbol());
         // Code inconnu / vide → repli.
         $this->assertSame('FCFA', School::factory()->make(['currency' => null])->currencySymbol());
+    }
+
+    public function test_logo_url_resolves_via_media_disk(): void
+    {
+        Storage::fake('media');
+
+        $withLogo = School::factory()->make(['logo' => 'schools/logos/x.png']);
+        $this->assertSame(Storage::disk('media')->url('schools/logos/x.png'), $withLogo->logo_url);
+        // Exposé au frontend (attribut ajouté).
+        $this->assertArrayHasKey('logo_url', $withLogo->toArray());
+
+        $this->assertNull(School::factory()->make(['logo' => null])->logo_url);
     }
 
     public function test_currency_is_shared_to_the_frontend(): void

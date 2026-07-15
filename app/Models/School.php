@@ -23,6 +23,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Support\Facades\Storage;
 
 class School extends Model
 {
@@ -51,10 +52,22 @@ class School extends Model
         'active' => 'boolean',
     ];
 
+    /** URL publique du logo, exposée au frontend (résolue sur le disque « media »). */
+    protected $appends = ['logo_url'];
+
     /** Symbole d'affichage de la monnaie de l'établissement (ex. « FCFA »). */
     public function currencySymbol(): string
     {
         return \App\Constants\Currencies::symbol($this->currency);
+    }
+
+    /**
+     * URL absolue du logo, valable que le disque « media » soit local ou distant
+     * (S3 / Cloudflare R2). Null si aucun logo.
+     */
+    public function getLogoUrlAttribute(): ?string
+    {
+        return $this->logo ? Storage::disk('media')->url($this->logo) : null;
     }
 
     /**
