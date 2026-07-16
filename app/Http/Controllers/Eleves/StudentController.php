@@ -5,6 +5,8 @@ use App\Http\Controllers\Controller;
 
 use App\Http\Requests\StoreStudentRequest;
 use App\Http\Requests\UpdateStudentRequest;
+use App\Models\AcademicYear;
+use App\Models\Classroom;
 use App\Models\Enrollment;
 use App\Models\Student;
 use Illuminate\Http\RedirectResponse;
@@ -17,10 +19,12 @@ use Inertia\Response;
 
 class StudentController extends Controller
 {
+    /** Colonnes de tri autorisées (liste blanche). */
+    private const SORTABLE = ['created_at', 'lastname', 'firstname', 'matricule', 'birth_date'];
+
     public function index(Request $request): Response
     {
-        $query = Student::with(['user', 'parentInfo'])
-            ->latest();
+        $query = Student::with(['user', 'parentInfo']);
 
         if ($request->filled('search')) {
             $search = strtolower($request->string('search')->toString());
@@ -56,6 +60,32 @@ class StudentController extends Controller
             }
         }
 
+        foreach (['region', 'prefecture'] as $field) {
+            if ($request->filled($field)) {
+                $query->where($field, $request->string($field)->toString());
+            }
+        }
+
+        // Filtres portés par l'inscription : ils doivent viser la MÊME inscription.
+        $classId        = $request->string('class_id')->toString();
+        $yearId         = $request->string('academic_year_id')->toString();
+        $academicStatus = $request->string('academic_status')->toString();
+
+        if ($classId !== '' || $yearId !== '' || $academicStatus !== '') {
+            $query->whereHas('enrollments', function ($q) use ($classId, $yearId, $academicStatus): void {
+                $q->when($classId !== '', fn ($x) => $x->where('class_id', $classId))
+                    ->when($yearId !== '', fn ($x) => $x->where('academic_year_id', $yearId))
+                    ->when($academicStatus !== '', fn ($x) => $x->where('academic_status', $academicStatus));
+            });
+        }
+
+        // Tri (liste blanche) + départage par id : sans lui, des created_at identiques
+        // (création en masse) rendent l'ordre non déterministe et la pagination instable.
+        $sort      = in_array($request->string('sort')->toString(), self::SORTABLE, true)
+            ? $request->string('sort')->toString() : 'created_at';
+        $direction = $request->string('direction')->toString() === 'asc' ? 'asc' : 'desc';
+        $query->orderBy($sort, $direction)->orderBy('id');
+
         $perPage  = in_array((int) $request->per_page, [10, 25, 50, 100], true)
             ? (int) $request->per_page : 25;
 
@@ -64,7 +94,22 @@ class StudentController extends Controller
         return Inertia::render('Eleves/Students/Index', [
             'students' => $students,
             'perPage'  => $perPage,
-            'filters' => $request->only(['search', 'gender', 'nationality', 'status', 'per_page']),
+            'filters' => array_merge(
+                $request->only([
+                    'search', 'gender', 'nationality', 'status', 'per_page',
+                    'class_id', 'academic_year_id', 'academic_status', 'region', 'prefecture',
+                ]),
+                ['sort' => $sort, 'direction' => $direction],
+            ),
+            'options' => [
+                'classrooms'       => Classroom::orderBy('name')->get(['id', 'name']),
+                'academicYears'    => AcademicYear::orderByDesc('start_date')->get(['id', 'year']),
+                'academicStatuses' => Enrollment::ACADEMIC_STATUSES,
+                'regions'          => Student::query()->whereNotNull('region')->where('region', '!=', '')
+                    ->distinct()->orderBy('region')->pluck('region'),
+                'prefectures'      => Student::query()->whereNotNull('prefecture')->where('prefecture', '!=', '')
+                    ->distinct()->orderBy('prefecture')->pluck('prefecture'),
+            ],
             // Query builder (sans casts Eloquent) : l'alias "active" entrerait sinon en
             // collision avec le cast booléen du modèle et renverrait true au lieu du compte.
             'stats' => DB::table('students')->whereNull('deleted_at')->selectRaw("
