@@ -1,6 +1,6 @@
 import { Head, router } from '@inertiajs/react';
-import { Plus, Pencil, Trash2, Search, Users, UserCheck, Eye, Mars, Venus, CircleHelp, Phone, History, Upload } from 'lucide-react';
-import { useState } from 'react';
+import { Plus, Pencil, Trash2, Search, Users, UserCheck, Eye, Mars, Venus, CircleHelp, Phone, History, Upload, X, ArrowUpDown, SlidersHorizontal, ChevronDown } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -60,6 +60,10 @@ interface PaginatedStudents {
 
 const PER_PAGE_OPTIONS = [10, 25, 50, 100];
 
+/** Style commun des listes déroulantes de filtre. */
+const FILTER_CLS =
+    'h-10 rounded-md border border-gray-300 bg-gray-50 px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500';
+
 interface IndexProps {
     students: PaginatedStudents;
     perPage: number;
@@ -71,14 +75,38 @@ interface IndexProps {
         female: number;
         other: number;
     };
-    filters?: {
-        search?: string;
-        gender?: string;
-        nationality?: string;
-        status?: string;
-        per_page?: string;
+    filters?: Filters;
+    options: {
+        classrooms: { id: string; name: string }[];
+        academicYears: { id: string; year: string }[];
+        academicStatuses: Record<string, string>;
+        regions: string[];
+        prefectures: string[];
     };
 }
+
+interface Filters {
+    search?: string;
+    gender?: string;
+    nationality?: string;
+    status?: string;
+    per_page?: string;
+    class_id?: string;
+    academic_year_id?: string;
+    academic_status?: string;
+    region?: string;
+    prefecture?: string;
+    sort?: string;
+    direction?: string;
+}
+
+const SORT_OPTIONS: { value: string; label: string }[] = [
+    { value: 'created_at', label: 'Date d\'ajout' },
+    { value: 'lastname', label: 'Nom' },
+    { value: 'firstname', label: 'Prénom' },
+    { value: 'matricule', label: 'Matricule' },
+    { value: 'birth_date', label: 'Date de naissance' },
+];
 
 function renderGenderBadge(gender?: 'male' | 'female' | '' | null) {
     if (gender === 'male') {
@@ -107,31 +135,66 @@ function renderGenderBadge(gender?: 'male' | 'female' | '' | null) {
     );
 }
 
-export default function Index({ students, perPage, stats, filters }: Readonly<IndexProps>) {
+export default function Index({ students, perPage, stats, filters, options }: Readonly<IndexProps>) {
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
-    const [searchQuery, setSearchQuery] = useState(filters?.search ?? '');
-    const [genderFilter, setGenderFilter] = useState(filters?.gender ?? '');
-    const [nationalityFilter, setNationalityFilter] = useState(filters?.nationality ?? '');
-    const [statusFilter, setStatusFilter] = useState(filters?.status ?? '');
     const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
     const [bulkAction, setBulkAction] = useState('');
 
-    const getFilters = () => ({
-        search: searchQuery,
-        gender: genderFilter,
-        nationality: nationalityFilter,
-        status: statusFilter,
-        per_page: perPage !== 25 ? String(perPage) : undefined,
-    });
+    // L'URL fait foi : seuls les champs texte ont un état local (frappe au clavier),
+    // resynchronisé quand l'URL change (retour/avance navigateur, lien partagé).
+    const [searchQuery, setSearchQuery] = useState(filters?.search ?? '');
+    const [nationalityFilter, setNationalityFilter] = useState(filters?.nationality ?? '');
+    useEffect(() => setSearchQuery(filters?.search ?? ''), [filters?.search]);
+    useEffect(() => setNationalityFilter(filters?.nationality ?? ''), [filters?.nationality]);
 
-    const goToPage = (page: number) => {
-        router.get(route('students.index'), { ...getFilters(), page }, { preserveState: true, replace: true });
+    /**
+     * Navigue en fusionnant les filtres courants (issus de l'URL) avec les
+     * modifications. Les valeurs vides sont retirées de l'URL, et la page est
+     * remise à 1 dès qu'un filtre change.
+     */
+    const go = (overrides: Filters & { page?: number | string }, keepPage = false) => {
+        const merged: Record<string, unknown> = {
+            ...filters,
+            ...(keepPage ? {} : { page: undefined }),
+            ...overrides,
+        };
+        const params: Record<string, string> = {};
+        Object.entries(merged).forEach(([key, value]) => {
+            if (value !== undefined && value !== null && value !== '') params[key] = String(value);
+        });
+        // Valeurs par défaut : inutile de les traîner dans l'URL.
+        if (params.sort === 'created_at' && params.direction === 'desc') {
+            delete params.sort;
+            delete params.direction;
+        }
+        if (params.per_page === '25') delete params.per_page;
+
+        router.get(route('students.index'), params, {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+            onSuccess: () => setSelectedStudentIds([]),
+        });
     };
 
-    const changePerPage = (value: number) => {
-        router.get(route('students.index'), { ...getFilters(), per_page: String(value), page: 1 }, { preserveState: true, replace: true });
-    };
+    const goToPage = (page: number) => go({ page }, true);
+    const changePerPage = (value: number) => go({ per_page: String(value) });
+
+    // Filtres repliés derrière le bouton « Filtres ».
+    const advancedFilterCount = [
+        filters?.gender, filters?.status, filters?.class_id, filters?.academic_year_id,
+        filters?.academic_status, filters?.region, filters?.prefecture,
+    ].filter((v) => v !== undefined && v !== '').length;
+
+    const activeFilterCount = advancedFilterCount
+        + [filters?.search, filters?.nationality].filter((v) => v !== undefined && v !== '').length;
+
+    // Ouvert d'office si des filtres avancés sont déjà appliqués (sinon ils seraient invisibles).
+    const [showFilters, setShowFilters] = useState(advancedFilterCount > 0);
+    useEffect(() => {
+        if (advancedFilterCount > 0) setShowFilters(true);
+    }, [advancedFilterCount]);
 
     const windowedPages = () => {
         const total = students.last_page;
@@ -155,21 +218,14 @@ export default function Index({ students, perPage, stats, filters }: Readonly<In
         });
     };
 
-    const handleSearch = () => {
-        router.get(route('students.index'), { ...getFilters(), page: 1 }, {
-            preserveState: true,
-            replace: true,
-            onSuccess: () => setSelectedStudentIds([]),
-        });
-    };
+    const handleSearch = () => go({ search: searchQuery, nationality: nationalityFilter });
 
     const handleClearSearch = () => {
         setSearchQuery('');
-        setGenderFilter('');
         setNationalityFilter('');
-        setStatusFilter('');
-        router.get(route('students.index'), { per_page: perPage !== 25 ? String(perPage) : undefined }, {
+        router.get(route('students.index'), perPage !== 25 ? { per_page: String(perPage) } : {}, {
             preserveState: true,
+            preserveScroll: true,
             replace: true,
             onSuccess: () => setSelectedStudentIds([]),
         });
@@ -309,15 +365,17 @@ export default function Index({ students, perPage, stats, filters }: Readonly<In
                     </div>
                 )}
 
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                    <div className="flex gap-4 flex-wrap">
-                        <div className="flex-1 relative">
+                <div className="bg-white rounded-lg p-4 shadow-sm space-y-3">
+                    {/* Recherche libre */}
+                    <div className="flex gap-3 flex-wrap">
+                        <div className="flex-1 min-w-56 relative">
                             <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
                             <Input
                                 type="text"
-                                placeholder="Rechercher un élève..."
+                                placeholder="Rechercher (nom, matricule, e-mail)..."
                                 value={searchQuery}
                                 onChange={(event) => setSearchQuery(event.target.value)}
+                                onKeyDown={(event) => event.key === 'Enter' && handleSearch()}
                                 className="pl-10 bg-gray-50 border-gray-300"
                             />
                         </div>
@@ -326,40 +384,108 @@ export default function Index({ students, perPage, stats, filters }: Readonly<In
                             placeholder="Nationalité"
                             value={nationalityFilter}
                             onChange={(event) => setNationalityFilter(event.target.value)}
+                            onKeyDown={(event) => event.key === 'Enter' && handleSearch()}
                             className="w-44 bg-gray-50 border-gray-300"
                         />
-                        <select
-                            value={genderFilter}
-                            onChange={(event) => setGenderFilter(event.target.value)}
-                            className="h-10 rounded-md border border-gray-300 bg-gray-50 px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                            <option value="">Sexe</option>
-                            <option value="male">Masculin</option>
-                            <option value="female">Féminin</option>
-                        </select>
-                        <select
-                            value={statusFilter}
-                            onChange={(event) => setStatusFilter(event.target.value)}
-                            className="h-10 rounded-md border border-gray-300 bg-gray-50 px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                            <option value="">Statut</option>
-                            <option value="active">Actif</option>
-                            <option value="inactive">Inactif</option>
-                        </select>
                         <Button onClick={handleSearch} className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
                             <Search className="w-4 h-4" />
                             Rechercher
                         </Button>
-                        {searchQuery && (
+                        <Button
+                            variant="outline"
+                            onClick={() => setShowFilters((v) => !v)}
+                            aria-expanded={showFilters}
+                            className="border-gray-300 text-gray-700 hover:bg-gray-50 gap-2"
+                        >
+                            <SlidersHorizontal className="w-4 h-4" />
+                            Filtres
+                            {advancedFilterCount > 0 && (
+                                <span className="ml-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1.5 text-xs font-semibold text-white">
+                                    {advancedFilterCount}
+                                </span>
+                            )}
+                            <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+                        </Button>
+                        {activeFilterCount > 0 && (
                             <Button
                                 variant="outline"
                                 onClick={handleClearSearch}
-                                className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                                className="border-gray-300 text-gray-700 hover:bg-gray-50 gap-2"
                             >
-                                Réinitialiser
+                                <X className="w-4 h-4" />
+                                Réinitialiser ({activeFilterCount})
                             </Button>
                         )}
                     </div>
+
+                    {/* Filtres avancés (repliables) */}
+                    {showFilters && (
+                    <div className="flex gap-3 flex-wrap border-t border-gray-100 pt-3">
+                        <select
+                            value={filters?.class_id ?? ''}
+                            onChange={(e) => go({ class_id: e.target.value })}
+                            className={FILTER_CLS}
+                        >
+                            <option value="">Toutes les classes</option>
+                            {options.classrooms.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                        </select>
+                        <select
+                            value={filters?.academic_year_id ?? ''}
+                            onChange={(e) => go({ academic_year_id: e.target.value })}
+                            className={FILTER_CLS}
+                        >
+                            <option value="">Toutes les années</option>
+                            {options.academicYears.map((y) => <option key={y.id} value={y.id}>{y.year}</option>)}
+                        </select>
+                        <select
+                            value={filters?.academic_status ?? ''}
+                            onChange={(e) => go({ academic_status: e.target.value })}
+                            className={FILTER_CLS}
+                        >
+                            <option value="">Scolarité (tous)</option>
+                            {Object.entries(options.academicStatuses).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                        </select>
+                        <select value={filters?.gender ?? ''} onChange={(e) => go({ gender: e.target.value })} className={FILTER_CLS}>
+                            <option value="">Sexe</option>
+                            <option value="male">Masculin</option>
+                            <option value="female">Féminin</option>
+                        </select>
+                        <select value={filters?.status ?? ''} onChange={(e) => go({ status: e.target.value })} className={FILTER_CLS}>
+                            <option value="">Statut</option>
+                            <option value="active">Actif</option>
+                            <option value="inactive">Inactif</option>
+                        </select>
+                        {options.regions.length > 0 && (
+                            <select value={filters?.region ?? ''} onChange={(e) => go({ region: e.target.value })} className={FILTER_CLS}>
+                                <option value="">Région</option>
+                                {options.regions.map((r) => <option key={r} value={r}>{r}</option>)}
+                            </select>
+                        )}
+                        {options.prefectures.length > 0 && (
+                            <select value={filters?.prefecture ?? ''} onChange={(e) => go({ prefecture: e.target.value })} className={FILTER_CLS}>
+                                <option value="">Préfecture</option>
+                                {options.prefectures.map((p) => <option key={p} value={p}>{p}</option>)}
+                            </select>
+                        )}
+
+                        {/* Tri */}
+                        <div className="ml-auto flex items-center gap-2">
+                            <span className="text-sm text-gray-500">Trier :</span>
+                            <select value={filters?.sort ?? 'created_at'} onChange={(e) => go({ sort: e.target.value })} className={FILTER_CLS}>
+                                {SORT_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+                            </select>
+                            <Button
+                                variant="outline"
+                                className="h-10 border-gray-300 gap-1.5"
+                                onClick={() => go({ direction: filters?.direction === 'asc' ? 'desc' : 'asc' })}
+                                title={filters?.direction === 'asc' ? 'Croissant' : 'Décroissant'}
+                            >
+                                <ArrowUpDown className="w-4 h-4" />
+                                {filters?.direction === 'asc' ? 'Croissant' : 'Décroissant'}
+                            </Button>
+                        </div>
+                    </div>
+                    )}
                 </div>
 
                 <div className="bg-white rounded-lg shadow-sm overflow-hidden">
