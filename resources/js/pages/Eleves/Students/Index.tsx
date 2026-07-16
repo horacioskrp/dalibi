@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { Plus, Pencil, Trash2, Search, Users, UserCheck, Eye, Mars, Venus, CircleHelp, Phone, History, Upload, X, ArrowUpDown } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Users, UserCheck, Eye, Mars, Venus, CircleHelp, Phone, History, Upload, X, ArrowUpDown, SlidersHorizontal, ChevronDown } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
     AlertDialog,
@@ -181,11 +181,20 @@ export default function Index({ students, perPage, stats, filters, options }: Re
     const goToPage = (page: number) => go({ page }, true);
     const changePerPage = (value: number) => go({ per_page: String(value) });
 
-    const activeFilterCount = [
-        filters?.search, filters?.gender, filters?.nationality, filters?.status,
-        filters?.class_id, filters?.academic_year_id, filters?.academic_status,
-        filters?.region, filters?.prefecture,
+    // Filtres repliés derrière le bouton « Filtres ».
+    const advancedFilterCount = [
+        filters?.gender, filters?.status, filters?.class_id, filters?.academic_year_id,
+        filters?.academic_status, filters?.region, filters?.prefecture,
     ].filter((v) => v !== undefined && v !== '').length;
+
+    const activeFilterCount = advancedFilterCount
+        + [filters?.search, filters?.nationality].filter((v) => v !== undefined && v !== '').length;
+
+    // Ouvert d'office si des filtres avancés sont déjà appliqués (sinon ils seraient invisibles).
+    const [showFilters, setShowFilters] = useState(advancedFilterCount > 0);
+    useEffect(() => {
+        if (advancedFilterCount > 0) setShowFilters(true);
+    }, [advancedFilterCount]);
 
     const windowedPages = () => {
         const total = students.last_page;
@@ -382,6 +391,21 @@ export default function Index({ students, perPage, stats, filters, options }: Re
                             <Search className="w-4 h-4" />
                             Rechercher
                         </Button>
+                        <Button
+                            variant="outline"
+                            onClick={() => setShowFilters((v) => !v)}
+                            aria-expanded={showFilters}
+                            className="border-gray-300 text-gray-700 hover:bg-gray-50 gap-2"
+                        >
+                            <SlidersHorizontal className="w-4 h-4" />
+                            Filtres
+                            {advancedFilterCount > 0 && (
+                                <span className="ml-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1.5 text-xs font-semibold text-white">
+                                    {advancedFilterCount}
+                                </span>
+                            )}
+                            <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+                        </Button>
                         {activeFilterCount > 0 && (
                             <Button
                                 variant="outline"
@@ -394,8 +418,9 @@ export default function Index({ students, perPage, stats, filters, options }: Re
                         )}
                     </div>
 
-                    {/* Filtres */}
-                    <div className="flex gap-3 flex-wrap">
+                    {/* Filtres avancés (repliables) */}
+                    {showFilters && (
+                    <div className="flex gap-3 flex-wrap border-t border-gray-100 pt-3">
                         <select
                             value={filters?.class_id ?? ''}
                             onChange={(e) => go({ class_id: e.target.value })}
@@ -460,6 +485,7 @@ export default function Index({ students, perPage, stats, filters, options }: Re
                             </Button>
                         </div>
                     </div>
+                    )}
                 </div>
 
                 <div className="bg-white rounded-lg shadow-sm overflow-hidden">
