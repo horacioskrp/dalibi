@@ -1,6 +1,8 @@
 import { Head, router, usePage } from '@inertiajs/react';
-import { CalendarDays, Pencil, Plus, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { addDays, addMonths, addWeeks, differenceInCalendarDays, eachDayOfInterval, endOfWeek, format, startOfWeek } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import { CalendarDays, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import {
     AlertDialog, AlertDialogAction, AlertDialogCancel,
     AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle,
@@ -12,50 +14,36 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { AgendaView } from '@/components/calendar/agenda-view';
+import { MonthView, type DragPayload } from '@/components/calendar/month-view';
+import { TimeGridView, type TimeDragPayload } from '@/components/calendar/time-grid-view';
+import { CalEvent, eventEnd, eventStart, fromMinutes, monthGridDays, toDate, toISO, toMinutes } from '@/components/calendar/utils';
 import { route } from '@/helpers/route';
 import AppLayout from '@/layouts/app-layout';
 
-interface Event {
-    id: string;
-    title: string;
-    description: string | null;
-    type: string;
-    start_date: string;
-    end_date: string | null;
-    all_day: boolean;
-    start_time: string | null;
-    end_time: string | null;
-    color: string | null;
-}
 interface Year { id: string; year: string }
 interface Props {
-    events: Event[];
+    events: CalEvent[];
     types: Record<string, string>;
     academicYears: Year[];
     activeYear: { id: string; year: string } | null;
     filters: { academic_year_id: string; type: string };
 }
 
-const TYPE_META: Record<string, string> = {
-    holiday: 'bg-emerald-100 text-emerald-700',
-    exam: 'bg-red-100 text-red-700',
-    meeting: 'bg-violet-100 text-violet-700',
-    event: 'bg-blue-100 text-blue-700',
-    other: 'bg-gray-100 text-gray-600',
-};
+type View = 'month' | 'week' | 'day' | 'agenda';
+const VIEWS: { key: View; label: string }[] = [
+    { key: 'month', label: 'Mois' },
+    { key: 'week', label: 'Semaine' },
+    { key: 'day', label: 'Jour' },
+    { key: 'agenda', label: 'Liste' },
+];
 const ALL = '__all__';
 
-const emptyForm = (): Omit<Event, 'id' | 'color'> => ({
+const emptyForm = (): Omit<CalEvent, 'id' | 'color'> => ({
     title: '', description: '', type: 'event',
-    start_date: new Date().toISOString().slice(0, 10), end_date: '',
+    start_date: toISO(new Date()), end_date: '',
     all_day: true, start_time: '', end_time: '',
 });
-
-const monthLabel = (ym: string) => {
-    const [y, m] = ym.split('-').map(Number);
-    return new Date(y, m - 1, 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-};
-const dayLabel = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: 'short' });
 
 export default function Index({ events, types, academicYears, activeYear, filters }: Readonly<Props>) {
     const perms = (usePage().props.auth?.permissions ?? []) as string[];
@@ -63,11 +51,18 @@ export default function Index({ events, types, academicYears, activeYear, filter
     const canEdit = perms.includes('edit_calendar');
     const canDelete = perms.includes('delete_calendar');
 
+    const [view, setView] = useState<View>('month');
+    const [cursor, setCursor] = useState<Date>(new Date());
     const [open, setOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [form, setForm] = useState(emptyForm());
     const [deleteId, setDeleteId] = useState<string | null>(null);
     const [errors, setErrors] = useState<Record<string, string>>({});
+
+    // Sur mobile, les grilles Semaine/Jour sont inexploitables : on ouvre sur la liste.
+    useEffect(() => {
+        if (typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches) setView('agenda');
+    }, []);
 
     const reload = (next: Partial<{ academic_year_id: string; type: string }>) => {
         router.get(route('calendar.index'), {
@@ -76,10 +71,47 @@ export default function Index({ events, types, academicYears, activeYear, filter
         }, { preserveScroll: true, replace: true });
     };
 
+    /* ── Navigation ──────────────────────────────────────────────────── */
+    const step = (dir: 1 | -1) => {
+        if (view === 'month') setCursor((c) => addMonths(c, dir));
+        else if (view === 'week') setCursor((c) => addWeeks(c, dir));
+        else if (view === 'day') setCursor((c) => addDays(c, dir));
+    };
+
+    const weekDays = eachDayOfInterval({
+        start: startOfWeek(cursor, { weekStartsOn: 1 }),
+        end: endOfWeek(cursor, { weekStartsOn: 1 }),
+    });
+
+    const title = (() => {
+        if (view === 'month') return format(cursor, 'MMMM yyyy', { locale: fr });
+        if (view === 'week') return `${format(weekDays[0], 'd MMM', { locale: fr })} – ${format(weekDays[6], 'd MMM yyyy', { locale: fr })}`;
+        if (view === 'day') return format(cursor, 'EEEE d MMMM yyyy', { locale: fr });
+        return activeYear?.year ?? '';
+    })();
+
+    /* ── Création / édition ──────────────────────────────────────────── */
     const openCreate = () => { setEditingId(null); setForm(emptyForm()); setErrors({}); setOpen(true); };
-    const openEdit = (e: Event) => {
+
+    const openCreateAt = (day: Date, time?: string) => {
+        if (!canCreate) return;
+        setEditingId(null);
+        setErrors({});
+        setForm({
+            ...emptyForm(),
+            start_date: toISO(day),
+            ...(time ? { all_day: false, start_time: time, end_time: fromMinutes((toMinutes(time) ?? 0) + 60) } : {}),
+        });
+        setOpen(true);
+    };
+
+    const openEdit = (e: CalEvent) => {
         setEditingId(e.id);
-        setForm({ title: e.title, description: e.description ?? '', type: e.type, start_date: e.start_date, end_date: e.end_date ?? '', all_day: e.all_day, start_time: e.start_time ?? '', end_time: e.end_time ?? '' });
+        setForm({
+            title: e.title, description: e.description ?? '', type: e.type,
+            start_date: e.start_date, end_date: e.end_date ?? '', all_day: e.all_day,
+            start_time: e.start_time ?? '', end_time: e.end_time ?? '',
+        });
         setErrors({});
         setOpen(true);
     };
@@ -96,13 +128,61 @@ export default function Index({ events, types, academicYears, activeYear, filter
         else router.post(route('calendar.store'), payload, opts);
     };
 
-    // Regroupement par mois
-    const byMonth = events.reduce<Record<string, Event[]>>((acc, e) => {
-        const key = e.start_date.slice(0, 7);
-        (acc[key] ??= []).push(e);
-        return acc;
-    }, {});
-    const months = Object.keys(byMonth).sort();
+    /* ── Drag & drop : déplacement et redimensionnement ──────────────── */
+    const persist = (e: CalEvent, changes: Partial<CalEvent>) => {
+        const next = { ...e, ...changes };
+        router.put(route('calendar.update', e.id), {
+            title: next.title,
+            description: next.description,
+            type: next.type,
+            start_date: next.start_date,
+            end_date: next.end_date || null,
+            all_day: next.all_day,
+            start_time: next.start_time || null,
+            end_time: next.end_time || null,
+            color: next.color || null,
+        }, { preserveScroll: true });
+    };
+
+    const handleDrop = (payload: DragPayload | TimeDragPayload, day: Date, minutes?: number) => {
+        if (!canEdit) return;
+        const e = events.find((x) => x.id === payload.id);
+        if (!e) return;
+
+        const timed = minutes !== undefined && !e.all_day;
+
+        if (payload.mode === 'resize-end') {
+            if (timed) {
+                const startMin = toMinutes(e.start_time) ?? 0;
+                // La fin doit rester après le début (30 min minimum).
+                const endMin = Math.max(minutes + 30, startMin + 30);
+                persist(e, { end_time: fromMinutes(endMin) });
+            } else {
+                const newEnd = day < eventStart(e) ? eventStart(e) : day;
+                persist(e, { end_date: toISO(newEnd) });
+            }
+            return;
+        }
+
+        // Déplacement
+        if (timed) {
+            const startMin = toMinutes(e.start_time) ?? 0;
+            const duration = Math.max((toMinutes(e.end_time) ?? startMin + 60) - startMin, 30);
+            persist(e, {
+                start_date: toISO(day),
+                end_date: toISO(day),
+                start_time: fromMinutes(minutes),
+                end_time: fromMinutes(minutes + duration),
+            });
+        } else {
+            const delta = differenceInCalendarDays(day, toDate(payload.grabDay));
+            if (delta === 0) return;
+            persist(e, {
+                start_date: toISO(addDays(eventStart(e), delta)),
+                end_date: e.end_date ? toISO(addDays(eventEnd(e), delta)) : null,
+            });
+        }
+    };
 
     return (
         <AppLayout>
@@ -120,63 +200,107 @@ export default function Index({ events, types, academicYears, activeYear, filter
                     )}
                 </div>
 
-                {/* Filtres */}
-                <div className="rounded-2xl bg-linear-to-br from-slate-50 to-white p-4 shadow-sm ring-1 ring-slate-100 flex flex-wrap gap-2 items-center">
-                    <Select value={filters.academic_year_id || ''} onValueChange={(v) => reload({ academic_year_id: v })}>
-                        <SelectTrigger className="w-48"><SelectValue placeholder="Année" /></SelectTrigger>
-                        <SelectContent>{academicYears.map((y) => <SelectItem key={y.id} value={y.id}>{y.year}</SelectItem>)}</SelectContent>
-                    </Select>
-                    <Select value={filters.type || ALL} onValueChange={(v) => reload({ type: v === ALL ? '' : v })}>
-                        <SelectTrigger className="w-48"><SelectValue placeholder="Type" /></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value={ALL}>Tous les types</SelectItem>
-                            {Object.entries(types).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
+                {/* Barre d'outils : navigation, vues, filtres */}
+                <div className="rounded-2xl bg-linear-to-br from-slate-50 to-white p-4 shadow-sm ring-1 ring-slate-100 flex flex-wrap gap-3 items-center">
+                    {view !== 'agenda' && (
+                        <div className="flex items-center gap-1">
+                            <Button variant="outline" size="sm" onClick={() => step(-1)} aria-label="Précédent"><ChevronLeft className="w-4 h-4" /></Button>
+                            <Button variant="outline" size="sm" onClick={() => setCursor(new Date())}>Aujourd&apos;hui</Button>
+                            <Button variant="outline" size="sm" onClick={() => step(1)} aria-label="Suivant"><ChevronRight className="w-4 h-4" /></Button>
+                        </div>
+                    )}
+                    <span className="text-sm font-semibold text-gray-700 capitalize min-w-40">{title}</span>
+
+                    {/* Sélecteur de vue */}
+                    <div className="inline-flex rounded-lg border border-slate-200 bg-white p-0.5">
+                        {VIEWS.map((v) => (
+                            <button
+                                key={v.key}
+                                type="button"
+                                onClick={() => setView(v.key)}
+                                className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${
+                                    view === v.key ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-slate-50'
+                                }`}
+                            >
+                                {v.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="ml-auto flex flex-wrap gap-2">
+                        <Select value={filters.academic_year_id || ''} onValueChange={(v) => reload({ academic_year_id: v })}>
+                            <SelectTrigger className="w-40"><SelectValue placeholder="Année" /></SelectTrigger>
+                            <SelectContent>{academicYears.map((y) => <SelectItem key={y.id} value={y.id}>{y.year}</SelectItem>)}</SelectContent>
+                        </Select>
+                        <Select value={filters.type || ALL} onValueChange={(v) => reload({ type: v === ALL ? '' : v })}>
+                            <SelectTrigger className="w-40"><SelectValue placeholder="Type" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value={ALL}>Tous les types</SelectItem>
+                                {Object.entries(types).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
 
-                {/* Agenda */}
-                {months.length === 0 ? (
-                    <div className="rounded-2xl bg-white p-12 text-center text-gray-400 ring-1 ring-slate-100 shadow-sm">
-                        <CalendarDays className="w-10 h-10 mx-auto mb-2 opacity-30" /> Aucun événement.
-                    </div>
-                ) : months.map((m) => (
-                    <div key={m} className="space-y-2">
-                        <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-400 capitalize">{monthLabel(m)}</h2>
-                        <div className="bg-white rounded-2xl shadow-sm ring-1 ring-slate-100 divide-y divide-slate-50">
-                            {byMonth[m].map((e) => (
-                                <div key={e.id} className="flex items-start gap-4 px-5 py-3.5 hover:bg-slate-50/50">
-                                    <div className="w-28 shrink-0 text-sm text-gray-600">
-                                        <div className="font-medium capitalize">{dayLabel(e.start_date)}</div>
-                                        {e.end_date && e.end_date !== e.start_date && <div className="text-xs text-gray-400">→ {dayLabel(e.end_date)}</div>}
-                                        {!e.all_day && e.start_time && <div className="text-xs text-gray-400">{e.start_time}{e.end_time ? `–${e.end_time}` : ''}</div>}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2">
-                                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${TYPE_META[e.type] ?? TYPE_META.other}`}>{types[e.type] ?? e.type}</span>
-                                            <span className="font-medium text-gray-900 truncate">{e.title}</span>
-                                        </div>
-                                        {e.description && <p className="text-sm text-gray-500 mt-0.5">{e.description}</p>}
-                                    </div>
-                                    {(canEdit || canDelete) && (
-                                        <div className="flex items-center gap-1 shrink-0">
-                                            {canEdit && <Button variant="outline" size="sm" onClick={() => openEdit(e)}><Pencil className="w-3.5 h-3.5" /></Button>}
-                                            {canDelete && <Button variant="outline" size="sm" className="border-red-200 text-red-500 hover:bg-red-50" onClick={() => setDeleteId(e.id)}><Trash2 className="w-3.5 h-3.5" /></Button>}
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                ))}
+                {canEdit && view !== 'agenda' && (
+                    <p className="text-xs text-gray-400 -mt-3">
+                        Astuce : glissez un événement pour le déplacer, tirez son bord pour changer sa fin.
+                    </p>
+                )}
+
+                {/* Vues */}
+                {view === 'month' && (
+                    <MonthView
+                        days={monthGridDays(cursor)}
+                        cursor={cursor}
+                        events={events}
+                        canEdit={canEdit}
+                        canCreate={canCreate}
+                        onCreateAt={openCreateAt}
+                        onEditEvent={openEdit}
+                        onDrop={handleDrop}
+                    />
+                )}
+                {view === 'week' && (
+                    <TimeGridView
+                        days={weekDays}
+                        events={events}
+                        canEdit={canEdit}
+                        canCreate={canCreate}
+                        onCreateAt={openCreateAt}
+                        onEditEvent={openEdit}
+                        onDrop={handleDrop}
+                    />
+                )}
+                {view === 'day' && (
+                    <TimeGridView
+                        days={[cursor]}
+                        events={events}
+                        canEdit={canEdit}
+                        canCreate={canCreate}
+                        onCreateAt={openCreateAt}
+                        onEditEvent={openEdit}
+                        onDrop={handleDrop}
+                    />
+                )}
+                {view === 'agenda' && (
+                    <AgendaView
+                        events={events}
+                        types={types}
+                        canEdit={canEdit}
+                        canDelete={canDelete}
+                        onEdit={openEdit}
+                        onDelete={setDeleteId}
+                    />
+                )}
             </div>
 
             {/* Dialog création/édition */}
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>{editingId ? 'Modifier l\'événement' : 'Nouvel événement'}</DialogTitle>
-                        <DialogDescription>Renseignez les informations de l'événement.</DialogDescription>
+                        <DialogTitle>{editingId ? "Modifier l'événement" : 'Nouvel événement'}</DialogTitle>
+                        <DialogDescription>Renseignez les informations de l&apos;événement.</DialogDescription>
                     </DialogHeader>
                     <form onSubmit={submit} className="space-y-4 py-1">
                         <div className="space-y-1.5">
@@ -215,9 +339,18 @@ export default function Index({ events, types, academicYears, activeYear, filter
                             <Label className="text-sm">Description</Label>
                             <Textarea rows={2} value={form.description ?? ''} onChange={(e) => setForm({ ...form, description: e.target.value })} />
                         </div>
-                        <div className="flex justify-end gap-2 pt-1">
-                            <Button type="button" variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
-                            <Button type="submit" className="bg-blue-600 hover:bg-blue-700">{editingId ? 'Enregistrer' : 'Ajouter'}</Button>
+                        <div className="flex justify-between gap-2 pt-1">
+                            <div>
+                                {editingId && canDelete && (
+                                    <Button type="button" variant="outline" className="border-red-200 text-red-500 hover:bg-red-50" onClick={() => { setOpen(false); setDeleteId(editingId); }}>
+                                        Supprimer
+                                    </Button>
+                                )}
+                            </div>
+                            <div className="flex gap-2">
+                                <Button type="button" variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
+                                <Button type="submit" className="bg-blue-600 hover:bg-blue-700">{editingId ? 'Enregistrer' : 'Ajouter'}</Button>
+                            </div>
                         </div>
                     </form>
                 </DialogContent>
