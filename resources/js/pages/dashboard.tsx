@@ -375,47 +375,18 @@ export default function Dashboard({ activeYear, selectedYearId, selectedYear, ac
                     </div>
                 )}
 
-                {/* ── Comptabilité : ce mois-ci + moyens de paiement ────────── */}
+                {/* ── Comptabilité : synthèse du mois ───────────────────────── */}
                 {isFinancial && (
-                    <div className="grid lg:grid-cols-2 gap-4">
-                        <div className="grid grid-cols-3 gap-4">
-                            <KpiCard title="Encaissé (mois)" value={fmt(financial.month.income)} sub="Ce mois-ci" icon={TrendingUp} color="green" />
-                            <KpiCard title="Dépenses (mois)" value={fmt(financial.month.expenses)} sub="Ce mois-ci" icon={TrendingDown} color="red" />
-                            <KpiCard
-                                title="Solde net (mois)"
-                                value={fmt(financial.month.net)}
-                                sub={financial.month.net >= 0 ? 'Excédent' : 'Déficit'}
-                                icon={Wallet}
-                                color={financial.month.net >= 0 ? 'blue' : 'orange'}
-                            />
-                        </div>
-
-                        <div className="bg-white dark:bg-card rounded-xl border border-gray-100 dark:border-gray-700 p-5 shadow-sm">
-                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">Moyens de paiement — {selectedYear?.year ?? activeYear?.year ?? ''}</p>
-                            {(() => {
-                                const total = financial.paymentMethods.reduce((s, m) => s + m.total, 0);
-                                if (total === 0) return <p className="text-sm text-gray-400 py-4 text-center">Aucun encaissement.</p>;
-                                return (
-                                    <ul className="space-y-3">
-                                        {financial.paymentMethods.map(m => {
-                                            const pct = Math.round((m.total / total) * 100);
-                                            const isMomo = m.method === 'MOBILE_MONEY';
-                                            return (
-                                                <li key={m.method}>
-                                                    <div className="flex justify-between text-sm mb-1">
-                                                        <span className={isMomo ? 'font-semibold text-emerald-600 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300'}>
-                                                            {PAYMENT_METHOD_LABELS[m.method] ?? m.method}{isMomo ? ' ★' : ''}
-                                                        </span>
-                                                        <span className="text-gray-500">{fmt(m.total)} · {pct}%</span>
-                                                    </div>
-                                                    <ProgressBar value={pct} color={isMomo ? 'green' : 'blue'} />
-                                                </li>
-                                            );
-                                        })}
-                                    </ul>
-                                );
-                            })()}
-                        </div>
+                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                        <KpiCard title="Encaissé (mois)" value={fmt(financial.month.income)} sub="Ce mois-ci" icon={TrendingUp} color="green" />
+                        <KpiCard title="Dépenses (mois)" value={fmt(financial.month.expenses)} sub="Ce mois-ci" icon={TrendingDown} color="red" />
+                        <KpiCard
+                            title="Solde net (mois)"
+                            value={fmt(financial.month.net)}
+                            sub={financial.month.net >= 0 ? 'Excédent' : 'Déficit'}
+                            icon={Wallet}
+                            color={financial.month.net >= 0 ? 'blue' : 'orange'}
+                        />
                     </div>
                 )}
 
@@ -641,6 +612,41 @@ export default function Dashboard({ activeYear, selectedYearId, selectedYear, ac
                                 </div>
                             )}
                         </div>
+                    </div>
+                )}
+
+                {/* ── Moyens de paiement ─────────────────────────────────── */}
+                {isFinancial && (
+                    <div className="bg-white dark:bg-card rounded-xl border border-gray-100 dark:border-gray-700 p-5 shadow-sm">
+                        <div className="flex items-center gap-2 mb-4">
+                            <Banknote className="w-4 h-4 text-gray-400" />
+                            <h2 className="font-semibold text-sm text-gray-900 dark:text-white">
+                                Moyens de paiement — {selectedYear?.year ?? activeYear?.year ?? ''}
+                            </h2>
+                        </div>
+                        {(() => {
+                            const total = financial.paymentMethods.reduce((s, m) => s + m.total, 0);
+                            if (total === 0) return <p className="text-sm text-gray-400 text-center py-6">Aucun encaissement sur la période</p>;
+                            return (
+                                <ul className="space-y-3">
+                                    {financial.paymentMethods.map(m => {
+                                        const pct = Math.round((m.total / total) * 100);
+                                        const isMomo = m.method === 'MOBILE_MONEY';
+                                        return (
+                                            <li key={m.method}>
+                                                <div className="flex justify-between text-sm mb-1">
+                                                    <span className={isMomo ? 'font-semibold text-emerald-600 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300'}>
+                                                        {PAYMENT_METHOD_LABELS[m.method] ?? m.method}{isMomo ? ' ★' : ''}
+                                                    </span>
+                                                    <span className="text-gray-500">{fmt(m.total)} · {pct}%</span>
+                                                </div>
+                                                <ProgressBar value={pct} color={isMomo ? 'green' : 'blue'} />
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                            );
+                        })()}
                     </div>
                 )}
 
