@@ -11,6 +11,7 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import {
@@ -107,6 +108,25 @@ const SORT_OPTIONS: { value: string; label: string }[] = [
     { value: 'matricule', label: 'Matricule' },
     { value: 'birth_date', label: 'Date de naissance' },
 ];
+
+/** Bouton d'action icône seule : tooltip au survol + libellé accessible. */
+function ActionButton({ label, icon, className, onClick }: Readonly<{
+    label: string;
+    icon: React.ReactNode;
+    className?: string;
+    onClick: () => void;
+}>) {
+    return (
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <Button variant="outline" size="sm" className={className} onClick={onClick} aria-label={label}>
+                    {icon}
+                </Button>
+            </TooltipTrigger>
+            <TooltipContent>{label}</TooltipContent>
+        </Tooltip>
+    );
+}
 
 function renderGenderBadge(gender?: 'male' | 'female' | '' | null) {
     if (gender === 'male') {
@@ -589,38 +609,30 @@ export default function Index({ students, perPage, stats, filters, options }: Re
                                             </TableCell>
                                             <TableCell className="text-center">
                                                 <div className="flex gap-2 justify-center">
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
+                                                    <ActionButton
+                                                        label="Voir la fiche"
+                                                        icon={<Eye className="w-4 h-4" />}
                                                         className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                                                         onClick={() => router.visit(route('students.show', student.id))}
-                                                    >
-                                                        <Eye className="w-4 h-4" />
-                                                    </Button>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
+                                                    />
+                                                    <ActionButton
+                                                        label="Modifier"
+                                                        icon={<Pencil className="w-4 h-4" />}
                                                         className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                                                         onClick={() => router.visit(route('students.edit', student.id))}
-                                                    >
-                                                        <Pencil className="w-4 h-4" />
-                                                    </Button>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
+                                                    />
+                                                    <ActionButton
+                                                        label="Historique"
+                                                        icon={<History className="w-4 h-4" />}
                                                         className="border-amber-300 text-amber-700 hover:bg-amber-50 hover:text-amber-800"
                                                         onClick={() => router.visit(route('students.history', student.id))}
-                                                    >
-                                                        <History className="w-4 h-4" />
-                                                    </Button>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
+                                                    />
+                                                    <ActionButton
+                                                        label="Supprimer"
+                                                        icon={<Trash2 className="w-4 h-4" />}
                                                         className="border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
                                                         onClick={() => setDeleteConfirm(student.id)}
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </Button>
+                                                    />
                                                 </div>
                                             </TableCell>
                                         </TableRow>
