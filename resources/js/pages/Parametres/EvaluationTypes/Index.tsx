@@ -11,6 +11,7 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/icon-button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { route } from '@/helpers/route';
@@ -173,15 +174,9 @@ export default function Index({ evaluationTypes, filters }: Readonly<IndexProps>
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex justify-center gap-2">
-                                                <Button variant="outline" size="sm" className="border-gray-300" onClick={() => router.get(route('evaluation-types.show', item.id))}>
-                                                    <Eye className="w-4 h-4" />
-                                                </Button>
-                                                <Button variant="outline" size="sm" className="border-gray-300" onClick={() => router.get(route('evaluation-types.edit', item.id))}>
-                                                    <Pencil className="w-4 h-4" />
-                                                </Button>
-                                                <Button variant="outline" size="sm" className="border-red-300 text-red-600 hover:bg-red-50" onClick={() => setDeleteId(item.id)}>
-                                                    <Trash2 className="w-4 h-4" />
-                                                </Button>
+                                                <IconButton label="Voir" icon={<Eye className="w-4 h-4" />} className="border-gray-300" onClick={() => router.get(route('evaluation-types.show', item.id))} />
+                                                <IconButton label="Modifier" icon={<Pencil className="w-4 h-4" />} className="border-gray-300" onClick={() => router.get(route('evaluation-types.edit', item.id))} />
+                                                <IconButton label="Supprimer" icon={<Trash2 className="w-4 h-4" />} className="border-red-300 text-red-600 hover:bg-red-50" onClick={() => setDeleteId(item.id)} />
                                             </div>
                                         </TableCell>
                                     </TableRow>

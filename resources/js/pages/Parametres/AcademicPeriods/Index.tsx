@@ -11,6 +11,7 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/icon-button';
 import { Input } from '@/components/ui/input';
 import {
     Table,
@@ -296,30 +297,27 @@ export default function Index({ academicPeriods, filters }: Readonly<IndexProps>
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
-                                                <Button
+                                                <IconButton
+                                                    label="Voir"
                                                     variant="ghost"
-                                                    size="sm"
+                                                    icon={<Eye className="w-4 h-4" />}
                                                     onClick={() => router.get(route('academic-periods.show', period.id))}
                                                     className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                                                >
-                                                    <Eye className="w-4 h-4" />
-                                                </Button>
-                                                <Button
+                                                />
+                                                <IconButton
+                                                    label="Modifier"
                                                     variant="ghost"
-                                                    size="sm"
+                                                    icon={<Pencil className="w-4 h-4" />}
                                                     onClick={() => router.get(route('academic-periods.edit', period.id))}
                                                     className="text-gray-600 hover:text-gray-700 hover:bg-gray-50"
-                                                >
-                                                    <Pencil className="w-4 h-4" />
-                                                </Button>
-                                                <Button
+                                                />
+                                                <IconButton
+                                                    label="Supprimer"
                                                     variant="ghost"
-                                                    size="sm"
+                                                    icon={<Trash2 className="w-4 h-4" />}
                                                     onClick={() => setDeleteConfirm(period.id)}
                                                     className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </Button>
+                                                />
                                             </div>
                                         </TableCell>
                                     </TableRow>

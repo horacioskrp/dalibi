@@ -6,6 +6,7 @@ import {
     AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/icon-button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -103,9 +104,9 @@ export default function Index({ guardians, filters }: Readonly<Props>) {
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-1.5">
-                                            <Button variant="outline" size="sm" title="Renvoyer l'invitation" onClick={() => router.post(route('guardians.invite', g.id), {}, { preserveScroll: true })}><Mail className="w-3.5 h-3.5" /></Button>
-                                            <Button variant="outline" size="sm" onClick={() => openEdit(g)}><Pencil className="w-3.5 h-3.5" /></Button>
-                                            <Button variant="outline" size="sm" className="border-red-200 text-red-500 hover:bg-red-50" onClick={() => setDeleteId(g.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
+                                            <IconButton label="Renvoyer l'invitation" icon={<Mail className="w-3.5 h-3.5" />} onClick={() => router.post(route('guardians.invite', g.id), {}, { preserveScroll: true })} />
+                                            <IconButton label="Modifier" icon={<Pencil className="w-3.5 h-3.5" />} onClick={() => openEdit(g)} />
+                                            <IconButton label="Supprimer" icon={<Trash2 className="w-3.5 h-3.5" />} className="border-red-200 text-red-500 hover:bg-red-50" onClick={() => setDeleteId(g.id)} />
                                         </div>
                                     </TableCell>
                                 </TableRow>

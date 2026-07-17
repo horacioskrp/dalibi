@@ -12,6 +12,7 @@ import {
     AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Input } from '@/components/ui/input';
 import { route } from '@/helpers/route';
 import AppLayout from '@/layouts/app-layout';
@@ -651,13 +652,18 @@ export default function Transactions({ transactions, cashAccounts, cashSummary, 
                                                 </td>
                                                 <td className="px-4 py-3">
                                                     {isManualExpense && (
-                                                        <button
-                                                            onClick={() => setDeletingId(tx.id)}
-                                                            className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                                                            title="Supprimer cette dépense"
-                                                        >
-                                                            <Trash2 className="w-3.5 h-3.5" />
-                                                        </button>
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <button
+                                                                    onClick={() => setDeletingId(tx.id)}
+                                                                    className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                                                    aria-label="Supprimer cette dépense"
+                                                                >
+                                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                                </button>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent>Supprimer cette dépense</TooltipContent>
+                                                        </Tooltip>
                                                     )}
                                                 </td>
                                             </tr>
