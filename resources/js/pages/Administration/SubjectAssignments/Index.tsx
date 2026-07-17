@@ -11,6 +11,7 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/icon-button';
 import { Input } from '@/components/ui/input';
 import {
     Table,
@@ -285,30 +286,24 @@ export default function Index({ assignments, filters }: Readonly<IndexProps>) {
                                         </TableCell>
                                         <TableCell className="text-center">
                                             <div className="flex gap-2 justify-center">
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
+                                                <IconButton
+                                                    label="Voir"
+                                                    icon={<Eye className="w-4 h-4" />}
                                                     onClick={() => router.get(route('subject-assignments.show', assignment.id))}
                                                     className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
-                                                >
-                                                    <Eye className="w-4 h-4" />
-                                                </Button>
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
+                                                />
+                                                <IconButton
+                                                    label="Modifier"
+                                                    icon={<Pencil className="w-4 h-4" />}
                                                     onClick={() => router.get(route('subject-assignments.edit', assignment.id))}
                                                     className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
-                                                >
-                                                    <Pencil className="w-4 h-4" />
-                                                </Button>
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
+                                                />
+                                                <IconButton
+                                                    label="Supprimer"
+                                                    icon={<Trash2 className="w-4 h-4" />}
                                                     onClick={() => setDeleteConfirm(assignment.id)}
                                                     className="border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </Button>
+                                                />
                                             </div>
                                         </TableCell>
                                     </TableRow>

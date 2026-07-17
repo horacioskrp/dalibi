@@ -3,6 +3,7 @@ import { Wallet, Plus, Pencil, Trash2, Banknote, Smartphone, Building2, CheckCir
 import { useMoney } from '@/helpers/money';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/icon-button';
 import { Input } from '@/components/ui/input';
 import { route } from '@/helpers/route';
 import AppLayout from '@/layouts/app-layout';
@@ -212,11 +213,12 @@ export default function CashAccounts({ accounts }: Readonly<Props>) {
                                                             onClick={() => setEditingId(account.id)}>
                                                             <Pencil className="w-3.5 h-3.5" /> Modifier
                                                         </Button>
-                                                        <Button size="sm" variant="outline"
+                                                        <IconButton
+                                                            label="Supprimer"
+                                                            icon={<Trash2 className="w-3.5 h-3.5" />}
                                                             className="border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400"
-                                                            onClick={() => setDeletingId(account.id)}>
-                                                            <Trash2 className="w-3.5 h-3.5" />
-                                                        </Button>
+                                                            onClick={() => setDeletingId(account.id)}
+                                                        />
                                                     </div>
                                                 </div>
                                             </div>

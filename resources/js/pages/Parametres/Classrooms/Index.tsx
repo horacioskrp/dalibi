@@ -11,6 +11,7 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/icon-button';
 import { Input } from '@/components/ui/input';
 import {
     Table,
@@ -262,39 +263,30 @@ export default function Index({ classrooms, activeCount, filters, message }: Rea
                                                     </TableCell>
                                                     <TableCell className="text-center">
                                                         <div className="flex gap-2 justify-center">
-                                                            <Button
-                                                                variant="outline"
-                                                                size="sm"
+                                                            <IconButton
+                                                                label="Attribuer des matières"
+                                                                icon={<BookPlus className="w-4 h-4" />}
                                                                 className="border-blue-300 text-blue-600 transition-colors duration-200 ease-out hover:bg-blue-50 hover:text-blue-700"
                                                                 onClick={() => router.get(route('classrooms.subject-assignments.create', classroom.id))}
-                                                                title="Attribuer des matières"
-                                                            >
-                                                                <BookPlus className="w-4 h-4" />
-                                                            </Button>
-                                                            <Button
-                                                                variant="outline"
-                                                                size="sm"
+                                                            />
+                                                            <IconButton
+                                                                label="Voir"
+                                                                icon={<Eye className="w-4 h-4" />}
                                                                 className="border-gray-300 text-gray-700 transition-colors duration-200 ease-out hover:bg-blue-50/60 hover:text-blue-800"
                                                                 onClick={() => router.visit(route('classrooms.show', classroom.id))}
-                                                            >
-                                                                <Eye className="w-4 h-4" />
-                                                            </Button>
-                                                            <Button
-                                                                variant="outline"
-                                                                size="sm"
+                                                            />
+                                                            <IconButton
+                                                                label="Modifier"
+                                                                icon={<Pencil className="w-4 h-4" />}
                                                                 className="border-gray-300 text-gray-700 transition-colors duration-200 ease-out hover:bg-blue-50/60 hover:text-blue-800"
                                                                 onClick={() => router.visit(route('classrooms.edit', classroom.id))}
-                                                            >
-                                                                <Pencil className="w-4 h-4" />
-                                                            </Button>
-                                                            <Button
-                                                                variant="outline"
-                                                                size="sm"
+                                                            />
+                                                            <IconButton
+                                                                label="Supprimer"
+                                                                icon={<Trash2 className="w-4 h-4" />}
                                                                 className="border-red-300 text-red-600 transition-colors duration-200 ease-out hover:bg-red-50 hover:text-red-700"
                                                                 onClick={() => setDeleteConfirm(classroom.id)}
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </Button>
+                                                            />
                                                         </div>
                                                     </TableCell>
                                                 </TableRow>

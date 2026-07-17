@@ -6,6 +6,7 @@ import {
     AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/icon-button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -251,15 +252,13 @@ export default function Index({ classrooms, periods, rows, activeYear, filters }
                                                     >
                                                         <Download className="w-3.5 h-3.5" /> PDF
                                                     </Button>
-                                                    <Button
-                                                        variant="outline" size="sm"
+                                                    <IconButton
+                                                        label="Dévalider ce bulletin"
+                                                        icon={<Trash2 className="w-3.5 h-3.5" />}
                                                         className="gap-1.5 text-red-600 hover:bg-red-50 hover:text-red-700"
                                                         disabled={!r.validated || !r.report_card_id}
                                                         onClick={() => setDeleteTarget(r)}
-                                                        title="Dévalider ce bulletin"
-                                                    >
-                                                        <Trash2 className="w-3.5 h-3.5" />
-                                                    </Button>
+                                                    />
                                                 </div>
                                             </TableCell>
                                         </TableRow>

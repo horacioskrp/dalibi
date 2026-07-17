@@ -6,6 +6,7 @@ import {
     AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/icon-button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -144,15 +145,9 @@ export default function Index({ templates, periods, activeYear, filters }: Reado
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex justify-center gap-1.5">
-                                            <Button variant="outline" size="sm" onClick={() => router.get(route('evaluation-templates.show', t.id))}>
-                                                <Eye className="w-4 h-4" />
-                                            </Button>
-                                            <Button variant="outline" size="sm" onClick={() => router.get(route('evaluation-templates.edit', t.id))}>
-                                                <Pencil className="w-4 h-4" />
-                                            </Button>
-                                            <Button variant="outline" size="sm" className="border-red-200 text-red-500 hover:bg-red-50" onClick={() => setDeleteId(t.id)}>
-                                                <Trash2 className="w-4 h-4" />
-                                            </Button>
+                                            <IconButton label="Voir" icon={<Eye className="w-4 h-4" />} onClick={() => router.get(route('evaluation-templates.show', t.id))} />
+                                            <IconButton label="Modifier" icon={<Pencil className="w-4 h-4" />} onClick={() => router.get(route('evaluation-templates.edit', t.id))} />
+                                            <IconButton label="Supprimer" icon={<Trash2 className="w-4 h-4" />} className="border-red-200 text-red-500 hover:bg-red-50" onClick={() => setDeleteId(t.id)} />
                                         </div>
                                     </TableCell>
                                 </TableRow>

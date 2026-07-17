@@ -6,6 +6,7 @@ import {
     AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/icon-button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -281,25 +282,22 @@ export default function Index({ evaluations, filters, options, canLock }: Readon
                                                     <ClipboardList className="w-3.5 h-3.5" /> Notes
                                                 </Button>
                                                 {canLock && (
-                                                    <Button
-                                                        variant="outline" size="sm"
-                                                        title={isLocked ? 'Déclôturer' : 'Clôturer'}
+                                                    <IconButton
+                                                        label={isLocked ? 'Déclôturer' : 'Clôturer'}
+                                                        icon={isLocked ? <Lock className="w-3.5 h-3.5" /> : <LockOpen className="w-3.5 h-3.5" />}
                                                         className={isLocked
                                                             ? 'border-red-200 text-red-500 hover:bg-red-50'
                                                             : 'border-gray-200 text-gray-500 hover:bg-gray-50'
                                                         }
                                                         onClick={() => onToggleLock(ev.id)}
-                                                    >
-                                                        {isLocked ? <Lock className="w-3.5 h-3.5" /> : <LockOpen className="w-3.5 h-3.5" />}
-                                                    </Button>
+                                                    />
                                                 )}
-                                                <Button
-                                                    variant="outline" size="sm"
+                                                <IconButton
+                                                    label="Supprimer"
+                                                    icon={<Trash2 className="w-3.5 h-3.5" />}
                                                     className="border-red-200 text-red-500 hover:bg-red-50"
                                                     onClick={() => setDeleteId(ev.id)}
-                                                >
-                                                    <Trash2 className="w-3.5 h-3.5" />
-                                                </Button>
+                                                />
                                             </div>
                                         </TableCell>
                                     </TableRow>

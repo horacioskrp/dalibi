@@ -11,6 +11,7 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/icon-button';
 import { Input } from '@/components/ui/input';
 import {
     Table,
@@ -184,30 +185,24 @@ export default function Index({ feeCategories, message, filters }: Readonly<Inde
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
+                                                <IconButton
+                                                    label="Voir"
+                                                    icon={<Eye className="w-4 h-4" />}
                                                     className="border-slate-200 text-gray-700 hover:bg-gray-100"
                                                     onClick={() => router.get(route('fee-categories.show', category.id))}
-                                                >
-                                                    <Eye className="w-4 h-4" />
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
+                                                />
+                                                <IconButton
+                                                    label="Modifier"
+                                                    icon={<Pencil className="w-4 h-4" />}
                                                     className="border-slate-200 text-gray-700 hover:bg-gray-100"
                                                     onClick={() => router.get(route('fee-categories.edit', category.id))}
-                                                >
-                                                    <Pencil className="w-4 h-4" />
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
+                                                />
+                                                <IconButton
+                                                    label="Supprimer"
+                                                    icon={<Trash2 className="w-4 h-4" />}
                                                     className="border-slate-200 text-gray-700 hover:bg-red-50 hover:text-red-600"
                                                     onClick={() => setDeleteConfirm(category.id)}
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </Button>
+                                                />
                                             </div>
                                         </TableCell>
                                     </TableRow>
