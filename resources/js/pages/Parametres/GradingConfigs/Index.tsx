@@ -6,6 +6,7 @@ import {
     AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/icon-button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { route } from '@/helpers/route';
@@ -156,20 +157,18 @@ export default function Index({ configs, schools, filters }: Readonly<Props>) {
                                                     Activer
                                                 </Button>
                                             )}
-                                            <Button
-                                                variant="outline" size="sm"
+                                            <IconButton
+                                                label="Modifier"
+                                                icon={<Pencil className="w-3.5 h-3.5" />}
                                                 onClick={() => router.get(route('grading-configs.edit', c.id))}
-                                            >
-                                                <Pencil className="w-3.5 h-3.5" />
-                                            </Button>
+                                            />
                                             {!c.is_active && (
-                                                <Button
-                                                    variant="outline" size="sm"
+                                                <IconButton
+                                                    label="Supprimer"
+                                                    icon={<Trash2 className="w-3.5 h-3.5" />}
                                                     className="border-red-200 text-red-500 hover:bg-red-50"
                                                     onClick={() => setDeleteId(c.id)}
-                                                >
-                                                    <Trash2 className="w-3.5 h-3.5" />
-                                                </Button>
+                                                />
                                             )}
                                         </div>
                                     </TableCell>

@@ -6,6 +6,7 @@ import {
     AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/icon-button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -185,9 +186,7 @@ export default function Index({ exams, years, activeYear, types, sessions, statu
                                             <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => router.get(route('official-exams.show', exam.id))}>
                                                 <Eye className="w-3.5 h-3.5" /> Gérer
                                             </Button>
-                                            <Button variant="outline" size="sm" className="border-red-200 text-red-500 hover:bg-red-50" onClick={() => setDeleteId(exam.id)}>
-                                                <Trash2 className="w-3.5 h-3.5" />
-                                            </Button>
+                                            <IconButton label="Supprimer" icon={<Trash2 className="w-3.5 h-3.5" />} className="border-red-200 text-red-500 hover:bg-red-50" onClick={() => setDeleteId(exam.id)} />
                                         </div>
                                     </TableCell>
                                 </TableRow>

@@ -6,6 +6,7 @@ import {
     AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/icon-button';
 import {
     Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
@@ -150,14 +151,12 @@ export default function Tags({ tags, filters }: Readonly<Props>) {
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
+                                                <IconButton
+                                                    label="Supprimer"
+                                                    icon={<Trash2 className="w-4 h-4" />}
                                                     className="border-slate-200 text-gray-700 hover:bg-red-50 hover:text-red-600"
                                                     onClick={() => setDeleteId(t.id)}
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </Button>
+                                                />
                                             </div>
                                         </TableCell>
                                     </TableRow>
