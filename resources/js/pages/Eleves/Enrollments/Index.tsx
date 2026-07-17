@@ -11,6 +11,7 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/icon-button';
 import { Input } from '@/components/ui/input';
 import {
     Table,
@@ -308,30 +309,24 @@ export default function Index({ enrollments, perPage, filters, stats, academicYe
                                             </TableCell>
                                             <TableCell className="text-center">
                                                 <div className="flex gap-2 justify-center">
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
+                                                    <IconButton
+                                                        label="Voir"
+                                                        icon={<Eye className="w-4 h-4" />}
                                                         className="border-gray-300 text-gray-700 hover:bg-gray-50"
                                                         onClick={() => router.get(route('enrollments.show', enrollment.id))}
-                                                    >
-                                                        <Eye className="w-4 h-4" />
-                                                    </Button>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
+                                                    />
+                                                    <IconButton
+                                                        label="Modifier"
+                                                        icon={<Pencil className="w-4 h-4" />}
                                                         className="border-gray-300 text-gray-700 hover:bg-gray-50"
                                                         onClick={() => router.get(route('enrollments.edit', enrollment.id))}
-                                                    >
-                                                        <Pencil className="w-4 h-4" />
-                                                    </Button>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
+                                                    />
+                                                    <IconButton
+                                                        label="Supprimer"
+                                                        icon={<Trash2 className="w-4 h-4" />}
                                                         className="border-red-300 text-red-600 hover:bg-red-50"
                                                         onClick={() => setDeletingId(enrollment.id)}
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </Button>
+                                                    />
                                                 </div>
                                             </TableCell>
                                         </TableRow>

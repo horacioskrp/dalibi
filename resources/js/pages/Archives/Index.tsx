@@ -9,6 +9,7 @@ import {
     AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/icon-button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -216,22 +217,16 @@ export default function Index({ documents, tags, categories, classrooms, filters
                                         <div className="flex justify-center gap-1.5">
                                             {filters.trashed ? (
                                                 <>
-                                                    <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => router.post(route('archives.restore', d.id), {}, { preserveScroll: true })}>
-                                                        <RotateCcw className="w-3.5 h-3.5" />
-                                                    </Button>
-                                                    <Button variant="outline" size="sm" className="border-red-200 text-red-500 hover:bg-red-50" onClick={() => setDeleteDoc(d)}>
-                                                        <Trash2 className="w-3.5 h-3.5" />
-                                                    </Button>
+                                                    <IconButton label="Restaurer" icon={<RotateCcw className="w-3.5 h-3.5" />} className="gap-1 text-xs" onClick={() => router.post(route('archives.restore', d.id), {}, { preserveScroll: true })} />
+                                                    <IconButton label="Supprimer définitivement" icon={<Trash2 className="w-3.5 h-3.5" />} className="border-red-200 text-red-500 hover:bg-red-50" onClick={() => setDeleteDoc(d)} />
                                                 </>
                                             ) : (
                                                 <>
                                                     <a href={route('archives.download', d.id)}>
-                                                        <Button variant="outline" size="sm" className="text-xs"><Download className="w-3.5 h-3.5" /></Button>
+                                                        <IconButton label="Télécharger" icon={<Download className="w-3.5 h-3.5" />} className="text-xs" />
                                                     </a>
-                                                    <Button variant="outline" size="sm" onClick={() => openEdit(d)}><Pencil className="w-3.5 h-3.5" /></Button>
-                                                    <Button variant="outline" size="sm" className="border-red-200 text-red-500 hover:bg-red-50" onClick={() => router.delete(route('archives.destroy', d.id), { preserveScroll: true })}>
-                                                        <Trash2 className="w-3.5 h-3.5" />
-                                                    </Button>
+                                                    <IconButton label="Modifier" icon={<Pencil className="w-3.5 h-3.5" />} onClick={() => openEdit(d)} />
+                                                    <IconButton label="Supprimer" icon={<Trash2 className="w-3.5 h-3.5" />} className="border-red-200 text-red-500 hover:bg-red-50" onClick={() => router.delete(route('archives.destroy', d.id), { preserveScroll: true })} />
                                                 </>
                                             )}
                                         </div>
