@@ -13,8 +13,15 @@ class DocumentHeader extends Model
 
     protected $fillable = [
         'school_id',
+        'preset',
         'layout',
         'watermark',
+    ];
+
+    /** Préréglages d'en-tête disponibles. */
+    public const PRESETS = [
+        'ministeriel'  => 'Ministériel (officiel)',
+        'personnalise' => 'Personnalisé (glisser-déposer)',
     ];
 
     protected $casts = [

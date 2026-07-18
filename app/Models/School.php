@@ -37,6 +37,7 @@ class School extends Model
         'devise',
         'currency',
         'terme',
+        'ministry',
         'address',
         'region',
         'city',

@@ -11,6 +11,7 @@ const initialValues: SchoolFormData = {
     devise: '',
     currency: 'XOF',
     terme: 'République Togolaise',
+    ministry: 'Ministère des Enseignements Primaire, Secondaire et Technique',
     email: '',
     phone: '',
     address: '',

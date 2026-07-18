@@ -9,6 +9,7 @@ use App\Services\DocumentRenderer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -28,6 +29,8 @@ class DocumentHeaderController extends Controller
 
         return Inertia::render('Parametres/Documents/HeaderDesigner', [
             'header'            => $config,
+            'preset'            => $header?->preset ?? 'ministeriel',
+            'presets'           => DocumentHeader::PRESETS,
             'default'           => DocumentHeader::defaultLayout($school),
             'watermarkImageUrl' => $this->mediaUrl($config['watermark']['image_path'] ?? null),
             'variables'         => DocumentRenderer::variableCatalog(),
@@ -45,6 +48,7 @@ class DocumentHeaderController extends Controller
         abort_unless($request->user()->can('edit_document_headers'), 403);
 
         $validated = $request->validate([
+            'preset'          => ['required', Rule::in(array_keys(DocumentHeader::PRESETS))],
             'layout'          => ['required', 'string'],
             'watermark'       => ['required', 'string'],
             'watermark_image' => ['nullable', 'image', 'max:2048'],
@@ -67,7 +71,11 @@ class DocumentHeaderController extends Controller
 
         DocumentHeader::updateOrCreate(
             ['school_id' => $school->id],
-            ['layout' => $this->sanitizeLayout($layout), 'watermark' => $watermark],
+            [
+                'preset'    => $validated['preset'],
+                'layout'    => $this->sanitizeLayout($layout),
+                'watermark' => $watermark,
+            ],
         );
 
         return back()->with('message', 'En-tête des documents enregistré.');

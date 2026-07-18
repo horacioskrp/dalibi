@@ -47,6 +47,8 @@ interface VariableCatalog {
 
 interface Props {
     header: { layout: { width: number; height: number; elements: El[] }; watermark: Watermark };
+    preset: string;
+    presets: Record<string, string>;
     default: { layout: { width: number; height: number; elements: El[] }; watermark: Watermark };
     watermarkImageUrl: string | null;
     variables: VariableCatalog;
@@ -57,7 +59,8 @@ interface Props {
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : `el-${Date.now()}-${Math.random()}`);
 const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
 
-export default function HeaderDesigner({ header, default: fallback, watermarkImageUrl, variables, canvasWidth, school }: Readonly<Props>) {
+export default function HeaderDesigner({ header, preset: initialPreset, presets, default: fallback, watermarkImageUrl, variables, canvasWidth, school }: Readonly<Props>) {
+    const [preset, setPreset] = useState<string>(initialPreset ?? 'ministeriel');
     const [elements, setElements] = useState<El[]>(header.layout.elements ?? []);
     const [height, setHeight] = useState<number>(header.layout.height ?? 130);
     const [watermark, setWatermark] = useState<Watermark>(header.watermark);
@@ -146,6 +149,7 @@ export default function HeaderDesigner({ header, default: fallback, watermarkIma
         router.post(
             route('document-header.update'),
             {
+                preset,
                 layout: JSON.stringify({ width: canvasWidth, height, elements }),
                 watermark: JSON.stringify(watermark),
                 watermark_image: wmFile,
@@ -183,9 +187,29 @@ export default function HeaderDesigner({ header, default: fallback, watermarkIma
                     </div>
                 </div>
 
+                {/* Préréglage d'en-tête */}
+                <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100 flex flex-wrap items-center gap-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Modèle d'en-tête</p>
+                    <Select value={preset} onValueChange={setPreset}>
+                        <SelectTrigger className="w-72"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                            {Object.entries(presets).map(([k, label]) => <SelectItem key={k} value={k}>{label}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                    <p className="text-xs text-gray-400">Le filigrane s'applique aux deux modèles.</p>
+                </div>
+
                 <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
                     {/* Zone de composition */}
                     <div className="space-y-4">
+                        {preset !== 'personnalise' && (
+                            <div className="rounded-2xl bg-blue-50/60 p-5 ring-1 ring-blue-100 text-sm text-gray-700 space-y-2">
+                                <p className="font-semibold text-gray-900">En-tête ministériel (officiel)</p>
+                                <p>L'en-tête à trois colonnes (Ministère &amp; établissement · logo · République &amp; devise) est généré automatiquement à partir des informations de l'école. Le glisser-déposer est désactivé pour ce modèle.</p>
+                                <p className="text-xs text-gray-500">Pour modifier le ministère, le nom, le logo ou la devise, rendez-vous dans les réglages de l'école.</p>
+                            </div>
+                        )}
+                        {preset === 'personnalise' && (<>
                         {/* Palette */}
                         <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
                             <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Ajouter un bloc</p>
@@ -251,11 +275,12 @@ export default function HeaderDesigner({ header, default: fallback, watermarkIma
                             </div>
                             <p className="mt-2 text-xs text-gray-400">Cliquez un bloc pour le modifier, glissez-le pour le déplacer.</p>
                         </div>
+                        </>)}
                     </div>
 
                     {/* Panneau latéral */}
                     <div className="space-y-4">
-                        {/* Propriétés du bloc */}
+                        {preset === 'personnalise' && (
                         <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
                             <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Propriétés du bloc</p>
                             {!selected ? (
@@ -321,6 +346,7 @@ export default function HeaderDesigner({ header, default: fallback, watermarkIma
                                 </div>
                             )}
                         </div>
+                        )}
 
                         {/* Filigrane */}
                         <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">

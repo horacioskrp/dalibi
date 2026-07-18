@@ -51,16 +51,31 @@ class DocumentHeaderTest extends TestCase
 
         $this->actingAs($this->admin())
             ->post(route('document-header.update'), [
+                'preset'    => 'personnalise',
                 'layout'    => json_encode($layout),
                 'watermark' => json_encode($watermark),
             ])
             ->assertRedirect();
 
         $header = DocumentHeader::where('school_id', $school->id)->firstOrFail();
+        $this->assertSame('personnalise', $header->preset);
         $this->assertSame(140, $header->layout['height']);
         $this->assertCount(1, $header->layout['elements']);
         $this->assertTrue($header->watermark['enabled']);
         $this->assertSame('CONFIDENTIEL', $header->watermark['text']);
+    }
+
+    public function test_update_rejects_unknown_preset(): void
+    {
+        School::factory()->create();
+
+        $this->actingAs($this->admin())
+            ->post(route('document-header.update'), [
+                'preset'    => 'invalide',
+                'layout'    => json_encode(['width' => 760, 'height' => 130, 'elements' => []]),
+                'watermark' => json_encode(['enabled' => false]),
+            ])
+            ->assertSessionHasErrors('preset');
     }
 
     public function test_renderer_uses_custom_header_and_watermark(): void
@@ -73,6 +88,7 @@ class DocumentHeaderTest extends TestCase
 
         DocumentHeader::create([
             'school_id' => $school->id,
+            'preset'    => 'personnalise',
             'layout'    => $config['layout'],
             'watermark' => $config['watermark'],
         ]);
@@ -109,6 +125,7 @@ class DocumentHeaderTest extends TestCase
 
         DocumentHeader::create([
             'school_id' => $school->id,
+            'preset'    => 'personnalise',
             'layout'    => $config['layout'],
             'watermark' => $config['watermark'],
         ]);
@@ -144,9 +161,13 @@ class DocumentHeaderTest extends TestCase
         $this->assertStringContainsString('&lt;img', $html);        // échappée
     }
 
-    public function test_renderer_falls_back_to_default_header_without_config(): void
+    public function test_renderer_uses_ministerial_header_by_default(): void
     {
-        $school = School::factory()->create(['name' => 'Sans Config']);
+        $school = School::factory()->create([
+            'name'     => 'Sans Config',
+            'ministry' => 'Ministère des Enseignements Primaire, Secondaire et Technique',
+            'terme'    => 'République Togolaise',
+        ]);
 
         $renderer = app(DocumentRenderer::class);
         $template = new DocumentTemplate([
@@ -158,7 +179,34 @@ class DocumentHeaderTest extends TestCase
 
         $html = $renderer->render($template, $renderer->resolveVariables($school));
 
-        $this->assertStringContainsString('doc-header', $html);          // en-tête classique
-        $this->assertStringNotContainsString('position:fixed', $html);   // pas de filigrane
+        $this->assertStringContainsString('mh-table', $html);                       // gabarit ministériel
+        $this->assertStringContainsString('Ministère des Enseignements', $html);    // ministère interpolé
+        $this->assertStringContainsString('Sans Config', $html);                    // nom école
+        $this->assertStringContainsString('République Togolaise', $html);           // terme
+        $this->assertStringNotContainsString('position:absolute', $html);           // pas le canevas
+        $this->assertStringNotContainsString('position:fixed', $html);              // pas de filigrane
+    }
+
+    public function test_ministerial_header_used_when_custom_layout_but_preset_default(): void
+    {
+        // Un canevas existe mais le préréglage reste « ministeriel » : le gabarit officiel prime.
+        $school = School::factory()->create(['name' => 'École Bascule']);
+        $config = DocumentHeader::defaultLayout($school);
+
+        DocumentHeader::create([
+            'school_id' => $school->id,
+            'preset'    => 'ministeriel',
+            'layout'    => $config['layout'],
+            'watermark' => $config['watermark'],
+        ]);
+
+        $renderer = app(DocumentRenderer::class);
+        $template = new DocumentTemplate(['header_enabled' => true, 'show_signature' => false, 'content' => '']);
+        $template->setRelation('school', $school->load('documentHeader'));
+
+        $html = $renderer->render($template, $renderer->resolveVariables($school));
+
+        $this->assertStringContainsString('mh-table', $html);
+        $this->assertStringNotContainsString('position:absolute', $html);
     }
 }
