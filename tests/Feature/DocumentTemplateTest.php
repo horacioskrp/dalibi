@@ -45,6 +45,7 @@ class DocumentTemplateTest extends TestCase
             'category'        => 'certificat',
             'type'            => 'certificat_scolarite',
             'name'            => 'Certificat de scolarité',
+            'source'          => 'wysiwyg',
             'content'         => '<p>Élève {{ eleve.nom_complet }} en {{ classe.nom }}.</p>',
             'header_enabled'  => true,
             'footer_enabled'  => true,
@@ -75,6 +76,7 @@ class DocumentTemplateTest extends TestCase
             'category'        => 'attestation',
             'type'            => 'attestation_frequentation',
             'name'            => 'Attestation standard',
+            'source'          => 'wysiwyg',
             'content'         => '<p>Test {{ eleve.nom }}</p>',
             'header_enabled'  => true,
             'footer_enabled'  => true,
@@ -180,6 +182,103 @@ class DocumentTemplateTest extends TestCase
         $this->actingAs($this->admin())
             ->get(route('document-templates.show', $template))
             ->assertOk();
+    }
+
+    // ─── Source Blade (mise en page prédéfinie) ────────────────────────────────
+
+    public function test_admin_can_create_blade_template(): void
+    {
+        $this->actingAs($this->admin())
+            ->post(route('document-templates.store'), $this->validPayload([
+                'source'  => 'blade',
+                'layout'  => 'certificat_scolarite',
+                'content' => null,
+            ]))
+            ->assertRedirect(route('document-templates.index'));
+
+        $this->assertDatabaseHas('document_templates', [
+            'source' => 'blade',
+            'layout' => 'certificat_scolarite',
+        ]);
+    }
+
+    public function test_blade_source_requires_a_layout(): void
+    {
+        $this->actingAs($this->admin())
+            ->post(route('document-templates.store'), $this->validPayload([
+                'source'  => 'blade',
+                'layout'  => null,
+                'content' => null,
+            ]))
+            ->assertSessionHasErrors('layout');
+    }
+
+    public function test_blade_source_rejects_layout_outside_whitelist(): void
+    {
+        $this->actingAs($this->admin())
+            ->post(route('document-templates.store'), $this->validPayload([
+                'source'  => 'blade',
+                'layout'  => '../../../etc/passwd',
+                'content' => null,
+            ]))
+            ->assertSessionHasErrors('layout');
+    }
+
+    public function test_wysiwyg_source_requires_content(): void
+    {
+        $this->actingAs($this->admin())
+            ->post(route('document-templates.store'), $this->validPayload([
+                'source'  => 'wysiwyg',
+                'content' => null,
+            ]))
+            ->assertSessionHasErrors('content');
+    }
+
+    public function test_generate_blade_template_returns_pdf(): void
+    {
+        $template = $this->template([
+            'source'  => 'blade',
+            'layout'  => 'certificat_scolarite',
+            'content' => null,
+        ]);
+        $student = $this->makeStudent();
+
+        $response = $this->actingAs($this->admin())
+            ->post(route('document-templates.generate', $template), [
+                'student_id'     => $student->id,
+                'classe'         => '3ème A',
+                'annee_scolaire' => '2025-2026',
+            ]);
+
+        $response->assertOk();
+        $this->assertEquals('application/pdf', $response->headers->get('content-type'));
+        $this->assertDatabaseHas('document_issuances', [
+            'template_id' => $template->id,
+            'student_id'  => $student->id,
+        ]);
+    }
+
+    public function test_every_whitelisted_layout_renders(): void
+    {
+        $renderer = app(\App\Services\DocumentRenderer::class);
+        $school   = \App\Models\School::query()->first() ?? new \App\Models\School(['name' => 'École Test', 'city' => 'Lomé']);
+        $student  = $this->makeStudent();
+        $vars     = $renderer->resolveVariables($school, $student, [
+            'classe.nom'         => '3ème A',
+            'annee_scolaire'     => '2025-2026',
+            'document.reference' => 'TEST-0001',
+            'signataire.titre'   => 'Le Directeur',
+        ]);
+
+        foreach (array_keys(DocumentTemplate::LAYOUTS) as $layout) {
+            $this->assertTrue(view()->exists("documents.{$layout}"), "Vue manquante : documents.{$layout}");
+
+            $template = new DocumentTemplate(['source' => 'blade', 'layout' => $layout, 'header_enabled' => true, 'show_signature' => true]);
+            $template->setRelation('school', $school);
+
+            $html = $renderer->render($template, $vars);
+            $this->assertStringContainsString('Koffi', $html, "Le layout {$layout} n'a pas interpolé l'élève.");
+        }
     }
 
     // ─── Prévisualisation ──────────────────────────────────────────────────────

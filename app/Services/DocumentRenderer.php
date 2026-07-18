@@ -23,6 +23,7 @@ class DocumentRenderer
                 'label' => 'École',
                 'variables' => [
                     'ecole.nom'    => 'Nom de l\'école',
+                    'ecole.ministere' => 'Ministère de tutelle',
                     'ecole.terme'  => 'Terme (ex. République Togolaise)',
                     'ecole.devise' => 'Devise',
                     'ecole.bp'     => 'Boîte postale',
@@ -75,6 +76,7 @@ class DocumentRenderer
     ): array {
         $vars = [
             'ecole.nom'       => $school->name ?? '',
+            'ecole.ministere' => $school->ministry ?? 'Ministère des Enseignements Primaire, Secondaire et Technique',
             'ecole.terme'     => $school->terme ?? 'République Togolaise',
             'ecole.devise'    => $school->devise ?? '',
             'ecole.bp'        => $school->po_box ?? '',
@@ -127,9 +129,7 @@ class DocumentRenderer
      */
     public function render(DocumentTemplate $template, array $variables): string
     {
-        // Le contenu du modèle est du HTML (saisi par l'admin) ; les VALEURS de variables
-        // (données élève, etc.) sont échappées pour empêcher toute injection HTML dans le PDF.
-        $body      = $this->interpolate($template->content ?? '', $variables, true);
+        $body      = $this->renderBody($template, $variables);
         $header    = $template->header_enabled ? $this->renderHeader($template, $variables) : '';
         $signature = $template->show_signature ? $this->renderSignature($template, $variables) : '';
         $watermark = $this->renderWatermark($template->school, $variables);
@@ -148,6 +148,30 @@ class DocumentRenderer
         </body>
         </html>
         HTML;
+    }
+
+    /**
+     * Corps du document selon la source :
+     *  - `blade` : mise en page prédéfinie (liste blanche) rendue via une vue Blade.
+     *              Blade échappe automatiquement `{{ }}`, donc pas de pré-échappement.
+     *  - sinon   : HTML saisi via l'éditeur ; les VALEURS de variables sont échappées
+     *              pour empêcher toute injection HTML dans le PDF.
+     */
+    protected function renderBody(DocumentTemplate $template, array $variables): string
+    {
+        if ($template->source === 'blade' && $this->isValidLayout($template->layout)) {
+            return view("documents.{$template->layout}", ['v' => $variables])->render();
+        }
+
+        return $this->interpolate($template->content ?? '', $variables, true);
+    }
+
+    /** Le layout demandé fait-il partie de la liste blanche ET la vue existe-t-elle ? */
+    protected function isValidLayout(?string $layout): bool
+    {
+        return $layout !== null
+            && array_key_exists($layout, DocumentTemplate::LAYOUTS)
+            && view()->exists("documents.{$layout}");
     }
 
     /** En-tête configurable réutilisable (ex. bulletins), pour une école donnée. */
@@ -172,9 +196,12 @@ class DocumentRenderer
     protected function renderHeader(DocumentTemplate $template, array $variables): string
     {
         $header = $template->school?->documentHeader;
+        $preset = $header?->preset ?? 'ministeriel';
 
-        if (! $header || empty($header->layout['elements'])) {
-            return $this->renderDefaultHeader($template, $variables);
+        // Préréglage « personnalisé » : canevas glisser-déposer (si des éléments existent).
+        // Sinon on rend le gabarit officiel ministériel (défaut).
+        if ($preset !== 'personnalise' || empty($header->layout['elements'])) {
+            return $this->renderMinisterialHeader($template, $variables);
         }
 
         $layout = $header->layout;
@@ -256,36 +283,51 @@ class DocumentRenderer
         HTML;
     }
 
-    /** En-tête « administratif » classique (utilisé sans personnalisation). */
-    protected function renderDefaultHeader(DocumentTemplate $template, array $variables): string
+    /**
+     * En-tête officiel togolais (préréglage « ministériel ») : trois colonnes —
+     * Ministère + établissement à gauche, logo au centre, République + devise à droite,
+     * avec filets de séparation. Rendu via un tableau pour une fidélité PDF fiable.
+     */
+    protected function renderMinisterialHeader(DocumentTemplate $template, array $variables): string
     {
-        $terme  = e($variables['ecole.terme'] ?? '');
-        $devise = e($variables['ecole.devise'] ?? '');
-        $nom    = e($variables['ecole.nom'] ?? '');
-        $coords = collect([
-            $variables['ecole.bp'] ?? null,
-            $variables['ecole.ville'] ?? null,
-            $variables['ecole.telephone'] ?? null,
-        ])->filter()->implode(' – ');
+        $ministere = e($variables['ecole.ministere'] ?? '');
+        $nom       = e($variables['ecole.nom'] ?? '');
+        $terme     = e($variables['ecole.terme'] ?? '');
+        $devise    = e($variables['ecole.devise'] ?? '');
 
-        // Logo de l'école si disponible (embarqué en data-URI).
-        $logo     = $this->logoDataUri($template->school);
-        $logoHtml = $logo ? '<img class="doc-logo" src="' . $logo . '" alt="logo">' : '';
+        // Coordonnées : « B.P. … – Tél. : … » puis la ville.
+        $ligne1 = collect([
+                ! empty($variables['ecole.bp']) ? 'B.P. ' . $variables['ecole.bp'] : null,
+                ! empty($variables['ecole.telephone']) ? 'Tél. : ' . $variables['ecole.telephone'] : null,
+            ])->filter()->implode(' – ');
+        $ligne2 = $variables['ecole.ville'] ?? '';
+        $info   = e($ligne1) . ($ligne1 && $ligne2 ? '<br>' : '') . e($ligne2);
+
+        $sep  = '<div class="mh-sep"></div>';
+        $left = <<<HTML
+            <div class="mh-ministere">{$ministere}</div>
+            {$sep}
+            <div class="mh-school">{$nom}</div>
+            <div class="mh-info">{$info}</div>
+        HTML;
+        $right = <<<HTML
+            <div class="mh-republic">{$terme}</div>
+            <div class="mh-motto">{$devise}</div>
+            {$sep}
+        HTML;
+
+        // Colonne logo au centre uniquement si un logo est disponible.
+        $logo = $this->logoDataUri($template->school);
+        if ($logo) {
+            $center = '<td class="mh-col mh-logo"><img class="mh-logo-img" src="' . $logo . '" alt="logo"></td>';
+            $cols   = "<td class=\"mh-col mh-side\" style=\"width:38%\">{$left}</td>{$center}<td class=\"mh-col mh-side\" style=\"width:38%\">{$right}</td>";
+        } else {
+            $cols = "<td class=\"mh-col mh-side\" style=\"width:50%\">{$left}</td><td class=\"mh-col mh-side\" style=\"width:50%\">{$right}</td>";
+        }
 
         return <<<HTML
-        <header class="doc-header">
-            <div class="doc-header-top">
-                <div class="doc-terme">{$terme}</div>
-                <div class="doc-devise">{$devise}</div>
-            </div>
-            <div class="doc-header-school">
-                {$logoHtml}
-                <div class="doc-school-info">
-                    <div class="doc-school-name">{$nom}</div>
-                    <div class="doc-school-coords">{$coords}</div>
-                </div>
-            </div>
-            <hr class="doc-rule">
+        <header class="doc-mheader">
+            <table class="mh-table"><tr>{$cols}</tr></table>
         </header>
         HTML;
     }
@@ -332,15 +374,19 @@ class DocumentRenderer
         return <<<CSS
         * { box-sizing: border-box; }
         body { font-family: 'DejaVu Sans', sans-serif; color: #1a1a1a; font-size: 13px; line-height: 1.6; margin: 0; }
-        .doc-header { text-align: center; margin-bottom: 24px; }
-        .doc-header-top { margin-bottom: 12px; }
-        .doc-terme { font-weight: bold; text-transform: uppercase; font-size: 14px; }
-        .doc-devise { font-style: italic; font-size: 11px; color: #444; }
-        .doc-header-school { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 10px; }
-        .doc-logo { height: 64px; width: 64px; object-fit: contain; }
-        .doc-school-name { font-weight: bold; font-size: 15px; text-transform: uppercase; }
-        .doc-school-coords { font-size: 10px; color: #555; }
-        .doc-rule { border: none; border-top: 2px solid #1a1a1a; margin: 12px auto 0; width: 40%; }
+        /* En-tête officiel ministériel (3 colonnes) */
+        .doc-mheader { margin-bottom: 32px; border-bottom: 1px solid #000; padding-bottom: 16px;
+            font-family: 'DejaVu Serif', 'Times New Roman', serif; }
+        .mh-table { width: 100%; border-collapse: collapse; }
+        .mh-col { vertical-align: middle; text-align: center; padding: 0 6px; }
+        .mh-logo { width: 24%; }
+        .mh-logo-img { max-width: 100px; max-height: 100px; object-fit: contain; }
+        .mh-ministere { font-size: 11px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.4px; }
+        .mh-school { font-size: 17px; font-weight: bold; text-transform: uppercase; margin: 4px 0; }
+        .mh-info { font-size: 10.5px; }
+        .mh-republic { font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.8px; }
+        .mh-motto { font-size: 11px; font-style: italic; font-weight: bold; margin-top: 2px; }
+        .mh-sep { width: 50px; height: 1px; background: #000; margin: 5px auto; }
         .doc-body { margin: 28px 0; }
         .doc-body h1, .doc-body h2 { text-align: center; text-transform: uppercase; }
         .doc-signature { margin-top: 48px; text-align: right; }

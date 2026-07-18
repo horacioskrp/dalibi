@@ -15,6 +15,7 @@ export interface SchoolFormData {
     devise: string;
     currency: string;
     terme: string;
+    ministry: string;
     email: string;
     phone: string;
     address: string;
@@ -107,6 +108,20 @@ export function SchoolForm({ mode, data, errors, processing, currentLogoUrl, cla
                             placeholder="Ex: République Togolaise"
                         />
                         {errors.terme && <p className="text-sm text-red-600 mt-1">{errors.terme}</p>}
+                    </div>
+
+                    <div className="md:col-span-2">
+                        <label htmlFor="ministry" className="block text-sm font-medium text-gray-900 mb-2">Ministère de tutelle</label>
+                        <Input
+                            id="ministry"
+                            value={data.ministry}
+                            onChange={e => setData('ministry', e.target.value)}
+                            disabled={processing}
+                            className={errors.ministry ? 'border-red-500 bg-red-50/40' : ''}
+                            placeholder="Ex: Ministère des Enseignements Primaire, Secondaire et Technique"
+                        />
+                        <p className="text-xs text-gray-400 mt-1">Affiché en haut à gauche de l'en-tête officiel des documents.</p>
+                        {errors.ministry && <p className="text-sm text-red-600 mt-1">{errors.ministry}</p>}
                     </div>
 
                     <div>

@@ -13,6 +13,7 @@ interface School {
     devise: string | null;
     currency: string | null;
     terme: string | null;
+    ministry: string | null;
     email: string | null;
     phone: string | null;
     address: string | null;
@@ -41,6 +42,7 @@ export default function Edit({ school, classroomTypes = [], selectedClassTypes =
         devise: school.devise || '',
         currency: school.currency || 'XOF',
         terme: school.terme || 'République Togolaise',
+        ministry: school.ministry || 'Ministère des Enseignements Primaire, Secondaire et Technique',
         email: school.email || '',
         phone: school.phone || '',
         address: school.address || '',
