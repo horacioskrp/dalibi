@@ -127,9 +127,7 @@ class DocumentRenderer
      */
     public function render(DocumentTemplate $template, array $variables): string
     {
-        // Le contenu du modèle est du HTML (saisi par l'admin) ; les VALEURS de variables
-        // (données élève, etc.) sont échappées pour empêcher toute injection HTML dans le PDF.
-        $body      = $this->interpolate($template->content ?? '', $variables, true);
+        $body      = $this->renderBody($template, $variables);
         $header    = $template->header_enabled ? $this->renderHeader($template, $variables) : '';
         $signature = $template->show_signature ? $this->renderSignature($template, $variables) : '';
         $watermark = $this->renderWatermark($template->school, $variables);
@@ -148,6 +146,30 @@ class DocumentRenderer
         </body>
         </html>
         HTML;
+    }
+
+    /**
+     * Corps du document selon la source :
+     *  - `blade` : mise en page prédéfinie (liste blanche) rendue via une vue Blade.
+     *              Blade échappe automatiquement `{{ }}`, donc pas de pré-échappement.
+     *  - sinon   : HTML saisi via l'éditeur ; les VALEURS de variables sont échappées
+     *              pour empêcher toute injection HTML dans le PDF.
+     */
+    protected function renderBody(DocumentTemplate $template, array $variables): string
+    {
+        if ($template->source === 'blade' && $this->isValidLayout($template->layout)) {
+            return view("documents.{$template->layout}", ['v' => $variables])->render();
+        }
+
+        return $this->interpolate($template->content ?? '', $variables, true);
+    }
+
+    /** Le layout demandé fait-il partie de la liste blanche ET la vue existe-t-elle ? */
+    protected function isValidLayout(?string $layout): bool
+    {
+        return $layout !== null
+            && array_key_exists($layout, DocumentTemplate::LAYOUTS)
+            && view()->exists("documents.{$layout}");
     }
 
     /** En-tête configurable réutilisable (ex. bulletins), pour une école donnée. */
