@@ -258,6 +258,29 @@ class DocumentTemplateTest extends TestCase
         ]);
     }
 
+    public function test_every_whitelisted_layout_renders(): void
+    {
+        $renderer = app(\App\Services\DocumentRenderer::class);
+        $school   = \App\Models\School::query()->first() ?? new \App\Models\School(['name' => 'École Test', 'city' => 'Lomé']);
+        $student  = $this->makeStudent();
+        $vars     = $renderer->resolveVariables($school, $student, [
+            'classe.nom'         => '3ème A',
+            'annee_scolaire'     => '2025-2026',
+            'document.reference' => 'TEST-0001',
+            'signataire.titre'   => 'Le Directeur',
+        ]);
+
+        foreach (array_keys(DocumentTemplate::LAYOUTS) as $layout) {
+            $this->assertTrue(view()->exists("documents.{$layout}"), "Vue manquante : documents.{$layout}");
+
+            $template = new DocumentTemplate(['source' => 'blade', 'layout' => $layout, 'header_enabled' => true, 'show_signature' => true]);
+            $template->setRelation('school', $school);
+
+            $html = $renderer->render($template, $vars);
+            $this->assertStringContainsString('Koffi', $html, "Le layout {$layout} n'a pas interpolé l'élève.");
+        }
+    }
+
     // ─── Prévisualisation ──────────────────────────────────────────────────────
 
     public function test_preview_returns_rendered_html(): void

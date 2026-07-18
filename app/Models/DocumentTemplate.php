@@ -52,7 +52,10 @@ class DocumentTemplate extends Model
      */
     public const LAYOUTS = [
         'certificat_scolarite'       => 'Certificat de scolarité',
+        'certificat_sortie'          => 'Certificat de sortie / radiation',
         'attestation_frequentation'  => 'Attestation de fréquentation',
+        'attestation_inscription'    => 'Attestation d\'inscription',
+        'attestation_reussite'       => 'Attestation de réussite',
     ];
 
     /** Catégories de documents. */
