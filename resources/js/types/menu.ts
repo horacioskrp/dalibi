@@ -105,7 +105,7 @@ export const mainNavItems: NavItem[] = [
         href: '#',
         icon: Settings,
         items: [
-            { title: 'Écoles', href: route('schools.index'), icon: BookOpen, permission: 'view_schools' },
+            { title: 'École', href: route('schools.index'), icon: BookOpen, permission: 'view_schools' },
             { title: 'Classes', href: route('classrooms.index'), icon: Layers, permission: 'view_classes' },
             { title: 'Types de classes', href: route('classroom-types.index'), icon: Tag, permission: 'view_classroom_types' },
             { title: 'Matières', href: route('subjects.index'), icon: BookOpen, permission: 'view_subjects' },

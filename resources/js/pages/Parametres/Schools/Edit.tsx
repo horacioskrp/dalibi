@@ -1,5 +1,4 @@
 import { Head, router, useForm } from '@inertiajs/react';
-import { ArrowLeft } from 'lucide-react';
 import { SchoolForm, type SchoolFormData, type CurrencyOption } from '@/components/Schools/school-form';
 import { route } from '@/helpers/route';
 import AppLayout from '@/layouts/app-layout';
@@ -65,14 +64,9 @@ export default function Edit({ school, classroomTypes = [], selectedClassTypes =
             <Head title={`Éditer ${school.name}`} />
 
             <div className="w-full space-y-6">
-                <div className="flex items-center gap-4">
-                    <button type="button" onClick={() => router.get(route('schools.index'))} className="p-2 hover:bg-gray-100 rounded-lg transition">
-                        <ArrowLeft className="w-5 h-5 text-gray-600" />
-                    </button>
-                    <div>
-                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Éditer une école</h1>
-                        <p className="mt-2 text-gray-600">Mettez à jour les informations de {school.name}.</p>
-                    </div>
+                <div>
+                    <h1 className="text-4xl font-bold tracking-tight text-gray-900">Paramètres de l'école</h1>
+                    <p className="mt-2 text-gray-600">Informations, logo, en-tête et devise de {school.name}.</p>
                 </div>
 
                 <SchoolForm
@@ -83,7 +77,7 @@ export default function Edit({ school, classroomTypes = [], selectedClassTypes =
                     currentLogoUrl={currentLogoUrl}
                     classroomTypes={classroomTypes}
                     currencies={currencies}
-                    onCancel={() => router.get(route('schools.index'))}
+                    onCancel={() => router.get(route('dashboard'))}
                     onSubmit={handleSubmit}
                     setData={setData}
                 />
