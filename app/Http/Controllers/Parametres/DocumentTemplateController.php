@@ -14,6 +14,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -52,6 +53,8 @@ class DocumentTemplateController extends Controller
             'template'   => null,
             'categories' => DocumentTemplate::CATEGORIES,
             'types'      => DocumentTemplate::TYPES,
+            'sources'    => DocumentTemplate::SOURCES,
+            'layouts'    => DocumentTemplate::LAYOUTS,
             'variables'  => DocumentRenderer::variableCatalog(),
         ]);
     }
@@ -133,6 +136,8 @@ class DocumentTemplateController extends Controller
             'template'   => $documentTemplate,
             'categories' => DocumentTemplate::CATEGORIES,
             'types'      => DocumentTemplate::TYPES,
+            'sources'    => DocumentTemplate::SOURCES,
+            'layouts'    => DocumentTemplate::LAYOUTS,
             'variables'  => DocumentRenderer::variableCatalog(),
         ]);
     }
@@ -179,6 +184,8 @@ class DocumentTemplateController extends Controller
         abort_unless($request->user()->can('create_documents'), 403);
 
         $validated = $request->validate([
+            'source'          => ['nullable', Rule::in(array_keys(DocumentTemplate::SOURCES))],
+            'layout'          => ['nullable', Rule::in(array_keys(DocumentTemplate::LAYOUTS))],
             'content'         => ['nullable', 'string'],
             'header_enabled'  => ['boolean'],
             'show_signature'  => ['boolean'],
@@ -188,6 +195,8 @@ class DocumentTemplateController extends Controller
         $school = School::query()->first() ?? new School();
 
         $template = new DocumentTemplate([
+            'source'          => $validated['source'] ?? 'wysiwyg',
+            'layout'          => $validated['layout'] ?? null,
             'content'         => $validated['content'] ?? '',
             'header_enabled'  => $validated['header_enabled'] ?? true,
             'show_signature'  => $validated['show_signature'] ?? true,
@@ -268,7 +277,11 @@ class DocumentTemplateController extends Controller
             'type'            => ['required', 'string', 'max:100'],
             'name'            => ['required', 'string', 'max:150'],
             'description'     => ['nullable', 'string', 'max:500'],
-            'content'         => ['nullable', 'string'],
+            'source'          => ['required', Rule::in(array_keys(DocumentTemplate::SOURCES))],
+            // Layout obligatoire et restreint à la liste blanche quand source = blade
+            // (jamais un chemin de vue libre → aucun rendu Blade arbitraire).
+            'layout'          => ['nullable', 'required_if:source,blade', Rule::in(array_keys(DocumentTemplate::LAYOUTS))],
+            'content'         => ['nullable', 'required_if:source,wysiwyg', 'string'],
             'header_enabled'  => ['boolean'],
             'footer_enabled'  => ['boolean'],
             'show_signature'  => ['boolean'],

@@ -18,6 +18,8 @@ interface Template {
     type: string;
     name: string;
     description: string | null;
+    source: 'wysiwyg' | 'blade';
+    layout: string | null;
     content: string | null;
     header_enabled: boolean;
     footer_enabled: boolean;
@@ -34,10 +36,12 @@ interface Props {
     template:   Template | null;
     categories: Record<string, string>;
     types:      Record<string, Record<string, string>>;
+    sources:    Record<string, string>;
+    layouts:    Record<string, string>;
     variables:  Record<string, VariableGroup>;
 }
 
-export default function Edit({ template, categories, types, variables }: Readonly<Props>) {
+export default function Edit({ template, categories, types, sources, layouts, variables }: Readonly<Props>) {
     const isEdit = !!template;
     const { toast } = useToast();
     const editorRef = useRef<Editor | null>(null);
@@ -49,6 +53,8 @@ export default function Edit({ template, categories, types, variables }: Readonl
         type:            template?.type ?? '',
         name:            template?.name ?? '',
         description:     template?.description ?? '',
+        source:          template?.source ?? 'wysiwyg',
+        layout:          template?.layout ?? '',
         content:         template?.content ?? '',
         header_enabled:  template?.header_enabled ?? true,
         footer_enabled:  template?.footer_enabled ?? true,
@@ -80,6 +86,8 @@ export default function Edit({ template, categories, types, variables }: Readonl
         try {
             const csrf = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content;
             const res = await axios.post(route('document-templates.preview'), {
+                source: data.source,
+                layout: data.layout || null,
                 content: data.content,
                 header_enabled: data.header_enabled,
                 show_signature: data.show_signature,
@@ -150,11 +158,37 @@ export default function Edit({ template, categories, types, variables }: Readonl
                             </div>
                         </div>
 
-                        {/* Éditeur */}
-                        <div className="bg-white rounded-2xl ring-1 ring-gray-100 shadow-sm p-6 space-y-3">
-                            <label className="text-sm font-medium text-gray-700">Contenu du document</label>
-                            <RichTextEditor value={data.content} onChange={v => setData('content', v)} onReady={handleEditorReady} />
-                            <p className="text-xs text-gray-400">Astuce : placez le curseur puis cliquez une variable à droite pour l'insérer.</p>
+                        {/* Source du corps : mise en page prédéfinie (Blade) ou éditeur libre */}
+                        <div className="bg-white rounded-2xl ring-1 ring-gray-100 shadow-sm p-6 space-y-4">
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-medium text-gray-700">Source du corps *</label>
+                                <Select value={data.source} onValueChange={v => setData('source', v as 'wysiwyg' | 'blade')}>
+                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        {Object.entries(sources).map(([k, label]) => <SelectItem key={k} value={k}>{label}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            {data.source === 'blade' ? (
+                                <div className="space-y-1.5">
+                                    <label className="text-sm font-medium text-gray-700">Mise en page prédéfinie *</label>
+                                    <Select value={data.layout} onValueChange={v => setData('layout', v)}>
+                                        <SelectTrigger className={errors.layout ? 'border-red-400' : ''}><SelectValue placeholder="Choisir une mise en page" /></SelectTrigger>
+                                        <SelectContent>
+                                            {Object.entries(layouts).map(([k, label]) => <SelectItem key={k} value={k}>{label}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                    {errors.layout && <p className="text-xs text-red-500">{errors.layout}</p>}
+                                    <p className="text-xs text-gray-400">Mise en page fournie par l'application (logique, tableaux). En-tête, signature et filigrane de l'école restent appliqués.</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    <label className="text-sm font-medium text-gray-700">Contenu du document</label>
+                                    <RichTextEditor value={data.content} onChange={v => setData('content', v)} onReady={handleEditorReady} />
+                                    <p className="text-xs text-gray-400">Astuce : placez le curseur puis cliquez une variable à droite pour l'insérer.</p>
+                                </div>
+                            )}
                         </div>
                     </div>
 

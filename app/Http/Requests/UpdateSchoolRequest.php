@@ -25,6 +25,7 @@ class UpdateSchoolRequest extends FormRequest
             'devise'   => ['nullable', 'string', 'max:500'],
             'currency' => ['nullable', Rule::in(\App\Constants\Currencies::codes())],
             'terme'    => ['nullable', 'string', 'max:255'],
+            'ministry' => ['nullable', 'string', 'max:255'],
             'email'  => ['nullable', 'email', 'max:255'],
             'phone'  => ['nullable', 'string', 'max:20'],
             'address' => ['nullable', 'string', 'max:500'],
