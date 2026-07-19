@@ -69,13 +69,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/{section}/export/{format}', [\App\Http\Controllers\Statistics\StatisticsController::class, 'export'])->name('export');
     });
 
-    Route::post('schools/bulk-activate', [SchoolController::class, 'bulkActivate'])
-        ->middleware('can:edit_schools')->name('schools.bulk-activate');
-    Route::post('schools/bulk-deactivate', [SchoolController::class, 'bulkDeactivate'])
-        ->middleware('can:edit_schools')->name('schools.bulk-deactivate');
-    Route::patch('schools/{school}/toggle-active', [SchoolController::class, 'toggleActive'])
-        ->middleware('can:edit_schools')->name('schools.toggle-active');
-    Route::resource('schools', SchoolController::class)->middleware('can:view_schools');
+    // Application mono-école : pas de liste ni d'actions groupées, une seule école éditable.
+    Route::resource('schools', SchoolController::class)
+        ->except(['destroy'])
+        ->middleware('can:view_schools');
     Route::resource('classrooms', ClassroomController::class)->middleware('can:view_classes');
     Route::get('classrooms/{classroom}/subject-assignments', [ClassroomSubjectAssignmentController::class, 'create'])
         ->middleware('can:view_subject_assignments')->name('classrooms.subject-assignments.create');

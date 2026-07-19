@@ -7,53 +7,34 @@ use App\Models\ClassroomType;
 use App\Models\School;
 use App\Http\Requests\StoreSchoolRequest;
 use App\Http\Requests\UpdateSchoolRequest;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class SchoolController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Application mono-école : pas de liste. On ouvre directement l'école
+     * existante (ou le formulaire de création s'il n'y en a pas encore).
      */
     public function index()
     {
-        $query = School::query();
-        $activeSchoolsCount = School::where('active', true)->count();
+        $school = School::query()->first();
 
-        // Recherche par nom, code ou email
-        if (request('search')) {
-            $search = request('search');
-            $query->where('name', 'like', "%{$search}%")
-                  ->orWhere('code', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('region', 'like', "%{$search}%")
-                  ->orWhere('city', 'like', "%{$search}%");
-        }
-
-        if (request()->filled('active')) {
-            $activeFilter = request('active');
-
-            if ($activeFilter === '1') {
-                $query->where('active', true);
-            } elseif ($activeFilter === '0') {
-                $query->where('active', false);
-            }
-        }
-
-        $schools = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
-
-        return Inertia::render('Parametres/Schools/Index', [
-            'schools' => $schools,
-            'activeSchoolsCount' => $activeSchoolsCount,
-        ]);
+        return $school
+            ? redirect()->route('schools.edit', $school)
+            : redirect()->route('schools.create');
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Formulaire de création — accessible uniquement tant qu'aucune école n'existe.
      */
     public function create()
     {
+        if ($school = School::query()->first()) {
+            return redirect()->route('schools.edit', $school)
+                ->with('message', 'Une école est déjà configurée.');
+        }
+
         return Inertia::render('Parametres/Schools/Create', [
             'classroomTypes' => ClassroomType::where('active', true)->orderBy('name')->get(['id', 'name', 'period_system']),
             'currencies' => \App\Constants\Currencies::options(),
@@ -65,6 +46,12 @@ class SchoolController extends Controller
      */
     public function store(StoreSchoolRequest $request)
     {
+        // Garde-fou : une seule école autorisée.
+        if ($existing = School::query()->first()) {
+            return redirect()->route('schools.edit', $existing)
+                ->with('message', 'Une école est déjà configurée.');
+        }
+
         $data = $request->validated();
 
         if ($request->hasFile('logo')) {
@@ -77,7 +64,7 @@ class SchoolController extends Controller
         $school = School::create($data);
         $school->classTypes()->sync($classTypeIds);
 
-        return redirect()->route('schools.index')
+        return redirect()->route('schools.edit', $school)
             ->with('message', 'École créée avec succès.');
     }
 
@@ -129,67 +116,7 @@ class SchoolController extends Controller
             $school->classTypes()->sync($classTypeIds);
         }
 
-        return redirect()->route('schools.index')
+        return redirect()->route('schools.edit', $school)
             ->with('message', 'École mise à jour avec succès.');
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(School $school)
-    {
-        $school->delete();
-
-        return redirect()->route('schools.index')
-            ->with('message', 'École supprimée avec succès.');
-    }
-
-    /**
-     * Disable multiple schools in one action.
-     */
-    public function bulkDeactivate(Request $request)
-    {
-        $validated = $request->validate([
-            'school_ids' => ['required', 'array', 'min:1'],
-            'school_ids.*' => ['required', 'uuid', 'exists:schools,id'],
-        ]);
-
-        $updatedCount = School::whereIn('id', $validated['school_ids'])
-            ->where('active', true)
-            ->update(['active' => false]);
-
-        return redirect()->route('schools.index')
-            ->with('message', "{$updatedCount} école(s) désactivée(s) avec succès.");
-    }
-
-    /**
-     * Enable multiple schools in one action.
-     */
-    public function bulkActivate(Request $request)
-    {
-        $validated = $request->validate([
-            'school_ids' => ['required', 'array', 'min:1'],
-            'school_ids.*' => ['required', 'uuid', 'exists:schools,id'],
-        ]);
-
-        $updatedCount = School::whereIn('id', $validated['school_ids'])
-            ->where('active', false)
-            ->update(['active' => true]);
-
-        return redirect()->route('schools.index')
-            ->with('message', "{$updatedCount} école(s) activée(s) avec succès.");
-    }
-
-    /**
-     * Toggle school active status quickly from index.
-     */
-    public function toggleActive(School $school)
-    {
-        $school->update(['active' => ! $school->active]);
-
-        $status = $school->active ? 'activée' : 'désactivée';
-
-        return redirect()->route('schools.index')
-            ->with('message', "École {$status} avec succès.");
     }
 }
