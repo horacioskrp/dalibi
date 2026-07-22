@@ -1,4 +1,4 @@
-export default function AppLogo({ className = 'h-7 w-auto fill-white' }: { className?: string }) {
+export default function AppLogo({ className = 'h-7 w-auto fill-current text-sidebar-foreground' }: { className?: string }) {
     return (
         <svg
             xmlns="http://www.w3.org/2000/svg"
