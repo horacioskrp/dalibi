@@ -24,8 +24,10 @@ export function AppSidebar() {
                             size="sm"
                             asChild
                         >
-                            <Link href="/dashboard" prefetch aria-label="Tableau de bord" className="flex items-center gap-2">
-                                <AppLogo />
+                            <Link href="/dashboard" prefetch aria-label="Tableau de bord">
+                                <div className="flex items-center gap-2">
+                                    <AppLogo />
+                                </div>
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
