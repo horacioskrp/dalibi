@@ -19,7 +19,6 @@ class ReferenceDataSeeder extends Seeder
     {
         $this->call([
             RolesAndPermissionsSeeder::class, // rôles & permissions (essentiel)
-            LevelSeeder::class,               // niveaux scolaires
             ClassTypeSeeder::class,           // types de classes
             ClassroomSeeder::class,           // classes standard (PS → Tle) — requiert les types
             SubjectSeeder::class,             // matières

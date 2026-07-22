@@ -112,7 +112,6 @@ export const mainNavItems: NavItem[] = [
             { title: 'Types d\'évaluation', href: route('evaluation-types.index'), icon: Tag, permission: 'view_evaluation_types' },
             { title: 'Années académiques', href: route('academic-years.index'), icon: Calendar, permission: 'view_academic_years' },
             { title: 'Périodes académiques', href: route('academic-periods.index'), icon: Clock, permission: 'view_academic_periods' },
-            { title: 'Niveaux', href: route('levels.index'), icon: GraduationCap, permission: 'view_levels' },
             { title: 'Catégories de frais', href: route('fee-categories.index'), icon: Percent, permission: 'view_fee_categories' },
             { title: 'Structures de frais', href: route('fee-structures.index'), icon: DollarSign, permission: 'view_fee_structures' },
             { title: 'Bourses', href: route('scholarships.index'), icon: Percent, permission: 'view_scholarships' },

@@ -27,7 +27,6 @@ use App\Http\Controllers\Examens\MarkController;
 use App\Http\Controllers\Notes\NoteReclamationController;
 use App\Http\Controllers\Parametres\FeeCategorieController;
 use App\Http\Controllers\Parametres\FeeStructureController;
-use App\Http\Controllers\Parametres\LevelController;
 use App\Http\Controllers\Administration\PermissionController;
 use App\Http\Controllers\Administration\RoleController;
 use App\Http\Controllers\Parametres\SchoolController;
@@ -79,7 +78,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('classrooms/{classroom}/subject-assignments', [ClassroomSubjectAssignmentController::class, 'store'])
         ->middleware('can:create_subject_assignments')->name('classrooms.subject-assignments.store');
     Route::resource('classroom-types', ClassroomTypeController::class)->middleware('can:view_classroom_types');
-    Route::resource('levels', LevelController::class)->middleware('can:view_levels');
     Route::resource('subjects', SubjectController::class)->middleware('can:view_subjects');
     Route::resource('evaluation-types', EvaluationTypeController::class)->middleware('can:view_evaluation_types');
 
