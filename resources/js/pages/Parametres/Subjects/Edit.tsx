@@ -39,7 +39,7 @@ export default function Edit({ subject, parents = [] }: Readonly<EditProps>) {
         <AppLayout>
             <Head title={`Éditer ${subject.name}`} />
 
-            <div className="max-w-4xl space-y-6">
+            <div className="w-full space-y-6">
                 <div className="flex items-center gap-4">
                     <button
                         type="button"

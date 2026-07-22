@@ -32,7 +32,7 @@ export default function Show({ subject }: Readonly<ShowProps>) {
         <AppLayout>
             <Head title={subject.name} />
 
-            <div className="max-w-5xl space-y-6">
+            <div className="w-full space-y-6">
                 <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                     <div className="flex items-center gap-4">
                         <button
