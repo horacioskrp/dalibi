@@ -1,5 +1,13 @@
 import { usePage } from '@inertiajs/react';
+import { Fragment, useMemo } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+    Breadcrumb,
+    BreadcrumbItem,
+    BreadcrumbList,
+    BreadcrumbPage,
+    BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -8,16 +16,53 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { UserMenuContent } from '@/components/user-menu-content';
+import { useCurrentUrl } from '@/hooks/use-current-url';
 import { getFullName } from '@/hooks/use-initials';
+import { mainNavItems } from '@/types';
 
 export function AppSidebarHeader() {
     const { auth } = usePage().props;
+    const { currentUrl, isCurrentUrl } = useCurrentUrl();
+
     const fullName = getFullName(auth.user.firstname, auth.user.lastname);
+    const initials = `${auth.user.firstname?.[0] ?? ''}${auth.user.lastname?.[0] ?? ''}`.toUpperCase();
+
+    // Fil d'Ariane dérivé du menu selon l'URL courante : [Section, Page] ou [Page].
+    const trail = useMemo<string[]>(() => {
+        for (const item of mainNavItems) {
+            if (item.items) {
+                const sub = item.items.find((s) => isCurrentUrl(s.href));
+                if (sub) return [item.title, sub.title];
+            } else if (isCurrentUrl(item.href)) {
+                return [item.title];
+            }
+        }
+        return [];
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentUrl]);
 
     return (
         <header className="flex h-16 shrink-0 items-center justify-between gap-2 bg-background border-b border-border px-6 transition-colors">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
                 <SidebarTrigger className="-ml-1" />
+                {trail.length > 0 && (
+                    <Breadcrumb>
+                        <BreadcrumbList>
+                            {trail.map((label, i) => (
+                                <Fragment key={label}>
+                                    {i > 0 && <BreadcrumbSeparator />}
+                                    <BreadcrumbItem>
+                                        {i === trail.length - 1 ? (
+                                            <BreadcrumbPage className="font-medium">{label}</BreadcrumbPage>
+                                        ) : (
+                                            <span>{label}</span>
+                                        )}
+                                    </BreadcrumbItem>
+                                </Fragment>
+                            ))}
+                        </BreadcrumbList>
+                    </Breadcrumb>
+                )}
             </div>
 
             <div className="flex items-center gap-4">
@@ -26,6 +71,7 @@ export function AppSidebarHeader() {
                         <Button
                             variant="ghost"
                             className="relative h-10 w-10 rounded-full"
+                            aria-label={`Menu de ${fullName}`}
                         >
                             <Avatar className="h-10 w-10">
                                 <AvatarImage
@@ -33,7 +79,7 @@ export function AppSidebarHeader() {
                                     alt={fullName}
                                 />
                                 <AvatarFallback className="bg-blue-600 text-white">
-                                    {fullName.split(' ').map(n => n[0]).join('')}
+                                    {initials}
                                 </AvatarFallback>
                             </Avatar>
                         </Button>

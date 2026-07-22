@@ -1,3 +1,4 @@
+import { Link } from '@inertiajs/react';
 import { NavMain } from '@/components/nav-main';
 import {
     Sidebar,
@@ -23,11 +24,9 @@ export function AppSidebar() {
                             size="sm"
                             asChild
                         >
-                            <div>
-                                <div className="flex items-center gap-2">
-                                    <AppLogo />
-                                </div>
-                            </div>
+                            <Link href="/dashboard" prefetch aria-label="Tableau de bord" className="flex items-center gap-2">
+                                <AppLogo />
+                            </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
