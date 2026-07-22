@@ -201,6 +201,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Accès portail (comptes tuteurs)
     Route::get('portal-accounts', [\App\Http\Controllers\Administration\GuardianController::class, 'index'])->middleware('can:view_portal_accounts')->name('guardians.index');
+    Route::get('portal-accounts/create', [\App\Http\Controllers\Administration\GuardianController::class, 'create'])->middleware('can:create_portal_accounts')->name('guardians.create');
+    Route::get('portal-accounts/{guardian}/edit', [\App\Http\Controllers\Administration\GuardianController::class, 'edit'])->middleware('can:edit_portal_accounts')->name('guardians.edit');
     Route::post('portal-accounts', [\App\Http\Controllers\Administration\GuardianController::class, 'store'])->middleware('can:create_portal_accounts')->name('guardians.store');
     Route::put('portal-accounts/{guardian}', [\App\Http\Controllers\Administration\GuardianController::class, 'update'])->middleware('can:edit_portal_accounts')->name('guardians.update');
     Route::delete('portal-accounts/{guardian}', [\App\Http\Controllers\Administration\GuardianController::class, 'destroy'])->middleware('can:delete_portal_accounts')->name('guardians.destroy');

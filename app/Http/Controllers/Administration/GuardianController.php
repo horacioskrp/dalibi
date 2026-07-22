@@ -19,13 +19,22 @@ class GuardianController extends Controller
     {
         $search = trim((string) $request->query('search', ''));
 
+        $like = '%' . strtolower($search) . '%';
+
         $guardians = Guardian::query()
             ->withCount('children')
             ->with('children:id,matricule')
+            // Recherche insensible à la casse sur le tuteur (nom, e-mail, téléphone)
+            // et sur ses enfants (matricule, prénom, nom).
             ->when($search !== '', fn ($q) => $q->where(fn ($q) => $q
-                ->where('first_name', 'like', "%{$search}%")
-                ->orWhere('last_name', 'like', "%{$search}%")
-                ->orWhere('email', 'like', "%{$search}%")))
+                ->whereRaw('LOWER(first_name) LIKE ?', [$like])
+                ->orWhereRaw('LOWER(last_name) LIKE ?', [$like])
+                ->orWhereRaw('LOWER(email) LIKE ?', [$like])
+                ->orWhereRaw('LOWER(phone) LIKE ?', [$like])
+                ->orWhereHas('children', fn ($c) => $c
+                    ->whereRaw('LOWER(matricule) LIKE ?', [$like])
+                    ->orWhereRaw('LOWER(firstname) LIKE ?', [$like])
+                    ->orWhereRaw('LOWER(lastname) LIKE ?', [$like]))))
             ->orderBy('last_name')
             ->paginate(20)->withQueryString()
             ->through(fn (Guardian $g) => [
@@ -47,6 +56,11 @@ class GuardianController extends Controller
         ]);
     }
 
+    public function create(): Response
+    {
+        return Inertia::render('Administration/Guardians/Create');
+    }
+
     public function store(Request $request): RedirectResponse
     {
         $data = $this->validateData($request);
@@ -65,7 +79,26 @@ class GuardianController extends Controller
             $this->sendInvitation($guardian, isReset: false);
         }
 
-        return back()->with('message', 'Compte tuteur créé.');
+        return redirect()->route('guardians.index')->with('message', 'Compte tuteur créé.');
+    }
+
+    public function edit(Guardian $guardian): Response
+    {
+        $guardian->load('children:id,matricule,firstname,lastname');
+
+        return Inertia::render('Administration/Guardians/Edit', [
+            'guardian' => [
+                'id'         => $guardian->id,
+                'first_name' => $guardian->first_name,
+                'last_name'  => $guardian->last_name,
+                'email'      => $guardian->email,
+                'phone'      => $guardian->phone,
+                'children'   => $guardian->children->map(fn ($c) => [
+                    'matricule' => $c->matricule,
+                    'name'      => trim("{$c->lastname} {$c->firstname}"),
+                ])->all(),
+            ],
+        ]);
     }
 
     public function update(Request $request, Guardian $guardian): RedirectResponse
@@ -80,7 +113,7 @@ class GuardianController extends Controller
         ]);
         $guardian->children()->sync($this->resolveStudentIds($data['student_matricules'] ?? []));
 
-        return back()->with('message', 'Compte tuteur mis à jour.');
+        return redirect()->route('guardians.index')->with('message', 'Compte tuteur mis à jour.');
     }
 
     public function destroy(Guardian $guardian): RedirectResponse

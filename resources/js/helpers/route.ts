@@ -240,6 +240,8 @@ export function route(name: string, params?: any): string {
 
         // Portal accounts (guardians)
         'guardians.index':   '/portal-accounts',
+        'guardians.create':  '/portal-accounts/create',
+        'guardians.edit':    `/portal-accounts/${params}/edit`,
         'guardians.store':   '/portal-accounts',
         'guardians.update':  `/portal-accounts/${params}`,
         'guardians.destroy': `/portal-accounts/${params}`,
