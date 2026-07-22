@@ -161,7 +161,7 @@ export default function Edit({ assignment, subjects, teachers, academicYears, cl
                     </div>
 
                     {/* Section Enseignant */}
-                    <div className="rounded-xl bg-violet-50 border border-violet-100 shadow-sm overflow-hidden">
+                    <div className="rounded-xl bg-violet-50 border border-violet-100 shadow-sm">
                         <div className="flex items-center gap-2 px-5 py-3 bg-violet-100 text-violet-800 rounded-t-xl">
                             <UserCheck className="w-4 h-4" />
                             <span className="font-semibold text-sm">Enseignant</span>
