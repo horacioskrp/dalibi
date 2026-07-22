@@ -1,5 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import { ChevronRight } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import {
     Collapsible,
     CollapsibleContent,
@@ -17,8 +18,12 @@ import {
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import type { NavItem } from '@/types';
 
+// Style de l'élément actif (parent ou sous-item) — factorisé pour éviter la triplication.
+const ACTIVE_CLASS =
+    'data-[active=true]:bg-sidebar-primary data-[active=true]:text-sidebar-primary-foreground data-[active=true]:font-semibold data-[active=true]:[&>svg]:text-sidebar-primary-foreground';
+
 export function NavMain({ items = [] }: Readonly<{ items: NavItem[] }>) {
-    const { isCurrentUrl } = useCurrentUrl();
+    const { currentUrl, isCurrentUrl } = useCurrentUrl();
 
     const auth = (usePage().props as { auth?: { permissions?: string[] } }).auth;
     const permissions = auth?.permissions ?? [];
@@ -30,6 +35,31 @@ export function NavMain({ items = [] }: Readonly<{ items: NavItem[] }>) {
         .map((item) => (item.items ? { ...item, items: item.items.filter(allowed) } : item))
         .filter((item) => (item.items ? item.items.length > 0 : allowed(item)));
 
+    // Un groupe est actif si l'un de ses sous-items correspond à l'URL courante.
+    const isGroupActive = (item: NavItem) =>
+        item.items?.some((sub) => isCurrentUrl(sub.href)) ?? false;
+
+    // État d'ouverture contrôlé : le groupe courant s'ouvre automatiquement
+    // (et à chaque navigation), tout en laissant l'utilisateur replier/déplier.
+    const [openTitles, setOpenTitles] = useState<Set<string>>(
+        () => new Set(visibleItems.filter(isGroupActive).map((i) => i.title)),
+    );
+
+    useEffect(() => {
+        const active = visibleItems.find(isGroupActive);
+        if (active) {
+            setOpenTitles((prev) => (prev.has(active.title) ? prev : new Set(prev).add(active.title)));
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentUrl]);
+
+    const setOpen = (title: string, open: boolean) =>
+        setOpenTitles((prev) => {
+            const next = new Set(prev);
+            open ? next.add(title) : next.delete(title);
+            return next;
+        });
+
     return (
         <SidebarGroup className="px-2 py-0">
             <SidebarMenu>
@@ -37,7 +67,8 @@ export function NavMain({ items = [] }: Readonly<{ items: NavItem[] }>) {
                     <Collapsible
                         key={item.title}
                         asChild
-                        defaultOpen={item.isActive}
+                        open={openTitles.has(item.title)}
+                        onOpenChange={(o) => setOpen(item.title, o)}
                         className="group/collapsible"
                     >
                         <SidebarMenuItem>
@@ -45,11 +76,9 @@ export function NavMain({ items = [] }: Readonly<{ items: NavItem[] }>) {
                                 <>
                                     <CollapsibleTrigger asChild>
                                         <SidebarMenuButton
-                                            isActive={item.isActive}
-                                            tooltip={{
-                                                children: item.title,
-                                            }}
-                                            className="data-[active=true]:bg-sidebar-primary data-[active=true]:text-sidebar-primary-foreground data-[active=true]:font-semibold data-[active=true]:[&>svg]:text-sidebar-primary-foreground"
+                                            isActive={isGroupActive(item)}
+                                            tooltip={{ children: item.title }}
+                                            className={ACTIVE_CLASS}
                                         >
                                             {item.icon && <item.icon />}
                                             <span>{item.title}</span>
@@ -59,26 +88,15 @@ export function NavMain({ items = [] }: Readonly<{ items: NavItem[] }>) {
                                     <CollapsibleContent>
                                         <SidebarMenuSub>
                                             {item.items?.map((subItem) => (
-                                                <SidebarMenuSubItem
-                                                    key={subItem.title}
-                                                >
+                                                <SidebarMenuSubItem key={subItem.title}>
                                                     <SidebarMenuSubButton
                                                         asChild
-                                                        isActive={isCurrentUrl(
-                                                            subItem.href
-                                                        )}
-                                                        className="data-[active=true]:bg-sidebar-primary data-[active=true]:text-sidebar-primary-foreground data-[active=true]:font-semibold data-[active=true]:[&>svg]:text-sidebar-primary-foreground"
+                                                        isActive={isCurrentUrl(subItem.href)}
+                                                        className={ACTIVE_CLASS}
                                                     >
-                                                        <Link
-                                                            href={subItem.href}
-                                                            prefetch
-                                                        >
-                                                            {subItem.icon && (
-                                                                <subItem.icon />
-                                                            )}
-                                                            <span>
-                                                                {subItem.title}
-                                                            </span>
+                                                        <Link href={subItem.href} prefetch>
+                                                            {subItem.icon && <subItem.icon />}
+                                                            <span>{subItem.title}</span>
                                                         </Link>
                                                     </SidebarMenuSubButton>
                                                 </SidebarMenuSubItem>
@@ -91,7 +109,7 @@ export function NavMain({ items = [] }: Readonly<{ items: NavItem[] }>) {
                                     asChild
                                     isActive={isCurrentUrl(item.href)}
                                     tooltip={{ children: item.title }}
-                                    className="data-[active=true]:bg-sidebar-primary data-[active=true]:text-sidebar-primary-foreground data-[active=true]:font-semibold data-[active=true]:[&>svg]:text-sidebar-primary-foreground"
+                                    className={ACTIVE_CLASS}
                                 >
                                     <Link href={item.href} prefetch>
                                         {item.icon && <item.icon />}
