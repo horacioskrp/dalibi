@@ -11,6 +11,7 @@ use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class PortalOnboardingTest extends TestCase
@@ -58,6 +59,44 @@ class PortalOnboardingTest extends TestCase
         $this->assertSame(1, $guardian->children()->count());
         // Le mail d'invitation est mis en file (GuardianInvitation implémente ShouldQueue).
         Mail::assertQueued(GuardianInvitation::class);
+    }
+
+    public function test_create_page_renders(): void
+    {
+        $this->actingAs($this->staff(Roles::SECRETARIAT))
+            ->get(route('guardians.create'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $p) => $p->component('Administration/Guardians/Create'));
+    }
+
+    public function test_edit_page_renders_with_linked_children(): void
+    {
+        $student  = $this->student('EDIT-777');
+        $guardian = $this->guardian();
+        $guardian->children()->sync([$student->id]);
+
+        $this->actingAs($this->staff(Roles::SECRETARIAT))
+            ->get(route('guardians.edit', $guardian))
+            ->assertOk()
+            ->assertInertia(fn (Assert $p) => $p
+                ->component('Administration/Guardians/Edit')
+                ->where('guardian.children.0.matricule', 'EDIT-777'));
+    }
+
+    public function test_index_search_matches_child_matricule(): void
+    {
+        $student  = $this->student('SRCH-777');
+        $guardian = $this->guardian();
+        $guardian->children()->sync([$student->id]);
+        $this->guardian(); // un autre tuteur sans correspondance
+
+        $this->actingAs($this->staff(Roles::SECRETARIAT))
+            ->get(route('guardians.index', ['search' => 'srch-777']))
+            ->assertOk()
+            ->assertInertia(fn (Assert $p) => $p
+                ->component('Administration/Guardians/Index')
+                ->has('guardians.data', 1)
+                ->where('guardians.data.0.id', $guardian->id));
     }
 
     public function test_teacher_cannot_manage_portal_accounts(): void
