@@ -1,9 +1,16 @@
-import { X } from 'lucide-react';
-import { useState } from 'react';
+import axios from 'axios';
+import { Search, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { route } from '@/helpers/route';
+
+export interface StudentRef {
+    matricule: string;
+    name: string;
+}
 
 export interface GuardianFormData {
     first_name: string;
@@ -20,23 +27,53 @@ interface Props {
     errors: Partial<Record<string, string>>;
     processing: boolean;
     mode: 'create' | 'edit';
+    initialChildren?: StudentRef[];
     onSubmit: (e: React.FormEvent) => void;
     onCancel: () => void;
 }
 
-export function GuardianForm({ data, setData, errors, processing, mode, onSubmit, onCancel }: Readonly<Props>) {
-    const [matInput, setMatInput] = useState('');
+export function GuardianForm({ data, setData, errors, processing, mode, initialChildren = [], onSubmit, onCancel }: Readonly<Props>) {
+    // Enfants sélectionnés (objets avec libellé) — la donnée soumise reste les matricules.
+    const [selected, setSelected] = useState<StudentRef[]>(initialChildren);
+    const [query, setQuery] = useState('');
+    const [results, setResults] = useState<StudentRef[]>([]);
+    const [showDropdown, setShowDropdown] = useState(false);
+    const [searching, setSearching] = useState(false);
 
-    const addMat = () => {
-        const m = matInput.trim();
-        if (m && !data.student_matricules.includes(m)) {
-            setData('student_matricules', [...data.student_matricules, m]);
-        }
-        setMatInput('');
+    const updateSelected = (next: StudentRef[]) => {
+        setSelected(next);
+        setData('student_matricules', next.map((s) => s.matricule));
     };
 
-    const removeMat = (m: string) =>
-        setData('student_matricules', data.student_matricules.filter((x) => x !== m));
+    // Recherche d'élèves (debounce) par nom ou matricule.
+    useEffect(() => {
+        if (!query.trim()) { setResults([]); return; }
+        setSearching(true);
+        const timer = setTimeout(async () => {
+            try {
+                const { data: res } = await axios.get<StudentRef[]>(route('guardians.students.search'), { params: { q: query } });
+                setResults(res);
+            } catch {
+                setResults([]);
+            } finally {
+                setSearching(false);
+            }
+        }, 250);
+        return () => clearTimeout(timer);
+    }, [query]);
+
+    const pick = (student: StudentRef) => {
+        if (!selected.some((s) => s.matricule === student.matricule)) {
+            updateSelected([...selected, student]);
+        }
+        setQuery('');
+        setResults([]);
+        setShowDropdown(false);
+    };
+
+    const remove = (matricule: string) => updateSelected(selected.filter((s) => s.matricule !== matricule));
+
+    const available = results.filter((r) => !selected.some((s) => s.matricule === r.matricule));
 
     return (
         <form onSubmit={onSubmit} className="space-y-6">
@@ -67,23 +104,46 @@ export function GuardianForm({ data, setData, errors, processing, mode, onSubmit
                 </div>
 
                 <div className="space-y-1.5">
-                    <Label className="text-sm">Élèves liés (matricule)</Label>
-                    <div className="flex gap-2">
+                    <Label className="text-sm">Élèves liés</Label>
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <Input
-                            value={matInput}
-                            onChange={(e) => setMatInput(e.target.value)}
-                            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addMat(); } }}
-                            placeholder="Saisir un matricule + Entrée"
+                            value={query}
+                            onChange={(e) => { setQuery(e.target.value); setShowDropdown(true); }}
+                            onFocus={() => setShowDropdown(true)}
+                            onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+                            placeholder="Rechercher un élève par nom ou matricule…"
+                            className="pl-9"
                         />
-                        <Button type="button" variant="outline" onClick={addMat}>Ajouter</Button>
+                        {showDropdown && query.trim() && (
+                            <div className="absolute z-20 mt-1 w-full bg-white rounded-lg shadow-lg max-h-56 overflow-auto ring-1 ring-gray-100">
+                                {searching && <div className="px-3 py-2 text-sm text-gray-400">Recherche…</div>}
+                                {!searching && available.length === 0 && (
+                                    <div className="px-3 py-2 text-sm text-gray-400">Aucun élève trouvé.</div>
+                                )}
+                                {available.map((student) => (
+                                    <button
+                                        type="button"
+                                        key={student.matricule}
+                                        onMouseDown={(e) => { e.preventDefault(); pick(student); }}
+                                        className="w-full text-left px-3 py-2 hover:bg-blue-50 transition text-sm text-gray-900 flex items-center justify-between gap-2"
+                                    >
+                                        <span>{student.name}</span>
+                                        <span className="text-xs text-gray-400">{student.matricule}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                     </div>
-                    <div className="flex flex-wrap gap-1.5 mt-1">
-                        {data.student_matricules.map((m) => (
-                            <span key={m} className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs">
-                                {m}
-                                <button type="button" onClick={() => removeMat(m)}><X className="w-3 h-3" /></button>
+
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                        {selected.map((s) => (
+                            <span key={s.matricule} className="inline-flex items-center gap-1.5 bg-blue-100 text-blue-800 px-2.5 py-1 rounded-full text-xs">
+                                {s.name} <span className="text-blue-500">· {s.matricule}</span>
+                                <button type="button" onClick={() => remove(s.matricule)} aria-label={`Retirer ${s.name}`}><X className="w-3 h-3" /></button>
                             </span>
                         ))}
+                        {selected.length === 0 && <span className="text-xs text-gray-400">Aucun élève lié pour l'instant.</span>}
                     </div>
                     {errors['student_matricules.0'] && <p className="text-xs text-red-500">Un matricule est introuvable.</p>}
                 </div>

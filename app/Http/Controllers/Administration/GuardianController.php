@@ -61,6 +61,31 @@ class GuardianController extends Controller
         return Inertia::render('Administration/Guardians/Create');
     }
 
+    /** Autocomplétion d'élèves par nom ou matricule (pour lier des enfants). */
+    public function searchStudents(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $q = strtolower(trim((string) $request->query('q', '')));
+        if ($q === '') {
+            return response()->json([]);
+        }
+
+        $like = "%{$q}%";
+        $students = Student::query()
+            ->where(fn ($s) => $s
+                ->whereRaw('LOWER(matricule) LIKE ?', [$like])
+                ->orWhereRaw('LOWER(firstname) LIKE ?', [$like])
+                ->orWhereRaw('LOWER(lastname) LIKE ?', [$like]))
+            ->orderBy('lastname')->orderBy('firstname')
+            ->limit(10)
+            ->get(['matricule', 'firstname', 'lastname'])
+            ->map(fn (Student $s) => [
+                'matricule' => $s->matricule,
+                'name'      => trim("{$s->lastname} {$s->firstname}"),
+            ]);
+
+        return response()->json($students);
+    }
+
     public function store(Request $request): RedirectResponse
     {
         $data = $this->validateData($request);

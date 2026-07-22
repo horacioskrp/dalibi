@@ -47,6 +47,7 @@ export default function Edit({ guardian }: Readonly<Props>) {
                     setData={setData}
                     errors={errors}
                     processing={processing}
+                    initialChildren={guardian.children}
                     onSubmit={submit}
                     onCancel={() => router.get(route('guardians.index'))}
                 />

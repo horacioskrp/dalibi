@@ -83,6 +83,25 @@ class PortalOnboardingTest extends TestCase
                 ->where('guardian.children.0.matricule', 'EDIT-777'));
     }
 
+    public function test_student_autocomplete_matches_name_or_matricule(): void
+    {
+        $this->student('AUTO-123');
+
+        $staff = $this->staff(Roles::SECRETARIAT);
+
+        // par matricule
+        $this->actingAs($staff)
+            ->getJson(route('guardians.students.search', ['q' => 'auto-123']))
+            ->assertOk()
+            ->assertJsonFragment(['matricule' => 'AUTO-123']);
+
+        // par nom (le helper crée firstname=A, lastname=B)
+        $this->actingAs($staff)
+            ->getJson(route('guardians.students.search', ['q' => 'b']))
+            ->assertOk()
+            ->assertJsonFragment(['matricule' => 'AUTO-123']);
+    }
+
     public function test_index_search_matches_child_matricule(): void
     {
         $student  = $this->student('SRCH-777');
