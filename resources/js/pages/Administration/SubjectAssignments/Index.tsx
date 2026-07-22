@@ -126,15 +126,6 @@ export default function Index({ assignments, academicYears, classrooms, filters 
         applyFilters({ class_id: value });
     };
 
-    const hasActiveFilters = Boolean(searchQuery || yearFilter || classFilter);
-
-    const resetAll = () => {
-        setSearchQuery('');
-        setYearFilter('');
-        setClassFilter('');
-        applyFilters({ search: '', academic_year_id: '', class_id: '' });
-    };
-
     const activeAssignments = assignments.data.filter(a => a.active).length;
 
     const statsCards = [
@@ -215,37 +206,6 @@ export default function Index({ assignments, academicYears, classrooms, filters 
                 {/* Filtres */}
                 <div className="bg-white rounded-lg shadow-sm p-4">
                     <div className="flex flex-wrap gap-3 items-center">
-                        <div className="relative flex-1 min-w-[220px]">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                            <Input
-                                type="text"
-                                placeholder="Rechercher par matière, enseignant ou classe..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                        handleSearch();
-                                    }
-                                }}
-                                className="pl-10 pr-10"
-                            />
-                            {searchQuery && (
-                                <button
-                                    onClick={handleClearSearch}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                                >
-                                    <X className="w-5 h-5" />
-                                </button>
-                            )}
-                        </div>
-
-                        <Button
-                            onClick={handleSearch}
-                            className="bg-blue-600 hover:bg-blue-700"
-                        >
-                            Rechercher
-                        </Button>
-
                         <select
                             id="filter_year"
                             aria-label="Filtrer par année"
@@ -272,14 +232,29 @@ export default function Index({ assignments, academicYears, classrooms, filters 
                             ))}
                         </select>
 
-                        {hasActiveFilters && (
-                            <button
-                                onClick={resetAll}
-                                className="ml-auto inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
-                            >
-                                <X className="w-4 h-4" /> Réinitialiser
-                            </button>
-                        )}
+                        <div className="relative flex-1 min-w-[220px] ml-auto">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                            <Input
+                                type="text"
+                                placeholder="Rechercher par matière, enseignant ou classe..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        handleSearch();
+                                    }
+                                }}
+                                className="pl-10 pr-10"
+                            />
+                            {searchQuery && (
+                                <button
+                                    onClick={handleClearSearch}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
 
