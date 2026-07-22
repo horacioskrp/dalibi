@@ -1,0 +1,99 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Constants\Roles;
+use App\Models\Country;
+use App\Models\User;
+use Database\Seeders\RolesAndPermissionsSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class CountryTest extends TestCase
+{
+    use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(RolesAndPermissionsSeeder::class);
+    }
+
+    private function admin(): User
+    {
+        $user = User::factory()->create();
+        $user->assignRole(Roles::ADMINISTRATOR);
+
+        return $user;
+    }
+
+    private function teacher(): User
+    {
+        $user = User::factory()->create();
+        $user->assignRole(Roles::TEACHER);
+
+        return $user;
+    }
+
+    public function test_guest_cannot_access_index(): void
+    {
+        $this->get(route('countries.index'))->assertRedirect(route('login'));
+    }
+
+    public function test_teacher_cannot_access_index(): void
+    {
+        $this->actingAs($this->teacher())->get(route('countries.index'))->assertForbidden();
+    }
+
+    public function test_admin_can_access_index(): void
+    {
+        $this->actingAs($this->admin())->get(route('countries.index'))->assertOk();
+    }
+
+    public function test_admin_can_create_country(): void
+    {
+        $this->actingAs($this->admin())
+            ->post(route('countries.store'), ['name' => 'Togo', 'code' => 'TG'])
+            ->assertRedirect(route('countries.index'));
+
+        $this->assertDatabaseHas('countries', ['name' => 'Togo', 'code' => 'TG']);
+    }
+
+    public function test_create_requires_name_and_code(): void
+    {
+        $this->actingAs($this->admin())
+            ->post(route('countries.store'), ['name' => '', 'code' => ''])
+            ->assertSessionHasErrors(['name', 'code']);
+    }
+
+    public function test_create_rejects_duplicate_code(): void
+    {
+        Country::create(['name' => 'Togo', 'code' => 'TG']);
+
+        $this->actingAs($this->admin())
+            ->post(route('countries.store'), ['name' => 'Togo Bis', 'code' => 'TG'])
+            ->assertSessionHasErrors('code');
+    }
+
+    public function test_admin_can_update_country(): void
+    {
+        $country = Country::create(['name' => 'Togo', 'code' => 'TG']);
+
+        $this->actingAs($this->admin())
+            ->put(route('countries.update', $country), ['name' => 'Togolaise', 'code' => 'TG'])
+            ->assertRedirect(route('countries.index'));
+
+        $this->assertDatabaseHas('countries', ['id' => $country->id, 'name' => 'Togolaise']);
+    }
+
+    public function test_admin_can_delete_country(): void
+    {
+        $country = Country::create(['name' => 'Togo', 'code' => 'TG']);
+
+        $this->actingAs($this->admin())
+            ->delete(route('countries.destroy', $country))
+            ->assertRedirect(route('countries.index'));
+
+        $this->assertDatabaseMissing('countries', ['id' => $country->id]);
+    }
+}
