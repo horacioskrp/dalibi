@@ -126,6 +126,15 @@ export default function Index({ assignments, academicYears, classrooms, filters 
         applyFilters({ class_id: value });
     };
 
+    const hasActiveFilters = Boolean(searchQuery || yearFilter || classFilter);
+
+    const resetAll = () => {
+        setSearchQuery('');
+        setYearFilter('');
+        setClassFilter('');
+        applyFilters({ search: '', academic_year_id: '', class_id: '' });
+    };
+
     const activeAssignments = assignments.data.filter(a => a.active).length;
 
     const statsCards = [
@@ -230,6 +239,13 @@ export default function Index({ assignments, academicYears, classrooms, filters 
                             )}
                         </div>
 
+                        <Button
+                            onClick={handleSearch}
+                            className="bg-blue-600 hover:bg-blue-700"
+                        >
+                            Rechercher
+                        </Button>
+
                         <select
                             id="filter_year"
                             aria-label="Filtrer par année"
@@ -256,21 +272,14 @@ export default function Index({ assignments, academicYears, classrooms, filters 
                             ))}
                         </select>
 
-                        {(yearFilter || classFilter) && (
+                        {hasActiveFilters && (
                             <button
-                                onClick={() => { setYearFilter(''); setClassFilter(''); applyFilters({ academic_year_id: '', class_id: '' }); }}
-                                className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
+                                onClick={resetAll}
+                                className="ml-auto inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
                             >
                                 <X className="w-4 h-4" /> Réinitialiser
                             </button>
                         )}
-
-                        <Button
-                            onClick={handleSearch}
-                            className="bg-blue-600 hover:bg-blue-700"
-                        >
-                            Rechercher
-                        </Button>
                     </div>
                 </div>
 
