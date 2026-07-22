@@ -101,13 +101,6 @@ export function route(name: string, params?: any): string {
         'academic-years.destroy': `/academic-years/${params}`,
 
         // Levels routes
-        'levels.index': '/levels',
-        'levels.create': '/levels/create',
-        'levels.store': '/levels',
-        'levels.show': `/levels/${params}`,
-        'levels.edit': `/levels/${params}/edit`,
-        'levels.update': `/levels/${params}`,
-        'levels.destroy': `/levels/${params}`,
 
         // Academic Periods routes
         'academic-periods.index': '/academic-periods',
