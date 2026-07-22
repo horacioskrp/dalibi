@@ -31,7 +31,6 @@ class RolesAndPermissionsSeeder extends Seeder
             'academic_periods' => ['view', 'create', 'edit'],
             'classes' => ['view', 'create', 'edit'],
             'classroom_types' => ['view'],
-            'levels' => ['view'],
             'calendar' => ['view', 'create', 'edit', 'delete'],
             'subjects' => ['view', 'create', 'edit'],
             'subject_assignments' => ['view', 'create', 'edit'],

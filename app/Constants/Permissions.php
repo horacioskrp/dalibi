@@ -145,7 +145,6 @@ class Permissions
             'academic_periods'     => ['Paramètres', 'Périodes académiques', $crud],
             'classes'              => ['Paramètres', 'Classes', $crud],
             'classroom_types'      => ['Paramètres', 'Types de classes', $crud],
-            'levels'               => ['Paramètres', 'Niveaux', $crud],
             'subjects'             => ['Paramètres', 'Matières', $crud],
             'class_subjects'       => ['Paramètres', 'Matières par classe', $crud],
             'evaluation_types'     => ['Paramètres', "Types d'évaluation", $crud],
