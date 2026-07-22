@@ -48,7 +48,9 @@ export default function Create({ subjects, teachers, academicYears, classrooms }
     const [formData, setFormData] = useState({
         subject_id: '',
         teacher_id: '',
-        academic_year_id: '',
+        // Présélectionne l'année active (academicYears ne contient que les années
+        // actives, triées de la plus récente à la plus ancienne).
+        academic_year_id: academicYears[0]?.id ?? '',
         class_id: '',
         active: true,
         notes: '',
