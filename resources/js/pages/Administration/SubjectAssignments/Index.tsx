@@ -204,9 +204,9 @@ export default function Index({ assignments, academicYears, classrooms, filters 
                 </div>
 
                 {/* Filtres */}
-                <div className="bg-white rounded-lg shadow-sm p-4 space-y-3">
-                    <div className="flex gap-3 items-center">
-                        <div className="relative flex-1">
+                <div className="bg-white rounded-lg shadow-sm p-4">
+                    <div className="flex flex-wrap gap-3 items-center">
+                        <div className="relative flex-1 min-w-[220px]">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                             <Input
                                 type="text"
@@ -229,44 +229,32 @@ export default function Index({ assignments, academicYears, classrooms, filters 
                                 </button>
                             )}
                         </div>
-                        <Button
-                            onClick={handleSearch}
-                            className="bg-blue-600 hover:bg-blue-700"
+
+                        <select
+                            id="filter_year"
+                            aria-label="Filtrer par année"
+                            value={yearFilter}
+                            onChange={(e) => handleYearChange(e.target.value)}
+                            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
                         >
-                            Rechercher
-                        </Button>
-                    </div>
+                            <option value="">Toutes les années</option>
+                            {academicYears.map((year) => (
+                                <option key={year.id} value={year.id}>{year.year}</option>
+                            ))}
+                        </select>
 
-                    <div className="flex flex-wrap gap-3 items-center">
-                        <div className="flex items-center gap-2">
-                            <label htmlFor="filter_year" className="text-sm font-medium text-gray-600">Année</label>
-                            <select
-                                id="filter_year"
-                                value={yearFilter}
-                                onChange={(e) => handleYearChange(e.target.value)}
-                                className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                            >
-                                <option value="">Toutes les années</option>
-                                {academicYears.map((year) => (
-                                    <option key={year.id} value={year.id}>{year.year}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                            <label htmlFor="filter_class" className="text-sm font-medium text-gray-600">Classe</label>
-                            <select
-                                id="filter_class"
-                                value={classFilter}
-                                onChange={(e) => handleClassChange(e.target.value)}
-                                className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                            >
-                                <option value="">Toutes les classes</option>
-                                {classrooms.map((classroom) => (
-                                    <option key={classroom.id} value={classroom.id}>{classroom.name}</option>
-                                ))}
-                            </select>
-                        </div>
+                        <select
+                            id="filter_class"
+                            aria-label="Filtrer par classe"
+                            value={classFilter}
+                            onChange={(e) => handleClassChange(e.target.value)}
+                            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        >
+                            <option value="">Toutes les classes</option>
+                            {classrooms.map((classroom) => (
+                                <option key={classroom.id} value={classroom.id}>{classroom.name}</option>
+                            ))}
+                        </select>
 
                         {(yearFilter || classFilter) && (
                             <button
@@ -276,6 +264,13 @@ export default function Index({ assignments, academicYears, classrooms, filters 
                                 <X className="w-4 h-4" /> Réinitialiser
                             </button>
                         )}
+
+                        <Button
+                            onClick={handleSearch}
+                            className="bg-blue-600 hover:bg-blue-700"
+                        >
+                            Rechercher
+                        </Button>
                     </div>
                 </div>
 
