@@ -114,7 +114,7 @@ export default function Index({ subjects, message, filters }: Readonly<IndexProp
         <AppLayout>
             <Head title="Matières" />
 
-            <div className="max-w-6xl space-y-6">
+            <div className="w-full space-y-6">
                 {/* Header */}
                 <div className="flex items-start justify-between">
                     <div>

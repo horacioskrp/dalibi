@@ -28,7 +28,7 @@ export default function Create({ parents = [] }: Readonly<{ parents?: ParentSubj
         <AppLayout>
             <Head title="Créer une matière" />
 
-            <div className="max-w-4xl space-y-6">
+            <div className="w-full space-y-6">
                 <div className="flex items-center gap-4">
                     <button
                         type="button"
