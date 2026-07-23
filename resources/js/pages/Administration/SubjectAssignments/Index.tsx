@@ -69,17 +69,22 @@ interface PaginatedAssignments {
 
 interface IndexProps {
     assignments: PaginatedAssignments;
+    academicYears: AcademicYear[];
+    classrooms: Classroom[];
     filters: {
         search?: string;
         active?: string;
         academic_year_id?: string;
+        class_id?: string;
     };
 }
 
-export default function Index({ assignments, filters }: Readonly<IndexProps>) {
+export default function Index({ assignments, academicYears, classrooms, filters }: Readonly<IndexProps>) {
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
+    const [yearFilter, setYearFilter] = useState(filters.academic_year_id ?? '');
+    const [classFilter, setClassFilter] = useState(filters.class_id ?? '');
 
     const handleDelete = (assignmentId: string) => {
         setIsDeleting(true);
@@ -94,19 +99,31 @@ export default function Index({ assignments, filters }: Readonly<IndexProps>) {
         });
     };
 
-    const handleSearch = () => {
-        router.get(route('subject-assignments.index'), { search: searchQuery }, { 
-            preserveScroll: true,
-            replace: true 
-        });
+    // Applique tous les filtres via des paramètres d'URL (année, classe, recherche).
+    const applyFilters = (overrides: Record<string, string> = {}) => {
+        router.get(route('subject-assignments.index'), {
+            search: searchQuery,
+            academic_year_id: yearFilter,
+            class_id: classFilter,
+            ...overrides,
+        }, { preserveScroll: true, replace: true });
     };
+
+    const handleSearch = () => applyFilters();
 
     const handleClearSearch = () => {
         setSearchQuery('');
-        router.get(route('subject-assignments.index'), {}, { 
-            preserveScroll: true,
-            replace: true 
-        });
+        applyFilters({ search: '' });
+    };
+
+    const handleYearChange = (value: string) => {
+        setYearFilter(value);
+        applyFilters({ academic_year_id: value });
+    };
+
+    const handleClassChange = (value: string) => {
+        setClassFilter(value);
+        applyFilters({ class_id: value });
     };
 
     const activeAssignments = assignments.data.filter(a => a.active).length;
@@ -186,10 +203,36 @@ export default function Index({ assignments, filters }: Readonly<IndexProps>) {
                     })}
                 </div>
 
-                {/* Search */}
+                {/* Filtres */}
                 <div className="bg-white rounded-lg shadow-sm p-4">
-                    <div className="flex gap-3 items-center">
-                        <div className="relative flex-1">
+                    <div className="flex flex-wrap gap-3 items-center">
+                        <select
+                            id="filter_year"
+                            aria-label="Filtrer par année"
+                            value={yearFilter}
+                            onChange={(e) => handleYearChange(e.target.value)}
+                            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        >
+                            <option value="">Toutes les années</option>
+                            {academicYears.map((year) => (
+                                <option key={year.id} value={year.id}>{year.year}</option>
+                            ))}
+                        </select>
+
+                        <select
+                            id="filter_class"
+                            aria-label="Filtrer par classe"
+                            value={classFilter}
+                            onChange={(e) => handleClassChange(e.target.value)}
+                            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        >
+                            <option value="">Toutes les classes</option>
+                            {classrooms.map((classroom) => (
+                                <option key={classroom.id} value={classroom.id}>{classroom.name}</option>
+                            ))}
+                        </select>
+
+                        <div className="relative flex-1 min-w-[220px] ml-auto">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                             <Input
                                 type="text"
@@ -212,12 +255,6 @@ export default function Index({ assignments, filters }: Readonly<IndexProps>) {
                                 </button>
                             )}
                         </div>
-                        <Button 
-                            onClick={handleSearch}
-                            className="bg-blue-600 hover:bg-blue-700"
-                        >
-                            Rechercher
-                        </Button>
                     </div>
                 </div>
 

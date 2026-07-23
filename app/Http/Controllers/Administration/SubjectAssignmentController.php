@@ -41,8 +41,18 @@ class SubjectAssignmentController extends Controller
             $query->where('active', $request->active === 'true');
         }
 
-        if ($request->filled('academic_year_id')) {
-            $query->where('academic_year_id', $request->academic_year_id);
+        if ($request->filled('class_id')) {
+            $query->where('class_id', $request->class_id);
+        }
+
+        // Filtre année : par défaut sur l'année active tant qu'aucun paramètre n'est
+        // fourni. Un paramètre vide (« Toutes les années ») désactive le filtre.
+        $activeYearId = AcademicYear::where('active', true)->orderBy('year', 'desc')->value('id');
+        $yearFilter = $request->has('academic_year_id')
+            ? $request->input('academic_year_id')
+            : $activeYearId;
+        if (! empty($yearFilter)) {
+            $query->where('academic_year_id', $yearFilter);
         }
 
         $assignments = $query->orderBy('created_at', 'desc')
@@ -50,8 +60,15 @@ class SubjectAssignmentController extends Controller
             ->withQueryString();
 
         return Inertia::render('Administration/SubjectAssignments/Index', [
-            'assignments' => $assignments,
-            'filters'     => $request->only(['search', 'active', 'academic_year_id']),
+            'assignments'   => $assignments,
+            'academicYears' => AcademicYear::orderBy('year', 'desc')->get(['id', 'year']),
+            'classrooms'    => Classroom::where('active', true)->orderBy('name')->get(['id', 'name']),
+            'filters'       => [
+                'search'           => $request->input('search', ''),
+                'active'           => $request->input('active'),
+                'academic_year_id' => (string) ($yearFilter ?? ''),
+                'class_id'         => $request->input('class_id', ''),
+            ],
         ]);
     }
 

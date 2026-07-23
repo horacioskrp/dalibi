@@ -146,6 +146,7 @@ class Permissions
             'classes'              => ['Paramètres', 'Classes', $crud],
             'classroom_types'      => ['Paramètres', 'Types de classes', $crud],
             'subjects'             => ['Paramètres', 'Matières', $crud],
+            'countries'            => ['Paramètres', 'Pays', $crud],
             'class_subjects'       => ['Paramètres', 'Matières par classe', $crud],
             'evaluation_types'     => ['Paramètres', "Types d'évaluation", $crud],
             'fee_categories'       => ['Paramètres', 'Catégories de frais', $crud],

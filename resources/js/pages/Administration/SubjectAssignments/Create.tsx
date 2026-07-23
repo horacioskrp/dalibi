@@ -48,7 +48,9 @@ export default function Create({ subjects, teachers, academicYears, classrooms }
     const [formData, setFormData] = useState({
         subject_id: '',
         teacher_id: '',
-        academic_year_id: '',
+        // Présélectionne l'année active (academicYears ne contient que les années
+        // actives, triées de la plus récente à la plus ancienne).
+        academic_year_id: academicYears[0]?.id ?? '',
         class_id: '',
         active: true,
         notes: '',
@@ -139,7 +141,7 @@ export default function Create({ subjects, teachers, academicYears, classrooms }
                     </div>
 
                     {/* Section Enseignant */}
-                    <div className="rounded-xl bg-violet-50 border border-violet-100 shadow-sm overflow-hidden">
+                    <div className="rounded-xl bg-violet-50 border border-violet-100 shadow-sm">
                         <div className="flex items-center gap-2 px-5 py-3 bg-violet-100 text-violet-800 rounded-t-xl">
                             <UserCheck className="w-4 h-4" />
                             <span className="font-semibold text-sm">Enseignant</span>

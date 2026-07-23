@@ -11,6 +11,7 @@ use App\Http\Controllers\Parametres\AcademicYearController;
 use App\Http\Controllers\Parametres\ClassroomController;
 use App\Http\Controllers\Parametres\ClassroomSubjectAssignmentController;
 use App\Http\Controllers\Parametres\ClassroomTypeController;
+use App\Http\Controllers\Parametres\CountryController;
 use App\Http\Controllers\Eleves\EnrollmentController;
 use App\Http\Controllers\Comptabilite\AccountingController;
 use App\Http\Controllers\Comptabilite\CashAccountController;
@@ -79,6 +80,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('can:create_subject_assignments')->name('classrooms.subject-assignments.store');
     Route::resource('classroom-types', ClassroomTypeController::class)->middleware('can:view_classroom_types');
     Route::resource('subjects', SubjectController::class)->middleware('can:view_subjects');
+    Route::resource('countries', CountryController::class)->middleware('can:view_countries');
     Route::resource('evaluation-types', EvaluationTypeController::class)->middleware('can:view_evaluation_types');
 
     // Modèles d'évaluation (global)
@@ -201,6 +203,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Accès portail (comptes tuteurs)
     Route::get('portal-accounts', [\App\Http\Controllers\Administration\GuardianController::class, 'index'])->middleware('can:view_portal_accounts')->name('guardians.index');
+    Route::get('portal-accounts/create', [\App\Http\Controllers\Administration\GuardianController::class, 'create'])->middleware('can:create_portal_accounts')->name('guardians.create');
+    Route::get('portal-accounts/students/search', [\App\Http\Controllers\Administration\GuardianController::class, 'searchStudents'])->middleware('can:view_portal_accounts')->name('guardians.students.search');
+    Route::get('portal-accounts/{guardian}/edit', [\App\Http\Controllers\Administration\GuardianController::class, 'edit'])->middleware('can:edit_portal_accounts')->name('guardians.edit');
     Route::post('portal-accounts', [\App\Http\Controllers\Administration\GuardianController::class, 'store'])->middleware('can:create_portal_accounts')->name('guardians.store');
     Route::put('portal-accounts/{guardian}', [\App\Http\Controllers\Administration\GuardianController::class, 'update'])->middleware('can:edit_portal_accounts')->name('guardians.update');
     Route::delete('portal-accounts/{guardian}', [\App\Http\Controllers\Administration\GuardianController::class, 'destroy'])->middleware('can:delete_portal_accounts')->name('guardians.destroy');

@@ -20,6 +20,15 @@ export function route(name: string, params?: any): string {
         'schools.edit': `/schools/${params}/edit`,
         'schools.update': `/schools/${params}`,
 
+        // Countries routes
+        'countries.index': '/countries',
+        'countries.create': '/countries/create',
+        'countries.store': '/countries',
+        'countries.show': `/countries/${params}`,
+        'countries.edit': `/countries/${params}/edit`,
+        'countries.update': `/countries/${params}`,
+        'countries.destroy': `/countries/${params}`,
+
         // Classrooms routes
         'classrooms.index': '/classrooms',
         'classrooms.create': '/classrooms/create',
@@ -240,6 +249,9 @@ export function route(name: string, params?: any): string {
 
         // Portal accounts (guardians)
         'guardians.index':   '/portal-accounts',
+        'guardians.create':  '/portal-accounts/create',
+        'guardians.students.search': '/portal-accounts/students/search',
+        'guardians.edit':    `/portal-accounts/${params}/edit`,
         'guardians.store':   '/portal-accounts',
         'guardians.update':  `/portal-accounts/${params}`,
         'guardians.destroy': `/portal-accounts/${params}`,
