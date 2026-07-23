@@ -11,6 +11,7 @@ use App\Http\Controllers\Parametres\AcademicYearController;
 use App\Http\Controllers\Parametres\ClassroomController;
 use App\Http\Controllers\Parametres\ClassroomSubjectAssignmentController;
 use App\Http\Controllers\Parametres\ClassroomTypeController;
+use App\Http\Controllers\Parametres\CountryController;
 use App\Http\Controllers\Eleves\EnrollmentController;
 use App\Http\Controllers\Comptabilite\AccountingController;
 use App\Http\Controllers\Comptabilite\CashAccountController;
@@ -79,6 +80,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('can:create_subject_assignments')->name('classrooms.subject-assignments.store');
     Route::resource('classroom-types', ClassroomTypeController::class)->middleware('can:view_classroom_types');
     Route::resource('subjects', SubjectController::class)->middleware('can:view_subjects');
+    Route::resource('countries', CountryController::class)->middleware('can:view_countries');
     Route::resource('evaluation-types', EvaluationTypeController::class)->middleware('can:view_evaluation_types');
 
     // Modèles d'évaluation (global)

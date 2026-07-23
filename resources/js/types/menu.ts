@@ -1,4 +1,4 @@
-import { BookOpen, Calendar, Clock, ClipboardList, GraduationCap, LayoutGrid, Layers, Settings, Tag, Users, Shield, Lock, Wallet, Percent, DollarSign, UserCircle, TrendingUp, ArrowLeftRight, PieChart, FileText, ListChecks, NotebookPen, SlidersHorizontal, AlertCircle, CalendarRange, UserCheck, BarChart3, ShieldCheck, HardDrive, FileBadge, ScanLine, DatabaseBackup, Archive } from 'lucide-react';
+import { BookOpen, Calendar, Clock, ClipboardList, GraduationCap, LayoutGrid, Layers, Settings, Tag, Users, Shield, Lock, Wallet, Percent, DollarSign, UserCircle, TrendingUp, ArrowLeftRight, PieChart, FileText, ListChecks, NotebookPen, SlidersHorizontal, AlertCircle, CalendarRange, UserCheck, BarChart3, ShieldCheck, HardDrive, FileBadge, ScanLine, DatabaseBackup, Archive, Globe } from 'lucide-react';
 import { route } from '@/helpers/route';
 import type { NavItem } from '@/types';
 
@@ -109,6 +109,7 @@ export const mainNavItems: NavItem[] = [
             { title: 'Classes', href: route('classrooms.index'), icon: Layers, permission: 'view_classes' },
             { title: 'Types de classes', href: route('classroom-types.index'), icon: Tag, permission: 'view_classroom_types' },
             { title: 'Matières', href: route('subjects.index'), icon: BookOpen, permission: 'view_subjects' },
+            { title: 'Pays', href: route('countries.index'), icon: Globe, permission: 'view_countries' },
             { title: 'Types d\'évaluation', href: route('evaluation-types.index'), icon: Tag, permission: 'view_evaluation_types' },
             { title: 'Années académiques', href: route('academic-years.index'), icon: Calendar, permission: 'view_academic_years' },
             { title: 'Périodes académiques', href: route('academic-periods.index'), icon: Clock, permission: 'view_academic_periods' },
