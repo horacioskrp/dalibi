@@ -20,7 +20,7 @@ class CountrySeeder extends Seeder
             ['name' => 'Afghanistan', 'code' => 'AF'],
             ['name' => 'Albania', 'code' => 'AL'],
             ['name' => 'Algeria', 'code' => 'DZ'],
-            ['name' => 'American Samoa', 'code' => 'DS'],
+            ['name' => 'American Samoa', 'code' => 'AS'],
             ['name' => 'Andorra', 'code' => 'AD'],
             ['name' => 'Angola', 'code' => 'AO'],
             ['name' => 'Anguilla', 'code' => 'AI'],
@@ -77,7 +77,7 @@ class CountrySeeder extends Seeder
             ['name' => 'Djibouti', 'code' => 'DJ'],
             ['name' => 'Dominica', 'code' => 'DM'],
             ['name' => 'Dominican Republic', 'code' => 'DO'],
-            ['name' => 'East Timor', 'code' => 'TP'],
+            ['name' => 'East Timor', 'code' => 'TL'],
             ['name' => 'Ecuador', 'code' => 'EC'],
             ['name' => 'Egypt', 'code' => 'EG'],
             ['name' => 'El Salvador', 'code' => 'SV'],
@@ -100,7 +100,7 @@ class CountrySeeder extends Seeder
             ['name' => 'Germany', 'code' => 'DE'],
             ['name' => 'Ghana', 'code' => 'GH'],
             ['name' => 'Gibraltar', 'code' => 'GI'],
-            ['name' => 'Guernsey', 'code' => 'GK'],
+            ['name' => 'Guernsey', 'code' => 'GG'],
             ['name' => 'Greece', 'code' => 'GR'],
             ['name' => 'Greenland', 'code' => 'GL'],
             ['name' => 'Grenada', 'code' => 'GD'],
@@ -158,7 +158,7 @@ class CountrySeeder extends Seeder
             ['name' => 'Martinique', 'code' => 'MQ'],
             ['name' => 'Mauritania', 'code' => 'MR'],
             ['name' => 'Mauritius', 'code' => 'MU'],
-            ['name' => 'Mayotte', 'code' => 'TY'],
+            ['name' => 'Mayotte', 'code' => 'YT'],
             ['name' => 'Mexico', 'code' => 'MX'],
             ['name' => 'Micronesia, Federated States of', 'code' => 'FM'],
             ['name' => 'Moldova, Republic of', 'code' => 'MD'],
@@ -264,6 +264,21 @@ class CountrySeeder extends Seeder
             ['name' => 'Zambia', 'code' => 'ZM'],
             ['name' => 'Zimbabwe', 'code' => 'ZW'],
         ];
+
+        // Normalisation des anciens codes non-ISO déjà présents en base (renomme en
+        // conservant l'UUID ; si le code cible existe déjà, on retire le doublon).
+        $legacy = ['DS' => 'AS', 'TY' => 'YT', 'TP' => 'TL', 'GK' => 'GG'];
+        foreach ($legacy as $old => $new) {
+            $oldRow = Country::where('code', $old)->first();
+            if (! $oldRow) {
+                continue;
+            }
+            if (Country::where('code', $new)->exists()) {
+                $oldRow->delete();
+            } else {
+                $oldRow->update(['code' => $new]);
+            }
+        }
 
         // UUID généré pour les insertions ; sur conflit de `code`, seul le nom
         // est mis à jour (l'id existant reste stable).

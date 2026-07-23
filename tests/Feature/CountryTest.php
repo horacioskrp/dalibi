@@ -53,10 +53,10 @@ class CountryTest extends TestCase
     public function test_admin_can_create_country(): void
     {
         $this->actingAs($this->admin())
-            ->post(route('countries.store'), ['name' => 'Togo', 'code' => 'TG'])
+            ->post(route('countries.store'), ['name' => 'Testland', 'code' => 'ZZ'])
             ->assertRedirect(route('countries.index'));
 
-        $this->assertDatabaseHas('countries', ['name' => 'Togo', 'code' => 'TG']);
+        $this->assertDatabaseHas('countries', ['name' => 'Testland', 'code' => 'ZZ']);
     }
 
     public function test_create_requires_name_and_code(): void
@@ -68,27 +68,27 @@ class CountryTest extends TestCase
 
     public function test_create_rejects_duplicate_code(): void
     {
-        Country::create(['name' => 'Togo', 'code' => 'TG']);
+        Country::create(['name' => 'Testland', 'code' => 'ZZ']);
 
         $this->actingAs($this->admin())
-            ->post(route('countries.store'), ['name' => 'Togo Bis', 'code' => 'TG'])
+            ->post(route('countries.store'), ['name' => 'Testland Bis', 'code' => 'ZZ'])
             ->assertSessionHasErrors('code');
     }
 
     public function test_admin_can_update_country(): void
     {
-        $country = Country::create(['name' => 'Togo', 'code' => 'TG']);
+        $country = Country::create(['name' => 'Testland', 'code' => 'ZZ']);
 
         $this->actingAs($this->admin())
-            ->put(route('countries.update', $country), ['name' => 'Togolaise', 'code' => 'TG'])
+            ->put(route('countries.update', $country), ['name' => 'Testland Modifié', 'code' => 'ZZ'])
             ->assertRedirect(route('countries.index'));
 
-        $this->assertDatabaseHas('countries', ['id' => $country->id, 'name' => 'Togolaise']);
+        $this->assertDatabaseHas('countries', ['id' => $country->id, 'name' => 'Testland Modifié']);
     }
 
     public function test_admin_can_delete_country(): void
     {
-        $country = Country::create(['name' => 'Togo', 'code' => 'TG']);
+        $country = Country::create(['name' => 'Testland', 'code' => 'ZZ']);
 
         $this->actingAs($this->admin())
             ->delete(route('countries.destroy', $country))
