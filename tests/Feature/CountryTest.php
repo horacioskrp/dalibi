@@ -96,4 +96,17 @@ class CountryTest extends TestCase
 
         $this->assertDatabaseMissing('countries', ['id' => $country->id]);
     }
+
+    public function test_seeder_is_idempotent_and_keeps_stable_uuid(): void
+    {
+        $this->seed(\Database\Seeders\CountrySeeder::class);
+        $count = Country::count();
+        $this->assertGreaterThan(200, $count);
+        $togoId = Country::where('code', 'TG')->value('id');
+
+        // Deuxième exécution : aucun doublon, id inchangé.
+        $this->seed(\Database\Seeders\CountrySeeder::class);
+        $this->assertSame($count, Country::count());
+        $this->assertSame($togoId, Country::where('code', 'TG')->value('id'));
+    }
 }
