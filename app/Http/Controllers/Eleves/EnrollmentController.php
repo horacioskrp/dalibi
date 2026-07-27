@@ -49,8 +49,14 @@ class EnrollmentController extends Controller
             $query->where('status', $request->string('status')->toString());
         }
 
-        if ($request->filled('academic_year_id')) {
-            $query->where('academic_year_id', $request->string('academic_year_id')->toString());
+        // Filtre année : par défaut sur l'année active tant qu'aucun paramètre n'est
+        // fourni ; un paramètre vide (« Toutes les années ») désactive le filtre.
+        $activeYearId = AcademicYear::where('active', true)->orderByDesc('year')->value('id');
+        $yearFilter = $request->has('academic_year_id')
+            ? $request->string('academic_year_id')->toString()
+            : (string) $activeYearId;
+        if ($yearFilter !== '') {
+            $query->where('academic_year_id', $yearFilter);
         }
 
         if ($request->filled('class_id')) {
@@ -72,7 +78,13 @@ class EnrollmentController extends Controller
         return Inertia::render('Eleves/Enrollments/Index', [
             'enrollments'   => $enrollments,
             'perPage'       => $perPage,
-            'filters'       => $request->only(['search', 'status', 'academic_year_id', 'class_id', 'per_page']),
+            'filters'       => [
+                'search'           => $request->string('search')->toString(),
+                'status'           => $request->string('status')->toString(),
+                'academic_year_id' => $yearFilter,
+                'class_id'         => $request->string('class_id')->toString(),
+                'per_page'         => (string) $perPage,
+            ],
             'stats'         => [
                 'total'     => (int) $stats->total,
                 'pending'   => (int) $stats->pending,

@@ -136,7 +136,12 @@ export default function Index({ enrollments, perPage, filters, stats, academicYe
         setStatus('');
         setAcademicYearId('');
         setClassId('');
-        router.get(route('enrollments.index'), { per_page: perPage !== 25 ? String(perPage) : undefined }, { preserveState: true, replace: true });
+        // academic_year_id explicitement vide = « Toutes les années » (sinon le
+        // serveur retomberait sur l'année active par défaut).
+        router.get(route('enrollments.index'), {
+            academic_year_id: '',
+            per_page: perPage !== 25 ? String(perPage) : undefined,
+        }, { preserveState: true, replace: true });
     };
 
     const handleDelete = (id: string) => {
@@ -181,9 +186,9 @@ export default function Index({ enrollments, perPage, filters, stats, academicYe
                 </div>
 
                 <div className="bg-white rounded-lg p-4 shadow-sm">
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-                        <div className="md:col-span-2 relative">
-                            <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                    <div className="flex flex-wrap items-center gap-3">
+                        <div className="relative flex-1 min-w-[220px]">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                             <Input
                                 value={search}
                                 onChange={(event) => setSearch(event.target.value)}
@@ -200,7 +205,7 @@ export default function Index({ enrollments, perPage, filters, stats, academicYe
                         <select
                             value={status}
                             onChange={(event) => setStatus(event.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                             <option value="">Tous les statuts</option>
                             <option value="PENDING">En attente</option>
@@ -211,7 +216,7 @@ export default function Index({ enrollments, perPage, filters, stats, academicYe
                         <select
                             value={academicYearId}
                             onChange={(event) => setAcademicYearId(event.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                             <option value="">Toutes les années</option>
                             {academicYears.map((year) => (
@@ -224,7 +229,7 @@ export default function Index({ enrollments, perPage, filters, stats, academicYe
                         <select
                             value={classId}
                             onChange={(event) => setClassId(event.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                             <option value="">Toutes les classes</option>
                             {classrooms.map((classroom) => (
@@ -234,17 +239,15 @@ export default function Index({ enrollments, perPage, filters, stats, academicYe
                             ))}
                         </select>
 
-                        <div className="flex gap-2">
-                            <Button onClick={handleSearch} className="bg-blue-600 hover:bg-blue-700 text-white gap-2 w-full md:w-auto">
-                                <Search className="w-4 h-4" />
-                                Rechercher
+                        <Button onClick={handleSearch} className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
+                            <Search className="w-4 h-4" />
+                            Rechercher
+                        </Button>
+                        {(search || status || academicYearId || classId) && (
+                            <Button variant="outline" onClick={handleClearSearch} className="border-gray-300 text-gray-700">
+                                Réinit.
                             </Button>
-                            {(search || status || academicYearId || classId) && (
-                                <Button variant="outline" onClick={handleClearSearch} className="border-gray-300 text-gray-700 w-full md:w-auto">
-                                    Réinit.
-                                </Button>
-                            )}
-                        </div>
+                        )}
                     </div>
                 </div>
 
