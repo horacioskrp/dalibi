@@ -35,6 +35,7 @@ class OfficialExamController extends Controller
             'registrations',
             'registrations as admis_count' => fn ($q) => $q->where('status', 'admis'),
         ])
+            ->with('classroom:id,name')
             ->when($yearId, fn ($q) => $q->where('academic_year_id', $yearId))
             ->when($type && array_key_exists($type, OfficialExam::TYPES), fn ($q) => $q->where('type', $type))
             ->when($session && array_key_exists($session, OfficialExam::SESSIONS), fn ($q) => $q->where('session', $session))
@@ -50,6 +51,8 @@ class OfficialExamController extends Controller
                 'name'          => $e->name,
                 'year'          => $e->year,
                 'session'       => $e->session,
+                'class_id'      => $e->class_id,
+                'class_name'    => $e->classroom?->name,
                 'exam_date'     => $e->exam_date?->format('Y-m-d'),
                 'center'        => $e->center,
                 'status'        => $e->status,
@@ -61,6 +64,7 @@ class OfficialExamController extends Controller
             'exams'    => $exams,
             'years'    => $years,
             'activeYear' => $activeYear,
+            'classrooms' => \App\Models\Classroom::where('active', true)->orderBy('name')->get(['id', 'name']),
             'types'    => OfficialExam::TYPES,
             'sessions' => OfficialExam::SESSIONS,
             'statuses' => OfficialExam::STATUSES,
@@ -154,6 +158,7 @@ class OfficialExamController extends Controller
                 'name'       => $officialExam->name,
                 'year'       => $officialExam->year,
                 'session'    => $officialExam->session,
+                'class_name' => $officialExam->classroom?->name,
                 'exam_date'  => $officialExam->exam_date?->format('Y-m-d'),
                 'center'     => $officialExam->center,
                 'status'     => $officialExam->status,
@@ -233,6 +238,7 @@ class OfficialExamController extends Controller
             'name'      => ['required', 'string', 'max:150'],
             'year'      => ['required', 'integer', 'min:2000', 'max:2100'],
             'session'   => ['required', 'in:normale,rattrapage'],
+            'class_id'  => ['nullable', 'uuid', 'exists:classes,id'],
             'exam_date' => ['nullable', 'date'],
             'center'    => ['nullable', 'string', 'max:150'],
             'status'    => ['required', 'in:ouvert,clos,termine'],

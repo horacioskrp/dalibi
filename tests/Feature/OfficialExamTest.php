@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Constants\Roles;
 use App\Models\AcademicYear;
+use App\Models\Classroom;
 use App\Models\OfficialExam;
 use App\Models\OfficialExamRegistration;
 use App\Models\School;
@@ -118,6 +119,24 @@ class OfficialExamTest extends TestCase
             'name'             => 'Baccalauréat 2026',
             'academic_year_id' => $year->id,
         ]);
+    }
+
+    public function test_admin_can_create_exam_with_class(): void
+    {
+        $class = Classroom::factory()->create();
+
+        $this->actingAs($this->admin())
+            ->post(route('official-exams.store'), $this->validPayload(['class_id' => $class->id]))
+            ->assertRedirect(route('official-exams.index'));
+
+        $this->assertDatabaseHas('official_exams', ['name' => 'Baccalauréat 2026', 'class_id' => $class->id]);
+    }
+
+    public function test_create_rejects_unknown_class(): void
+    {
+        $this->actingAs($this->admin())
+            ->post(route('official-exams.store'), $this->validPayload(['class_id' => '00000000-0000-0000-0000-000000000000']))
+            ->assertSessionHasErrors('class_id');
     }
 
     public function test_create_requires_name(): void

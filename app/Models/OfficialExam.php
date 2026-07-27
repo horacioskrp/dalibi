@@ -12,7 +12,7 @@ class OfficialExam extends Model
     use HasUuids;
 
     protected $fillable = [
-        'school_id', 'academic_year_id', 'type', 'name', 'year', 'session', 'exam_date', 'center', 'status',
+        'school_id', 'academic_year_id', 'class_id', 'type', 'name', 'year', 'session', 'exam_date', 'center', 'status',
     ];
 
     protected $casts = [
@@ -45,6 +45,11 @@ class OfficialExam extends Model
     public function academicYear(): BelongsTo
     {
         return $this->belongsTo(AcademicYear::class);
+    }
+
+    public function classroom(): BelongsTo
+    {
+        return $this->belongsTo(Classroom::class, 'class_id');
     }
 
     public function registrations(): HasMany

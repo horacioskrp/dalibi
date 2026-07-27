@@ -17,14 +17,17 @@ import AppLayout from '@/layouts/app-layout';
 interface Exam {
     id: string; type: string; type_label: string; name: string; year: number;
     session: string; exam_date: string | null; center: string | null; status: string;
+    class_id: string | null; class_name: string | null;
     total: number; admis: number;
 }
 interface Year { id: string; year: string; active: boolean; }
+interface Classroom { id: string; name: string; }
 
 interface Props {
     exams: Exam[];
     years: Year[];
     activeYear: { id: string; year: string } | null;
+    classrooms: Classroom[];
     types: Record<string, string>;
     sessions: Record<string, string>;
     statuses: Record<string, string>;
@@ -36,7 +39,7 @@ const STATUS_STYLE: Record<string, string> = {
     ouvert: 'bg-emerald-100 text-emerald-700', clos: 'bg-amber-100 text-amber-700', termine: 'bg-gray-100 text-gray-600',
 };
 
-export default function Index({ exams, years, activeYear, types, sessions, statuses, filters }: Readonly<Props>) {
+export default function Index({ exams, years, activeYear, classrooms, types, sessions, statuses, filters }: Readonly<Props>) {
     const [createOpen, setCreateOpen] = useState(false);
     const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -63,8 +66,10 @@ export default function Index({ exams, years, activeYear, types, sessions, statu
     };
 
     const { data, setData, post, processing, errors, reset } = useForm({
-        type: 'bepc', name: '', year: new Date().getFullYear(), session: 'normale', exam_date: '', center: '', status: 'ouvert',
+        type: 'bepc', name: '', year: new Date().getFullYear(), session: 'normale', class_id: '', exam_date: '', center: '', status: 'ouvert',
     });
+
+    const NO_CLASS = '__none__';
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -150,6 +155,7 @@ export default function Index({ exams, years, activeYear, types, sessions, statu
                             <TableRow>
                                 <TableHead>Type</TableHead>
                                 <TableHead>Examen</TableHead>
+                                <TableHead>Classe</TableHead>
                                 <TableHead>Session</TableHead>
                                 <TableHead>Date</TableHead>
                                 <TableHead>Centre</TableHead>
@@ -162,7 +168,7 @@ export default function Index({ exams, years, activeYear, types, sessions, statu
                         <TableBody>
                             {exams.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={9} className="py-16 text-center text-gray-400">
+                                    <TableCell colSpan={10} className="py-16 text-center text-gray-400">
                                         <GraduationCap className="w-10 h-10 mx-auto mb-2 opacity-30" />
                                         Aucun examen pour ces critères.
                                     </TableCell>
@@ -171,6 +177,7 @@ export default function Index({ exams, years, activeYear, types, sessions, statu
                                 <TableRow key={exam.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => router.get(route('official-exams.show', exam.id))}>
                                     <TableCell><span className="text-xs font-bold uppercase text-blue-600">{exam.type}</span></TableCell>
                                     <TableCell className="font-medium text-gray-900">{exam.name}</TableCell>
+                                    <TableCell className="text-sm text-gray-600">{exam.class_name ?? '—'}</TableCell>
                                     <TableCell className="text-sm text-gray-600">{sessions[exam.session]}</TableCell>
                                     <TableCell className="text-sm text-gray-600">
                                         {exam.exam_date ? <span className="inline-flex items-center gap-1"><CalendarDays className="w-3.5 h-3.5 text-gray-400" />{new Date(exam.exam_date).toLocaleDateString('fr-FR')}</span> : '—'}
@@ -235,9 +242,21 @@ export default function Index({ exams, years, activeYear, types, sessions, statu
                                 <Input type="date" value={data.exam_date} onChange={e => setData('exam_date', e.target.value)} />
                             </div>
                         </div>
-                        <div className="space-y-1.5">
-                            <label className="text-sm font-medium text-gray-700">Centre d'examen</label>
-                            <Input value={data.center} onChange={e => setData('center', e.target.value)} placeholder="Ex: Lycée de Tokoin" />
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-medium text-gray-700">Classe</label>
+                                <Select value={data.class_id || NO_CLASS} onValueChange={v => setData('class_id', v === NO_CLASS ? '' : v)}>
+                                    <SelectTrigger><SelectValue placeholder="Aucune" /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value={NO_CLASS}>Aucune</SelectItem>
+                                        {classrooms.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-medium text-gray-700">Centre d'examen</label>
+                                <Input value={data.center} onChange={e => setData('center', e.target.value)} placeholder="Ex: Lycée de Tokoin" />
+                            </div>
                         </div>
                         <div className="flex justify-end gap-2 pt-2">
                             <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>Annuler</Button>

@@ -23,7 +23,7 @@ interface Registration {
 interface AvailableStudent { id: string; name: string; matricule: string | null; }
 
 interface Props {
-    exam: { id: string; type: string; type_label: string; name: string; year: number; session: string; exam_date: string | null; center: string | null; status: string };
+    exam: { id: string; type: string; type_label: string; name: string; year: number; session: string; class_name: string | null; exam_date: string | null; center: string | null; status: string };
     registrations: Registration[];
     availableStudents: AvailableStudent[];
     stats: { total: number; admis: number; echoue: number; absent: number; taux: number };
@@ -97,6 +97,7 @@ export default function Show({ exam, registrations, availableStudents, stats, st
                             <span className="text-xs font-bold uppercase tracking-wide text-blue-600">{exam.type} · {exam.year}</span>
                             <h1 className="text-3xl font-bold text-gray-900">{exam.name}</h1>
                             <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">
+                                {exam.class_name && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs font-medium">Classe : {exam.class_name}</span>}
                                 {exam.exam_date && <span className="inline-flex items-center gap-1"><CalendarDays className="w-4 h-4" />{new Date(exam.exam_date).toLocaleDateString('fr-FR')}</span>}
                                 {exam.center && <span className="inline-flex items-center gap-1"><MapPin className="w-4 h-4" />{exam.center}</span>}
                             </div>
