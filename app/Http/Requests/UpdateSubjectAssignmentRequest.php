@@ -28,7 +28,7 @@ class UpdateSubjectAssignmentRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function ($validator): void {
-            $current = $this->route('subjectAssignment');
+            $current = $this->route('subject_assignment');
 
             $exists = SubjectAssignment::where('subject_id', $this->input('subject_id'))
                 ->where('teacher_id', $this->input('teacher_id'))
