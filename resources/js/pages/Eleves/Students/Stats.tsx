@@ -1,16 +1,20 @@
-import { Head } from '@inertiajs/react';
-import { GraduationCap, Users, UserCheck, UserX, BarChart3 } from 'lucide-react';
+import { Head, router } from '@inertiajs/react';
+import { GraduationCap, Users, UserCheck, UserX, BarChart3, Layers } from 'lucide-react';
+import { route } from '@/helpers/route';
 import AppLayout from '@/layouts/app-layout';
 
 interface Bar { label: string; count: number; }
 
+interface YearRef { id: string; year: string; }
+
 interface Props {
-    summary: { total: number; active: number; inactive: number; enrolled_active: number };
+    summary: { enrolled: number; active: number; inactive: number; classes: number };
     byGender: { male: number; female: number };
     byNationality: Bar[];
     byAge: Bar[];
     byClass: Bar[];
-    activeYear: { year: string } | null;
+    academicYears: YearRef[];
+    selectedYear: YearRef | null;
 }
 
 function BarList({ title, items, color }: Readonly<{ title: string; items: Bar[]; color: string }>) {
@@ -39,25 +43,43 @@ function BarList({ title, items, color }: Readonly<{ title: string; items: Bar[]
     );
 }
 
-export default function Stats({ summary, byGender, byNationality, byAge, byClass, activeYear }: Readonly<Props>) {
+export default function Stats({ summary, byGender, byNationality, byAge, byClass, academicYears, selectedYear }: Readonly<Props>) {
     const genderTotal = byGender.male + byGender.female;
     const malePct = genderTotal > 0 ? Math.round((byGender.male / genderTotal) * 100) : 0;
 
     const cards = [
-        { label: 'Total élèves', value: summary.total, color: 'text-gray-700', icon: Users },
+        { label: `Inscrits ${selectedYear?.year ?? ''}`, value: summary.enrolled, color: 'text-blue-600', icon: GraduationCap },
         { label: 'Actifs', value: summary.active, color: 'text-emerald-600', icon: UserCheck },
         { label: 'Inactifs', value: summary.inactive, color: 'text-gray-400', icon: UserX },
-        { label: `Inscrits ${activeYear?.year ?? ''}`, value: summary.enrolled_active, color: 'text-blue-600', icon: GraduationCap },
+        { label: 'Classes', value: summary.classes, color: 'text-violet-600', icon: Layers },
     ];
+
+    const changeYear = (id: string) =>
+        router.get(route('students.stats'), { academic_year_id: id }, { preserveScroll: true, replace: true });
 
     return (
         <AppLayout>
             <Head title="Statistiques élèves" />
             <div className="w-full space-y-6">
 
-                <div>
-                    <h1 className="text-4xl font-bold tracking-tight text-gray-900 flex items-center gap-3"><BarChart3 className="h-7 w-7 text-blue-600 shrink-0" />Statistiques élèves</h1>
-                    <p className="mt-2 text-gray-500">Vue démographique et effectifs{activeYear ? ` — année ${activeYear.year}` : ''}.</p>
+                <div className="flex items-start justify-between gap-4 flex-wrap">
+                    <div>
+                        <h1 className="text-4xl font-bold tracking-tight text-gray-900 flex items-center gap-3"><BarChart3 className="h-7 w-7 text-blue-600 shrink-0" />Statistiques élèves</h1>
+                        <p className="mt-2 text-gray-500">Vue démographique et effectifs des élèves inscrits pour l'année sélectionnée.</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <label htmlFor="stats_year" className="text-sm font-medium text-gray-600">Année</label>
+                        <select
+                            id="stats_year"
+                            value={selectedYear?.id ?? ''}
+                            onChange={(e) => changeYear(e.target.value)}
+                            className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            {academicYears.map((y) => (
+                                <option key={y.id} value={y.id}>{y.year}</option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
 
                 {/* KPIs */}
@@ -100,7 +122,7 @@ export default function Stats({ summary, byGender, byNationality, byAge, byClass
                     <BarList title="Par nationalité (top 6)" items={byNationality} color="bg-emerald-500" />
                 </div>
 
-                <BarList title={`Effectifs par classe${activeYear ? ` — ${activeYear.year}` : ''}`} items={byClass} color="bg-blue-500" />
+                <BarList title={`Effectifs par classe${selectedYear ? ` — ${selectedYear.year}` : ''}`} items={byClass} color="bg-blue-500" />
             </div>
         </AppLayout>
     );

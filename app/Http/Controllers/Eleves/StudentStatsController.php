@@ -21,17 +21,34 @@ class StudentStatsController extends Controller
             403
         );
 
-        $total    = Student::count();
-        $active   = Student::where('active', true)->count();
+        // Année sélectionnée (défaut = année active). Toutes les stats sont
+        // scopées sur la cohorte des élèves inscrits (scolarité active) cette année-là.
+        $academicYears = AcademicYear::orderByDesc('year')->get(['id', 'year', 'active']);
+        $defaultYearId = optional($academicYears->firstWhere('active', true) ?? $academicYears->first())->id;
+        $selectedYearId = $request->filled('academic_year_id')
+            ? $request->string('academic_year_id')->toString()
+            : $defaultYearId;
+        $selectedYear = $academicYears->firstWhere('id', $selectedYearId);
 
-        // Répartition par sexe
+        // Cohorte : élèves ayant une inscription à scolarité active pour l'année.
+        $studentIds = $selectedYearId
+            ? Enrollment::where('academic_year_id', $selectedYearId)
+                ->whereIn('academic_status', Enrollment::ACTIVE_ACADEMIC_STATUSES)
+                ->distinct()->pluck('student_id')
+            : collect();
+
+        $total  = $studentIds->count();
+        $active = Student::whereIn('id', $studentIds)->where('active', true)->count();
+
+        // Répartition par sexe (cohorte)
         $byGender = [
-            'male'   => Student::where('gender', 'male')->count(),
-            'female' => Student::where('gender', 'female')->count(),
+            'male'   => Student::whereIn('id', $studentIds)->where('gender', 'male')->count(),
+            'female' => Student::whereIn('id', $studentIds)->where('gender', 'female')->count(),
         ];
 
-        // Répartition par nationalité (top 6)
+        // Répartition par nationalité (top 6, cohorte)
         $byNationality = Student::query()
+            ->whereIn('id', $studentIds)
             ->select('nationality', DB::raw('COUNT(*) as count'))
             ->whereNotNull('nationality')
             ->where('nationality', '!=', '')
@@ -41,7 +58,7 @@ class StudentStatsController extends Controller
             ->get()
             ->map(fn ($r) => ['label' => $r->nationality, 'count' => (int) $r->count]);
 
-        // Répartition par tranche d'âge
+        // Répartition par tranche d'âge (cohorte)
         $brackets = [
             'Moins de 6 ans' => 0,
             '6 à 10 ans'     => 0,
@@ -49,7 +66,7 @@ class StudentStatsController extends Controller
             '15 à 18 ans'    => 0,
             'Plus de 18 ans' => 0,
         ];
-        foreach (Student::whereNotNull('birth_date')->pluck('birth_date') as $dob) {
+        foreach (Student::whereIn('id', $studentIds)->whereNotNull('birth_date')->pluck('birth_date') as $dob) {
             $age = Carbon::parse($dob)->age;
             $key = match (true) {
                 $age < 6  => 'Moins de 6 ans',
@@ -62,36 +79,32 @@ class StudentStatsController extends Controller
         }
         $byAge = collect($brackets)->map(fn ($count, $label) => ['label' => $label, 'count' => $count])->values();
 
-        // Effectifs par classe (année active, scolarité active)
-        $activeYear = AcademicYear::where('active', true)->first(['id', 'year']);
-        $byClass = collect();
-        $enrolledActive = 0;
-        if ($activeYear) {
-            $byClass = Enrollment::query()
+        // Effectifs par classe (année sélectionnée, scolarité active)
+        $byClass = $selectedYearId
+            ? Enrollment::query()
                 ->join('classes', 'classes.id', '=', 'enrollments.class_id')
-                ->where('enrollments.academic_year_id', $activeYear->id)
+                ->where('enrollments.academic_year_id', $selectedYearId)
                 ->whereIn('enrollments.academic_status', Enrollment::ACTIVE_ACADEMIC_STATUSES)
                 ->select('classes.name as label', DB::raw('COUNT(*) as count'))
                 ->groupBy('classes.name')
                 ->orderBy('classes.name')
                 ->get()
-                ->map(fn ($r) => ['label' => $r->label, 'count' => (int) $r->count]);
-
-            $enrolledActive = (int) $byClass->sum('count');
-        }
+                ->map(fn ($r) => ['label' => $r->label, 'count' => (int) $r->count])
+            : collect();
 
         return Inertia::render('Eleves/Students/Stats', [
             'summary' => [
-                'total'           => $total,
-                'active'          => $active,
-                'inactive'        => $total - $active,
-                'enrolled_active' => $enrolledActive,
+                'enrolled' => $total,
+                'active'   => $active,
+                'inactive' => $total - $active,
+                'classes'  => $byClass->count(),
             ],
             'byGender'      => $byGender,
             'byNationality' => $byNationality,
             'byAge'         => $byAge,
             'byClass'       => $byClass,
-            'activeYear'    => $activeYear,
+            'academicYears' => $academicYears->map(fn ($y) => ['id' => $y->id, 'year' => $y->year])->values(),
+            'selectedYear'  => $selectedYear ? ['id' => $selectedYear->id, 'year' => $selectedYear->year] : null,
         ]);
     }
 }
