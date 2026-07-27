@@ -41,6 +41,24 @@ export default function Index({ countries, filters }: Readonly<IndexProps>) {
     const doSearch = () => router.get(route('countries.index'), { search }, { preserveScroll: true, replace: true });
     const clearSearch = () => { setSearch(''); router.get(route('countries.index'), {}, { preserveScroll: true, replace: true }); };
 
+    const goToPage = (page: number) =>
+        router.get(route('countries.index'), { search, page }, { preserveScroll: true, replace: true });
+
+    // Fenêtre glissante de numéros de page : 1 … (courant-1, courant, courant+1) … dernier.
+    const pageNumbers = (() => {
+        const { current_page: cur, last_page: last } = countries;
+        const pages = new Set<number>([1, last, cur, cur - 1, cur + 1]);
+        const sorted = [...pages].filter((p) => p >= 1 && p <= last).sort((a, b) => a - b);
+        const out: (number | '…')[] = [];
+        let prev = 0;
+        for (const p of sorted) {
+            if (p - prev > 1) out.push('…');
+            out.push(p);
+            prev = p;
+        }
+        return out;
+    })();
+
     return (
         <AppLayout>
             <Head title="Pays" />
@@ -119,14 +137,31 @@ export default function Index({ countries, filters }: Readonly<IndexProps>) {
                 </div>
 
                 {countries.last_page > 1 && (
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between flex-wrap gap-3">
                         <p className="text-sm text-gray-600">Affichage {countries.from} à {countries.to} sur {countries.total}</p>
-                        <div className="flex gap-2">
-                            <Button variant="outline" size="sm" className="border-slate-200" disabled={countries.current_page === 1} onClick={() => router.get(route('countries.index'), { search, page: countries.current_page - 1 }, { preserveScroll: true })}>
-                                <ChevronLeft className="w-4 h-4" />
+                        <div className="flex items-center gap-1">
+                            <Button variant="outline" size="sm" className="border-slate-200 gap-1" disabled={countries.current_page === 1} onClick={() => goToPage(countries.current_page - 1)}>
+                                <ChevronLeft className="w-4 h-4" /> Précédent
                             </Button>
-                            <Button variant="outline" size="sm" className="border-slate-200" disabled={countries.current_page === countries.last_page} onClick={() => router.get(route('countries.index'), { search, page: countries.current_page + 1 }, { preserveScroll: true })}>
-                                <ChevronRight className="w-4 h-4" />
+
+                            {pageNumbers.map((p, i) =>
+                                p === '…' ? (
+                                    <span key={`gap-${i}`} className="px-2 text-gray-400">…</span>
+                                ) : (
+                                    <Button
+                                        key={p}
+                                        variant={p === countries.current_page ? 'default' : 'outline'}
+                                        size="sm"
+                                        className={p === countries.current_page ? 'bg-blue-600 hover:bg-blue-700 w-9' : 'border-slate-200 w-9'}
+                                        onClick={() => goToPage(p as number)}
+                                    >
+                                        {p}
+                                    </Button>
+                                ),
+                            )}
+
+                            <Button variant="outline" size="sm" className="border-slate-200 gap-1" disabled={countries.current_page === countries.last_page} onClick={() => goToPage(countries.current_page + 1)}>
+                                Suivant <ChevronRight className="w-4 h-4" />
                             </Button>
                         </div>
                     </div>
