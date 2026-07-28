@@ -46,11 +46,12 @@ class OfficialExamTest extends TestCase
     private function exam(array $overrides = []): OfficialExam
     {
         return OfficialExam::create(array_merge([
-            'type'    => 'bepc',
-            'name'    => 'BEPC 2026',
-            'year'    => 2026,
-            'session' => 'normale',
-            'status'  => 'ouvert',
+            'type'     => 'bepc',
+            'name'     => 'BEPC 2026',
+            'year'     => 2026,
+            'session'  => 'normale',
+            'class_id' => Classroom::factory()->create()->id,
+            'status'   => 'ouvert',
         ], $overrides));
     }
 
