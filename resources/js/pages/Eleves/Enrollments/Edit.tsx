@@ -101,8 +101,8 @@ export default function Edit({ enrollment, schools, students, classrooms, academ
                     </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl">
-                    <div className="bg-white dark:bg-card rounded-lg p-6 shadow-sm grid grid-cols-1 md:grid-cols-2 gap-4">
+                <form onSubmit={handleSubmit} className="w-full space-y-6">
+                    <div className="bg-white dark:bg-card rounded-lg p-6 shadow-sm grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                         <div>
                             <label htmlFor="school_id" className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">École *</label>
                             <select

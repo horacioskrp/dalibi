@@ -138,7 +138,7 @@ export default function InvoicePage({ enrollment, invoice, cashAccounts }: Reado
         <AppLayout>
             <Head title={`Facture ${invoice.invoice_number}`} />
 
-            <div className="space-y-6 max-w-4xl">
+            <div className="w-full space-y-6">
 
                 {/* ── En-tête ── */}
                 <div className="flex items-center justify-between">
@@ -217,6 +217,7 @@ export default function InvoicePage({ enrollment, invoice, cashAccounts }: Reado
                     </div>
                 </div>
 
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
                 {/* ── Lignes de facturation ── */}
                 <div className="bg-white dark:bg-card rounded-xl shadow-sm overflow-hidden">
                     <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
@@ -415,6 +416,7 @@ export default function InvoicePage({ enrollment, invoice, cashAccounts }: Reado
                             ))}
                         </div>
                     )}
+                </div>
                 </div>
 
             </div>
