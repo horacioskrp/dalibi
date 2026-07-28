@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Examens;
 use App\Http\Controllers\Controller;
 
 use App\Constants\Roles;
+use App\Models\Enrollment;
 use App\Models\OfficialExam;
 use App\Models\OfficialExamRegistration;
 use App\Models\School;
@@ -35,6 +36,7 @@ class OfficialExamController extends Controller
             'registrations',
             'registrations as admis_count' => fn ($q) => $q->where('status', 'admis'),
         ])
+            ->with('classroom:id,name')
             ->when($yearId, fn ($q) => $q->where('academic_year_id', $yearId))
             ->when($type && array_key_exists($type, OfficialExam::TYPES), fn ($q) => $q->where('type', $type))
             ->when($session && array_key_exists($session, OfficialExam::SESSIONS), fn ($q) => $q->where('session', $session))
@@ -50,6 +52,8 @@ class OfficialExamController extends Controller
                 'name'          => $e->name,
                 'year'          => $e->year,
                 'session'       => $e->session,
+                'class_id'      => $e->class_id,
+                'class_name'    => $e->classroom?->name,
                 'exam_date'     => $e->exam_date?->format('Y-m-d'),
                 'center'        => $e->center,
                 'status'        => $e->status,
@@ -61,6 +65,7 @@ class OfficialExamController extends Controller
             'exams'    => $exams,
             'years'    => $years,
             'activeYear' => $activeYear,
+            'classrooms' => \App\Models\Classroom::where('active', true)->orderBy('name')->get(['id', 'name']),
             'types'    => OfficialExam::TYPES,
             'sessions' => OfficialExam::SESSIONS,
             'statuses' => OfficialExam::STATUSES,
@@ -126,10 +131,21 @@ class OfficialExamController extends Controller
                 'mention'             => $r->mention,
             ])->values();
 
-        // Élèves non encore inscrits à cet examen
+        // Candidats : élèves inscrits dans la classe de l'examen pour son année
+        // académique (scolarité active), non encore inscrits à cet examen.
+        // Fallback (examens anciens sans classe) : tous les élèves actifs.
         $registeredIds = $officialExam->registrations()->pluck('student_id');
-        $availableStudents = Student::whereNotIn('id', $registeredIds)
-            ->where('active', true)
+        $availableQuery = Student::whereNotIn('id', $registeredIds)->where('active', true);
+
+        if ($officialExam->class_id) {
+            $cohortIds = Enrollment::where('class_id', $officialExam->class_id)
+                ->where('academic_year_id', $officialExam->academic_year_id)
+                ->whereIn('academic_status', Enrollment::ACTIVE_ACADEMIC_STATUSES)
+                ->pluck('student_id');
+            $availableQuery->whereIn('id', $cohortIds);
+        }
+
+        $availableStudents = $availableQuery
             ->orderBy('lastname')
             ->get(['id', 'firstname', 'lastname', 'matricule'])
             ->map(fn ($s) => [
@@ -154,6 +170,7 @@ class OfficialExamController extends Controller
                 'name'       => $officialExam->name,
                 'year'       => $officialExam->year,
                 'session'    => $officialExam->session,
+                'class_name' => $officialExam->classroom?->name,
                 'exam_date'  => $officialExam->exam_date?->format('Y-m-d'),
                 'center'     => $officialExam->center,
                 'status'     => $officialExam->status,
@@ -233,6 +250,7 @@ class OfficialExamController extends Controller
             'name'      => ['required', 'string', 'max:150'],
             'year'      => ['required', 'integer', 'min:2000', 'max:2100'],
             'session'   => ['required', 'in:normale,rattrapage'],
+            'class_id'  => ['required', 'uuid', 'exists:classes,id'],
             'exam_date' => ['nullable', 'date'],
             'center'    => ['nullable', 'string', 'max:150'],
             'status'    => ['required', 'in:ouvert,clos,termine'],
