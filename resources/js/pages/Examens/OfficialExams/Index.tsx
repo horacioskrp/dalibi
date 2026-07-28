@@ -69,8 +69,6 @@ export default function Index({ exams, years, activeYear, classrooms, types, ses
         type: 'bepc', name: '', year: new Date().getFullYear(), session: 'normale', class_id: '', exam_date: '', center: '', status: 'ouvert',
     });
 
-    const NO_CLASS = '__none__';
-
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
         post(route('official-exams.store'), { onSuccess: () => { setCreateOpen(false); reset(); } });
@@ -244,14 +242,14 @@ export default function Index({ exams, years, activeYear, classrooms, types, ses
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-1.5">
-                                <label className="text-sm font-medium text-gray-700">Classe</label>
-                                <Select value={data.class_id || NO_CLASS} onValueChange={v => setData('class_id', v === NO_CLASS ? '' : v)}>
-                                    <SelectTrigger><SelectValue placeholder="Aucune" /></SelectTrigger>
+                                <label className="text-sm font-medium text-gray-700">Classe *</label>
+                                <Select value={data.class_id} onValueChange={v => setData('class_id', v)}>
+                                    <SelectTrigger className={errors.class_id ? 'border-red-400' : ''}><SelectValue placeholder="Choisir une classe" /></SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value={NO_CLASS}>Aucune</SelectItem>
                                         {classrooms.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
+                                {errors.class_id && <p className="text-xs text-red-500">{errors.class_id}</p>}
                             </div>
                             <div className="space-y-1.5">
                                 <label className="text-sm font-medium text-gray-700">Centre d'examen</label>

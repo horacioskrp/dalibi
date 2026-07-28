@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Constants\Roles;
 use App\Models\AcademicYear;
 use App\Models\Classroom;
+use App\Models\Enrollment;
 use App\Models\OfficialExam;
 use App\Models\OfficialExamRegistration;
 use App\Models\School;
@@ -12,6 +13,8 @@ use App\Models\Student;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class OfficialExamTest extends TestCase
@@ -67,11 +70,12 @@ class OfficialExamTest extends TestCase
     private function validPayload(array $overrides = []): array
     {
         return array_merge([
-            'type'    => 'bac',
-            'name'    => 'Baccalauréat 2026',
-            'year'    => 2026,
-            'session' => 'normale',
-            'status'  => 'ouvert',
+            'type'     => 'bac',
+            'name'     => 'Baccalauréat 2026',
+            'year'     => 2026,
+            'session'  => 'normale',
+            'class_id' => Classroom::factory()->create()->id,
+            'status'   => 'ouvert',
         ], $overrides);
     }
 
@@ -137,6 +141,41 @@ class OfficialExamTest extends TestCase
         $this->actingAs($this->admin())
             ->post(route('official-exams.store'), $this->validPayload(['class_id' => '00000000-0000-0000-0000-000000000000']))
             ->assertSessionHasErrors('class_id');
+    }
+
+    public function test_create_requires_class(): void
+    {
+        $this->actingAs($this->admin())
+            ->post(route('official-exams.store'), $this->validPayload(['class_id' => '']))
+            ->assertSessionHasErrors('class_id');
+    }
+
+    public function test_available_students_are_limited_to_exam_class_cohort(): void
+    {
+        $school = School::factory()->create();
+        $year   = AcademicYear::create(['year' => '2025-2026', 'start_date' => '2025-09-01', 'end_date' => '2026-07-31', 'active' => true]);
+        $class  = Classroom::factory()->create();
+        $other  = Classroom::factory()->create();
+
+        $exam = $this->exam(['class_id' => $class->id, 'academic_year_id' => $year->id, 'school_id' => $school->id]);
+
+        $inCohort  = $this->makeStudent('IN-1');
+        $outCohort = $this->makeStudent('OUT-1');
+
+        $enroll = fn (Student $s, Classroom $c) => Enrollment::create([
+            'school_id' => $school->id, 'student_id' => $s->id, 'class_id' => $c->id,
+            'academic_year_id' => $year->id, 'enrollment_code' => 'ENR-' . Str::random(8),
+            'enrollment_date' => '2025-09-01', 'status' => 'paid', 'academic_status' => 'en_cours',
+        ]);
+        $enroll($inCohort, $class);
+        $enroll($outCohort, $other);
+
+        $this->actingAs($this->admin())
+            ->get(route('official-exams.show', $exam))
+            ->assertOk()
+            ->assertInertia(fn (Assert $p) => $p
+                ->has('availableStudents', 1)
+                ->where('availableStudents.0.matricule', 'IN-1'));
     }
 
     public function test_create_requires_name(): void
