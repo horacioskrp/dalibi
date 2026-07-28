@@ -9,6 +9,10 @@ import { Button } from '@/components/ui/button';
 import { route } from '@/helpers/route';
 import AppLayout from '@/layouts/app-layout';
 import { useState } from 'react';
+import {
+    Bar, CartesianGrid, ComposedChart, Legend, Line,
+    ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis,
+} from 'recharts';
 
 /* ------------------------------------------------------------------ */
 /* Types                                                               */
@@ -68,6 +72,7 @@ interface DashboardProps {
     monthlyPayments: MonthlyPayment[];
     byClass:         ClassStat[];
     studentsUnpaid:  StudentUnpaid[];
+    studentsUnpaidTotal: number;
 }
 
 /* ------------------------------------------------------------------ */
@@ -159,7 +164,7 @@ function SectionHeader({ icon, title, count }: { icon: React.ReactNode; title: s
 /* ------------------------------------------------------------------ */
 
 export default function AccountingDashboard({
-    academicYears, classrooms, filters, globalStats, monthlyPayments, byClass, studentsUnpaid,
+    academicYears, classrooms, filters, globalStats, monthlyPayments, byClass, studentsUnpaid, studentsUnpaidTotal,
 }: Readonly<DashboardProps>) {
     const fmt = useMoney();
     const [yearId,  setYearId]  = useState(filters.academic_year_id ?? '');
@@ -178,8 +183,15 @@ export default function AccountingDashboard({
 
     const collectedPct = pct(globalStats?.total_paid ?? 0, globalStats?.total_amount ?? 0);
 
-    /* Graphe mensuel */
-    const maxMonthly = Math.max(...monthlyPayments.map(m => Number(m.total)), 1);
+    /* Graphe mensuel : encaissé du mois + cumul, vs total attendu */
+    const chartData = (() => {
+        let cumulative = 0;
+        return monthlyPayments.map(m => {
+            cumulative += Number(m.total);
+            return { label: m.month_label.slice(0, 3), fullLabel: m.month_label, encaisse: Number(m.total), cumul: cumulative };
+        });
+    })();
+    const totalExpected = Number(globalStats?.total_amount ?? 0);
 
     /* Urgence : élèves avec 0 paiement */
     const toSend = studentsUnpaid.filter(e => e.invoice?.status === 'ISSUED');
@@ -317,26 +329,34 @@ export default function AccountingDashboard({
                 {monthlyPayments.length > 0 && (
                     <div className="bg-white dark:bg-card rounded-xl border border-gray-100 dark:border-gray-700 p-5 shadow-sm">
                         <SectionHeader icon={<TrendingUp className="w-4 h-4" />} title="Évolution mensuelle des encaissements" />
-                        <div className="flex items-end gap-2 h-36 mt-4">
-                            {monthlyPayments.map(m => {
-                                const h = Math.round((Number(m.total) / maxMonthly) * 100);
-                                return (
-                                    <div key={m.month} className="flex-1 flex flex-col items-center gap-1.5 group min-w-0">
-                                        <div className="relative w-full flex items-end justify-center" style={{ height: '100px' }}>
-                                            {/* Tooltip */}
-                                            <div className="absolute bottom-full mb-1.5 hidden group-hover:flex bg-gray-900 text-white text-xs rounded-lg px-2.5 py-1.5 whitespace-nowrap shadow-lg z-10 flex-col items-center gap-0.5">
-                                                <span className="font-semibold">{fmt(Number(m.total))}</span>
-                                                <span className="text-gray-400">{m.month_label}</span>
-                                            </div>
-                                            <div
-                                                className="w-full rounded-t-lg bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-500 transition-colors cursor-default"
-                                                style={{ height: `${Math.max(h, 4)}%` }}
-                                            />
-                                        </div>
-                                        <p className="text-xs text-gray-400 truncate w-full text-center">{m.month_label.slice(0, 3)}</p>
-                                    </div>
-                                );
-                            })}
+                        <div className="h-72 mt-4 -ml-2">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <ComposedChart data={chartData} margin={{ top: 10, right: 12, left: 4, bottom: 0 }}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+                                    <XAxis dataKey="label" tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={false} tickLine={false} />
+                                    <YAxis
+                                        tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} width={70}
+                                        tickFormatter={(v: number) => (v >= 1000 ? `${Math.round(v / 1000)}k` : String(v))}
+                                    />
+                                    <Tooltip
+                                        formatter={(value, name) => [fmt(Number(value)), name === 'encaisse' ? 'Encaissé du mois' : 'Cumul encaissé']}
+                                        labelFormatter={(_label, payload) => payload?.[0]?.payload?.fullLabel ?? ''}
+                                        contentStyle={{ borderRadius: 12, border: '1px solid #e5e7eb', fontSize: 13 }}
+                                    />
+                                    <Legend
+                                        formatter={(value: string) =>
+                                            value === 'encaisse' ? 'Encaissé du mois' : value === 'cumul' ? 'Cumul encaissé' : 'Total attendu'
+                                        }
+                                        wrapperStyle={{ fontSize: 12 }}
+                                    />
+                                    {totalExpected > 0 && (
+                                        <ReferenceLine y={totalExpected} stroke="#f59e0b" strokeDasharray="5 5"
+                                            label={{ value: 'Attendu', position: 'right', fill: '#b45309', fontSize: 11 }} />
+                                    )}
+                                    <Bar dataKey="encaisse" name="encaisse" fill="#3b82f6" radius={[6, 6, 0, 0]} maxBarSize={44} />
+                                    <Line type="monotone" dataKey="cumul" name="cumul" stroke="#10b981" strokeWidth={2.5} dot={{ r: 3 }} />
+                                </ComposedChart>
+                            </ResponsiveContainer>
                         </div>
                     </div>
                 )}
@@ -426,14 +446,25 @@ export default function AccountingDashboard({
                 {/* ── Élèves avec solde impayé ── */}
                 <div className="bg-white dark:bg-card rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
                     <div className="px-5 pt-5 pb-3">
-                        <SectionHeader
-                            icon={<AlertTriangle className="w-4 h-4" />}
-                            title="Élèves avec solde impayé"
-                            count={studentsUnpaid.length}
-                        />
+                        <div className="flex items-start justify-between gap-3">
+                            <SectionHeader
+                                icon={<AlertTriangle className="w-4 h-4" />}
+                                title="Élèves avec solde impayé"
+                                count={studentsUnpaidTotal}
+                            />
+                            {studentsUnpaidTotal > studentsUnpaid.length && (
+                                <Button variant="outline" size="sm" className="gap-1.5 shrink-0"
+                                    onClick={() => router.get(route('accounting.situation'), { academic_year_id: yearId || undefined, class_id: classId || undefined })}>
+                                    <Eye className="w-3.5 h-3.5" /> Voir tout
+                                </Button>
+                            )}
+                        </div>
                         {studentsUnpaid.length > 0 && (
-                            <p className="text-xs text-gray-400 -mt-2 mb-2">
-                                Triés par montant restant décroissant · <span className="text-red-500 font-medium">{toSend.length} aucun paiement</span>
+                            <p className="text-xs text-gray-400 mt-1 mb-2">
+                                {studentsUnpaidTotal > studentsUnpaid.length
+                                    ? `Top ${studentsUnpaid.length} des plus gros soldes sur ${studentsUnpaidTotal} · `
+                                    : 'Triés par montant restant décroissant · '}
+                                <span className="text-red-500 font-medium">{toSend.length} aucun paiement</span>
                             </p>
                         )}
                     </div>
