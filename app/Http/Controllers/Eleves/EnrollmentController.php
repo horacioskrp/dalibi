@@ -22,7 +22,10 @@ class EnrollmentController extends Controller
 {
     public function index(Request $request): Response
     {
-        $query = Enrollment::with(['school', 'student', 'classroom', 'academicYear']);
+        $query = Enrollment::with([
+            'school', 'student', 'classroom', 'academicYear',
+            'invoice:id,enrollment_id,total,amount_paid,amount_remaining,status',
+        ]);
 
         if ($request->filled('search')) {
             $searchTerm = strtolower($request->string('search')->toString());

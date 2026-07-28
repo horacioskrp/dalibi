@@ -21,6 +21,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { useMoney } from '@/helpers/money';
 import { route } from '@/helpers/route';
 import AppLayout from '@/layouts/app-layout';
 
@@ -42,6 +43,12 @@ interface AcademicYear {
     year: string;
 }
 
+interface Invoice {
+    total: number;
+    amount_paid: number;
+    amount_remaining: number;
+    status: string;
+}
 interface Enrollment {
     id: string;
     enrollment_code: string;
@@ -50,6 +57,7 @@ interface Enrollment {
     student: Student;
     classroom: Classroom;
     academic_year: AcademicYear;
+    invoice: Invoice | null;
 }
 
 interface PaginatedEnrollments {
@@ -95,7 +103,21 @@ const statusBadgeClass: Record<Enrollment['status'], string> = {
     CANCELLED: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
 };
 
+function PaymentBadge({ invoice, fmt }: Readonly<{ invoice: Invoice | null; fmt: (n: number) => string }>) {
+    if (!invoice) {
+        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">Sans facture</span>;
+    }
+    if (invoice.amount_remaining <= 0 && invoice.total > 0) {
+        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">Payé</span>;
+    }
+    if (invoice.amount_paid > 0) {
+        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">Reste {fmt(invoice.amount_remaining)}</span>;
+    }
+    return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">Impayé</span>;
+}
+
 export default function Index({ enrollments, perPage, filters, stats, academicYears, classrooms }: Readonly<IndexProps>) {
+    const fmt = useMoney();
     const [search, setSearch] = useState(filters.search ?? '');
     const [status, setStatus] = useState(filters.status ?? '');
     const [academicYearId, setAcademicYearId] = useState(filters.academic_year_id ?? '');
@@ -280,13 +302,14 @@ export default function Index({ enrollments, perPage, filters, stats, academicYe
                                     <TableHead className="font-semibold text-gray-900">Année</TableHead>
                                     <TableHead className="font-semibold text-gray-900">Date</TableHead>
                                     <TableHead className="font-semibold text-gray-900">Statut</TableHead>
+                                    <TableHead className="font-semibold text-gray-900">Paiement</TableHead>
                                     <TableHead className="text-center font-semibold text-gray-900 w-28">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {enrollments.data.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={7} className="text-center py-12 text-gray-500">
+                                        <TableCell colSpan={8} className="text-center py-12 text-gray-500">
                                             <div className="flex flex-col items-center gap-2">
                                                 <ClipboardList className="w-12 h-12 text-gray-300" />
                                                 <p className="text-lg">Aucune inscription trouvée</p>
@@ -309,6 +332,9 @@ export default function Index({ enrollments, perPage, filters, stats, academicYe
                                                 <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${statusBadgeClass[enrollment.status]}`}>
                                                     {statusMap[enrollment.status]}
                                                 </span>
+                                            </TableCell>
+                                            <TableCell>
+                                                <PaymentBadge invoice={enrollment.invoice} fmt={fmt} />
                                             </TableCell>
                                             <TableCell className="text-center">
                                                 <div className="flex gap-2 justify-center">
