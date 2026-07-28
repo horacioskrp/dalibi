@@ -13,6 +13,7 @@ use App\Models\Grade;
 use App\Models\School;
 use App\Models\Student;
 use App\Models\Subject;
+use Inertia\Testing\AssertableInertia as Assert;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -61,7 +62,8 @@ class GradeTest extends TestCase
         Enrollment::create([
             'school_id' => $this->school->id, 'student_id' => $this->student->id,
             'class_id' => $this->class->id, 'academic_year_id' => $this->year->id,
-            'enrollment_code' => 'ENR001', 'enrollment_date' => '2025-09-02', 'status' => 'active',
+            'enrollment_code' => 'ENR001', 'enrollment_date' => '2025-09-02',
+            'status' => 'paid', 'academic_status' => 'en_cours',
         ]);
     }
 
@@ -78,6 +80,22 @@ class GradeTest extends TestCase
         $this->actingAs($this->admin())
             ->get(route('grades.index', ['class_id' => $this->class->id]))
             ->assertOk();
+    }
+
+    public function test_grade_index_lists_enrolled_students(): void
+    {
+        // Régression : la liste filtrait sur `status` (paid/unpaid) au lieu de
+        // `academic_status`, renvoyant zéro élève malgré des inscriptions.
+        $this->actingAs($this->admin())
+            ->get(route('grades.index', [
+                'class_id'           => $this->class->id,
+                'class_subject_id'   => $this->classSubject->id,
+                'academic_period_id' => $this->period->id,
+            ]))
+            ->assertInertia(fn (Assert $p) => $p
+                ->component('Notes/Grades/Index')
+                ->has('studentsWithGrades', 1)
+                ->where('studentsWithGrades.0.student_id', $this->student->id));
     }
 
     public function test_can_store_grade_by_period(): void

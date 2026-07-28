@@ -89,7 +89,7 @@ export default function Show({ enrollment, invoice }: Readonly<ShowProps>) {
         <AppLayout>
             <Head title="Détail inscription" />
 
-            <div className="space-y-6 max-w-5xl">
+            <div className="w-full space-y-6">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <button
@@ -114,7 +114,8 @@ export default function Show({ enrollment, invoice }: Readonly<ShowProps>) {
                     </div>
                 </div>
 
-                <div className="bg-white rounded-lg p-6 shadow-sm grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 bg-white rounded-lg p-6 shadow-sm grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 h-max">
                     <div>
                         <p className="text-sm text-gray-500">Code d'inscription</p>
                         <p className="font-semibold text-gray-900 mt-1">{enrollment.enrollment_code}</p>
@@ -217,6 +218,7 @@ export default function Show({ enrollment, invoice }: Readonly<ShowProps>) {
                         )}
                     </div>
                 )}
+                </div>
             </div>
         </AppLayout>
     );
