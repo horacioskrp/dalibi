@@ -73,7 +73,8 @@ class GradeController extends Controller
         if ($classSubjectId !== '' && $periodId !== '') {
             $enrollments = Enrollment::where('class_id', $classId)
                 ->when($activeYear, fn ($q) => $q->where('academic_year_id', $activeYear->id))
-                ->where('status', 'active')
+                // Statut de scolarité (la colonne `status` = paid/unpaid, pas actif/inactif).
+                ->whereIn('academic_status', Enrollment::ACTIVE_ACADEMIC_STATUSES)
                 ->with('student:id,firstname,lastname,matricule')
                 ->get();
 
