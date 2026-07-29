@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\CashAccount;
 use App\Models\Enrollment;
 use App\Models\FeeStructure;
 use App\Models\Invoice;
@@ -92,6 +93,12 @@ class InvoiceService
         return DB::transaction(function () use ($invoice, $data): Payment {
             $data['invoice_id'] = $invoice->id;
 
+            // Rattache le paiement à la caisse correspondant au moyen de paiement
+            // (si non déjà précisé) afin que le solde de la caisse soit crédité.
+            if (empty($data['cash_account_id'])) {
+                $data['cash_account_id'] = $this->resolveCashAccountId($data['payment_method'] ?? null);
+            }
+
             $payment = Payment::create($data);
 
             Receipt::create([
@@ -111,6 +118,25 @@ class InvoiceService
 
             return $payment->load('receipt');
         });
+    }
+
+    /**
+     * Caisse par défaut correspondant à un moyen de paiement.
+     * Espèces → CASH · Mobile Money → MOBILE_MONEY · Virement/Chèque → BANK.
+     * Retourne la première caisse active du type, ou null si aucune.
+     */
+    private function resolveCashAccountId(?string $method): ?string
+    {
+        $type = match ($method) {
+            'MOBILE_MONEY'            => 'MOBILE_MONEY',
+            'BANK_TRANSFER', 'CHEQUE' => 'BANK',
+            default                   => 'CASH',
+        };
+
+        return CashAccount::where('active', true)
+            ->where('type', $type)
+            ->orderBy('created_at')
+            ->value('id');
     }
 
     /* ------------------------------------------------------------------ */
