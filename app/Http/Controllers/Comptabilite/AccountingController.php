@@ -106,22 +106,28 @@ class AccountingController extends Controller
         /* -------------------------------------------------------------- */
         /* Élèves avec solde impayé — tri SQL via sous-requête corrélée   */
         /* -------------------------------------------------------------- */
-        $studentsUnpaid = Enrollment::with([
-                'student:id,firstname,lastname,matricule',
-                'classroom:id,name,code',
-                'invoice:id,enrollment_id,invoice_number,total,amount_paid,amount_remaining,status',
-            ])
-            ->where('academic_year_id', $yearId)
+        // Limité aux plus gros soldes (perf + lisibilité) ; le total sert au « Voir tout ».
+        $unpaidQuery = Enrollment::where('academic_year_id', $yearId)
             ->when($classId, fn ($q) => $q->where('class_id', $classId))
             ->whereHas('invoice', fn ($q) =>
                 $q->whereIn('status', ['ISSUED', 'PARTIALLY_PAID'])
                   ->where('amount_remaining', '>', 0)
-            )
+            );
+
+        $studentsUnpaidTotal = (clone $unpaidQuery)->count();
+
+        $studentsUnpaid = $unpaidQuery
+            ->with([
+                'student:id,firstname,lastname,matricule',
+                'classroom:id,name,code',
+                'invoice:id,enrollment_id,invoice_number,total,amount_paid,amount_remaining,status',
+            ])
             ->orderByDesc(
                 Invoice::select('amount_remaining')
                     ->whereColumn('enrollment_id', 'enrollments.id')
                     ->limit(1)
             )
+            ->limit(15)
             ->get();
 
         /* -------------------------------------------------------------- */
@@ -147,7 +153,8 @@ class AccountingController extends Controller
             'globalStats'      => $globalStats,
             'monthlyPayments'  => $monthlyPayments,
             'byClass'          => $byClass,
-            'studentsUnpaid'   => $studentsUnpaid,
+            'studentsUnpaid'      => $studentsUnpaid,
+            'studentsUnpaidTotal' => $studentsUnpaidTotal,
             'cashAccounts'     => $cashAccounts,
             'transactionStats' => $transactionStats,
         ]);
