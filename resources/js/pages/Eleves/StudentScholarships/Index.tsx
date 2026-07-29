@@ -165,10 +165,10 @@ export default function Index({ studentScholarships, scholarships, academicYears
                 <div className="flex items-start justify-between">
                     <div>
                         <h1 className="text-4xl font-bold tracking-tight text-gray-900 flex items-center gap-3"><GraduationCap className="h-7 w-7 text-blue-600 shrink-0" />
-                            Bourses d'Éleves
+                            Bourses d'élèves
                         </h1>
                         <p className="mt-3 text-base text-gray-600">
-                            Gérez les attributions de bourses aux éleves
+                            Gérez les attributions de bourses aux élèves
                         </p>
                     </div>
                     <Button
@@ -258,7 +258,7 @@ export default function Index({ studentScholarships, scholarships, academicYears
                     <div className="flex gap-3 mt-4">
                         {(searchQuery || selectedScholarshipFilter || selectedAcademicYearFilter) && (
                             <Button
-                                variant="outline"handlePerPageChange
+                                variant="outline"
                                 onClick={handleClearFilters}
                                 className="border-gray-300"
                             >

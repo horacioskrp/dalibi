@@ -26,8 +26,8 @@ function BarList({ title, items, color }: Readonly<{ title: string; items: Bar[]
                 <p className="text-sm text-gray-400 text-center py-6">Aucune donnée</p>
             ) : (
                 <div className="space-y-3">
-                    {items.map(i => (
-                        <div key={i.label}>
+                    {items.map((i, idx) => (
+                        <div key={`${i.label}-${idx}`}>
                             <div className="flex justify-between text-xs mb-1">
                                 <span className="text-gray-600">{i.label}</span>
                                 <span className="font-semibold text-gray-900">{i.count}</span>
