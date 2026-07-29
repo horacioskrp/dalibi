@@ -54,7 +54,7 @@ export const mainNavItems: NavItem[] = [
         href: '#',
         icon: NotebookPen,
         items: [
-            { title: 'Saisie par trimestre', href: route('grades.index'), icon: ClipboardList, permission: 'view_grades' },
+            { title: 'Saisie de notes', href: route('grades.index'), icon: ClipboardList, permission: 'view_grades' },
             { title: 'Bulletins', href: route('bulletins.index'), icon: FileBadge, permission: 'view_bulletins' },
             { title: 'Modèle de bulletin', href: route('bulletin-templates.edit'), icon: SlidersHorizontal, permission: 'view_bulletin_templates' },
             { title: 'Réclamations', href: route('note-reclamations.index'), icon: AlertCircle, permission: 'view_note_reclamations' },

@@ -42,7 +42,7 @@ interface IndexProps {
     classSubjects: ClassSubject[];
     periods: Period[];
     studentsWithGrades: StudentGrade[];
-    activeYear: { id: string; name: string } | null;
+    activeYear: { id: string; year: string } | null;
     stats: { total: number; graded: number; average: number | null };
     filters: { class_id: string; class_subject_id: string; academic_period_id: string };
 }
@@ -179,7 +179,7 @@ export default function Index({
                     <div>
                         <h1 className="text-4xl font-bold tracking-tight text-gray-900 flex items-center gap-3"><NotebookPen className="h-7 w-7 text-blue-600 shrink-0" />Saisie des Notes</h1>
                         <p className="mt-2 text-lg text-gray-600">
-                            {activeYear ? `Année scolaire : ${activeYear.name}` : 'Aucune année scolaire active'}
+                            {activeYear ? `Année scolaire : ${activeYear.year}` : 'Aucune année scolaire active'}
                         </p>
                     </div>
                     {canSave && (
