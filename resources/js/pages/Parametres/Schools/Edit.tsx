@@ -20,6 +20,7 @@ interface School {
     city: string | null;
     po_box: string | null;
     active: boolean;
+    portal_enabled: boolean;
 }
 
 interface ClassroomTypeOption { id: string; name: string; period_system: string; }
@@ -49,6 +50,7 @@ export default function Edit({ school, classroomTypes = [], selectedClassTypes =
         city: school.city || '',
         po_box: school.po_box || '',
         active: school.active,
+        portal_enabled: school.portal_enabled ?? true,
         class_type_ids: selectedClassTypes,
     });
 
