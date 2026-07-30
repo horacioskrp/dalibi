@@ -1,4 +1,4 @@
-import { BookOpen, Calendar, Clock, ClipboardList, GraduationCap, LayoutGrid, Layers, Settings, Tag, Users, Shield, Lock, Wallet, Percent, DollarSign, UserCircle, TrendingUp, ArrowLeftRight, PieChart, FileText, ListChecks, NotebookPen, SlidersHorizontal, AlertCircle, CalendarRange, UserCheck, BarChart3, ShieldCheck, HardDrive, FileBadge, ScanLine, DatabaseBackup, Archive, Globe } from 'lucide-react';
+import { BookOpen, Calendar, Clock, ClipboardList, GraduationCap, LayoutGrid, Layers, Settings, Tag, Users, Shield, Lock, Wallet, Percent, DollarSign, UserCircle, TrendingUp, ArrowLeftRight, PieChart, FileText, ListChecks, NotebookPen, SlidersHorizontal, AlertCircle, CalendarRange, UserCheck, BarChart3, ShieldCheck, HardDrive, FileBadge, ScanLine, DatabaseBackup, Archive, Globe, TrendingDown } from 'lucide-react';
 import { route } from '@/helpers/route';
 import type { NavItem } from '@/types';
 
@@ -67,6 +67,7 @@ export const mainNavItems: NavItem[] = [
         items: [
             { title: 'Vue d\'ensemble', href: route('accounting.index'), icon: TrendingUp, permission: 'view_finances' },
             { title: 'Journal des transactions', href: route('accounting.transactions'), icon: ArrowLeftRight, permission: 'view_transactions' },
+            { title: 'Nouvelle dépense', href: route('expenses.create'), icon: TrendingDown, permission: 'create_expenses' },
             { title: 'Situation par classe', href: route('accounting.situation'), icon: PieChart, permission: 'view_finances' },
             { title: 'Caisses', href: route('cash-accounts.index'), icon: Wallet, permission: 'view_cash_accounts' },
             { title: 'Vérifier un reçu', href: route('receipts.verify'), icon: ScanLine, permission: 'view_invoices' },

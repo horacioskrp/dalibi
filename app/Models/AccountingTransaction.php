@@ -18,6 +18,7 @@ class AccountingTransaction extends Model
         'amount',
         'description',
         'reference_type',   // PAYMENT | SCHOLARSHIP | EXPENSE | CANCELLATION
+        'category',         // clé ExpenseCategories (dépenses uniquement, nullable)
         'reference_id',
         'cash_account_id',
         'created_by',
