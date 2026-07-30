@@ -4,7 +4,7 @@ import {
     ArrowLeftRight, TrendingUp, TrendingDown,
     ChevronLeft, ChevronRight, XCircle,
     Banknote, Smartphone, Building2, ArrowUpRight, ArrowDownRight,
-    CalendarDays, SlidersHorizontal, Plus, Trash2, X, AlertCircle,
+    CalendarDays, SlidersHorizontal, Plus, Trash2,
 } from 'lucide-react';
 import { useState } from 'react';
 import {
@@ -13,7 +13,6 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Input } from '@/components/ui/input';
 import { route } from '@/helpers/route';
 import AppLayout from '@/layouts/app-layout';
 
@@ -25,6 +24,7 @@ type ReferenceType = 'PAYMENT' | 'SCHOLARSHIP' | 'EXPENSE' | 'CANCELLATION';
 type CashType      = 'CASH' | 'MOBILE_MONEY' | 'BANK';
 
 interface CashAccount { id: string; name: string; type: CashType; balance: number; }
+interface Category { value: string; label: string; emoji: string; }
 
 interface Transaction {
     id: string;
@@ -32,6 +32,7 @@ interface Transaction {
     amount: number;
     description: string;
     reference_type: ReferenceType;
+    category: string | null;
     transaction_date: string;
     cash_account?: { id: string; name: string; type: CashType } | null;
     created_by?: { id: string; name: string } | null;
@@ -52,9 +53,10 @@ interface Props {
     transactions: Paginated<Transaction>;
     cashAccounts: { id: string; name: string; type: CashType }[];
     cashSummary:  CashAccount[];
+    categories:   Category[];
     totals:       Totals | null;
     perPage:      number;
-    filters:      { type?: string; reference_type?: string; cash_account_id?: string; date_from?: string; date_to?: string; per_page?: string };
+    filters:      { type?: string; reference_type?: string; category?: string; cash_account_id?: string; date_from?: string; date_to?: string; per_page?: string };
 }
 
 /* ------------------------------------------------------------------ */
@@ -82,19 +84,6 @@ const cashTypeIcon: Record<CashType, React.ReactNode> = {
     MOBILE_MONEY: <Smartphone className="w-3.5 h-3.5" />,
     BANK:         <Building2 className="w-3.5 h-3.5" />,
 };
-
-const EXPENSE_CATEGORIES = [
-    { label: 'Loyer', emoji: '🏠' },
-    { label: 'Électricité', emoji: '⚡' },
-    { label: 'Eau', emoji: '💧' },
-    { label: 'Fournitures', emoji: '📦' },
-    { label: 'Personnel', emoji: '👤' },
-    { label: 'Entretien', emoji: '🔧' },
-    { label: 'Transport', emoji: '🚗' },
-    { label: 'Communication', emoji: '📞' },
-    { label: 'Santé', emoji: '💊' },
-    { label: 'Alimentation', emoji: '🍽️' },
-];
 
 /* ------------------------------------------------------------------ */
 /* StatCard                                                             */
@@ -124,201 +113,31 @@ function StatCard({ title, value, sub, icon: Icon, color }: {
     );
 }
 
-/* ------------------------------------------------------------------ */
-/* Formulaire de dépense                                               */
-/* ------------------------------------------------------------------ */
-function ExpenseForm({
-    cashAccounts,
-    onClose,
-}: {
-    cashAccounts: { id: string; name: string; type: CashType }[];
-    onClose: () => void;
-}) {
-    const [description, setDescription]   = useState('');
-    const [amount, setAmount]             = useState('');
-    const [cashAccountId, setCashAccountId] = useState(cashAccounts[0]?.id ?? '');
-    const [date, setDate]                 = useState(todayStr());
-    const [submitting, setSubmitting]     = useState(false);
-    const [errors, setErrors]             = useState<Record<string, string>>({});
-
-    const applyCategory = (cat: { label: string; emoji: string }) => {
-        setDescription(prev => {
-            const base = prev.trim();
-            if (!base) return cat.label + ' - ';
-            // Replace existing category prefix or prepend
-            const alreadyHas = EXPENSE_CATEGORIES.some(c => base.startsWith(c.label));
-            if (alreadyHas) return cat.label + base.slice(base.indexOf(' - '));
-            return cat.label + ' - ' + base;
-        });
-    };
-
-    const handleSubmit = () => {
-        const errs: Record<string, string> = {};
-        if (!description.trim()) errs.description = 'La description est obligatoire.';
-        if (!amount || Number(amount) <= 0) errs.amount = 'Le montant doit être supérieur à 0.';
-        if (!cashAccountId) errs.cash_account_id = 'Sélectionnez une caisse.';
-        if (!date) errs.transaction_date = 'La date est obligatoire.';
-
-        if (Object.keys(errs).length > 0) { setErrors(errs); return; }
-        setErrors({});
-        setSubmitting(true);
-
-        router.post(
-            route('expenses.store'),
-            { description: description.trim(), amount: Number(amount), cash_account_id: cashAccountId, transaction_date: date },
-            {
-                preserveScroll: true,
-                onSuccess: () => { setSubmitting(false); onClose(); },
-                onError:   (e) => { setSubmitting(false); setErrors(e as Record<string, string>); },
-            },
-        );
-    };
-
-    const sel = "w-full h-9 px-3 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-card dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-400";
-
-    return (
-        <div className="bg-orange-50/60 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-900/40 rounded-xl p-5 space-y-4">
-
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-orange-800 dark:text-orange-300 flex items-center gap-2">
-                    <TrendingDown className="w-4 h-4" />
-                    Enregistrer une dépense
-                </h3>
-                <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                    <X className="w-4 h-4" />
-                </button>
-            </div>
-
-            {/* Catégories rapides */}
-            <div className="space-y-1.5">
-                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Catégorie rapide</p>
-                <div className="flex flex-wrap gap-1.5">
-                    {EXPENSE_CATEGORIES.map(cat => (
-                        <button
-                            key={cat.label}
-                            type="button"
-                            onClick={() => applyCategory(cat)}
-                            className="text-xs px-2.5 py-1 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:border-orange-400 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
-                        >
-                            {cat.emoji} {cat.label}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            {/* Champs principaux */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-
-                {/* Description */}
-                <div className="sm:col-span-2 space-y-1">
-                    <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Description *</label>
-                    <Input
-                        value={description}
-                        onChange={e => setDescription(e.target.value)}
-                        placeholder="Ex: Électricité - Facture octobre"
-                        className={errors.description ? 'border-red-400' : ''}
-                    />
-                    {errors.description && (
-                        <p className="text-xs text-red-500 flex items-center gap-1">
-                            <AlertCircle className="w-3 h-3" />{errors.description}
-                        </p>
-                    )}
-                </div>
-
-                {/* Montant */}
-                <div className="space-y-1">
-                    <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Montant (F) *</label>
-                    <Input
-                        type="number"
-                        min={1}
-                        value={amount}
-                        onChange={e => setAmount(e.target.value)}
-                        placeholder="Ex: 25000"
-                        className={errors.amount ? 'border-red-400' : ''}
-                    />
-                    {errors.amount && (
-                        <p className="text-xs text-red-500 flex items-center gap-1">
-                            <AlertCircle className="w-3 h-3" />{errors.amount}
-                        </p>
-                    )}
-                </div>
-
-                {/* Date */}
-                <div className="space-y-1">
-                    <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Date *</label>
-                    <input
-                        type="date"
-                        value={date}
-                        onChange={e => setDate(e.target.value)}
-                        className={`${sel} ${errors.transaction_date ? 'border-red-400' : ''}`}
-                    />
-                    {errors.transaction_date && (
-                        <p className="text-xs text-red-500 flex items-center gap-1">
-                            <AlertCircle className="w-3 h-3" />{errors.transaction_date}
-                        </p>
-                    )}
-                </div>
-
-                {/* Caisse */}
-                <div className="sm:col-span-2 space-y-1">
-                    <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Caisse *</label>
-                    <select
-                        value={cashAccountId}
-                        onChange={e => setCashAccountId(e.target.value)}
-                        className={`${sel} ${errors.cash_account_id ? 'border-red-400' : ''}`}
-                    >
-                        <option value="">— Sélectionner —</option>
-                        {cashAccounts.map(ca => (
-                            <option key={ca.id} value={ca.id}>{ca.name}</option>
-                        ))}
-                    </select>
-                    {errors.cash_account_id && (
-                        <p className="text-xs text-red-500 flex items-center gap-1">
-                            <AlertCircle className="w-3 h-3" />{errors.cash_account_id}
-                        </p>
-                    )}
-                </div>
-
-                {/* Actions */}
-                <div className="sm:col-span-2 flex items-end gap-2">
-                    <Button
-                        className="bg-orange-600 hover:bg-orange-700 text-white gap-2"
-                        onClick={handleSubmit}
-                        disabled={submitting}
-                    >
-                        <TrendingDown className="w-4 h-4" />
-                        {submitting ? 'Enregistrement...' : 'Enregistrer la dépense'}
-                    </Button>
-                    <Button variant="outline" onClick={onClose} disabled={submitting}>
-                        Annuler
-                    </Button>
-                </div>
-            </div>
-        </div>
-    );
-}
 
 /* ------------------------------------------------------------------ */
 /* Composant principal                                                  */
 /* ------------------------------------------------------------------ */
 const PER_PAGE_OPTIONS = [10, 25, 50, 100];
 
-export default function Transactions({ transactions, cashAccounts, cashSummary, totals, perPage, filters }: Readonly<Props>) {
+export default function Transactions({ transactions, cashAccounts, cashSummary, categories, totals, perPage, filters }: Readonly<Props>) {
     const fmt = useMoney();
 
     const [type,          setType]          = useState(filters.type ?? '');
     const [refType,       setRefType]       = useState(filters.reference_type ?? '');
+    const [category,      setCategory]      = useState(filters.category ?? '');
     const [cashAccountId, setCashAccountId] = useState(filters.cash_account_id ?? '');
     const [dateFrom,      setDateFrom]      = useState(filters.date_from ?? '');
     const [dateTo,        setDateTo]        = useState(filters.date_to ?? '');
-    const [showExpenseForm, setShowExpenseForm] = useState(false);
     const [deletingId, setDeletingId]       = useState<string | null>(null);
+
+    const catLabel = (key: string | null) => categories.find(c => c.value === key)?.label ?? null;
+    const catEmoji = (key: string | null) => categories.find(c => c.value === key)?.emoji ?? '📌';
 
     const push = (overrides: Record<string, string | undefined> = {}) => {
         const params = {
             type:             (overrides.type            !== undefined ? overrides.type            : type)            || undefined,
             reference_type:   (overrides.refType         !== undefined ? overrides.refType         : refType)         || undefined,
+            category:         (overrides.category        !== undefined ? overrides.category        : category)        || undefined,
             cash_account_id:  (overrides.cashAccountId   !== undefined ? overrides.cashAccountId   : cashAccountId)   || undefined,
             date_from:        (overrides.dateFrom        !== undefined ? overrides.dateFrom        : dateFrom)        || undefined,
             date_to:          (overrides.dateTo          !== undefined ? overrides.dateTo          : dateTo)          || undefined,
@@ -344,7 +163,7 @@ export default function Transactions({ transactions, cashAccounts, cashSummary, 
     };
 
     const clearAll = () => {
-        setType(''); setRefType(''); setCashAccountId(''); setDateFrom(''); setDateTo('');
+        setType(''); setRefType(''); setCategory(''); setCashAccountId(''); setDateFrom(''); setDateTo('');
         router.get(route('accounting.transactions'), {}, { preserveState: true, replace: true });
     };
 
@@ -364,6 +183,7 @@ export default function Transactions({ transactions, cashAccounts, cashSummary, 
     const activeFilters = [
         type          && { key: 'type',          label: type === 'INCOME' ? 'Entrées' : 'Sorties',                       clear: () => { setType('');          push({ type: '' }); } },
         refType       && { key: 'refType',        label: refConfig[refType as ReferenceType]?.label ?? refType,            clear: () => { setRefType('');       push({ refType: '' }); } },
+        category      && { key: 'category',        label: catLabel(category) ?? category,                                   clear: () => { setCategory('');      push({ category: '' }); } },
         cashAccountId && { key: 'cashAccountId',  label: cashAccounts.find(c => c.id === cashAccountId)?.name ?? 'Caisse', clear: () => { setCashAccountId(''); push({ cashAccountId: '' }); } },
         (dateFrom || dateTo) && { key: 'dates', label: [dateFrom, dateTo].filter(Boolean).join(' → '), clear: () => { setDateFrom(''); setDateTo(''); push({ dateFrom: '', dateTo: '' }); } },
     ].filter(Boolean) as { key: string; label: string; clear: () => void }[];
@@ -392,21 +212,13 @@ export default function Transactions({ transactions, cashAccounts, cashSummary, 
                             </p>
                         </div>
                         <Button
-                            className={`gap-2 transition-colors ${showExpenseForm ? 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200' : 'bg-orange-600 hover:bg-orange-700 text-white'}`}
-                            onClick={() => setShowExpenseForm(v => !v)}
+                            className="gap-2 bg-orange-600 hover:bg-orange-700 text-white"
+                            onClick={() => router.get(route('expenses.create'))}
                         >
-                            {showExpenseForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-                            {showExpenseForm ? 'Fermer' : 'Nouvelle dépense'}
+                            <Plus className="w-4 h-4" />
+                            Nouvelle dépense
                         </Button>
                     </div>
-
-                    {/* ── Formulaire dépense (collapsible) ── */}
-                    {showExpenseForm && (
-                        <ExpenseForm
-                            cashAccounts={cashAccounts}
-                            onClose={() => setShowExpenseForm(false)}
-                        />
-                    )}
 
                     {/* ── Cards stats ── */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -489,6 +301,16 @@ export default function Transactions({ transactions, cashAccounts, cashSummary, 
                                     <option value="SCHOLARSHIP">Bourse accordée</option>
                                     <option value="CANCELLATION">Annulation</option>
                                     <option value="EXPENSE">Dépense manuelle</option>
+                                </select>
+                            </div>
+
+                            <div className="flex flex-col gap-1">
+                                <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Catégorie (dépense)</label>
+                                <select value={category} onChange={e => { setCategory(e.target.value); push({ category: e.target.value }); }} className={sel}>
+                                    <option value="">Toutes les catégories</option>
+                                    {categories.map(c => (
+                                        <option key={c.value} value={c.value}>{c.emoji} {c.label}</option>
+                                    ))}
                                 </select>
                             </div>
 
@@ -622,7 +444,17 @@ export default function Transactions({ transactions, cashAccounts, cashSummary, 
                                                     </span>
                                                 </td>
                                                 <td className="px-4 py-3 text-gray-700 dark:text-gray-300 max-w-xs">
-                                                    <p className="truncate text-sm">{tx.description}</p>
+                                                    <div className="flex items-center gap-1.5">
+                                                        {tx.category && (
+                                                            <span
+                                                                className="shrink-0 text-xs px-1.5 py-0.5 rounded bg-orange-50 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400"
+                                                                title={catLabel(tx.category) ?? undefined}
+                                                            >
+                                                                {catEmoji(tx.category)} {catLabel(tx.category)}
+                                                            </span>
+                                                        )}
+                                                        <p className="truncate text-sm">{tx.description}</p>
+                                                    </div>
                                                     {tx.created_by && (
                                                         <p className="text-xs text-gray-400 mt-0.5">par {tx.created_by.name}</p>
                                                     )}
