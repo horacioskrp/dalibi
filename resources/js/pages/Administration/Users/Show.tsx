@@ -3,6 +3,8 @@ import { ArrowLeft, Calendar, Mail, MapPin, Phone, User as UserIcon, Shield } fr
 import { Button } from '@/components/ui/button';
 import { route } from '@/helpers/route';
 import AppLayout from '@/layouts/app-layout';
+import PayrollSection, { type EmployeeProfile } from './PayrollSection';
+import { type ContractType } from '@/components/Employees/employee-form';
 
 interface Permission {
     id: string;
@@ -29,15 +31,18 @@ interface User {
     profile: string | null;
     natricule: string | null;
     roles: Role[];
+    employee_profile: EmployeeProfile | null;
     created_at: string;
     updated_at: string;
 }
 
 interface ShowProps {
     user: User;
+    contractTypes: ContractType[];
+    canManagePayroll: boolean;
 }
 
-export default function Show({ user }: Readonly<ShowProps>) {
+export default function Show({ user, contractTypes, canManagePayroll }: Readonly<ShowProps>) {
     const formatGender = (gender: string) => {
         if (gender === 'M' || gender === 'male') return 'Masculin';
         if (gender === 'F' || gender === 'female') return 'Féminin';
@@ -160,6 +165,17 @@ export default function Show({ user }: Readonly<ShowProps>) {
                                 </div>
                             </div>
                         </div>
+
+                        {/* Paie / RH */}
+                        {(canManagePayroll || user.employee_profile) && (
+                            <PayrollSection
+                                userId={user.id}
+                                userName={`${user.firstname} ${user.lastname}`}
+                                profile={user.employee_profile}
+                                contractTypes={contractTypes}
+                                canManage={canManagePayroll}
+                            />
+                        )}
 
                         {/* Profil */}
                         {user.profile && (

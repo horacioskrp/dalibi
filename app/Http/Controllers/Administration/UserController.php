@@ -102,10 +102,12 @@ class UserController extends Controller
 
     public function show(User $user): Response
     {
-        $user->load('roles.permissions');
+        $user->load('roles.permissions', 'employeeProfile');
 
         return Inertia::render('Administration/Users/Show', [
-            'user' => $user,
+            'user'             => $user,
+            'contractTypes'    => \App\Constants\ContractTypes::options(),
+            'canManagePayroll' => auth()->user()->can('edit_employees'),
         ]);
     }
 

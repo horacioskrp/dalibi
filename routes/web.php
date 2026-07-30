@@ -15,7 +15,7 @@ use App\Http\Controllers\Parametres\CountryController;
 use App\Http\Controllers\Eleves\EnrollmentController;
 use App\Http\Controllers\Comptabilite\AccountingController;
 use App\Http\Controllers\Comptabilite\CashAccountController;
-use App\Http\Controllers\Rh\EmployeeProfileController;
+use App\Http\Controllers\Rh\UserPayrollController;
 use App\Http\Controllers\Rh\SalaryComponentController;
 use App\Http\Controllers\Paie\PayRunController;
 use App\Http\Controllers\Paie\PayslipController;
@@ -172,13 +172,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('cash-accounts/{cashAccount}', [CashAccountController::class, 'destroy'])->middleware('can:delete_cash_accounts')->name('cash-accounts.destroy');
 
     /* ── Personnel & Paie ─────────────────────────────────────────────── */
-    // Employés (profils RH)
-    Route::get('employees', [EmployeeProfileController::class, 'index'])->middleware('can:view_employees')->name('employees.index');
-    Route::get('employees/create', [EmployeeProfileController::class, 'create'])->middleware('can:create_employees')->name('employees.create');
-    Route::post('employees', [EmployeeProfileController::class, 'store'])->middleware('can:create_employees')->name('employees.store');
-    Route::get('employees/{employee}/edit', [EmployeeProfileController::class, 'edit'])->middleware('can:edit_employees')->name('employees.edit');
-    Route::put('employees/{employee}', [EmployeeProfileController::class, 'update'])->middleware('can:edit_employees')->name('employees.update');
-    Route::delete('employees/{employee}', [EmployeeProfileController::class, 'destroy'])->middleware('can:delete_employees')->name('employees.destroy');
+    // Profil paie rattaché à un utilisateur (Administration → Utilisateurs)
+    Route::put('users/{user}/payroll', [UserPayrollController::class, 'update'])->middleware('can:edit_employees')->name('users.payroll.update');
+    Route::delete('users/{user}/payroll', [UserPayrollController::class, 'destroy'])->middleware('can:delete_employees')->name('users.payroll.destroy');
 
     // Rubriques de paie
     Route::get('salary-components', [SalaryComponentController::class, 'index'])->middleware('can:view_salary_components')->name('salary-components.index');

@@ -384,12 +384,8 @@ export function route(name: string, params?: any): string {
         'expenses.destroy': `/accounting/expenses/${params}`,
 
         // Personnel & Paie
-        'employees.index':   '/employees',
-        'employees.create':  '/employees/create',
-        'employees.store':   '/employees',
-        'employees.edit':    `/employees/${params}/edit`,
-        'employees.update':  `/employees/${params}`,
-        'employees.destroy': `/employees/${params}`,
+        'users.payroll.update':  `/users/${params}/payroll`,
+        'users.payroll.destroy': `/users/${params}/payroll`,
         'salary-components.index':   '/salary-components',
         'salary-components.store':   '/salary-components',
         'salary-components.update':  `/salary-components/${params}`,

@@ -77,7 +77,6 @@ export const mainNavItems: NavItem[] = [
         href: '#',
         icon: Briefcase,
         items: [
-            { title: 'Employés', href: route('employees.index'), icon: Users, permission: 'view_employees' },
             { title: 'Cycles de paie', href: route('pay-runs.index'), icon: Receipt, permission: 'view_payroll' },
             { title: 'Rubriques de paie', href: route('salary-components.index'), icon: Coins, permission: 'view_salary_components' },
         ],
