@@ -5,10 +5,64 @@ namespace App\Services;
 use App\Models\AccountingTransaction;
 use App\Models\CashAccount;
 use App\Models\Payment;
+use App\Models\Payslip;
 use App\Models\StudentScholarship;
 
 class AccountingService
 {
+    /**
+     * Enregistre la dépense de salaire d'un bulletin (net payé) et débite la
+     * caisse. Lie la transaction au bulletin. À appeler dans un DB::transaction.
+     */
+    public function recordPayrollTransaction(Payslip $payslip, ?string $cashAccountId, string $periodLabel): AccountingTransaction
+    {
+        $name = $payslip->payload['employee']['name'] ?? 'Employé';
+
+        $transaction = AccountingTransaction::create([
+            'type'             => 'EXPENSE',
+            'amount'           => $payslip->net,
+            'description'      => "Salaire {$periodLabel} — {$name}",
+            'reference_type'   => 'PAYROLL',
+            'reference_id'     => $payslip->id,
+            'cash_account_id'  => $cashAccountId,
+            'created_by'       => auth()->id(),
+            'transaction_date' => now(),
+        ]);
+
+        if ($cashAccountId) {
+            CashAccount::where('id', $cashAccountId)->decrement('balance', $payslip->net);
+        }
+
+        $payslip->update(['accounting_transaction_id' => $transaction->id]);
+
+        return $transaction;
+    }
+
+    /**
+     * Annule la dépense de salaire liée à un bulletin : recrédite la caisse et
+     * supprime la transaction. À appeler dans un DB::transaction.
+     */
+    public function cancelPayrollTransaction(Payslip $payslip): void
+    {
+        if (! $payslip->accounting_transaction_id) {
+            return;
+        }
+
+        $transaction = AccountingTransaction::find($payslip->accounting_transaction_id);
+        if (! $transaction) {
+            $payslip->update(['accounting_transaction_id' => null]);
+
+            return;
+        }
+
+        if ($transaction->cash_account_id) {
+            CashAccount::where('id', $transaction->cash_account_id)->increment('balance', $transaction->amount);
+        }
+
+        $transaction->delete();
+        $payslip->update(['accounting_transaction_id' => null]);
+    }
+
     /**
      * Crée une transaction INCOME pour un paiement
      * et incrémente la caisse correspondante.

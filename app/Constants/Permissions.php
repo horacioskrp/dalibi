@@ -72,6 +72,8 @@ class Permissions
         'create'   => 'Créer',
         'edit'     => 'Modifier',
         'delete'   => 'Supprimer',
+        'pay'      => 'Payer',
+        'cancel'   => 'Annuler',
         'export'   => 'Exporter',
         'generate' => 'Générer',
         'review'   => 'Traiter',
@@ -128,6 +130,11 @@ class Permissions
             'invoices'             => ['Comptabilité', 'Factures & paiements', ['view', 'create']],
             'transactions'         => ['Comptabilité', 'Transactions', ['view', 'create']],
             'expenses'             => ['Comptabilité', 'Dépenses', $crud],
+
+            // Personnel & Paie
+            'employees'            => ['Personnel & Paie', 'Employés', $crud],
+            'salary_components'    => ['Personnel & Paie', 'Rubriques de paie', $crud],
+            'payroll'              => ['Personnel & Paie', 'Paie', ['view', 'create', 'validate', 'pay', 'cancel']],
 
             // Archives
             'archives'             => ['Archives', 'Archives documentaires', $crud],

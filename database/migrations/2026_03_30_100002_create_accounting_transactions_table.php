@@ -13,7 +13,7 @@ return new class extends Migration
             $table->enum('type', ['INCOME', 'EXPENSE']);
             $table->decimal('amount', 15, 2);
             $table->string('description');
-            $table->enum('reference_type', ['PAYMENT', 'SCHOLARSHIP', 'EXPENSE', 'CANCELLATION']);
+            $table->enum('reference_type', ['PAYMENT', 'SCHOLARSHIP', 'EXPENSE', 'CANCELLATION', 'PAYROLL']);
             $table->string('reference_id', 36)->nullable();   // UUID source
             $table->foreignUuid('cash_account_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignUuid('created_by')->nullable()->constrained('users')->nullOnDelete();

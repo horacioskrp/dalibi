@@ -15,6 +15,10 @@ use App\Http\Controllers\Parametres\CountryController;
 use App\Http\Controllers\Eleves\EnrollmentController;
 use App\Http\Controllers\Comptabilite\AccountingController;
 use App\Http\Controllers\Comptabilite\CashAccountController;
+use App\Http\Controllers\Rh\EmployeeProfileController;
+use App\Http\Controllers\Rh\SalaryComponentController;
+use App\Http\Controllers\Paie\PayRunController;
+use App\Http\Controllers\Paie\PayslipController;
 use App\Http\Controllers\Comptabilite\InvoiceController;
 use App\Http\Controllers\Comptabilite\SituationController;
 use App\Http\Controllers\Comptabilite\TransactionController;
@@ -166,6 +170,32 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('cash-accounts', [CashAccountController::class, 'store'])->middleware('can:create_cash_accounts')->name('cash-accounts.store');
     Route::put('cash-accounts/{cashAccount}', [CashAccountController::class, 'update'])->middleware('can:edit_cash_accounts')->name('cash-accounts.update');
     Route::delete('cash-accounts/{cashAccount}', [CashAccountController::class, 'destroy'])->middleware('can:delete_cash_accounts')->name('cash-accounts.destroy');
+
+    /* ── Personnel & Paie ─────────────────────────────────────────────── */
+    // Employés (profils RH)
+    Route::get('employees', [EmployeeProfileController::class, 'index'])->middleware('can:view_employees')->name('employees.index');
+    Route::get('employees/create', [EmployeeProfileController::class, 'create'])->middleware('can:create_employees')->name('employees.create');
+    Route::post('employees', [EmployeeProfileController::class, 'store'])->middleware('can:create_employees')->name('employees.store');
+    Route::get('employees/{employee}/edit', [EmployeeProfileController::class, 'edit'])->middleware('can:edit_employees')->name('employees.edit');
+    Route::put('employees/{employee}', [EmployeeProfileController::class, 'update'])->middleware('can:edit_employees')->name('employees.update');
+    Route::delete('employees/{employee}', [EmployeeProfileController::class, 'destroy'])->middleware('can:delete_employees')->name('employees.destroy');
+
+    // Rubriques de paie
+    Route::get('salary-components', [SalaryComponentController::class, 'index'])->middleware('can:view_salary_components')->name('salary-components.index');
+    Route::post('salary-components', [SalaryComponentController::class, 'store'])->middleware('can:create_salary_components')->name('salary-components.store');
+    Route::put('salary-components/{salaryComponent}', [SalaryComponentController::class, 'update'])->middleware('can:edit_salary_components')->name('salary-components.update');
+    Route::delete('salary-components/{salaryComponent}', [SalaryComponentController::class, 'destroy'])->middleware('can:delete_salary_components')->name('salary-components.destroy');
+
+    // Cycles de paie
+    Route::get('pay-runs', [PayRunController::class, 'index'])->middleware('can:view_payroll')->name('pay-runs.index');
+    Route::get('pay-runs/create', [PayRunController::class, 'create'])->middleware('can:create_payroll')->name('pay-runs.create');
+    Route::post('pay-runs', [PayRunController::class, 'store'])->middleware('can:create_payroll')->name('pay-runs.store');
+    Route::get('pay-runs/{payRun}', [PayRunController::class, 'show'])->middleware('can:view_payroll')->name('pay-runs.show');
+    Route::put('payslips/{payslip}', [PayRunController::class, 'updatePayslip'])->middleware('can:create_payroll')->name('payslips.update');
+    Route::get('payslips/{payslip}/pdf', [PayslipController::class, 'pdf'])->middleware('can:view_payroll')->name('payslips.pdf');
+    Route::post('pay-runs/{payRun}/validate', [PayRunController::class, 'validateRun'])->middleware('can:validate_payroll')->name('pay-runs.validate');
+    Route::post('pay-runs/{payRun}/pay', [PayRunController::class, 'pay'])->middleware('can:pay_payroll')->name('pay-runs.pay');
+    Route::post('pay-runs/{payRun}/cancel', [PayRunController::class, 'cancel'])->middleware('can:cancel_payroll')->name('pay-runs.cancel');
     Route::resource('enrollments', EnrollmentController::class)->middleware('can:view_enrollments');
     Route::get('enrollments/{enrollment}/invoice', [InvoiceController::class, 'show'])->middleware('can:view_invoices')->name('enrollments.invoice');
     Route::post('enrollments/{enrollment}/payments', [InvoiceController::class, 'storePayment'])->middleware('can:create_invoices')->name('enrollments.payments.store');

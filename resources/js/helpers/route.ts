@@ -382,6 +382,27 @@ export function route(name: string, params?: any): string {
         // Expenses routes
         'expenses.store':   '/accounting/expenses',
         'expenses.destroy': `/accounting/expenses/${params}`,
+
+        // Personnel & Paie
+        'employees.index':   '/employees',
+        'employees.create':  '/employees/create',
+        'employees.store':   '/employees',
+        'employees.edit':    `/employees/${params}/edit`,
+        'employees.update':  `/employees/${params}`,
+        'employees.destroy': `/employees/${params}`,
+        'salary-components.index':   '/salary-components',
+        'salary-components.store':   '/salary-components',
+        'salary-components.update':  `/salary-components/${params}`,
+        'salary-components.destroy': `/salary-components/${params}`,
+        'pay-runs.index':    '/pay-runs',
+        'pay-runs.create':   '/pay-runs/create',
+        'pay-runs.store':    '/pay-runs',
+        'pay-runs.show':     `/pay-runs/${params}`,
+        'pay-runs.validate': `/pay-runs/${params}/validate`,
+        'pay-runs.pay':      `/pay-runs/${params}/pay`,
+        'pay-runs.cancel':   `/pay-runs/${params}/cancel`,
+        'payslips.update':   `/payslips/${params}`,
+        'payslips.pdf':      `/payslips/${params}/pdf`,
     };
 
     try {

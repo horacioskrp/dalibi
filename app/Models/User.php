@@ -100,6 +100,12 @@ class User extends Authenticatable
         );
     }
 
+    /** Profil RH (paie) de l'utilisateur, s'il est employé. */
+    public function employeeProfile(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(EmployeeProfile::class);
+    }
+
     public function isAdministrator(): bool
     {
         return $this->hasRole(Roles::ADMINISTRATOR);
