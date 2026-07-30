@@ -47,10 +47,12 @@ class School extends Model
         'principal',
         'description',
         'active',
+        'portal_enabled',
     ];
 
     protected $casts = [
         'active' => 'boolean',
+        'portal_enabled' => 'boolean',
     ];
 
     /** URL publique du logo, exposée au frontend (résolue sur le disque « media »). */

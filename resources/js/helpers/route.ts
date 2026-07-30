@@ -380,6 +380,7 @@ export function route(name: string, params?: any): string {
         'document-templates.generate': `/settings/documents/${params}/generate`,
 
         // Expenses routes
+        'expenses.create':  '/accounting/expenses/create',
         'expenses.store':   '/accounting/expenses',
         'expenses.destroy': `/accounting/expenses/${params}`,
 

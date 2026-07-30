@@ -9,14 +9,40 @@
 namespace App\Http\Controllers\Comptabilite;
 use App\Http\Controllers\Controller;
 
+use App\Constants\ExpenseCategories;
 use App\Models\AccountingTransaction;
 use App\Models\CashAccount;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class ExpenseController extends Controller
 {
+    /**
+     * Page dédiée de saisie d'une nouvelle dépense.
+     */
+    public function create(): Response
+    {
+        $cashAccounts = CashAccount::where('active', true)
+            ->orderBy('type')->orderBy('name')
+            ->get(['id', 'name', 'type', 'balance']);
+
+        // Dernières dépenses manuelles, pour repère à la saisie.
+        $recent = AccountingTransaction::where('reference_type', 'EXPENSE')
+            ->with('cashAccount:id,name,type')
+            ->orderByDesc('transaction_date')
+            ->limit(5)
+            ->get(['id', 'amount', 'description', 'category', 'cash_account_id', 'transaction_date']);
+
+        return Inertia::render('Comptabilite/Expenses/Create', [
+            'cashAccounts' => $cashAccounts,
+            'categories'   => ExpenseCategories::options(),
+            'recent'       => $recent,
+        ]);
+    }
+
     /**
      * Store a manual expense transaction.
      */
@@ -24,11 +50,14 @@ class ExpenseController extends Controller
     {
         $validated = $request->validate([
             'description'      => ['required', 'string', 'max:255'],
+            'category'         => ['required', 'string', 'in:' . implode(',', ExpenseCategories::keys())],
             'amount'           => ['required', 'numeric', 'min:1', 'max:999999999'],
             'cash_account_id'  => ['required', 'uuid', 'exists:cash_accounts,id'],
             'transaction_date' => ['required', 'date'],
         ], [
             'description.required'      => 'La description est obligatoire.',
+            'category.required'         => 'Veuillez choisir une catégorie.',
+            'category.in'               => 'Catégorie invalide.',
             'amount.required'           => 'Le montant est obligatoire.',
             'amount.min'                => 'Le montant doit être supérieur à 0.',
             'cash_account_id.required'  => 'Veuillez sélectionner une caisse.',
@@ -41,6 +70,7 @@ class ExpenseController extends Controller
                 'amount'           => $validated['amount'],
                 'description'      => $validated['description'],
                 'reference_type'   => 'EXPENSE',
+                'category'         => $validated['category'],
                 'cash_account_id'  => $validated['cash_account_id'],
                 'created_by'       => auth()->id(),
                 'transaction_date' => $validated['transaction_date'],
@@ -50,7 +80,8 @@ class ExpenseController extends Controller
                 ->decrement('balance', $validated['amount']);
         });
 
-        return back()->with('success', 'Dépense enregistrée avec succès.');
+        return redirect()->route('accounting.transactions')
+            ->with('success', 'Dépense enregistrée avec succès.');
     }
 
     /**

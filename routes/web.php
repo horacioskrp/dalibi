@@ -164,6 +164,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('accounting/transactions', [TransactionController::class, 'index'])->middleware('can:view_transactions')->name('accounting.transactions');
     Route::get('accounting/situation', [SituationController::class, 'index'])->middleware('can:view_finances')->name('accounting.situation');
     Route::get('accounting/situation/export', [SituationController::class, 'export'])->middleware('can:view_finances')->name('accounting.situation.export');
+    Route::get('accounting/expenses/create', [ExpenseController::class, 'create'])->middleware('can:create_expenses')->name('expenses.create');
     Route::post('accounting/expenses', [ExpenseController::class, 'store'])->middleware('can:create_expenses')->name('expenses.store');
     Route::delete('accounting/expenses/{transaction}', [ExpenseController::class, 'destroy'])->middleware('can:delete_expenses')->name('expenses.destroy');
     Route::get('cash-accounts', [CashAccountController::class, 'index'])->middleware('can:view_cash_accounts')->name('cash-accounts.index');

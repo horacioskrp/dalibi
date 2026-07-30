@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Comptabilite;
 use App\Http\Controllers\Controller;
 
+use App\Constants\ExpenseCategories;
 use App\Models\AccountingTransaction;
 use App\Models\CashAccount;
 use Illuminate\Http\Request;
@@ -18,6 +19,7 @@ class TransactionController extends Controller
             ->with(['cashAccount:id,name,type', 'createdBy:id,firstname,lastname'])
             ->when($request->type, fn ($q) => $q->where('type', $request->type))
             ->when($request->reference_type, fn ($q) => $q->where('reference_type', $request->reference_type))
+            ->when($request->category, fn ($q) => $q->where('category', $request->category))
             ->when($request->cash_account_id, fn ($q) => $q->where('cash_account_id', $request->cash_account_id))
             ->when($request->date_from, fn ($q) => $q->whereDate('transaction_date', '>=', $request->date_from))
             ->when($request->date_to, fn ($q) => $q->whereDate('transaction_date', '<=', $request->date_to))
@@ -33,6 +35,7 @@ class TransactionController extends Controller
         $totals = AccountingTransaction::query()
             ->when($request->type, fn ($q) => $q->where('type', $request->type))
             ->when($request->reference_type, fn ($q) => $q->where('reference_type', $request->reference_type))
+            ->when($request->category, fn ($q) => $q->where('category', $request->category))
             ->when($request->cash_account_id, fn ($q) => $q->where('cash_account_id', $request->cash_account_id))
             ->when($request->date_from, fn ($q) => $q->whereDate('transaction_date', '>=', $request->date_from))
             ->when($request->date_to, fn ($q) => $q->whereDate('transaction_date', '<=', $request->date_to))
@@ -54,8 +57,9 @@ class TransactionController extends Controller
             'transactions' => $transactions,
             'cashAccounts' => CashAccount::where('active', true)->orderBy('name')->get(['id', 'name', 'type']),
             'cashSummary'  => $cashSummary,
+            'categories'   => ExpenseCategories::options(),
             'totals'       => $totals,
-            'filters'      => $request->only(['type', 'reference_type', 'cash_account_id', 'date_from', 'date_to', 'per_page']),
+            'filters'      => $request->only(['type', 'reference_type', 'category', 'cash_account_id', 'date_from', 'date_to', 'per_page']),
             'perPage'      => $perPage,
         ]);
     }

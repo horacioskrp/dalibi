@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\ChildrenController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\FeeController;
 use App\Http\Controllers\Api\V1\GradeController;
+use App\Http\Middleware\EnsurePortalEnabled;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -18,7 +19,7 @@ use Illuminate\Support\Facades\Route;
 | Guardian (tuteur → ses enfants) et Student (→ ses propres données).
 */
 
-Route::prefix('v1')->group(function () {
+Route::prefix('v1')->middleware(EnsurePortalEnabled::class)->group(function () {
     // Connexion + réinitialisation (throttlées)
     Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttle:6,1');
     Route::post('auth/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:6,1');
