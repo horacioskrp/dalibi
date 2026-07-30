@@ -5,7 +5,9 @@ namespace App\Services;
 use App\Models\EmployeeProfile;
 use App\Models\PayRun;
 use App\Models\Payslip;
+use App\Models\PayrollSetting;
 use App\Models\SalaryComponent;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -47,12 +49,16 @@ class PayrollService
                 ->orderBy('sort_order')
                 ->get();
 
-            $employees = EmployeeProfile::with('user:id,firstname,lastname')
-                ->where('status', 'active')
-                ->get();
+            $employees = EmployeeProfile::with([
+                'user:id,firstname,lastname',
+                'salaryGrade:id,base_amount,name',
+                'allowances' => fn ($q) => $q->where('active', true),
+            ])->where('status', 'active')->get();
+
+            $settings = PayrollSetting::current();
 
             foreach ($employees as $employee) {
-                $lines = $this->buildLines($employee, $components);
+                $lines = $this->buildLines($employee, $components, $month, $year, $settings);
                 $this->persistPayslip($run, $employee, $lines);
             }
 
@@ -63,26 +69,66 @@ class PayrollService
     }
 
     /**
-     * Recompose les lignes par défaut d'un employé : salaire de base + rubriques.
+     * Compose les lignes d'un bulletin :
+     *   salaire de base (grille) + ancienneté + rubriques par défaut + primes tracées.
+     * Chaque ligne porte une `origin` pour la traçabilité dans le snapshot.
      *
-     * @return array<int, array{code:?string, label:string, type:string, amount:float}>
+     * @return array<int, array<string, mixed>>
      */
-    private function buildLines(EmployeeProfile $employee, $components): array
+    private function buildLines(EmployeeProfile $employee, $components, int $month, int $year, PayrollSetting $settings): array
     {
+        $base = $employee->effectiveBaseSalary();
+
         $lines = [[
             'code'   => 'BASE',
             'label'  => 'Salaire de base',
             'type'   => SalaryComponent::EARNING,
-            'amount' => (float) $employee->base_salary,
+            'amount' => $base,
+            'origin' => $employee->salary_grade_id ? 'grade:' . $employee->salary_grade_id : 'base',
         ]];
 
+        // Prime d'ancienneté (si activée) : % du base par année, plafonnée.
+        if ($settings->seniority_enabled && $settings->seniority_rate_per_year > 0 && $employee->hire_date) {
+            $periodEnd = Carbon::create($year, $month, 1)->endOfMonth();
+            $years     = (int) $employee->hire_date->diffInYears($periodEnd); // années pleines
+            $rate      = $settings->seniority_rate_per_year * $years;
+            if ($settings->seniority_cap_percent > 0) {
+                $rate = min($rate, $settings->seniority_cap_percent);
+            }
+            if ($rate > 0 && $years > 0) {
+                $lines[] = [
+                    'code'   => 'ANC',
+                    'label'  => "Prime d'ancienneté ({$years} an" . ($years > 1 ? 's' : '') . ')',
+                    'type'   => SalaryComponent::EARNING,
+                    'amount' => round($base * $rate / 100, 2),
+                    'origin' => 'seniority',
+                ];
+            }
+        }
+
+        // Rubriques par défaut (globales).
         foreach ($components as $c) {
             $lines[] = [
                 'code'   => $c->code,
                 'label'  => $c->name,
                 'type'   => $c->type,
                 'amount' => (float) ($c->default_amount ?? 0),
+                'origin' => 'component:' . $c->id,
             ];
+        }
+
+        // Primes / retenues propres à l'employé, actives sur la période (tracées).
+        foreach ($employee->allowances as $a) {
+            if ($a->appliesTo($month, $year)) {
+                $lines[] = [
+                    'code'   => null,
+                    'label'  => $a->label,
+                    'type'   => $a->type,
+                    'amount' => $a->computeAmount($base),
+                    'reason' => $a->reason,
+                    'origin' => 'allowance:' . $a->id,
+                ];
+            }
         }
 
         return $lines;

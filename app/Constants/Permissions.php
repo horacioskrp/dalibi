@@ -133,6 +133,7 @@ class Permissions
 
             // Personnel & Paie
             'employees'            => ['Personnel & Paie', 'Employés', $crud],
+            'salary_grades'        => ['Personnel & Paie', 'Grilles salariales', $crud],
             'salary_components'    => ['Personnel & Paie', 'Rubriques de paie', $crud],
             'payroll'              => ['Personnel & Paie', 'Paie', ['view', 'create', 'validate', 'pay', 'cancel']],
 

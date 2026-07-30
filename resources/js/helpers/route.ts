@@ -387,6 +387,13 @@ export function route(name: string, params?: any): string {
         // Personnel & Paie
         'users.payroll.update':  `/users/${params}/payroll`,
         'users.payroll.destroy': `/users/${params}/payroll`,
+        'users.allowances.store': `/users/${params}/allowances`,
+        'employee-allowances.destroy': `/employee-allowances/${params}`,
+        'salary-grades.index':    '/salary-grades',
+        'salary-grades.store':    '/salary-grades',
+        'salary-grades.settings': '/salary-grades/settings',
+        'salary-grades.update':   `/salary-grades/${params}`,
+        'salary-grades.destroy':  `/salary-grades/${params}`,
         'salary-components.index':   '/salary-components',
         'salary-components.store':   '/salary-components',
         'salary-components.update':  `/salary-components/${params}`,

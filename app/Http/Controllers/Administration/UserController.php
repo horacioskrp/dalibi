@@ -102,11 +102,17 @@ class UserController extends Controller
 
     public function show(User $user): Response
     {
-        $user->load('roles.permissions', 'employeeProfile');
+        $user->load([
+            'roles.permissions',
+            'employeeProfile.salaryGrade:id,name,base_amount',
+            'employeeProfile.allowances' => fn ($q) => $q->orderByDesc('created_at'),
+            'employeeProfile.allowances.createdBy:id,firstname,lastname',
+        ]);
 
         return Inertia::render('Administration/Users/Show', [
             'user'             => $user,
             'contractTypes'    => \App\Constants\ContractTypes::options(),
+            'salaryGrades'     => \App\Models\SalaryGrade::where('active', true)->orderBy('sort_order')->orderBy('category')->get(['id', 'name', 'base_amount']),
             'canManagePayroll' => auth()->user()->can('edit_employees'),
         ]);
     }

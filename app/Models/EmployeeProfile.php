@@ -18,6 +18,7 @@ class EmployeeProfile extends Model
         'job_title',
         'department',
         'contract_type',
+        'salary_grade_id',
         'hire_date',
         'end_date',
         'base_salary',
@@ -46,9 +47,29 @@ class EmployeeProfile extends Model
         return $this->hasMany(Payslip::class);
     }
 
+    public function salaryGrade(): BelongsTo
+    {
+        return $this->belongsTo(SalaryGrade::class);
+    }
+
+    /** Primes / retenues récurrentes propres à l'employé (tracées). */
+    public function allowances(): HasMany
+    {
+        return $this->hasMany(EmployeeAllowance::class);
+    }
+
     /** Nom complet de l'employé (via le compte utilisateur). */
     public function fullName(): string
     {
         return trim(($this->user?->firstname ?? '') . ' ' . ($this->user?->lastname ?? ''));
+    }
+
+    /**
+     * Salaire de base effectif : la grille prime ; à défaut, le montant saisi
+     * manuellement (repli pour un employé pas encore classé).
+     */
+    public function effectiveBaseSalary(): float
+    {
+        return (float) ($this->salaryGrade?->base_amount ?? $this->base_salary);
     }
 }

@@ -29,9 +29,11 @@ class UserPayrollController extends Controller
             'job_title'       => ['required', 'string', 'max:255'],
             'department'      => ['nullable', 'string', 'max:255'],
             'contract_type'   => ['required', Rule::in(ContractTypes::keys())],
+            'salary_grade_id' => ['nullable', 'uuid', 'exists:salary_grades,id'],
             'hire_date'       => ['nullable', 'date'],
             'end_date'        => ['nullable', 'date', 'after_or_equal:hire_date'],
-            'base_salary'     => ['required', 'numeric', 'min:0', 'max:999999999'],
+            // Repli si l'employé n'est pas (encore) rattaché à une grille.
+            'base_salary'     => ['nullable', 'numeric', 'min:0', 'max:999999999'],
             'payment_method'  => ['required', Rule::in(self::PAYMENT_METHODS)],
             'bank_name'       => ['nullable', 'string', 'max:255'],
             'bank_account'    => ['nullable', 'string', 'max:255'],
@@ -45,6 +47,7 @@ class UserPayrollController extends Controller
         ]);
 
         $data['employee_number'] = ($data['employee_number'] ?? null) ?: ($profile?->employee_number ?: $this->generateNumber());
+        $data['base_salary']     = $data['base_salary'] ?? 0; // colonne non nullable ; la grille prime au calcul
 
         $user->employeeProfile()->updateOrCreate(['user_id' => $user->id], $data);
 
