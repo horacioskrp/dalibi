@@ -114,4 +114,31 @@ class SalaryGradePayrollTest extends TestCase
         $this->actingAs($teacher)->get(route('salary-grades.index'))->assertForbidden();
         $this->actingAs($this->admin())->get(route('salary-grades.index'))->assertOk();
     }
+
+    public function test_admin_can_create_a_grade(): void
+    {
+        $this->actingAs($this->admin())
+            ->post(route('salary-grades.store'), ['name' => 'Enseignant A1', 'category' => 'A', 'echelon' => 1, 'base_amount' => 180000])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('salary_grades', ['name' => 'Enseignant A1', 'base_amount' => 180000]);
+    }
+
+    public function test_allowance_records_its_author_for_traceability(): void
+    {
+        $admin = $this->admin();
+        $emp   = $this->employee();
+
+        $this->actingAs($admin)
+            ->post(route('users.allowances.store', $emp->user_id), [
+                'type' => 'earning', 'label' => 'Prime de logement', 'mode' => 'fixed', 'amount' => 15000, 'reason' => 'Logement de fonction',
+            ])
+            ->assertRedirect();
+
+        $allowance = EmployeeAllowance::where('label', 'Prime de logement')->first();
+        $this->assertNotNull($allowance);
+        $this->assertSame($emp->id, $allowance->employee_profile_id);
+        $this->assertSame($admin->id, $allowance->created_by);
+        $this->assertSame('Logement de fonction', $allowance->reason);
+    }
 }

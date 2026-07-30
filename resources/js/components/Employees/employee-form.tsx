@@ -7,6 +7,7 @@ import {
 
 export interface UserOption { id: string; name: string; email: string | null; }
 export interface ContractType { value: string; label: string; }
+export interface SalaryGradeOption { id: string; name: string; base_amount: number; }
 
 export interface EmployeeFormData {
     user_id: string;
@@ -14,6 +15,7 @@ export interface EmployeeFormData {
     job_title: string;
     department: string;
     contract_type: string;
+    salary_grade_id: string;
     hire_date: string;
     end_date: string;
     base_salary: string;
@@ -45,6 +47,7 @@ interface Props {
     errors: Record<string, string>;
     processing: boolean;
     contractTypes: ContractType[];
+    salaryGrades?: SalaryGradeOption[];
     users?: UserOption[];
     employeeName?: string;
     onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
@@ -56,7 +59,8 @@ function Err({ msg }: { msg?: string }) {
     return msg ? <p className="text-red-600 text-sm mt-1">{msg}</p> : null;
 }
 
-export function EmployeeForm({ mode, data, errors, processing, contractTypes, users = [], employeeName, onSubmit, onCancel, setData }: Readonly<Props>) {
+export function EmployeeForm({ mode, data, errors, processing, contractTypes, salaryGrades = [], users = [], employeeName, onSubmit, onCancel, setData }: Readonly<Props>) {
+    const selectedGrade = salaryGrades.find(g => g.id === data.salary_grade_id) ?? null;
     const isMoMo = data.payment_method === 'MOBILE_MONEY';
     const isBank = data.payment_method === 'BANK_TRANSFER' || data.payment_method === 'CHEQUE';
 
@@ -152,9 +156,24 @@ export function EmployeeForm({ mode, data, errors, processing, contractTypes, us
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-900 mb-2">Grille salariale</label>
+                        <Select value={data.salary_grade_id || 'none'} onValueChange={(v) => setData('salary_grade_id', v === 'none' ? '' : v)}>
+                            <SelectTrigger><SelectValue placeholder="Aucune (salaire saisi manuellement)" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="none">Aucune (hors grille)</SelectItem>
+                                {salaryGrades.map(g => <SelectItem key={g.id} value={g.id}>{g.name} — {g.base_amount.toLocaleString('fr-FR')} F</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                        {selectedGrade && <p className="text-xs text-emerald-600 mt-1">Salaire de base : {selectedGrade.base_amount.toLocaleString('fr-FR')} F (issu de la grille)</p>}
+                        <Err msg={errors.salary_grade_id} />
+                    </div>
+
                     <div>
-                        <label className="block text-sm font-medium text-gray-900 mb-2">Salaire de base mensuel (F) *</label>
-                        <Input type="number" min={0} value={data.base_salary} onChange={e => setData('base_salary', e.target.value)} placeholder="Ex: 120000" className={errors.base_salary ? 'border-red-500' : ''} />
+                        <label className="block text-sm font-medium text-gray-900 mb-2">
+                            {selectedGrade ? 'Salaire de base (ignoré, grille active)' : 'Salaire de base mensuel (F) *'}
+                        </label>
+                        <Input type="number" min={0} value={data.base_salary} onChange={e => setData('base_salary', e.target.value)} placeholder="Ex: 120000" disabled={!!selectedGrade} className={errors.base_salary ? 'border-red-500' : ''} />
                         <Err msg={errors.base_salary} />
                     </div>
 

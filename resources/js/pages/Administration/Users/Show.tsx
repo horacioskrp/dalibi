@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { route } from '@/helpers/route';
 import AppLayout from '@/layouts/app-layout';
 import PayrollSection, { type EmployeeProfile } from './PayrollSection';
-import { type ContractType } from '@/components/Employees/employee-form';
+import { type ContractType, type SalaryGradeOption } from '@/components/Employees/employee-form';
 
 interface Permission {
     id: string;
@@ -39,10 +39,11 @@ interface User {
 interface ShowProps {
     user: User;
     contractTypes: ContractType[];
+    salaryGrades: SalaryGradeOption[];
     canManagePayroll: boolean;
 }
 
-export default function Show({ user, contractTypes, canManagePayroll }: Readonly<ShowProps>) {
+export default function Show({ user, contractTypes, salaryGrades, canManagePayroll }: Readonly<ShowProps>) {
     const formatGender = (gender: string) => {
         if (gender === 'M' || gender === 'male') return 'Masculin';
         if (gender === 'F' || gender === 'female') return 'Féminin';
@@ -173,6 +174,7 @@ export default function Show({ user, contractTypes, canManagePayroll }: Readonly
                                 userName={`${user.firstname} ${user.lastname}`}
                                 profile={user.employee_profile}
                                 contractTypes={contractTypes}
+                                salaryGrades={salaryGrades}
                                 canManage={canManagePayroll}
                             />
                         )}
