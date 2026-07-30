@@ -18,6 +18,7 @@ const initialValues: SchoolFormData = {
     city: '',
     po_box: '',
     active: true,
+    portal_enabled: true,
     class_type_ids: [],
 };
 
