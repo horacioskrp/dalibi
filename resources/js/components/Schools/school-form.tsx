@@ -1,4 +1,4 @@
-import { Building2, ImageIcon, Mail, MapPin, MapPinned, Phone, Quote, Save, ShieldCheck, WalletCards } from 'lucide-react';
+import { Building2, ImageIcon, Mail, MapPin, MapPinned, Phone, Quote, Save, ShieldCheck, Smartphone, WalletCards } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -23,6 +23,7 @@ export interface SchoolFormData {
     city: string;
     po_box: string;
     active: boolean;
+    portal_enabled: boolean;
     class_type_ids: string[];
 }
 
@@ -330,6 +331,19 @@ export function SchoolForm({ mode, data, errors, processing, currentLogoUrl, cla
                 <div className="flex items-center gap-3">
                     <Checkbox id="active" checked={data.active} onCheckedChange={checked => setData('active', checked === true)} />
                     <label htmlFor="active" className="text-sm font-medium text-gray-700">École active</label>
+                </div>
+
+                <div className="flex items-start gap-3 rounded-xl bg-white/70 px-3 py-3 ring-1 ring-amber-100">
+                    <Checkbox id="portal_enabled" checked={data.portal_enabled} onCheckedChange={checked => setData('portal_enabled', checked === true)} className="mt-0.5" />
+                    <label htmlFor="portal_enabled" className="cursor-pointer">
+                        <span className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                            <Smartphone className="w-4 h-4 text-amber-600" />
+                            Accès au portail parents / élèves
+                        </span>
+                        <span className="mt-0.5 block text-xs text-gray-400">
+                            Lorsque désactivé, la connexion et toutes les fonctionnalités de l'espace parents/élèves sont bloquées.
+                        </span>
+                    </label>
                 </div>
             </div>
 
