@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Constants\Roles;
+use App\Models\School;
 use App\Models\Student;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
@@ -18,6 +19,8 @@ class PortalStudentTest extends TestCase
     {
         parent::setUp();
         $this->seed(RolesAndPermissionsSeeder::class);
+        // Le portail nécessite une école avec l'accès activé (verrou EnsurePortalEnabled).
+        School::factory()->create(['portal_enabled' => true]);
     }
 
     private function staff(string $role): User
