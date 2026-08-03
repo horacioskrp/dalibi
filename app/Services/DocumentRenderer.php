@@ -369,6 +369,28 @@ class DocumentRenderer
         HTML;
     }
 
+    /**
+     * CSS de l'en-tête officiel (ministériel + logo), réutilisable par des
+     * documents qui n'embarquent pas tout le baseCss (ex. bulletin de paie).
+     */
+    public function headerCss(): string
+    {
+        return <<<CSS
+        .doc-mheader { margin-bottom: 20px; border-bottom: 1px solid #000; padding-bottom: 10px;
+            font-family: 'DejaVu Serif', 'Times New Roman', serif; color: #1a1a1a; }
+        .mh-table { width: 100%; border-collapse: collapse; }
+        .mh-col { vertical-align: middle; text-align: center; padding: 0 6px; }
+        .mh-logo { width: 20%; }
+        .mh-logo-img { max-width: 68px; max-height: 68px; object-fit: contain; }
+        .mh-ministere { font-size: 11px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.4px; }
+        .mh-school { font-size: 15px; font-weight: bold; text-transform: uppercase; margin: 3px 0; }
+        .mh-info { font-size: 10.5px; }
+        .mh-republic { font-size: 12.5px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.8px; }
+        .mh-motto { font-size: 11px; font-style: italic; font-weight: bold; margin-top: 2px; }
+        .mh-sep { width: 50px; height: 1px; background: #000; margin: 4px auto; }
+        CSS;
+    }
+
     protected function baseCss(): string
     {
         return <<<CSS
