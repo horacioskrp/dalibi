@@ -78,6 +78,8 @@ export const mainNavItems: NavItem[] = [
         href: '#',
         icon: Briefcase,
         items: [
+            { title: 'Vue d\'ensemble', href: route('payroll.overview'), icon: LayoutGrid, permission: 'view_payroll' },
+            { title: 'Personnel', href: route('personnel.index'), icon: Users, permission: 'view_employees' },
             { title: 'Cycles de paie', href: route('pay-runs.index'), icon: Receipt, permission: 'view_payroll' },
             { title: 'Grilles salariales', href: route('salary-grades.index'), icon: Layers, permission: 'view_salary_grades' },
             { title: 'Rubriques de paie', href: route('salary-components.index'), icon: Coins, permission: 'view_salary_components' },

@@ -28,6 +28,7 @@
     </style>
 </head>
 <body>
+    {!! $watermarkHtml !!}
     {!! $headerHtml !!}
 
     <div class="title">BULLETIN DE PAIE</div>
