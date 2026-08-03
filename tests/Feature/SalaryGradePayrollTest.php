@@ -124,6 +124,37 @@ class SalaryGradePayrollTest extends TestCase
         $this->assertDatabaseHas('salary_grades', ['name' => 'Enseignant A1', 'base_amount' => 180000]);
     }
 
+    public function test_bulk_assign_attaches_selected_and_detaches_others(): void
+    {
+        $this->actingAs($this->admin());
+        $gradeA = SalaryGrade::create(['name' => 'A1', 'base_amount' => 100000, 'active' => true]);
+        $gradeB = SalaryGrade::create(['name' => 'B1', 'base_amount' => 120000, 'active' => true]);
+
+        $e1 = $this->employee();                                       // sans grille
+        $e2 = $this->employee(['salary_grade_id' => $gradeA->id]);     // déjà sur A → à détacher
+        $e3 = $this->employee(['salary_grade_id' => $gradeB->id]);     // sur B → déplacé vers A
+
+        // On affecte à A : e1 et e3 (e2 décoché → détaché)
+        $this->put(route('salary-grades.employees.sync', $gradeA->id), [
+            'employee_ids' => [$e1->id, $e3->id],
+        ])->assertRedirect(route('salary-grades.index'));
+
+        $this->assertSame($gradeA->id, $e1->fresh()->salary_grade_id);
+        $this->assertNull($e2->fresh()->salary_grade_id);
+        $this->assertSame($gradeA->id, $e3->fresh()->salary_grade_id);
+    }
+
+    public function test_bulk_assign_with_empty_selection_detaches_all(): void
+    {
+        $this->actingAs($this->admin());
+        $grade = SalaryGrade::create(['name' => 'A1', 'base_amount' => 100000, 'active' => true]);
+        $emp   = $this->employee(['salary_grade_id' => $grade->id]);
+
+        $this->put(route('salary-grades.employees.sync', $grade->id), ['employee_ids' => []])->assertRedirect();
+
+        $this->assertNull($emp->fresh()->salary_grade_id);
+    }
+
     public function test_allowance_records_its_author_for_traceability(): void
     {
         $admin = $this->admin();
