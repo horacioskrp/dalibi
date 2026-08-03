@@ -1,6 +1,12 @@
 import { Head, router } from '@inertiajs/react';
-import { Plus, Receipt, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
+import { Plus, Receipt, ChevronLeft, ChevronRight, Eye, Search } from 'lucide-react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/icon-button';
+import { Input } from '@/components/ui/input';
+import {
+    Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from '@/components/ui/table';
 import { useMoney } from '@/helpers/money';
 import { route } from '@/helpers/route';
 import AppLayout from '@/layouts/app-layout';
@@ -25,7 +31,11 @@ interface Paginated<T> {
     total: number;
 }
 
-interface Props { payRuns: Paginated<PayRun>; }
+interface Props {
+    payRuns: Paginated<PayRun>;
+    years: number[];
+    filters: { status?: string; period_year?: string; period_month?: string; search?: string };
+}
 
 const MONTHS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
@@ -36,9 +46,31 @@ const STATUS: Record<string, { label: string; cls: string }> = {
     cancelled: { label: 'Annulé',    cls: 'bg-red-100 text-red-600' },
 };
 
-export default function Index({ payRuns }: Readonly<Props>) {
+export default function Index({ payRuns, years, filters }: Readonly<Props>) {
     const fmt = useMoney();
-    const goToPage = (page: number) => router.get(route('pay-runs.index'), { page: String(page) }, { preserveState: true, replace: true });
+    const [search, setSearch] = useState(filters.search ?? '');
+    const [status, setStatus] = useState(filters.status ?? '');
+    const [year, setYear] = useState(filters.period_year ?? '');
+    const [month, setMonth] = useState(filters.period_month ?? '');
+
+    const apply = (over: Record<string, string | undefined> = {}) => {
+        router.get(route('pay-runs.index'), {
+            search: (over.search !== undefined ? over.search : search) || undefined,
+            status: (over.status !== undefined ? over.status : status) || undefined,
+            period_year: (over.period_year !== undefined ? over.period_year : year) || undefined,
+            period_month: (over.period_month !== undefined ? over.period_month : month) || undefined,
+        }, { preserveState: true, replace: true });
+    };
+
+    const clear = () => {
+        setSearch(''); setStatus(''); setYear(''); setMonth('');
+        router.get(route('pay-runs.index'), {}, { preserveState: true, replace: true });
+    };
+
+    const goToPage = (page: number) => router.get(route('pay-runs.index'), { ...filters, page: String(page) }, { preserveState: true, replace: true });
+
+    const hasFilters = !!(search || status || year || month);
+    const selectCls = "px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
 
     return (
         <AppLayout>
@@ -56,50 +88,101 @@ export default function Index({ payRuns }: Readonly<Props>) {
                     </Button>
                 </div>
 
-                <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                    {payRuns.data.length === 0 ? (
-                        <div className="px-5 py-16 text-center text-gray-400">
-                            <Receipt className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                            <p className="text-sm">Aucun cycle de paie</p>
+                {/* Filtres */}
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                    <div className="flex flex-wrap items-center gap-3">
+                        <div className="relative flex-1 min-w-[220px]">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                            <Input
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                                onKeyDown={e => e.key === 'Enter' && apply()}
+                                placeholder="Référence, libellé..."
+                                className="pl-10 border-gray-300"
+                            />
                         </div>
-                    ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                                <thead>
-                                    <tr className="border-b border-gray-100 bg-gray-50">
-                                        <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Période</th>
-                                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Référence</th>
-                                        <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Bulletins</th>
-                                        <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Total net</th>
-                                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Statut</th>
-                                        <th className="px-4 py-3 w-16"></th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-50">
-                                    {payRuns.data.map(run => {
+
+                        <select value={status} onChange={e => { setStatus(e.target.value); apply({ status: e.target.value }); }} className={selectCls}>
+                            <option value="">Tous les statuts</option>
+                            <option value="draft">Brouillon</option>
+                            <option value="validated">Validé</option>
+                            <option value="paid">Payé</option>
+                            <option value="cancelled">Annulé</option>
+                        </select>
+
+                        <select value={year} onChange={e => { setYear(e.target.value); apply({ period_year: e.target.value }); }} className={selectCls}>
+                            <option value="">Toutes les années</option>
+                            {years.map(y => <option key={y} value={y}>{y}</option>)}
+                        </select>
+
+                        <select value={month} onChange={e => { setMonth(e.target.value); apply({ period_month: e.target.value }); }} className={selectCls}>
+                            <option value="">Tous les mois</option>
+                            {MONTHS.slice(1).map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
+                        </select>
+
+                        <Button onClick={() => apply()} className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
+                            <Search className="w-4 h-4" /> Rechercher
+                        </Button>
+                        {hasFilters && (
+                            <Button variant="outline" onClick={clear} className="border-gray-300 text-gray-700">Réinit.</Button>
+                        )}
+                    </div>
+                </div>
+
+                {/* Tableau */}
+                <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                        <p className="text-sm text-gray-600"><span className="font-semibold">{payRuns.total}</span> cycle(s){hasFilters && <span className="text-blue-500 ml-2">— filtrés</span>}</p>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader className="bg-gray-50">
+                                <TableRow className="border-b border-gray-200">
+                                    <TableHead className="font-semibold text-gray-900">Période</TableHead>
+                                    <TableHead className="font-semibold text-gray-900">Référence</TableHead>
+                                    <TableHead className="text-center font-semibold text-gray-900">Bulletins</TableHead>
+                                    <TableHead className="text-right font-semibold text-gray-900">Total net</TableHead>
+                                    <TableHead className="font-semibold text-gray-900">Statut</TableHead>
+                                    <TableHead className="text-center font-semibold text-gray-900 w-20">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {payRuns.data.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={6} className="text-center py-12 text-gray-500">
+                                            <div className="flex flex-col items-center gap-2">
+                                                <Receipt className="w-12 h-12 text-gray-300" />
+                                                <p className="text-lg">Aucun cycle de paie</p>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    payRuns.data.map(run => {
                                         const badge = STATUS[run.status] ?? STATUS.draft;
                                         return (
-                                            <tr key={run.id} className="hover:bg-gray-50/50 cursor-pointer" onClick={() => router.get(route('pay-runs.show', run.id))}>
-                                                <td className="px-5 py-3 font-medium text-gray-900">
+                                            <TableRow key={run.id} className="border-b border-gray-100 hover:bg-blue-50/40 transition-colors cursor-pointer" onClick={() => router.get(route('pay-runs.show', run.id))}>
+                                                <TableCell className="font-semibold text-gray-900">
                                                     {MONTHS[run.period_month]} {run.period_year}
-                                                    {run.label && <span className="block text-xs text-gray-400">{run.label}</span>}
-                                                </td>
-                                                <td className="px-4 py-3 text-gray-500">{run.reference}</td>
-                                                <td className="px-4 py-3 text-center text-gray-600">{run.payslips_count}</td>
-                                                <td className="px-4 py-3 text-right font-semibold text-gray-900">{fmt(run.total_net)}</td>
-                                                <td className="px-4 py-3"><span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full ${badge.cls}`}>{badge.label}</span></td>
-                                                <td className="px-4 py-3 text-right">
-                                                    <Eye className="w-4 h-4 text-gray-400 inline" />
-                                                </td>
-                                            </tr>
+                                                    {run.label && <span className="block text-xs font-normal text-gray-400">{run.label}</span>}
+                                                </TableCell>
+                                                <TableCell className="text-gray-500">{run.reference}</TableCell>
+                                                <TableCell className="text-center text-gray-700">{run.payslips_count}</TableCell>
+                                                <TableCell className="text-right font-semibold text-gray-900">{fmt(run.total_net)}</TableCell>
+                                                <TableCell>
+                                                    <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full ${badge.cls}`}>{badge.label}</span>
+                                                </TableCell>
+                                                <TableCell className="text-center" onClick={e => e.stopPropagation()}>
+                                                    <IconButton label="Voir le détail" icon={<Eye className="w-4 h-4" />} onClick={() => router.get(route('pay-runs.show', run.id))} />
+                                                </TableCell>
+                                            </TableRow>
                                         );
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
+                                    })
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
 
-                    <div className="px-5 py-3.5 border-t border-gray-100 flex items-center justify-between gap-4 flex-wrap">
+                    <div className="px-4 py-3 border-t border-gray-100 flex items-center justify-between gap-4 flex-wrap">
                         {payRuns.total > 0 && <p className="text-xs text-gray-400">{payRuns.from}–{payRuns.to} sur {payRuns.total}</p>}
                         {payRuns.last_page > 1 && (
                             <div className="flex items-center gap-1.5">

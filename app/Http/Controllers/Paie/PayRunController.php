@@ -19,14 +19,26 @@ class PayRunController extends Controller
 {
     public function __construct(private readonly PayrollService $payroll) {}
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        $payRuns = PayRun::query()
+            ->withCount('payslips')
+            ->when($request->status, fn ($q) => $q->where('status', $request->status))
+            ->when($request->period_year, fn ($q) => $q->where('period_year', $request->period_year))
+            ->when($request->period_month, fn ($q) => $q->where('period_month', $request->period_month))
+            ->when($request->search, function ($q) use ($request) {
+                $term = '%' . $request->search . '%';
+                $q->where(fn ($s) => $s->where('reference', 'like', $term)->orWhere('label', 'like', $term));
+            })
+            ->orderByDesc('period_year')
+            ->orderByDesc('period_month')
+            ->paginate(20)
+            ->withQueryString();
+
         return Inertia::render('Paie/PayRuns/Index', [
-            'payRuns' => PayRun::query()
-                ->withCount('payslips')
-                ->orderByDesc('period_year')
-                ->orderByDesc('period_month')
-                ->paginate(20),
+            'payRuns' => $payRuns,
+            'years'   => PayRun::query()->select('period_year')->distinct()->orderByDesc('period_year')->pluck('period_year'),
+            'filters' => $request->only(['status', 'period_year', 'period_month', 'search']),
         ]);
     }
 
