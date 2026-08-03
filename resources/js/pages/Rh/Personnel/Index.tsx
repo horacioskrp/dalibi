@@ -227,7 +227,7 @@ export default function Index({ employees, salaryGrades, ungradedCount, assignab
 
             {/* Modal : ajouter au personnel */}
             <Dialog open={addOpen} onOpenChange={setAddOpen}>
-                <DialogContent>
+                <DialogContent onOpenAutoFocus={e => e.preventDefault()}>
                     <DialogHeader><DialogTitle>Ajouter au personnel</DialogTitle></DialogHeader>
                     <form onSubmit={submitAdd} className="space-y-3">
                         <div>
