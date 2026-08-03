@@ -68,13 +68,17 @@ interface User {
 
 interface ShowProps {
     user: User;
+    activeYear: string | null;
     contractTypes: ContractType[];
     salaryGrades: SalaryGradeOption[];
     canManagePayroll: boolean;
 }
 
-export default function Show({ user, contractTypes, salaryGrades, canManagePayroll }: Readonly<ShowProps>) {
+export default function Show({ user, activeYear, contractTypes, salaryGrades, canManagePayroll }: Readonly<ShowProps>) {
     const fmt = useMoney();
+    const yearBadge = activeYear
+        ? <span className="ml-2 text-xs font-medium px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">{activeYear}</span>
+        : null;
     const affectations = user.subject_assignments ?? [];
     const slots = user.timetable_slots ?? [];
     const payslips = user.employee_profile?.payslips ?? [];
@@ -218,7 +222,7 @@ export default function Show({ user, contractTypes, salaryGrades, canManagePayro
                         <div className="bg-white rounded-lg border p-6">
                             <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                                 <BookOpen className="w-5 h-5 text-blue-600" />
-                                Affectations matières ({affectations.length})
+                                Affectations matières ({affectations.length}){yearBadge}
                             </h2>
                             {affectations.length === 0 ? (
                                 <p className="text-gray-500 text-sm">Aucune affectation de matière.</p>
@@ -256,7 +260,7 @@ export default function Show({ user, contractTypes, salaryGrades, canManagePayro
                         <div className="bg-white rounded-lg border p-6">
                             <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                                 <CalendarRange className="w-5 h-5 text-blue-600" />
-                                Emploi du temps ({slots.length})
+                                Emploi du temps ({slots.length}){yearBadge}
                             </h2>
                             {slots.length === 0 ? (
                                 <p className="text-gray-500 text-sm">Aucun créneau assigné.</p>
