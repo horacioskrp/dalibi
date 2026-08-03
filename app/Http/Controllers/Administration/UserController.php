@@ -102,6 +102,9 @@ class UserController extends Controller
 
     public function show(User $user): Response
     {
+        $activeYear   = \App\Models\AcademicYear::where('active', true)->first(['id', 'year']);
+        $activeYearId = $activeYear?->id;
+
         $user->load([
             'roles.permissions',
             'employeeProfile.salaryGrade:id,name,base_amount',
@@ -109,19 +112,21 @@ class UserController extends Controller
             'employeeProfile.allowances.createdBy:id,firstname,lastname',
             'employeeProfile.payslips' => fn ($q) => $q->orderByDesc('created_at')->limit(6),
             'employeeProfile.payslips.payRun:id,reference,period_month,period_year,status',
-            // Affectations matières (enseignant)
-            'subjectAssignments' => fn ($q) => $q->orderByDesc('academic_year_id'),
+            // Affectations matières de l'année active (enseignant)
+            'subjectAssignments' => fn ($q) => $q->when($activeYearId, fn ($sub) => $sub->where('academic_year_id', $activeYearId)),
             'subjectAssignments.subject:id,name',
             'subjectAssignments.classroom:id,name',
             'subjectAssignments.academicYear:id,year',
-            // Emploi du temps (enseignant)
-            'timetableSlots' => fn ($q) => $q->orderBy('day_of_week')->orderBy('start_time'),
+            // Emploi du temps de l'année active (enseignant)
+            'timetableSlots' => fn ($q) => $q->when($activeYearId, fn ($sub) => $sub->where('academic_year_id', $activeYearId))
+                ->orderBy('day_of_week')->orderBy('start_time'),
             'timetableSlots.subject:id,name',
             'timetableSlots.classroom:id,name',
         ]);
 
         return Inertia::render('Administration/Users/Show', [
             'user'             => $user,
+            'activeYear'       => $activeYear?->year,
             'contractTypes'    => \App\Constants\ContractTypes::options(),
             'salaryGrades'     => \App\Models\SalaryGrade::where('active', true)->orderBy('sort_order')->orderBy('category')->get(['id', 'name', 'base_amount']),
             'canManagePayroll' => auth()->user()->can('edit_employees'),
