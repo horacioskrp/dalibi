@@ -1,4 +1,4 @@
-import { BookOpen, Calendar, Clock, ClipboardList, GraduationCap, LayoutGrid, Layers, Settings, Tag, Users, Shield, Lock, Wallet, Percent, DollarSign, UserCircle, TrendingUp, ArrowLeftRight, PieChart, FileText, ListChecks, NotebookPen, SlidersHorizontal, AlertCircle, CalendarRange, UserCheck, BarChart3, ShieldCheck, HardDrive, FileBadge, ScanLine, DatabaseBackup, Archive, Globe, TrendingDown } from 'lucide-react';
+import { BookOpen, Calendar, Clock, ClipboardList, GraduationCap, LayoutGrid, Layers, Settings, Tag, Users, Shield, Lock, Wallet, Percent, DollarSign, UserCircle, TrendingUp, ArrowLeftRight, PieChart, FileText, ListChecks, NotebookPen, SlidersHorizontal, AlertCircle, CalendarRange, UserCheck, BarChart3, ShieldCheck, HardDrive, FileBadge, ScanLine, DatabaseBackup, Archive, Globe, TrendingDown, Briefcase, Receipt, Coins } from 'lucide-react';
 import { route } from '@/helpers/route';
 import type { NavItem } from '@/types';
 
@@ -71,6 +71,16 @@ export const mainNavItems: NavItem[] = [
             { title: 'Situation par classe', href: route('accounting.situation'), icon: PieChart, permission: 'view_finances' },
             { title: 'Caisses', href: route('cash-accounts.index'), icon: Wallet, permission: 'view_cash_accounts' },
             { title: 'Vérifier un reçu', href: route('receipts.verify'), icon: ScanLine, permission: 'view_invoices' },
+        ],
+    },
+    {
+        title: 'Personnel & Paie',
+        href: '#',
+        icon: Briefcase,
+        items: [
+            { title: 'Cycles de paie', href: route('pay-runs.index'), icon: Receipt, permission: 'view_payroll' },
+            { title: 'Grilles salariales', href: route('salary-grades.index'), icon: Layers, permission: 'view_salary_grades' },
+            { title: 'Rubriques de paie', href: route('salary-components.index'), icon: Coins, permission: 'view_salary_components' },
         ],
     },
     {
