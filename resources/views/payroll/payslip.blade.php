@@ -5,6 +5,8 @@
     <style>
         * { font-family: DejaVu Sans, sans-serif; }
         body { color: #1f2937; font-size: 12px; margin: 24px; }
+        /* En-tête officiel partagé (même style que les documents administratifs) */
+        {!! $headerCss !!}
         .title { text-align: center; font-size: 16px; font-weight: bold; margin: 10px 0 2px; letter-spacing: 1px; }
         .subtitle { text-align: center; color: #6b7280; margin-bottom: 16px; }
         .meta { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
