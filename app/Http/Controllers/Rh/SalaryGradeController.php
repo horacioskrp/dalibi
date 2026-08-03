@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Rh;
 
 use App\Http\Controllers\Controller;
+use App\Models\EmployeeProfile;
 use App\Models\PayrollSetting;
 use App\Models\SalaryGrade;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -54,6 +56,54 @@ class SalaryGradeController extends Controller
         $salaryGrade->delete();
 
         return back()->with('success', 'Grille supprimée.');
+    }
+
+    /** Page d'affectation groupée d'employés à cette grille. */
+    public function employees(SalaryGrade $salaryGrade): Response
+    {
+        $employees = EmployeeProfile::with(['user:id,firstname,lastname', 'salaryGrade:id,name'])
+            ->where('status', 'active')
+            ->get()
+            ->map(fn (EmployeeProfile $e) => [
+                'id'            => $e->id,
+                'name'          => $e->fullName() ?: '—',
+                'job_title'     => $e->job_title,
+                'current_grade' => $e->salaryGrade ? ['id' => $e->salaryGrade->id, 'name' => $e->salaryGrade->name] : null,
+            ])
+            ->sortBy('name')
+            ->values();
+
+        return Inertia::render('Rh/SalaryGrades/Employees', [
+            'grade'       => $salaryGrade->only(['id', 'name', 'base_amount']),
+            'employees'   => $employees,
+            'assignedIds' => EmployeeProfile::where('salary_grade_id', $salaryGrade->id)->pluck('id'),
+        ]);
+    }
+
+    /** Rattache les employés sélectionnés à la grille et détache les autres. */
+    public function syncEmployees(Request $request, SalaryGrade $salaryGrade): RedirectResponse
+    {
+        $data = $request->validate([
+            'employee_ids'   => ['array'],
+            'employee_ids.*' => ['uuid', 'exists:employee_profiles,id'],
+        ]);
+        $ids = $data['employee_ids'] ?? [];
+
+        DB::transaction(function () use ($ids, $salaryGrade): void {
+            // Détache ceux qui étaient sur cette grille mais ne sont plus cochés.
+            $detach = EmployeeProfile::where('salary_grade_id', $salaryGrade->id);
+            if (! empty($ids)) {
+                $detach->whereNotIn('id', $ids);
+            }
+            $detach->update(['salary_grade_id' => null]);
+
+            // Rattache les cochés (les déplace depuis une autre grille au besoin).
+            if (! empty($ids)) {
+                EmployeeProfile::whereIn('id', $ids)->update(['salary_grade_id' => $salaryGrade->id]);
+            }
+        });
+
+        return redirect()->route('salary-grades.index')->with('success', 'Affectations mises à jour.');
     }
 
     /** Met à jour la règle d'ancienneté (réglages de paie). */
