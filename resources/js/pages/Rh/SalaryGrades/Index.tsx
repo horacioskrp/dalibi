@@ -1,5 +1,5 @@
 import { Head, router, useForm } from '@inertiajs/react';
-import { Layers, Plus, Pencil, Trash2, Clock, Save, Users } from 'lucide-react';
+import { Layers, Plus, Pencil, Trash2, Clock, Save, Users, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import {
     AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -31,12 +31,30 @@ interface Settings {
     seniority_cap_percent: number;
 }
 
-interface Props { grades: Grade[]; settings: Settings; }
+interface Paginated<T> { data: T[]; current_page: number; last_page: number; from: number; to: number; total: number; }
+interface Props {
+    grades: Paginated<Grade>;
+    perPage: number;
+    filters: { search?: string; status?: string };
+    settings: Settings;
+}
 
-export default function Index({ grades, settings }: Readonly<Props>) {
+const PER_PAGE_OPTIONS = [10, 25, 50, 100];
+
+export default function Index({ grades, perPage, filters, settings }: Readonly<Props>) {
     const fmt = useMoney();
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [seniorityOpen, setSeniorityOpen] = useState(false);
+    const [search, setSearch] = useState(filters.search ?? '');
+    const [status, setStatus] = useState(filters.status ?? '');
+
+    const apply = () => router.get(route('salary-grades.index'), {
+        search: search || undefined, status: status || undefined, per_page: String(perPage),
+    }, { preserveState: true, replace: true });
+    const clear = () => { setSearch(''); setStatus(''); router.get(route('salary-grades.index'), {}, { preserveState: true, replace: true }); };
+    const goToPage = (page: number) => router.get(route('salary-grades.index'), { ...filters, per_page: String(perPage), page: String(page) }, { preserveState: true, replace: true });
+    const changePerPage = (value: number) => router.get(route('salary-grades.index'), { ...filters, per_page: String(value), page: '1' }, { preserveState: true, replace: true });
+    const selectCls = "px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
 
     const senForm = useForm({
         seniority_enabled: settings.seniority_enabled,
@@ -79,12 +97,35 @@ export default function Index({ grades, settings }: Readonly<Props>) {
                         : <span>Prime d'ancienneté <strong className="text-gray-500">désactivée</strong>.</span>}
                 </div>
 
+                {/* Filtres */}
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                    <div className="flex flex-wrap items-center gap-3">
+                        <div className="relative flex-1 min-w-[220px]">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                            <Input value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && apply()} placeholder="Nom, catégorie..." className="pl-10 border-gray-300" />
+                        </div>
+                        <select value={status} onChange={e => setStatus(e.target.value)} className={selectCls}>
+                            <option value="">Toutes</option>
+                            <option value="active">Actives</option>
+                            <option value="inactive">Inactives</option>
+                        </select>
+                        <Button onClick={apply} className="bg-blue-600 hover:bg-blue-700 text-white gap-2"><Search className="w-4 h-4" /> Rechercher</Button>
+                        {(search || status) && <Button variant="outline" onClick={clear} className="border-gray-300 text-gray-700">Réinit.</Button>}
+                    </div>
+                </div>
+
                 {/* Table */}
                 <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div className="px-5 py-3.5 border-b border-gray-100">
-                        <p className="text-sm font-semibold text-gray-700">{grades.length} grille(s)</p>
+                    <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100 gap-4 flex-wrap">
+                        <p className="text-sm font-semibold text-gray-700">{grades.total} grille(s)</p>
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <span>Lignes par page :</span>
+                            <select value={perPage} onChange={e => changePerPage(Number(e.target.value))} className="h-8 px-2 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                {PER_PAGE_OPTIONS.map(n => <option key={n} value={n}>{n}</option>)}
+                            </select>
+                        </div>
                     </div>
-                    {grades.length === 0 ? (
+                    {grades.data.length === 0 ? (
                         <div className="px-5 py-16 text-center text-gray-400">
                             <Layers className="w-10 h-10 mx-auto mb-3 opacity-30" />
                             <p className="text-sm">Aucune grille salariale</p>
@@ -106,7 +147,7 @@ export default function Index({ grades, settings }: Readonly<Props>) {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50">
-                                    {grades.map(g => (
+                                    {grades.data.map(g => (
                                         <tr key={g.id} className="hover:bg-gray-50/50">
                                             <td className="px-5 py-3 font-medium text-gray-900">{g.name}</td>
                                             <td className="px-4 py-3 text-gray-600">
@@ -136,6 +177,17 @@ export default function Index({ grades, settings }: Readonly<Props>) {
                             </table>
                         </div>
                     )}
+
+                    <div className="px-5 py-3.5 border-t border-gray-100 flex items-center justify-between gap-4 flex-wrap">
+                        {grades.total > 0 && <p className="text-xs text-gray-400">{grades.from}–{grades.to} sur {grades.total}</p>}
+                        {grades.last_page > 1 && (
+                            <div className="flex items-center gap-1.5">
+                                <Button size="sm" variant="outline" className="h-8 w-8 p-0" disabled={grades.current_page === 1} onClick={() => goToPage(grades.current_page - 1)}><ChevronLeft className="w-4 h-4" /></Button>
+                                <span className="text-xs text-gray-500 px-2">{grades.current_page} / {grades.last_page}</span>
+                                <Button size="sm" variant="outline" className="h-8 w-8 p-0" disabled={grades.current_page === grades.last_page} onClick={() => goToPage(grades.current_page + 1)}><ChevronRight className="w-4 h-4" /></Button>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 

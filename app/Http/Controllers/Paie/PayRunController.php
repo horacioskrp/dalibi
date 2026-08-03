@@ -21,6 +21,8 @@ class PayRunController extends Controller
 
     public function index(Request $request): Response
     {
+        $perPage = in_array((int) $request->per_page, [10, 25, 50, 100], true) ? (int) $request->per_page : 25;
+
         $payRuns = PayRun::query()
             ->withCount('payslips')
             ->when($request->status, fn ($q) => $q->where('status', $request->status))
@@ -32,12 +34,13 @@ class PayRunController extends Controller
             })
             ->orderByDesc('period_year')
             ->orderByDesc('period_month')
-            ->paginate(20)
+            ->paginate($perPage)
             ->withQueryString();
 
         return Inertia::render('Paie/PayRuns/Index', [
             'payRuns' => $payRuns,
             'years'   => PayRun::query()->select('period_year')->distinct()->orderByDesc('period_year')->pluck('period_year'),
+            'perPage' => $perPage,
             'filters' => $request->only(['status', 'period_year', 'period_month', 'search']),
         ]);
     }
