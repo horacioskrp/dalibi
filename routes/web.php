@@ -21,6 +21,7 @@ use App\Http\Controllers\Rh\SalaryGradeController;
 use App\Http\Controllers\Rh\EmployeeAllowanceController;
 use App\Http\Controllers\Paie\PayRunController;
 use App\Http\Controllers\Paie\PayslipController;
+use App\Http\Controllers\Rh\PersonnelController;
 use App\Http\Controllers\Comptabilite\InvoiceController;
 use App\Http\Controllers\Comptabilite\SituationController;
 use App\Http\Controllers\Comptabilite\TransactionController;
@@ -175,6 +176,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('cash-accounts/{cashAccount}', [CashAccountController::class, 'destroy'])->middleware('can:delete_cash_accounts')->name('cash-accounts.destroy');
 
     /* ── Personnel & Paie ─────────────────────────────────────────────── */
+    // Hub : vue d'ensemble + liste du personnel (assignation de grille en ligne)
+    Route::get('payroll/overview', [PersonnelController::class, 'overview'])->middleware('can:view_payroll')->name('payroll.overview');
+    Route::get('personnel', [PersonnelController::class, 'index'])->middleware('can:view_employees')->name('personnel.index');
+    Route::post('personnel', [PersonnelController::class, 'store'])->middleware('can:create_employees')->name('personnel.store');
+    Route::put('personnel/{employee}/grade', [PersonnelController::class, 'assignGrade'])->middleware('can:edit_employees')->name('personnel.grade');
+
     // Profil paie rattaché à un utilisateur (Administration → Utilisateurs)
     Route::put('users/{user}/payroll', [UserPayrollController::class, 'update'])->middleware('can:edit_employees')->name('users.payroll.update');
     Route::delete('users/{user}/payroll', [UserPayrollController::class, 'destroy'])->middleware('can:delete_employees')->name('users.payroll.destroy');
