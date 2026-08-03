@@ -125,6 +125,7 @@ export default function Index({ grades, settings }: Readonly<Props>) {
                                             </td>
                                             <td className="px-4 py-3">
                                                 <div className="flex items-center justify-end gap-1">
+                                                    <button onClick={() => router.get(route('salary-grades.employees', g.id))} className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50" aria-label="Affecter des employés" title="Affecter des employés"><Users className="w-4 h-4" /></button>
                                                     <button onClick={() => router.get(route('salary-grades.edit', g.id))} className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50" aria-label="Modifier"><Pencil className="w-4 h-4" /></button>
                                                     <button onClick={() => setDeletingId(g.id)} className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50" aria-label="Supprimer"><Trash2 className="w-4 h-4" /></button>
                                                 </div>

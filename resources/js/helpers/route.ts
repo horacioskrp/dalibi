@@ -393,6 +393,8 @@ export function route(name: string, params?: any): string {
         'salary-grades.create':   '/salary-grades/create',
         'salary-grades.store':    '/salary-grades',
         'salary-grades.settings': '/salary-grades/settings',
+        'salary-grades.employees':      `/salary-grades/${params}/employees`,
+        'salary-grades.employees.sync': `/salary-grades/${params}/employees`,
         'salary-grades.edit':     `/salary-grades/${params}/edit`,
         'salary-grades.update':   `/salary-grades/${params}`,
         'salary-grades.destroy':  `/salary-grades/${params}`,
