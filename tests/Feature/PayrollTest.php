@@ -136,6 +136,21 @@ class PayrollTest extends TestCase
         $this->assertSame('application/pdf', $res->headers->get('content-type'));
     }
 
+    public function test_show_paginates_payslips(): void
+    {
+        $this->actingAs($this->admin());
+        $this->employee(100000);
+        $this->employee(80000);
+        $run = app(PayrollService::class)->generate(7, 2026);
+
+        $this->get(route('pay-runs.show', $run->id))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Paie/PayRuns/Show')
+                ->has('payslips.data', 2)
+                ->has('payslips.current_page'));
+    }
+
     public function test_index_requires_payroll_permission(): void
     {
         $teacher = tap(User::factory()->create(), fn ($u) => $u->assignRole(Roles::TEACHER));

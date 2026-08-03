@@ -2,6 +2,7 @@ import { Head, router } from '@inertiajs/react';
 import {
     ArrowLeft, Receipt, FileDown, Pencil, Plus, Trash2, CheckCircle2,
     Banknote, XCircle, AlertTriangle, TrendingUp, TrendingDown, Wallet,
+    Search, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { useState } from 'react';
 import {
@@ -43,9 +44,21 @@ interface PayRun {
     total_deductions: number;
     total_net: number;
     cash_account?: { id: string; name: string; type: string } | null;
-    payslips: Payslip[];
 }
-interface Props { payRun: PayRun; cashAccounts: CashAccount[]; }
+interface Paginated<T> {
+    data: T[];
+    current_page: number;
+    last_page: number;
+    from: number;
+    to: number;
+    total: number;
+}
+interface Props {
+    payRun: PayRun;
+    payslips: Paginated<Payslip>;
+    cashAccounts: CashAccount[];
+    filters: { search?: string };
+}
 
 const MONTHS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 const STATUS: Record<string, { label: string; cls: string }> = {
@@ -64,7 +77,7 @@ function StatCard({ title, value, color }: { title: string; value: string; color
     );
 }
 
-export default function Show({ payRun, cashAccounts }: Readonly<Props>) {
+export default function Show({ payRun, payslips, cashAccounts, filters }: Readonly<Props>) {
     const fmt = useMoney();
     const badge = STATUS[payRun.status] ?? STATUS.draft;
     const isDraft = payRun.status === 'draft';
@@ -76,6 +89,10 @@ export default function Show({ payRun, cashAccounts }: Readonly<Props>) {
     const [payOpen, setPayOpen] = useState(false);
     const [cashId, setCashId] = useState(cashAccounts[0]?.id ?? '');
     const [confirm, setConfirm] = useState<null | 'validate' | 'cancel'>(null);
+    const [search, setSearch] = useState(filters.search ?? '');
+
+    const applySearch = () => router.get(route('pay-runs.show', payRun.id), { search: search || undefined }, { preserveState: true, replace: true });
+    const goToPage = (page: number) => router.get(route('pay-runs.show', payRun.id), { search: search || undefined, page: String(page) }, { preserveState: true, replace: true });
 
     const openEditor = (p: Payslip) => {
         setLines((p.payload.lines ?? []).map(l => ({ ...l, amount: Number(l.amount) })));
@@ -148,8 +165,12 @@ export default function Show({ payRun, cashAccounts }: Readonly<Props>) {
 
                 {/* Bulletins */}
                 <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div className="px-5 py-3.5 border-b border-gray-100">
-                        <p className="text-sm font-semibold text-gray-700">{payRun.payslips.length} bulletin(s)</p>
+                    <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between gap-3 flex-wrap">
+                        <p className="text-sm font-semibold text-gray-700">{payslips.total} bulletin(s)</p>
+                        <div className="relative w-64 max-w-full">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                            <Input value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && applySearch()} placeholder="Rechercher un employé…" className="pl-9 h-9" />
+                        </div>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
@@ -163,7 +184,10 @@ export default function Show({ payRun, cashAccounts }: Readonly<Props>) {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
-                                {payRun.payslips.map(p => {
+                                {payslips.data.length === 0 && (
+                                    <tr><td colSpan={5} className="px-5 py-10 text-center text-sm text-gray-400">Aucun bulletin trouvé.</td></tr>
+                                )}
+                                {payslips.data.map(p => {
                                     const name = p.payload.employee?.name
                                         || `${p.employee_profile?.user?.firstname ?? ''} ${p.employee_profile?.user?.lastname ?? ''}`.trim()
                                         || '—';
@@ -193,6 +217,17 @@ export default function Show({ payRun, cashAccounts }: Readonly<Props>) {
                                 })}
                             </tbody>
                         </table>
+                    </div>
+
+                    <div className="px-5 py-3.5 border-t border-gray-100 flex items-center justify-between gap-4 flex-wrap">
+                        {payslips.total > 0 && <p className="text-xs text-gray-400">{payslips.from}–{payslips.to} sur {payslips.total}</p>}
+                        {payslips.last_page > 1 && (
+                            <div className="flex items-center gap-1.5">
+                                <Button size="sm" variant="outline" className="h-8 w-8 p-0" disabled={payslips.current_page === 1} onClick={() => goToPage(payslips.current_page - 1)}><ChevronLeft className="w-4 h-4" /></Button>
+                                <span className="text-xs text-gray-500 px-2">{payslips.current_page} / {payslips.last_page}</span>
+                                <Button size="sm" variant="outline" className="h-8 w-8 p-0" disabled={payslips.current_page === payslips.last_page} onClick={() => goToPage(payslips.current_page + 1)}><ChevronRight className="w-4 h-4" /></Button>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

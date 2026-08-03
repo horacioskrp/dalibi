@@ -63,15 +63,29 @@ class PayRunController extends Controller
         return redirect()->route('pay-runs.show', $run->id)->with('success', 'Cycle de paie généré.');
     }
 
-    public function show(PayRun $payRun): Response
+    public function show(Request $request, PayRun $payRun): Response
     {
-        $payRun->load([
-            'payslips.employeeProfile.user:id,firstname,lastname',
-            'cashAccount:id,name,type',
-        ]);
+        $payRun->load('cashAccount:id,name,type');
+
+        $payslips = $payRun->payslips()
+            ->with('employeeProfile.user:id,firstname,lastname')
+            ->join('employee_profiles', 'employee_profiles.id', '=', 'payslips.employee_profile_id')
+            ->join('users', 'users.id', '=', 'employee_profiles.user_id')
+            ->when($request->search, function ($q) use ($request) {
+                $term = '%' . $request->search . '%';
+                $q->where(fn ($s) => $s->where('users.firstname', 'like', $term)
+                    ->orWhere('users.lastname', 'like', $term)
+                    ->orWhere('payslips.reference', 'like', $term));
+            })
+            ->orderBy('users.firstname')->orderBy('users.lastname')
+            ->select('payslips.*')
+            ->paginate(25)
+            ->withQueryString();
 
         return Inertia::render('Paie/PayRuns/Show', [
             'payRun'       => $payRun,
+            'payslips'     => $payslips,
+            'filters'      => $request->only('search'),
             'cashAccounts' => CashAccount::where('active', true)->orderBy('type')->orderBy('name')->get(['id', 'name', 'type', 'balance']),
             'components'   => SalaryComponent::where('active', true)->orderBy('type')->orderBy('sort_order')->get(['id', 'name', 'code', 'type', 'default_amount']),
         ]);
