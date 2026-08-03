@@ -17,6 +17,8 @@ use App\Http\Controllers\Comptabilite\AccountingController;
 use App\Http\Controllers\Comptabilite\CashAccountController;
 use App\Http\Controllers\Rh\UserPayrollController;
 use App\Http\Controllers\Rh\SalaryComponentController;
+use App\Http\Controllers\Rh\SalaryGradeController;
+use App\Http\Controllers\Rh\EmployeeAllowanceController;
 use App\Http\Controllers\Paie\PayRunController;
 use App\Http\Controllers\Paie\PayslipController;
 use App\Http\Controllers\Comptabilite\InvoiceController;
@@ -176,6 +178,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Profil paie rattaché à un utilisateur (Administration → Utilisateurs)
     Route::put('users/{user}/payroll', [UserPayrollController::class, 'update'])->middleware('can:edit_employees')->name('users.payroll.update');
     Route::delete('users/{user}/payroll', [UserPayrollController::class, 'destroy'])->middleware('can:delete_employees')->name('users.payroll.destroy');
+    // Primes / retenues tracées propres à un employé
+    Route::post('users/{user}/allowances', [EmployeeAllowanceController::class, 'store'])->middleware('can:edit_employees')->name('users.allowances.store');
+    Route::delete('employee-allowances/{allowance}', [EmployeeAllowanceController::class, 'destroy'])->middleware('can:edit_employees')->name('employee-allowances.destroy');
+
+    // Grilles salariales
+    Route::get('salary-grades', [SalaryGradeController::class, 'index'])->middleware('can:view_salary_grades')->name('salary-grades.index');
+    Route::get('salary-grades/create', [SalaryGradeController::class, 'create'])->middleware('can:create_salary_grades')->name('salary-grades.create');
+    Route::post('salary-grades', [SalaryGradeController::class, 'store'])->middleware('can:create_salary_grades')->name('salary-grades.store');
+    Route::put('salary-grades/settings', [SalaryGradeController::class, 'updateSettings'])->middleware('can:edit_salary_grades')->name('salary-grades.settings');
+    Route::get('salary-grades/{salaryGrade}/edit', [SalaryGradeController::class, 'edit'])->middleware('can:edit_salary_grades')->name('salary-grades.edit');
+    Route::put('salary-grades/{salaryGrade}', [SalaryGradeController::class, 'update'])->middleware('can:edit_salary_grades')->name('salary-grades.update');
+    Route::delete('salary-grades/{salaryGrade}', [SalaryGradeController::class, 'destroy'])->middleware('can:delete_salary_grades')->name('salary-grades.destroy');
 
     // Rubriques de paie
     Route::get('salary-components', [SalaryComponentController::class, 'index'])->middleware('can:view_salary_components')->name('salary-components.index');

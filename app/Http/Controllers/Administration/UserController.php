@@ -102,11 +102,28 @@ class UserController extends Controller
 
     public function show(User $user): Response
     {
-        $user->load('roles.permissions', 'employeeProfile');
+        $user->load([
+            'roles.permissions',
+            'employeeProfile.salaryGrade:id,name,base_amount',
+            'employeeProfile.allowances' => fn ($q) => $q->orderByDesc('created_at'),
+            'employeeProfile.allowances.createdBy:id,firstname,lastname',
+            'employeeProfile.payslips' => fn ($q) => $q->orderByDesc('created_at')->limit(6),
+            'employeeProfile.payslips.payRun:id,reference,period_month,period_year,status',
+            // Affectations matières (enseignant)
+            'subjectAssignments' => fn ($q) => $q->orderByDesc('academic_year_id'),
+            'subjectAssignments.subject:id,name',
+            'subjectAssignments.classroom:id,name',
+            'subjectAssignments.academicYear:id,year',
+            // Emploi du temps (enseignant)
+            'timetableSlots' => fn ($q) => $q->orderBy('day_of_week')->orderBy('start_time'),
+            'timetableSlots.subject:id,name',
+            'timetableSlots.classroom:id,name',
+        ]);
 
         return Inertia::render('Administration/Users/Show', [
             'user'             => $user,
             'contractTypes'    => \App\Constants\ContractTypes::options(),
+            'salaryGrades'     => \App\Models\SalaryGrade::where('active', true)->orderBy('sort_order')->orderBy('category')->get(['id', 'name', 'base_amount']),
             'canManagePayroll' => auth()->user()->can('edit_employees'),
         ]);
     }
