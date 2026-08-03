@@ -106,6 +106,18 @@ class User extends Authenticatable
         return $this->hasOne(EmployeeProfile::class);
     }
 
+    /** Affectations matières où l'utilisateur est l'enseignant. */
+    public function subjectAssignments(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(SubjectAssignment::class, 'teacher_id');
+    }
+
+    /** Créneaux d'emploi du temps où l'utilisateur est l'enseignant. */
+    public function timetableSlots(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(TimetableSlot::class, 'teacher_id');
+    }
+
     public function isAdministrator(): bool
     {
         return $this->hasRole(Roles::ADMINISTRATOR);

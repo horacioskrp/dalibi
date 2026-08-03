@@ -44,6 +44,14 @@ export interface EmployeeProfile {
     status: string;
     notes: string | null;
     allowances?: Allowance[];
+    payslips?: RecentPayslip[];
+}
+
+export interface RecentPayslip {
+    id: string;
+    reference: string;
+    net: number;
+    pay_run?: { reference: string; period_month: number; period_year: number; status: string } | null;
 }
 
 interface Props {

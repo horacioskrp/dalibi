@@ -1,10 +1,38 @@
 import { Head, router } from '@inertiajs/react';
-import { ArrowLeft, Calendar, Mail, MapPin, Phone, User as UserIcon, Shield } from 'lucide-react';
+import { ArrowLeft, Calendar, Mail, MapPin, Phone, User as UserIcon, Shield, BookOpen, CalendarRange, Receipt, FileDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useMoney } from '@/helpers/money';
 import { route } from '@/helpers/route';
 import AppLayout from '@/layouts/app-layout';
 import PayrollSection, { type EmployeeProfile } from './PayrollSection';
 import { type ContractType, type SalaryGradeOption } from '@/components/Employees/employee-form';
+
+interface Affectation {
+    id: string;
+    active: boolean;
+    subject?: { id: string; name: string } | null;
+    classroom?: { id: string; name: string } | null;
+    academic_year?: { id: string; year: string } | null;
+}
+
+interface Slot {
+    id: string;
+    day_of_week: number;
+    start_time: string;
+    end_time: string;
+    room: string | null;
+    subject?: { id: string; name: string } | null;
+    classroom?: { id: string; name: string } | null;
+}
+
+const DAYS = ['', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+const MONTHS_SHORT = ['', 'janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+const PAY_STATUS: Record<string, { label: string; cls: string }> = {
+    draft:     { label: 'Brouillon', cls: 'bg-gray-100 text-gray-600' },
+    validated: { label: 'Validé',    cls: 'bg-blue-100 text-blue-700' },
+    paid:      { label: 'Payé',      cls: 'bg-green-100 text-green-700' },
+    cancelled: { label: 'Annulé',    cls: 'bg-red-100 text-red-600' },
+};
 
 interface Permission {
     id: string;
@@ -32,6 +60,8 @@ interface User {
     natricule: string | null;
     roles: Role[];
     employee_profile: EmployeeProfile | null;
+    subject_assignments?: Affectation[];
+    timetable_slots?: Slot[];
     created_at: string;
     updated_at: string;
 }
@@ -44,6 +74,11 @@ interface ShowProps {
 }
 
 export default function Show({ user, contractTypes, salaryGrades, canManagePayroll }: Readonly<ShowProps>) {
+    const fmt = useMoney();
+    const affectations = user.subject_assignments ?? [];
+    const slots = user.timetable_slots ?? [];
+    const payslips = user.employee_profile?.payslips ?? [];
+
     const formatGender = (gender: string) => {
         if (gender === 'M' || gender === 'male') return 'Masculin';
         if (gender === 'F' || gender === 'female') return 'Féminin';
@@ -177,6 +212,116 @@ export default function Show({ user, contractTypes, salaryGrades, canManagePayro
                                 salaryGrades={salaryGrades}
                                 canManage={canManagePayroll}
                             />
+                        )}
+
+                        {/* Affectations matières */}
+                        <div className="bg-white rounded-lg border p-6">
+                            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                <BookOpen className="w-5 h-5 text-blue-600" />
+                                Affectations matières ({affectations.length})
+                            </h2>
+                            {affectations.length === 0 ? (
+                                <p className="text-gray-500 text-sm">Aucune affectation de matière.</p>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm">
+                                        <thead>
+                                            <tr className="border-b border-gray-100 text-left text-xs font-semibold text-gray-500 uppercase">
+                                                <th className="py-2 pr-4">Matière</th>
+                                                <th className="py-2 pr-4">Classe</th>
+                                                <th className="py-2 pr-4">Année</th>
+                                                <th className="py-2">Statut</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-50">
+                                            {affectations.map(a => (
+                                                <tr key={a.id}>
+                                                    <td className="py-2 pr-4 font-medium text-gray-900">{a.subject?.name ?? '—'}</td>
+                                                    <td className="py-2 pr-4 text-gray-600">{a.classroom?.name ?? '—'}</td>
+                                                    <td className="py-2 pr-4 text-gray-600">{a.academic_year?.year ?? '—'}</td>
+                                                    <td className="py-2">
+                                                        {a.active
+                                                            ? <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-700">Active</span>
+                                                            : <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">Inactive</span>}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Emploi du temps */}
+                        <div className="bg-white rounded-lg border p-6">
+                            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                <CalendarRange className="w-5 h-5 text-blue-600" />
+                                Emploi du temps ({slots.length})
+                            </h2>
+                            {slots.length === 0 ? (
+                                <p className="text-gray-500 text-sm">Aucun créneau assigné.</p>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm">
+                                        <thead>
+                                            <tr className="border-b border-gray-100 text-left text-xs font-semibold text-gray-500 uppercase">
+                                                <th className="py-2 pr-4">Jour</th>
+                                                <th className="py-2 pr-4">Créneau</th>
+                                                <th className="py-2 pr-4">Matière</th>
+                                                <th className="py-2 pr-4">Classe</th>
+                                                <th className="py-2">Salle</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-50">
+                                            {slots.map(s => (
+                                                <tr key={s.id}>
+                                                    <td className="py-2 pr-4 font-medium text-gray-900">{DAYS[s.day_of_week] ?? s.day_of_week}</td>
+                                                    <td className="py-2 pr-4 text-gray-600">{s.start_time?.slice(0, 5)} – {s.end_time?.slice(0, 5)}</td>
+                                                    <td className="py-2 pr-4 text-gray-600">{s.subject?.name ?? '—'}</td>
+                                                    <td className="py-2 pr-4 text-gray-600">{s.classroom?.name ?? '—'}</td>
+                                                    <td className="py-2 text-gray-600">{s.room ?? '—'}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Derniers bulletins de paie */}
+                        {user.employee_profile && (
+                            <div className="bg-white rounded-lg border p-6">
+                                <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                    <Receipt className="w-5 h-5 text-blue-600" />
+                                    Derniers bulletins de paie ({payslips.length})
+                                </h2>
+                                {payslips.length === 0 ? (
+                                    <p className="text-gray-500 text-sm">Aucun bulletin généré.</p>
+                                ) : (
+                                    <div className="divide-y divide-gray-50">
+                                        {payslips.map(p => {
+                                            const st = p.pay_run ? (PAY_STATUS[p.pay_run.status] ?? PAY_STATUS.draft) : null;
+                                            return (
+                                                <div key={p.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
+                                                    <div className="min-w-0">
+                                                        <p className="font-medium text-gray-900">
+                                                            {p.pay_run ? `${MONTHS_SHORT[p.pay_run.period_month]} ${p.pay_run.period_year}` : p.reference}
+                                                        </p>
+                                                        <p className="text-xs text-gray-400">{p.reference}</p>
+                                                    </div>
+                                                    <div className="flex items-center gap-3 shrink-0">
+                                                        {st && <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${st.cls}`}>{st.label}</span>}
+                                                        <span className="font-semibold text-gray-900">{fmt(p.net)}</span>
+                                                        <a href={route('payslips.pdf', p.id)} className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50" aria-label="Télécharger">
+                                                            <FileDown className="w-4 h-4" />
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
                         )}
 
                         {/* Profil */}
