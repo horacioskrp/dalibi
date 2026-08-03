@@ -122,6 +122,20 @@ class PayrollTest extends TestCase
         $svc->generate(7, 2026);
     }
 
+    public function test_payslip_pdf_downloads_with_document_header(): void
+    {
+        \App\Models\School::factory()->create();
+        $this->actingAs($this->admin());
+        $this->employee(100000);
+
+        $run  = app(PayrollService::class)->generate(7, 2026);
+        $slip = $run->payslips->first();
+
+        $res = $this->get(route('payslips.pdf', $slip->id));
+        $res->assertOk();
+        $this->assertSame('application/pdf', $res->headers->get('content-type'));
+    }
+
     public function test_index_requires_payroll_permission(): void
     {
         $teacher = tap(User::factory()->create(), fn ($u) => $u->assignRole(Roles::TEACHER));
