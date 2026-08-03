@@ -35,8 +35,11 @@ interface Props {
     assignableUsers: UserOption[];
     contractTypes: ContractType[];
     canManage: boolean;
+    perPage: number;
     filters: { status?: string; salary_grade_id?: string; ungraded?: string; search?: string };
 }
+
+const PER_PAGE_OPTIONS = [10, 25, 50, 100];
 
 const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
     active:     { label: 'Actif',     cls: 'bg-green-100 text-green-700' },
@@ -44,21 +47,32 @@ const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
     terminated: { label: 'Sorti',     cls: 'bg-gray-200 text-gray-600' },
 };
 
-export default function Index({ employees, salaryGrades, ungradedCount, assignableUsers, contractTypes, canManage, filters }: Readonly<Props>) {
+export default function Index({ employees, salaryGrades, ungradedCount, assignableUsers, contractTypes, canManage, perPage, filters }: Readonly<Props>) {
     const fmt = useMoney();
     const [search, setSearch] = useState(filters.search ?? '');
+    const [status, setStatus] = useState(filters.status ?? '');
+    const [gradeId, setGradeId] = useState(filters.salary_grade_id ?? '');
+    const [ungraded, setUngraded] = useState(filters.ungraded === '1' || filters.ungraded === 'true');
     const [addOpen, setAddOpen] = useState(false);
 
-    const push = (over: Record<string, string | undefined> = {}) => {
+    const apply = (over: { ungraded?: boolean } = {}) => {
+        const ung = over.ungraded !== undefined ? over.ungraded : ungraded;
         router.get(route('personnel.index'), {
-            search: (over.search !== undefined ? over.search : search) || undefined,
-            status: (over.status !== undefined ? over.status : filters.status) || undefined,
-            salary_grade_id: (over.salary_grade_id !== undefined ? over.salary_grade_id : filters.salary_grade_id) || undefined,
-            ungraded: (over.ungraded !== undefined ? over.ungraded : filters.ungraded) || undefined,
+            search: search || undefined,
+            status: status || undefined,
+            salary_grade_id: gradeId || undefined,
+            ungraded: ung ? '1' : undefined,
+            per_page: String(perPage),
         }, { preserveState: true, replace: true });
     };
 
-    const goToPage = (page: number) => router.get(route('personnel.index'), { ...filters, page: String(page) }, { preserveState: true, replace: true });
+    const clear = () => {
+        setSearch(''); setStatus(''); setGradeId(''); setUngraded(false);
+        router.get(route('personnel.index'), {}, { preserveState: true, replace: true });
+    };
+
+    const goToPage = (page: number) => router.get(route('personnel.index'), { ...filters, per_page: String(perPage), page: String(page) }, { preserveState: true, replace: true });
+    const changePerPage = (value: number) => router.get(route('personnel.index'), { ...filters, per_page: String(value), page: '1' }, { preserveState: true, replace: true });
 
     const assignGrade = (emp: Employee, value: string) => {
         router.put(route('personnel.grade', emp.id), { salary_grade_id: value === 'none' ? null : value }, { preserveScroll: true });
@@ -93,7 +107,7 @@ export default function Index({ employees, salaryGrades, ungradedCount, assignab
                 </div>
 
                 {ungradedCount > 0 && !ungradedActive && (
-                    <button onClick={() => push({ ungraded: '1' })} className="w-full text-left rounded-xl bg-amber-50 ring-1 ring-amber-100 px-4 py-2.5 flex items-center gap-2 text-sm text-amber-800 hover:bg-amber-100 transition-colors">
+                    <button onClick={() => { setUngraded(true); apply({ ungraded: true }); }} className="w-full text-left rounded-xl bg-amber-50 ring-1 ring-amber-100 px-4 py-2.5 flex items-center gap-2 text-sm text-amber-800 hover:bg-amber-100 transition-colors">
                         <AlertTriangle className="w-4 h-4 shrink-0" /> <strong>{ungradedCount}</strong> employé(s) sans grille — cliquer pour les filtrer.
                     </button>
                 )}
@@ -102,28 +116,44 @@ export default function Index({ employees, salaryGrades, ungradedCount, assignab
                 <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex items-center gap-3 flex-wrap">
                     <div className="relative flex-1 min-w-56">
                         <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                        <Input value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && push()} placeholder="Nom, poste, matricule…" className="pl-9" />
+                        <Input value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && apply()} placeholder="Nom, poste, matricule…" className="pl-9" />
                     </div>
-                    <select value={filters.status ?? ''} onChange={e => push({ status: e.target.value })} className={sel}>
+                    <select value={status} onChange={e => setStatus(e.target.value)} className={sel}>
                         <option value="">Tous les statuts</option>
                         <option value="active">Actifs</option>
                         <option value="suspended">Suspendus</option>
                         <option value="terminated">Sortis</option>
                     </select>
-                    <select value={filters.salary_grade_id ?? ''} onChange={e => push({ salary_grade_id: e.target.value })} className={sel}>
+                    <select value={gradeId} onChange={e => setGradeId(e.target.value)} className={sel}>
                         <option value="">Toutes les grilles</option>
                         {salaryGrades.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                     </select>
                     <button
-                        onClick={() => push({ ungraded: ungradedActive ? '' : '1' })}
-                        className={`h-9 px-3 text-sm rounded-lg border transition-colors ${ungradedActive ? 'bg-amber-500 text-white border-amber-500' : 'border-gray-200 text-gray-600 hover:border-amber-400'}`}
+                        type="button"
+                        onClick={() => setUngraded(v => !v)}
+                        className={`h-9 px-3 text-sm rounded-lg border transition-colors ${ungraded ? 'bg-amber-500 text-white border-amber-500' : 'border-gray-200 text-gray-600 hover:border-amber-400'}`}
                     >
                         Sans grille
                     </button>
+                    <Button onClick={() => apply()} className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
+                        <Search className="w-4 h-4" /> Rechercher
+                    </Button>
+                    {(search || status || gradeId || ungraded) && (
+                        <Button variant="outline" onClick={clear} className="border-gray-300 text-gray-700">Réinit.</Button>
+                    )}
                 </div>
 
                 {/* Table */}
                 <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 gap-4 flex-wrap">
+                        <p className="text-sm text-gray-600"><span className="font-semibold">{employees.total}</span> employé(s)</p>
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <span>Lignes par page :</span>
+                            <select value={perPage} onChange={e => changePerPage(Number(e.target.value))} className="h-8 px-2 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                {PER_PAGE_OPTIONS.map(n => <option key={n} value={n}>{n}</option>)}
+                            </select>
+                        </div>
+                    </div>
                     {employees.data.length === 0 ? (
                         <div className="px-5 py-16 text-center text-gray-400">
                             <Users className="w-10 h-10 mx-auto mb-3 opacity-30" />

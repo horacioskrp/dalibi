@@ -34,8 +34,11 @@ interface Paginated<T> {
 interface Props {
     payRuns: Paginated<PayRun>;
     years: number[];
+    perPage: number;
     filters: { status?: string; period_year?: string; period_month?: string; search?: string };
 }
+
+const PER_PAGE_OPTIONS = [10, 25, 50, 100];
 
 const MONTHS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
@@ -46,7 +49,7 @@ const STATUS: Record<string, { label: string; cls: string }> = {
     cancelled: { label: 'Annulé',    cls: 'bg-red-100 text-red-600' },
 };
 
-export default function Index({ payRuns, years, filters }: Readonly<Props>) {
+export default function Index({ payRuns, years, perPage, filters }: Readonly<Props>) {
     const fmt = useMoney();
     const [search, setSearch] = useState(filters.search ?? '');
     const [status, setStatus] = useState(filters.status ?? '');
@@ -59,6 +62,7 @@ export default function Index({ payRuns, years, filters }: Readonly<Props>) {
             status: (over.status !== undefined ? over.status : status) || undefined,
             period_year: (over.period_year !== undefined ? over.period_year : year) || undefined,
             period_month: (over.period_month !== undefined ? over.period_month : month) || undefined,
+            per_page: String(perPage),
         }, { preserveState: true, replace: true });
     };
 
@@ -67,7 +71,8 @@ export default function Index({ payRuns, years, filters }: Readonly<Props>) {
         router.get(route('pay-runs.index'), {}, { preserveState: true, replace: true });
     };
 
-    const goToPage = (page: number) => router.get(route('pay-runs.index'), { ...filters, page: String(page) }, { preserveState: true, replace: true });
+    const goToPage = (page: number) => router.get(route('pay-runs.index'), { ...filters, per_page: String(perPage), page: String(page) }, { preserveState: true, replace: true });
+    const changePerPage = (value: number) => router.get(route('pay-runs.index'), { ...filters, per_page: String(value), page: '1' }, { preserveState: true, replace: true });
 
     const hasFilters = !!(search || status || year || month);
     const selectCls = "px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
@@ -102,7 +107,7 @@ export default function Index({ payRuns, years, filters }: Readonly<Props>) {
                             />
                         </div>
 
-                        <select value={status} onChange={e => { setStatus(e.target.value); apply({ status: e.target.value }); }} className={selectCls}>
+                        <select value={status} onChange={e => setStatus(e.target.value)} className={selectCls}>
                             <option value="">Tous les statuts</option>
                             <option value="draft">Brouillon</option>
                             <option value="validated">Validé</option>
@@ -110,12 +115,12 @@ export default function Index({ payRuns, years, filters }: Readonly<Props>) {
                             <option value="cancelled">Annulé</option>
                         </select>
 
-                        <select value={year} onChange={e => { setYear(e.target.value); apply({ period_year: e.target.value }); }} className={selectCls}>
+                        <select value={year} onChange={e => setYear(e.target.value)} className={selectCls}>
                             <option value="">Toutes les années</option>
                             {years.map(y => <option key={y} value={y}>{y}</option>)}
                         </select>
 
-                        <select value={month} onChange={e => { setMonth(e.target.value); apply({ period_month: e.target.value }); }} className={selectCls}>
+                        <select value={month} onChange={e => setMonth(e.target.value)} className={selectCls}>
                             <option value="">Tous les mois</option>
                             {MONTHS.slice(1).map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
                         </select>
@@ -131,8 +136,14 @@ export default function Index({ payRuns, years, filters }: Readonly<Props>) {
 
                 {/* Tableau */}
                 <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 gap-4 flex-wrap">
                         <p className="text-sm text-gray-600"><span className="font-semibold">{payRuns.total}</span> cycle(s){hasFilters && <span className="text-blue-500 ml-2">— filtrés</span>}</p>
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <span>Lignes par page :</span>
+                            <select value={perPage} onChange={e => changePerPage(Number(e.target.value))} className="h-8 px-2 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                {PER_PAGE_OPTIONS.map(n => <option key={n} value={n}>{n}</option>)}
+                            </select>
+                        </div>
                     </div>
                     <div className="overflow-x-auto">
                         <Table>
