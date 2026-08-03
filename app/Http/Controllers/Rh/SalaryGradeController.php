@@ -15,23 +15,34 @@ class SalaryGradeController extends Controller
     public function index(): Response
     {
         return Inertia::render('Rh/SalaryGrades/Index', [
-            'grades'   => SalaryGrade::orderBy('sort_order')->orderBy('category')->orderBy('echelon')->get(),
+            'grades'   => SalaryGrade::withCount('employeeProfiles')
+                ->orderBy('sort_order')->orderBy('category')->orderBy('echelon')->get(),
             'settings' => PayrollSetting::current(),
         ]);
+    }
+
+    public function create(): Response
+    {
+        return Inertia::render('Rh/SalaryGrades/Create');
+    }
+
+    public function edit(SalaryGrade $salaryGrade): Response
+    {
+        return Inertia::render('Rh/SalaryGrades/Edit', ['grade' => $salaryGrade]);
     }
 
     public function store(Request $request): RedirectResponse
     {
         SalaryGrade::create($this->validateData($request));
 
-        return back()->with('success', 'Grille ajoutée.');
+        return redirect()->route('salary-grades.index')->with('success', 'Grille créée.');
     }
 
     public function update(Request $request, SalaryGrade $salaryGrade): RedirectResponse
     {
         $salaryGrade->update($this->validateData($request));
 
-        return back()->with('success', 'Grille mise à jour.');
+        return redirect()->route('salary-grades.index')->with('success', 'Grille mise à jour.');
     }
 
     public function destroy(SalaryGrade $salaryGrade): RedirectResponse

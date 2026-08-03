@@ -1,5 +1,5 @@
 import { Head, router, useForm } from '@inertiajs/react';
-import { Layers, Plus, Trash2, Clock, Save } from 'lucide-react';
+import { Layers, Plus, Pencil, Trash2, Clock, Save, Users } from 'lucide-react';
 import { useState } from 'react';
 import {
     AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -7,6 +7,9 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+    Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useMoney } from '@/helpers/money';
 import { route } from '@/helpers/route';
@@ -19,6 +22,7 @@ interface Grade {
     echelon: number | null;
     base_amount: number;
     active: boolean;
+    employee_profiles_count: number;
 }
 
 interface Settings {
@@ -32,112 +36,138 @@ interface Props { grades: Grade[]; settings: Settings; }
 export default function Index({ grades, settings }: Readonly<Props>) {
     const fmt = useMoney();
     const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [seniorityOpen, setSeniorityOpen] = useState(false);
 
-    const gradeForm = useForm({ name: '', category: '', echelon: '', base_amount: '', active: true });
     const senForm = useForm({
         seniority_enabled: settings.seniority_enabled,
         seniority_rate_per_year: String(settings.seniority_rate_per_year),
         seniority_cap_percent: String(settings.seniority_cap_percent),
     });
 
-    const addGrade = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        gradeForm.post(route('salary-grades.store'), { preserveScroll: true, onSuccess: () => gradeForm.reset() });
-    };
-
     const saveSettings = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        senForm.put(route('salary-grades.settings'), { preserveScroll: true });
+        senForm.put(route('salary-grades.settings'), { preserveScroll: true, onSuccess: () => setSeniorityOpen(false) });
     };
 
     return (
         <AppLayout>
             <Head title="Grilles salariales" />
-            <div className="space-y-6 max-w-5xl">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-                        <Layers className="w-7 h-7 text-blue-600" /> Grilles salariales
-                    </h1>
-                    <p className="text-sm text-gray-500 mt-0.5">Chaque catégorie/échelon porte un salaire de base ; l'employé y est rattaché depuis sa fiche.</p>
+            <div className="space-y-5">
+                {/* En-tête */}
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                    <div>
+                        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+                            <Layers className="w-7 h-7 text-blue-600" /> Grilles salariales
+                        </h1>
+                        <p className="text-sm text-gray-500 mt-0.5">Chaque catégorie/échelon porte un salaire de base ; l'employé y est rattaché depuis sa fiche.</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" className="gap-2" onClick={() => setSeniorityOpen(true)}>
+                            <Clock className="w-4 h-4 text-amber-600" /> Prime d'ancienneté
+                        </Button>
+                        <Button className="gap-2 bg-blue-600 hover:bg-blue-700" onClick={() => router.get(route('salary-grades.create'))}>
+                            <Plus className="w-4 h-4" /> Nouvelle grille
+                        </Button>
+                    </div>
                 </div>
 
-                {/* Ajout grille */}
-                <form onSubmit={addGrade} className="rounded-2xl bg-linear-to-br from-blue-50 to-white ring-1 ring-blue-100 p-6 shadow-sm space-y-4">
-                    <div className="flex items-center gap-2 text-blue-700"><Plus className="h-4 w-4" /><p className="text-sm font-semibold">Ajouter une grille</p></div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                        <div className="lg:col-span-2">
-                            <label className="block text-sm font-medium text-gray-900 mb-2">Nom *</label>
-                            <Input value={gradeForm.data.name} onChange={e => gradeForm.setData('name', e.target.value)} placeholder="Ex: Enseignant — Catégorie B, échelon 2" className={gradeForm.errors.name ? 'border-red-500' : ''} />
-                            {gradeForm.errors.name && <p className="text-red-600 text-sm mt-1">{gradeForm.errors.name}</p>}
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-900 mb-2">Catégorie</label>
-                            <Input value={gradeForm.data.category} onChange={e => gradeForm.setData('category', e.target.value)} placeholder="Ex: B" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-900 mb-2">Échelon</label>
-                            <Input type="number" min={0} value={gradeForm.data.echelon} onChange={e => gradeForm.setData('echelon', e.target.value)} placeholder="Ex: 2" />
-                        </div>
-                        <div className="lg:col-span-2">
-                            <label className="block text-sm font-medium text-gray-900 mb-2">Salaire de base (F) *</label>
-                            <Input type="number" min={0} value={gradeForm.data.base_amount} onChange={e => gradeForm.setData('base_amount', e.target.value)} placeholder="Ex: 145000" className={gradeForm.errors.base_amount ? 'border-red-500' : ''} />
-                            {gradeForm.errors.base_amount && <p className="text-red-600 text-sm mt-1">{gradeForm.errors.base_amount}</p>}
-                        </div>
-                        <div className="flex items-end">
-                            <label className="flex items-center gap-2 text-sm text-gray-700 h-10">
-                                <Checkbox checked={gradeForm.data.active} onCheckedChange={c => gradeForm.setData('active', c === true)} /> Active
-                            </label>
-                        </div>
-                        <div className="flex items-end">
-                            <Button type="submit" disabled={gradeForm.processing} className="gap-2 bg-blue-600 hover:bg-blue-700 w-full"><Plus className="w-4 h-4" /> Ajouter</Button>
-                        </div>
-                    </div>
-                </form>
+                {/* État de l'ancienneté */}
+                <div className="rounded-xl bg-slate-50 ring-1 ring-slate-100 px-4 py-2.5 flex items-center gap-2 text-sm text-gray-600">
+                    <Clock className="w-4 h-4 text-amber-500" />
+                    {settings.seniority_enabled
+                        ? <span>Prime d'ancienneté <strong className="text-emerald-600">active</strong> : +{settings.seniority_rate_per_year}% du base par année{settings.seniority_cap_percent > 0 ? `, plafonnée à ${settings.seniority_cap_percent}%` : ''}.</span>
+                        : <span>Prime d'ancienneté <strong className="text-gray-500">désactivée</strong>.</span>}
+                </div>
 
-                {/* Liste grilles */}
-                <div className="rounded-2xl bg-white ring-1 ring-gray-100 p-6 shadow-sm">
-                    <p className="text-sm font-semibold text-gray-700 mb-3">{grades.length} grille(s)</p>
-                    {grades.length === 0 ? <p className="text-sm text-gray-400">Aucune grille.</p> : (
-                        <div className="divide-y divide-slate-100">
-                            {grades.map(g => (
-                                <div key={g.id} className="flex items-center justify-between gap-3 py-2.5">
-                                    <div className="min-w-0">
-                                        <p className="text-sm font-medium text-gray-900 flex items-center gap-2">
-                                            {g.name}
-                                            {!g.active && <span className="text-[10px] uppercase bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">inactive</span>}
-                                        </p>
-                                        <p className="text-xs text-gray-400">{[g.category && `Cat. ${g.category}`, g.echelon != null && `échelon ${g.echelon}`].filter(Boolean).join(' · ') || '—'}</p>
-                                    </div>
-                                    <div className="flex items-center gap-3 shrink-0">
-                                        <span className="text-sm font-semibold text-gray-900">{fmt(g.base_amount)}</span>
-                                        <button onClick={() => setDeletingId(g.id)} className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50" aria-label="Supprimer"><Trash2 className="w-4 h-4" /></button>
-                                    </div>
-                                </div>
-                            ))}
+                {/* Table */}
+                <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div className="px-5 py-3.5 border-b border-gray-100">
+                        <p className="text-sm font-semibold text-gray-700">{grades.length} grille(s)</p>
+                    </div>
+                    {grades.length === 0 ? (
+                        <div className="px-5 py-16 text-center text-gray-400">
+                            <Layers className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                            <p className="text-sm">Aucune grille salariale</p>
+                            <Button className="mt-3 gap-2 bg-blue-600 hover:bg-blue-700" onClick={() => router.get(route('salary-grades.create'))}>
+                                <Plus className="w-4 h-4" /> Créer la première grille
+                            </Button>
+                        </div>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="border-b border-gray-100 bg-gray-50">
+                                        <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Grille</th>
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Catégorie / échelon</th>
+                                        <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Employés</th>
+                                        <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Salaire de base</th>
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Statut</th>
+                                        <th className="px-4 py-3 w-24"></th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50">
+                                    {grades.map(g => (
+                                        <tr key={g.id} className="hover:bg-gray-50/50">
+                                            <td className="px-5 py-3 font-medium text-gray-900">{g.name}</td>
+                                            <td className="px-4 py-3 text-gray-600">
+                                                {[g.category && `Cat. ${g.category}`, g.echelon != null && `échelon ${g.echelon}`].filter(Boolean).join(' · ') || '—'}
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                                <span className="inline-flex items-center gap-1 text-gray-600">
+                                                    <Users className="w-3.5 h-3.5 text-gray-400" /> {g.employee_profiles_count}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 text-right font-semibold text-gray-900">{fmt(g.base_amount)}</td>
+                                            <td className="px-4 py-3">
+                                                {g.active
+                                                    ? <span className="inline-block text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-700">Active</span>
+                                                    : <span className="inline-block text-xs font-medium px-2 py-0.5 rounded-full bg-gray-200 text-gray-600">Inactive</span>}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <div className="flex items-center justify-end gap-1">
+                                                    <button onClick={() => router.get(route('salary-grades.edit', g.id))} className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50" aria-label="Modifier"><Pencil className="w-4 h-4" /></button>
+                                                    <button onClick={() => setDeletingId(g.id)} className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50" aria-label="Supprimer"><Trash2 className="w-4 h-4" /></button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
                     )}
                 </div>
-
-                {/* Réglage ancienneté */}
-                <form onSubmit={saveSettings} className="rounded-2xl bg-linear-to-br from-amber-50 to-white ring-1 ring-amber-100 p-6 shadow-sm space-y-4">
-                    <div className="flex items-center gap-2 text-amber-700"><Clock className="h-4 w-4" /><p className="text-sm font-semibold">Prime d'ancienneté (automatique)</p></div>
-                    <label className="flex items-center gap-2 text-sm text-gray-700">
-                        <Checkbox checked={senForm.data.seniority_enabled} onCheckedChange={c => senForm.setData('seniority_enabled', c === true)} />
-                        Activer la prime d'ancienneté (appliquée automatiquement à chaque bulletin)
-                    </label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-900 mb-2">Taux par année (% du base)</label>
-                            <Input type="number" min={0} max={100} step="0.5" value={senForm.data.seniority_rate_per_year} onChange={e => senForm.setData('seniority_rate_per_year', e.target.value)} disabled={!senForm.data.seniority_enabled} />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-900 mb-2">Plafond (% du base, 0 = aucun)</label>
-                            <Input type="number" min={0} max={100} step="0.5" value={senForm.data.seniority_cap_percent} onChange={e => senForm.setData('seniority_cap_percent', e.target.value)} disabled={!senForm.data.seniority_enabled} />
-                        </div>
-                    </div>
-                    <Button type="submit" disabled={senForm.processing} className="gap-2 bg-blue-600 hover:bg-blue-700"><Save className="w-4 h-4" /> Enregistrer</Button>
-                </form>
             </div>
+
+            {/* Modal : prime d'ancienneté */}
+            <Dialog open={seniorityOpen} onOpenChange={setSeniorityOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2"><Clock className="w-5 h-5 text-amber-600" /> Prime d'ancienneté</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={saveSettings} className="space-y-4">
+                        <p className="text-sm text-gray-500">Calcul automatique appliqué à chaque bulletin, en fonction de la date d'embauche de l'employé.</p>
+                        <label className="flex items-center gap-2 text-sm text-gray-700">
+                            <Checkbox checked={senForm.data.seniority_enabled} onCheckedChange={c => senForm.setData('seniority_enabled', c === true)} />
+                            Activer la prime d'ancienneté
+                        </label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-900 mb-2">Taux par année (% du base)</label>
+                                <Input type="number" min={0} max={100} step="0.5" value={senForm.data.seniority_rate_per_year} onChange={e => senForm.setData('seniority_rate_per_year', e.target.value)} disabled={!senForm.data.seniority_enabled} />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-900 mb-2">Plafond (% du base, 0 = aucun)</label>
+                                <Input type="number" min={0} max={100} step="0.5" value={senForm.data.seniority_cap_percent} onChange={e => senForm.setData('seniority_cap_percent', e.target.value)} disabled={!senForm.data.seniority_enabled} />
+                            </div>
+                        </div>
+                        <p className="text-xs text-gray-400">Exemple : 2%/an plafonné à 30% → un employé avec 5 ans d'ancienneté reçoit +10% du salaire de base.</p>
+                        <DialogFooter>
+                            <Button type="button" variant="outline" onClick={() => setSeniorityOpen(false)}>Annuler</Button>
+                            <Button type="submit" disabled={senForm.processing} className="gap-2 bg-blue-600 hover:bg-blue-700"><Save className="w-4 h-4" /> Enregistrer</Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
 
             <AlertDialog open={!!deletingId} onOpenChange={() => setDeletingId(null)}>
                 <AlertDialogContent>

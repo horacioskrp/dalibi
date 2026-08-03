@@ -184,8 +184,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Grilles salariales
     Route::get('salary-grades', [SalaryGradeController::class, 'index'])->middleware('can:view_salary_grades')->name('salary-grades.index');
+    Route::get('salary-grades/create', [SalaryGradeController::class, 'create'])->middleware('can:create_salary_grades')->name('salary-grades.create');
     Route::post('salary-grades', [SalaryGradeController::class, 'store'])->middleware('can:create_salary_grades')->name('salary-grades.store');
     Route::put('salary-grades/settings', [SalaryGradeController::class, 'updateSettings'])->middleware('can:edit_salary_grades')->name('salary-grades.settings');
+    Route::get('salary-grades/{salaryGrade}/edit', [SalaryGradeController::class, 'edit'])->middleware('can:edit_salary_grades')->name('salary-grades.edit');
     Route::put('salary-grades/{salaryGrade}', [SalaryGradeController::class, 'update'])->middleware('can:edit_salary_grades')->name('salary-grades.update');
     Route::delete('salary-grades/{salaryGrade}', [SalaryGradeController::class, 'destroy'])->middleware('can:delete_salary_grades')->name('salary-grades.destroy');
 
