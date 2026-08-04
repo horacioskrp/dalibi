@@ -1,15 +1,11 @@
-import { Head, router, useForm } from '@inertiajs/react';
-import { Layers, Plus, Pencil, Trash2, Clock, Save, Users, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Head, router } from '@inertiajs/react';
+import { Layers, Plus, Pencil, Trash2, Clock, Users, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import {
     AlertDialog, AlertDialogAction, AlertDialogCancel,
     AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import {
-    Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
-} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useMoney } from '@/helpers/money';
 import { route } from '@/helpers/route';
@@ -44,7 +40,6 @@ const PER_PAGE_OPTIONS = [10, 25, 50, 100];
 export default function Index({ grades, perPage, filters, settings }: Readonly<Props>) {
     const fmt = useMoney();
     const [deletingId, setDeletingId] = useState<string | null>(null);
-    const [seniorityOpen, setSeniorityOpen] = useState(false);
     const [search, setSearch] = useState(filters.search ?? '');
     const [status, setStatus] = useState(filters.status ?? '');
 
@@ -55,17 +50,6 @@ export default function Index({ grades, perPage, filters, settings }: Readonly<P
     const goToPage = (page: number) => router.get(route('salary-grades.index'), { ...filters, per_page: String(perPage), page: String(page) }, { preserveState: true, replace: true });
     const changePerPage = (value: number) => router.get(route('salary-grades.index'), { ...filters, per_page: String(value), page: '1' }, { preserveState: true, replace: true });
     const selectCls = "px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
-
-    const senForm = useForm({
-        seniority_enabled: settings.seniority_enabled,
-        seniority_rate_per_year: String(settings.seniority_rate_per_year),
-        seniority_cap_percent: String(settings.seniority_cap_percent),
-    });
-
-    const saveSettings = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        senForm.put(route('salary-grades.settings'), { preserveScroll: true, onSuccess: () => setSeniorityOpen(false) });
-    };
 
     return (
         <AppLayout>
@@ -80,8 +64,8 @@ export default function Index({ grades, perPage, filters, settings }: Readonly<P
                         <p className="text-sm text-gray-500 mt-0.5">Chaque catégorie/échelon porte un salaire de base ; l'employé y est rattaché depuis sa fiche.</p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Button variant="outline" className="gap-2" onClick={() => setSeniorityOpen(true)}>
-                            <Clock className="w-4 h-4 text-amber-600" /> Prime d'ancienneté
+                        <Button variant="outline" className="gap-2" onClick={() => router.get(route('payroll-settings.edit'))}>
+                            <Clock className="w-4 h-4 text-amber-600" /> Réglages de paie
                         </Button>
                         <Button className="gap-2 bg-blue-600 hover:bg-blue-700" onClick={() => router.get(route('salary-grades.create'))}>
                             <Plus className="w-4 h-4" /> Nouvelle grille
@@ -190,37 +174,6 @@ export default function Index({ grades, perPage, filters, settings }: Readonly<P
                     </div>
                 </div>
             </div>
-
-            {/* Modal : prime d'ancienneté */}
-            <Dialog open={seniorityOpen} onOpenChange={setSeniorityOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2"><Clock className="w-5 h-5 text-amber-600" /> Prime d'ancienneté</DialogTitle>
-                    </DialogHeader>
-                    <form onSubmit={saveSettings} className="space-y-4">
-                        <p className="text-sm text-gray-500">Calcul automatique appliqué à chaque bulletin, en fonction de la date d'embauche de l'employé.</p>
-                        <label className="flex items-center gap-2 text-sm text-gray-700">
-                            <Checkbox checked={senForm.data.seniority_enabled} onCheckedChange={c => senForm.setData('seniority_enabled', c === true)} />
-                            Activer la prime d'ancienneté
-                        </label>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-900 mb-2">Taux par année (% du base)</label>
-                                <Input type="number" min={0} max={100} step="0.5" value={senForm.data.seniority_rate_per_year} onChange={e => senForm.setData('seniority_rate_per_year', e.target.value)} disabled={!senForm.data.seniority_enabled} />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-900 mb-2">Plafond (% du base, 0 = aucun)</label>
-                                <Input type="number" min={0} max={100} step="0.5" value={senForm.data.seniority_cap_percent} onChange={e => senForm.setData('seniority_cap_percent', e.target.value)} disabled={!senForm.data.seniority_enabled} />
-                            </div>
-                        </div>
-                        <p className="text-xs text-gray-400">Exemple : 2%/an plafonné à 30% → un employé avec 5 ans d'ancienneté reçoit +10% du salaire de base.</p>
-                        <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => setSeniorityOpen(false)}>Annuler</Button>
-                            <Button type="submit" disabled={senForm.processing} className="gap-2 bg-blue-600 hover:bg-blue-700"><Save className="w-4 h-4" /> Enregistrer</Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
 
             <AlertDialog open={!!deletingId} onOpenChange={() => setDeletingId(null)}>
                 <AlertDialogContent>

@@ -151,6 +151,36 @@ class PayrollTest extends TestCase
                 ->has('payslips.current_page'));
     }
 
+    public function test_admin_can_delete_a_paid_run_and_reverses_accounting(): void
+    {
+        $this->actingAs($this->admin());
+        $this->employee(100000);
+        $cash = $this->cash(500000);
+        $svc  = app(PayrollService::class);
+
+        $run = $svc->generate(7, 2026);
+        $svc->validate($run->fresh());
+        $svc->pay($run->fresh(), $cash->id);
+
+        $this->delete(route('pay-runs.destroy', $run->id))->assertRedirect(route('pay-runs.index'));
+
+        $this->assertDatabaseMissing('pay_runs', ['id' => $run->id]);
+        $this->assertSame(0, \App\Models\Payslip::where('pay_run_id', $run->id)->count());
+        $this->assertSame(0, AccountingTransaction::where('reference_type', 'PAYROLL')->count());
+        $this->assertEqualsWithDelta(500000, (float) $cash->fresh()->balance, 0.01);
+    }
+
+    public function test_delete_is_forbidden_without_delete_payroll_permission(): void
+    {
+        $accounting = tap(User::factory()->create(), fn ($u) => $u->assignRole(Roles::ACCOUNTING));
+        $this->actingAs($this->admin());
+        $this->employee(100000);
+        $run = app(PayrollService::class)->generate(7, 2026);
+
+        $this->actingAs($accounting)->delete(route('pay-runs.destroy', $run->id))->assertForbidden();
+        $this->assertDatabaseHas('pay_runs', ['id' => $run->id]);
+    }
+
     public function test_index_requires_payroll_permission(): void
     {
         $teacher = tap(User::factory()->create(), fn ($u) => $u->assignRole(Roles::TEACHER));

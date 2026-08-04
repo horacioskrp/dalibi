@@ -397,6 +397,8 @@ export function route(name: string, params?: any): string {
         'personnel.index':  '/personnel',
         'personnel.store':  '/personnel',
         'personnel.grade':  `/personnel/${params}/grade`,
+        'payroll-settings.edit':   '/payroll/settings',
+        'payroll-settings.update': '/payroll/settings',
         'salary-grades.employees':      `/salary-grades/${params}/employees`,
         'salary-grades.employees.sync': `/salary-grades/${params}/employees`,
         'salary-grades.edit':     `/salary-grades/${params}/edit`,
@@ -413,6 +415,7 @@ export function route(name: string, params?: any): string {
         'pay-runs.validate': `/pay-runs/${params}/validate`,
         'pay-runs.pay':      `/pay-runs/${params}/pay`,
         'pay-runs.cancel':   `/pay-runs/${params}/cancel`,
+        'pay-runs.destroy':  `/pay-runs/${params}`,
         'payslips.update':   `/payslips/${params}`,
         'payslips.pdf':      `/payslips/${params}/pdf`,
     };

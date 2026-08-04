@@ -1,6 +1,10 @@
 import { Head, router } from '@inertiajs/react';
-import { Plus, Receipt, ChevronLeft, ChevronRight, Eye, Search } from 'lucide-react';
+import { Plus, Receipt, ChevronLeft, ChevronRight, Eye, Search, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import {
+    AlertDialog, AlertDialogAction, AlertDialogCancel,
+    AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { IconButton } from '@/components/icon-button';
 import { Input } from '@/components/ui/input';
@@ -35,6 +39,7 @@ interface Props {
     payRuns: Paginated<PayRun>;
     years: number[];
     perPage: number;
+    canDelete: boolean;
     filters: { status?: string; period_year?: string; period_month?: string; search?: string };
 }
 
@@ -49,12 +54,13 @@ const STATUS: Record<string, { label: string; cls: string }> = {
     cancelled: { label: 'Annulé',    cls: 'bg-red-100 text-red-600' },
 };
 
-export default function Index({ payRuns, years, perPage, filters }: Readonly<Props>) {
+export default function Index({ payRuns, years, perPage, canDelete, filters }: Readonly<Props>) {
     const fmt = useMoney();
     const [search, setSearch] = useState(filters.search ?? '');
     const [status, setStatus] = useState(filters.status ?? '');
     const [year, setYear] = useState(filters.period_year ?? '');
     const [month, setMonth] = useState(filters.period_month ?? '');
+    const [deleting, setDeleting] = useState<PayRun | null>(null);
 
     const apply = (over: Record<string, string | undefined> = {}) => {
         router.get(route('pay-runs.index'), {
@@ -183,7 +189,12 @@ export default function Index({ payRuns, years, perPage, filters }: Readonly<Pro
                                                     <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full ${badge.cls}`}>{badge.label}</span>
                                                 </TableCell>
                                                 <TableCell className="text-center" onClick={e => e.stopPropagation()}>
-                                                    <IconButton label="Voir le détail" icon={<Eye className="w-4 h-4" />} onClick={() => router.get(route('pay-runs.show', run.id))} />
+                                                    <div className="flex items-center justify-center gap-1">
+                                                        <IconButton label="Voir le détail" icon={<Eye className="w-4 h-4" />} onClick={() => router.get(route('pay-runs.show', run.id))} />
+                                                        {canDelete && (
+                                                            <IconButton label="Supprimer le cycle" icon={<Trash2 className="w-4 h-4" />} className="text-red-600 border-red-200 hover:bg-red-50" onClick={() => setDeleting(run)} />
+                                                        )}
+                                                    </div>
                                                 </TableCell>
                                             </TableRow>
                                         );
@@ -205,6 +216,24 @@ export default function Index({ payRuns, years, perPage, filters }: Readonly<Pro
                     </div>
                 </div>
             </div>
+
+            <AlertDialog open={!!deleting} onOpenChange={() => setDeleting(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Supprimer ce cycle de paie ?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {deleting ? `« ${MONTHS[deleting.period_month]} ${deleting.period_year} » et ses ${deleting.payslips_count} bulletin(s) seront supprimés définitivement. ` : ''}
+                            {deleting?.status === 'paid' ? 'Le cycle étant payé, les caisses seront recréditées et les écritures comptables supprimées.' : 'Cette action est irréversible.'}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="flex justify-end gap-2">
+                        <AlertDialogCancel>Annuler</AlertDialogCancel>
+                        <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={() => {
+                            if (deleting) router.delete(route('pay-runs.destroy', deleting.id), { preserveScroll: true, onFinish: () => setDeleting(null) });
+                        }}>Supprimer</AlertDialogAction>
+                    </div>
+                </AlertDialogContent>
+            </AlertDialog>
         </AppLayout>
     );
 }
