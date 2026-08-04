@@ -226,6 +226,29 @@ class PayrollService
         });
     }
 
+    /**
+     * Supprime définitivement un cycle. Si le cycle était payé, on annule
+     * d'abord les écritures comptables (recrédit des caisses) avant de le
+     * supprimer ; les bulletins sont supprimés en cascade.
+     */
+    public function delete(PayRun $run): void
+    {
+        DB::transaction(function () use ($run): void {
+            $run->load('payslips');
+
+            if ($run->status === PayRun::PAID) {
+                foreach ($run->payslips as $payslip) {
+                    $this->accountingService->cancelPayrollTransaction($payslip);
+                }
+            }
+
+            // Suppression explicite des bulletins (portable : ne dépend pas du
+            // cascade FK, non appliqué sous SQLite en test).
+            $run->payslips()->delete();
+            $run->delete();
+        });
+    }
+
     /* ------------------------------------------------------------------ */
     /* Helpers                                                             */
     /* ------------------------------------------------------------------ */
