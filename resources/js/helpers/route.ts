@@ -397,6 +397,8 @@ export function route(name: string, params?: any): string {
         'personnel.index':  '/personnel',
         'personnel.store':  '/personnel',
         'personnel.grade':  `/personnel/${params}/grade`,
+        'payroll-settings.edit':   '/payroll/settings',
+        'payroll-settings.update': '/payroll/settings',
         'salary-grades.employees':      `/salary-grades/${params}/employees`,
         'salary-grades.employees.sync': `/salary-grades/${params}/employees`,
         'salary-grades.edit':     `/salary-grades/${params}/edit`,

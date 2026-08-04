@@ -22,6 +22,7 @@ use App\Http\Controllers\Rh\EmployeeAllowanceController;
 use App\Http\Controllers\Paie\PayRunController;
 use App\Http\Controllers\Paie\PayslipController;
 use App\Http\Controllers\Rh\PersonnelController;
+use App\Http\Controllers\Rh\PayrollSettingController;
 use App\Http\Controllers\Comptabilite\InvoiceController;
 use App\Http\Controllers\Comptabilite\SituationController;
 use App\Http\Controllers\Comptabilite\TransactionController;
@@ -181,6 +182,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('personnel', [PersonnelController::class, 'index'])->middleware('can:view_employees')->name('personnel.index');
     Route::post('personnel', [PersonnelController::class, 'store'])->middleware('can:create_employees')->name('personnel.store');
     Route::put('personnel/{employee}/grade', [PersonnelController::class, 'assignGrade'])->middleware('can:edit_employees')->name('personnel.grade');
+    // Réglages de paie (ancienneté, CNSS, ITS)
+    Route::get('payroll/settings', [PayrollSettingController::class, 'edit'])->middleware('can:edit_salary_grades')->name('payroll-settings.edit');
+    Route::put('payroll/settings', [PayrollSettingController::class, 'update'])->middleware('can:edit_salary_grades')->name('payroll-settings.update');
 
     // Profil paie rattaché à un utilisateur (Administration → Utilisateurs)
     Route::put('users/{user}/payroll', [UserPayrollController::class, 'update'])->middleware('can:edit_employees')->name('users.payroll.update');

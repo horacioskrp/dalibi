@@ -58,8 +58,8 @@ class PayrollService
             $settings = PayrollSetting::current();
 
             foreach ($employees as $employee) {
-                $lines = $this->buildLines($employee, $components, $month, $year, $settings);
-                $this->persistPayslip($run, $employee, $lines);
+                $built = $this->buildLines($employee, $components, $month, $year, $settings);
+                $this->persistPayslip($run, $employee, $built['lines'], $built['employer']);
             }
 
             $this->refreshTotals($run);
@@ -70,10 +70,10 @@ class PayrollService
 
     /**
      * Compose les lignes d'un bulletin :
-     *   salaire de base (grille) + ancienneté + rubriques par défaut + primes tracées.
-     * Chaque ligne porte une `origin` pour la traçabilité dans le snapshot.
+     *   salaire de base (grille) + ancienneté + rubriques par défaut + primes tracées
+     *   + retenues légales (CNSS salariale, ITS). Chaque ligne porte une `origin`.
      *
-     * @return array<int, array<string, mixed>>
+     * @return array{lines: array<int, array<string, mixed>>, employer: array<int, array{label:string, amount:float}>}
      */
     private function buildLines(EmployeeProfile $employee, $components, int $month, int $year, PayrollSetting $settings): array
     {
@@ -131,7 +131,86 @@ class PayrollService
             }
         }
 
-        return $lines;
+        // Retenues légales (CNSS salariale, ITS) calculées sur le brut imposable.
+        $grossEarnings = 0.0;
+        foreach ($lines as $l) {
+            if (($l['type'] ?? '') !== SalaryComponent::DEDUCTION) {
+                $grossEarnings += (float) ($l['amount'] ?? 0);
+            }
+        }
+        $statutory = $this->statutory($grossEarnings, $settings);
+        $lines = array_merge($lines, $statutory['deductions']);
+
+        return ['lines' => $lines, 'employer' => $statutory['employer']];
+    }
+
+    /**
+     * Retenues légales togolaises (paramétrables, désactivées par défaut) :
+     *   - CNSS part salariale (sur brut plafonné) + part patronale (info employeur) ;
+     *   - ITS : barème progressif sur le brut − CNSS salariale.
+     *
+     * @return array{deductions: array<int, array<string, mixed>>, employer: array<int, array{label:string, amount:float}>}
+     */
+    private function statutory(float $gross, PayrollSetting $s): array
+    {
+        $deductions = [];
+        $employer   = [];
+        $cnssEmployee = 0.0;
+
+        if ($s->cnss_enabled && $s->cnss_employee_rate > 0) {
+            $baseCnss = $s->cnss_ceiling > 0 ? min($gross, $s->cnss_ceiling) : $gross;
+            $cnssEmployee = round($baseCnss * $s->cnss_employee_rate / 100, 2);
+            if ($cnssEmployee > 0) {
+                $deductions[] = ['code' => 'CNSS', 'label' => 'CNSS (part salariale)', 'type' => SalaryComponent::DEDUCTION, 'amount' => $cnssEmployee, 'origin' => 'cnss'];
+            }
+            if ($s->cnss_employer_rate > 0) {
+                $employer[] = ['label' => 'CNSS (part patronale)', 'amount' => round($baseCnss * $s->cnss_employer_rate / 100, 2)];
+            }
+        }
+
+        if ($s->its_enabled) {
+            $taxable = max(0.0, $gross - $cnssEmployee);
+            $its = $this->progressiveTax($taxable, $s->its_brackets ?? []);
+            if ($its > 0) {
+                $deductions[] = ['code' => 'ITS', 'label' => 'ITS (impôt sur salaire)', 'type' => SalaryComponent::DEDUCTION, 'amount' => $its, 'origin' => 'its'];
+            }
+        }
+
+        return ['deductions' => $deductions, 'employer' => $employer];
+    }
+
+    /**
+     * Impôt progressif par tranches. Chaque tranche : {up_to, rate}. up_to null =
+     * dernière tranche (au-delà). La part de revenu dans chaque tranche est taxée
+     * à son taux.
+     */
+    private function progressiveTax(float $taxable, array $brackets): float
+    {
+        if ($taxable <= 0 || empty($brackets)) {
+            return 0.0;
+        }
+
+        usort($brackets, fn ($a, $b) => (($a['up_to'] ?? INF) <=> ($b['up_to'] ?? INF)));
+
+        $tax  = 0.0;
+        $prev = 0.0;
+        foreach ($brackets as $b) {
+            $cap  = isset($b['up_to']) && $b['up_to'] !== null ? (float) $b['up_to'] : INF;
+            $rate = (float) ($b['rate'] ?? 0);
+            if ($taxable <= $prev) {
+                break;
+            }
+            $portion = min($taxable, $cap) - $prev;
+            if ($portion > 0) {
+                $tax += $portion * $rate / 100;
+            }
+            $prev = $cap;
+            if (is_infinite($cap)) {
+                break;
+            }
+        }
+
+        return round($tax, 2);
     }
 
     /**
@@ -253,7 +332,7 @@ class PayrollService
     /* Helpers                                                             */
     /* ------------------------------------------------------------------ */
 
-    private function persistPayslip(PayRun $run, EmployeeProfile $employee, array $lines): Payslip
+    private function persistPayslip(PayRun $run, EmployeeProfile $employee, array $lines, array $employerCharges = []): Payslip
     {
         [$gross, $deductions, $net] = $this->totals($lines);
 
@@ -272,7 +351,8 @@ class PayrollService
                     'contract_type' => $employee->contract_type,
                     'cnss_number'   => $employee->cnss_number,
                 ],
-                'lines' => $lines,
+                'lines'            => $lines,
+                'employer_charges' => $employerCharges,
             ],
         ]);
     }

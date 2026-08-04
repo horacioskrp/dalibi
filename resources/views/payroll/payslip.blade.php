@@ -71,6 +71,16 @@
         <tr class="net"><td class="k">NET À PAYER</td><td class="v">{{ number_format($payslip->net, 0, ',', ' ') }} {{ $currency }}</td></tr>
     </table>
 
+    @php $employer = $payslip->payload['employer_charges'] ?? []; @endphp
+    @if (!empty($employer))
+        <div style="margin-top:14px; font-size:11px; color:#6b7280;">
+            <strong>Charges patronales (non déduites du net) :</strong>
+            @foreach ($employer as $c)
+                {{ $c['label'] ?? '' }} : {{ number_format((float) ($c['amount'] ?? 0), 0, ',', ' ') }} {{ $currency }}@if(!$loop->last) — @endif
+            @endforeach
+        </div>
+    @endif
+
     <table class="sign">
         <tr>
             <td>L'employé</td>
