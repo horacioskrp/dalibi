@@ -54,6 +54,8 @@ export default function Index({ employees, salaryGrades, ungradedCount, assignab
     const [gradeId, setGradeId] = useState(filters.salary_grade_id ?? '');
     const [ungraded, setUngraded] = useState(filters.ungraded === '1' || filters.ungraded === 'true');
     const [addOpen, setAddOpen] = useState(false);
+    const [userQuery, setUserQuery] = useState('');
+    const [userOpen, setUserOpen] = useState(false);
 
     const apply = (over: { ungraded?: boolean } = {}) => {
         const ung = over.ungraded !== undefined ? over.ungraded : ungraded;
@@ -82,7 +84,7 @@ export default function Index({ employees, salaryGrades, ungradedCount, assignab
     const submitAdd = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         addForm.transform(d => ({ ...d, salary_grade_id: d.salary_grade_id === 'none' ? '' : d.salary_grade_id }));
-        addForm.post(route('personnel.store'), { preserveScroll: true, onSuccess: () => { addForm.reset(); setAddOpen(false); } });
+        addForm.post(route('personnel.store'), { preserveScroll: true, onSuccess: () => { addForm.reset(); setUserQuery(''); setAddOpen(false); } });
     };
 
     const sel = "h-9 px-3 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500";
@@ -225,17 +227,46 @@ export default function Index({ employees, salaryGrades, ungradedCount, assignab
 
             {/* Modal : ajouter au personnel */}
             <Dialog open={addOpen} onOpenChange={setAddOpen}>
-                <DialogContent>
+                <DialogContent onOpenAutoFocus={e => e.preventDefault()}>
                     <DialogHeader><DialogTitle>Ajouter au personnel</DialogTitle></DialogHeader>
                     <form onSubmit={submitAdd} className="space-y-3">
                         <div>
                             <label className="block text-sm font-medium text-gray-900 mb-1">Utilisateur *</label>
-                            <Select value={addForm.data.user_id} onValueChange={v => addForm.setData('user_id', v)}>
-                                <SelectTrigger className={addForm.errors.user_id ? 'border-red-500' : ''}><SelectValue placeholder="Choisir un utilisateur" /></SelectTrigger>
-                                <SelectContent>
-                                    {assignableUsers.map(u => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
+                            {(() => {
+                                const selectedUser = assignableUsers.find(u => u.id === addForm.data.user_id) ?? null;
+                                const q = userQuery.trim().toLowerCase();
+                                const filtered = q ? assignableUsers.filter(u => u.name.toLowerCase().includes(q)) : assignableUsers;
+                                return (
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                        <Input
+                                            value={selectedUser ? selectedUser.name : userQuery}
+                                            onChange={e => { setUserQuery(e.target.value); if (addForm.data.user_id) addForm.setData('user_id', ''); setUserOpen(true); }}
+                                            onFocus={() => setUserOpen(true)}
+                                            onBlur={() => setTimeout(() => setUserOpen(false), 150)}
+                                            placeholder="Rechercher un utilisateur…"
+                                            disabled={assignableUsers.length === 0}
+                                            className={`pl-9 ${addForm.errors.user_id ? 'border-red-500' : ''}`}
+                                        />
+                                        {userOpen && assignableUsers.length > 0 && (
+                                            <div className="absolute z-20 mt-1 w-full bg-white rounded-lg shadow-lg max-h-56 overflow-auto ring-1 ring-gray-100">
+                                                {filtered.length === 0 && <div className="px-3 py-2 text-sm text-gray-400">Aucun résultat</div>}
+                                                {filtered.map(u => (
+                                                    <button
+                                                        type="button"
+                                                        key={u.id}
+                                                        onMouseDown={e => e.preventDefault()}
+                                                        onClick={() => { addForm.setData('user_id', u.id); setUserQuery(''); setUserOpen(false); }}
+                                                        className={`w-full text-left px-3 py-2 text-sm hover:bg-blue-50 ${u.id === addForm.data.user_id ? 'bg-blue-50 text-blue-700' : 'text-gray-700'}`}
+                                                    >
+                                                        {u.name}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })()}
                             {addForm.errors.user_id && <p className="text-red-600 text-sm mt-1">{addForm.errors.user_id}</p>}
                             {assignableUsers.length === 0 && <p className="text-xs text-gray-400 mt-1">Tous les utilisateurs ont déjà un profil paie.</p>}
                         </div>
