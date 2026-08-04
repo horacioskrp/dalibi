@@ -26,6 +26,8 @@ class PersonnelController extends Controller
 
     public function index(Request $request): Response
     {
+        $perPage = in_array((int) $request->per_page, [10, 25, 50, 100], true) ? (int) $request->per_page : 25;
+
         $employees = EmployeeProfile::query()
             ->with(['user:id,firstname,lastname,email', 'salaryGrade:id,name,base_amount'])
             ->when($request->status, fn ($q) => $q->where('status', $request->status))
@@ -41,7 +43,7 @@ class PersonnelController extends Controller
             ->join('users', 'users.id', '=', 'employee_profiles.user_id')
             ->orderBy('users.firstname')->orderBy('users.lastname')
             ->select('employee_profiles.*')
-            ->paginate(25)
+            ->paginate($perPage)
             ->withQueryString()
             ->through(fn (EmployeeProfile $e) => [
                 'id'              => $e->id,
@@ -62,6 +64,7 @@ class PersonnelController extends Controller
                 ->map(fn ($u) => ['id' => $u->id, 'name' => trim($u->firstname . ' ' . $u->lastname)]),
             'contractTypes'  => ContractTypes::options(),
             'canManage'      => $request->user()->can('edit_employees'),
+            'perPage'        => $perPage,
             'filters'        => $request->only(['status', 'salary_grade_id', 'ungraded', 'search']),
         ]);
     }

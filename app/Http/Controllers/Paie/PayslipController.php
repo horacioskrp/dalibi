@@ -30,6 +30,7 @@ class PayslipController extends Controller
             'payRun'        => $payslip->payRun,
             'school'        => $school,
             'headerHtml'    => $headerHtml,
+            'headerCss'     => $renderer->headerCss(),
             'watermarkHtml' => $watermarkHtml,
             'currency'      => $school->currencySymbol(),
         ])->render();

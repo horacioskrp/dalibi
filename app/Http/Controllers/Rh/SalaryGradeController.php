@@ -14,11 +14,25 @@ use Inertia\Response;
 
 class SalaryGradeController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        $perPage = in_array((int) $request->per_page, [10, 25, 50, 100], true) ? (int) $request->per_page : 25;
+
+        $grades = SalaryGrade::withCount('employeeProfiles')
+            ->when($request->search, function ($q) use ($request) {
+                $term = '%' . $request->search . '%';
+                $q->where(fn ($s) => $s->where('name', 'like', $term)->orWhere('category', 'like', $term));
+            })
+            ->when($request->status === 'active', fn ($q) => $q->where('active', true))
+            ->when($request->status === 'inactive', fn ($q) => $q->where('active', false))
+            ->orderBy('sort_order')->orderBy('category')->orderBy('echelon')
+            ->paginate($perPage)
+            ->withQueryString();
+
         return Inertia::render('Rh/SalaryGrades/Index', [
-            'grades'   => SalaryGrade::withCount('employeeProfiles')
-                ->orderBy('sort_order')->orderBy('category')->orderBy('echelon')->get(),
+            'grades'   => $grades,
+            'perPage'  => $perPage,
+            'filters'  => $request->only(['search', 'status']),
             'settings' => PayrollSetting::current(),
         ]);
     }
