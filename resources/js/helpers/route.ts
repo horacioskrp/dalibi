@@ -413,6 +413,7 @@ export function route(name: string, params?: any): string {
         'pay-runs.validate': `/pay-runs/${params}/validate`,
         'pay-runs.pay':      `/pay-runs/${params}/pay`,
         'pay-runs.cancel':   `/pay-runs/${params}/cancel`,
+        'pay-runs.destroy':  `/pay-runs/${params}`,
         'payslips.update':   `/payslips/${params}`,
         'payslips.pdf':      `/payslips/${params}/pdf`,
     };

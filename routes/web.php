@@ -216,6 +216,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('pay-runs/{payRun}/validate', [PayRunController::class, 'validateRun'])->middleware('can:validate_payroll')->name('pay-runs.validate');
     Route::post('pay-runs/{payRun}/pay', [PayRunController::class, 'pay'])->middleware('can:pay_payroll')->name('pay-runs.pay');
     Route::post('pay-runs/{payRun}/cancel', [PayRunController::class, 'cancel'])->middleware('can:cancel_payroll')->name('pay-runs.cancel');
+    Route::delete('pay-runs/{payRun}', [PayRunController::class, 'destroy'])->middleware('can:delete_payroll')->name('pay-runs.destroy');
     Route::resource('enrollments', EnrollmentController::class)->middleware('can:view_enrollments');
     Route::get('enrollments/{enrollment}/invoice', [InvoiceController::class, 'show'])->middleware('can:view_invoices')->name('enrollments.invoice');
     Route::post('enrollments/{enrollment}/payments', [InvoiceController::class, 'storePayment'])->middleware('can:create_invoices')->name('enrollments.payments.store');

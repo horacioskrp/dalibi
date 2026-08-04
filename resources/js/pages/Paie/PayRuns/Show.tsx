@@ -57,6 +57,7 @@ interface Props {
     payRun: PayRun;
     payslips: Paginated<Payslip>;
     cashAccounts: CashAccount[];
+    canDelete: boolean;
     filters: { search?: string };
 }
 
@@ -77,7 +78,7 @@ function StatCard({ title, value, color }: { title: string; value: string; color
     );
 }
 
-export default function Show({ payRun, payslips, cashAccounts, filters }: Readonly<Props>) {
+export default function Show({ payRun, payslips, cashAccounts, canDelete, filters }: Readonly<Props>) {
     const fmt = useMoney();
     const badge = STATUS[payRun.status] ?? STATUS.draft;
     const isDraft = payRun.status === 'draft';
@@ -89,6 +90,7 @@ export default function Show({ payRun, payslips, cashAccounts, filters }: Readon
     const [payOpen, setPayOpen] = useState(false);
     const [cashId, setCashId] = useState(cashAccounts[0]?.id ?? '');
     const [confirm, setConfirm] = useState<null | 'validate' | 'cancel'>(null);
+    const [deleteOpen, setDeleteOpen] = useState(false);
     const [search, setSearch] = useState(filters.search ?? '');
 
     const applySearch = () => router.get(route('pay-runs.show', payRun.id), { search: search || undefined }, { preserveState: true, replace: true });
@@ -152,6 +154,9 @@ export default function Show({ payRun, payslips, cashAccounts, filters }: Readon
                         )}
                         {isPaid && (
                             <Button variant="outline" className="gap-2 text-red-600 border-red-200 hover:bg-red-50" onClick={() => setConfirm('cancel')}><XCircle className="w-4 h-4" /> Annuler la paie</Button>
+                        )}
+                        {canDelete && (
+                            <Button variant="outline" className="gap-2 text-red-600 border-red-200 hover:bg-red-50" onClick={() => setDeleteOpen(true)}><Trash2 className="w-4 h-4" /> Supprimer</Button>
                         )}
                     </div>
                 </div>
@@ -321,6 +326,23 @@ export default function Show({ payRun, payslips, cashAccounts, filters }: Readon
                         >
                             {confirm === 'validate' ? 'Valider' : 'Annuler le cycle'}
                         </AlertDialogAction>
+                    </div>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Suppression du cycle */}
+            <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Supprimer ce cycle de paie ?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            « {MONTHS[payRun.period_month]} {payRun.period_year} » et ses {payslips.total} bulletin(s) seront supprimés définitivement.
+                            {' '}{isPaid ? 'Le cycle étant payé, les caisses seront recréditées et les écritures comptables supprimées.' : 'Cette action est irréversible.'}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="flex justify-end gap-2">
+                        <AlertDialogCancel>Annuler</AlertDialogCancel>
+                        <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={() => router.delete(route('pay-runs.destroy', payRun.id), { onFinish: () => setDeleteOpen(false) })}>Supprimer</AlertDialogAction>
                     </div>
                 </AlertDialogContent>
             </AlertDialog>

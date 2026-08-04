@@ -39,9 +39,10 @@ class PayRunController extends Controller
 
         return Inertia::render('Paie/PayRuns/Index', [
             'payRuns' => $payRuns,
-            'years'   => PayRun::query()->select('period_year')->distinct()->orderByDesc('period_year')->pluck('period_year'),
-            'perPage' => $perPage,
-            'filters' => $request->only(['status', 'period_year', 'period_month', 'search']),
+            'years'    => PayRun::query()->select('period_year')->distinct()->orderByDesc('period_year')->pluck('period_year'),
+            'perPage'  => $perPage,
+            'canDelete' => $request->user()->can('delete_payroll'),
+            'filters'  => $request->only(['status', 'period_year', 'period_month', 'search']),
         ]);
     }
 
@@ -89,6 +90,7 @@ class PayRunController extends Controller
             'payRun'       => $payRun,
             'payslips'     => $payslips,
             'filters'      => $request->only('search'),
+            'canDelete'    => $request->user()->can('delete_payroll'),
             'cashAccounts' => CashAccount::where('active', true)->orderBy('type')->orderBy('name')->get(['id', 'name', 'type', 'balance']),
             'components'   => SalaryComponent::where('active', true)->orderBy('type')->orderBy('sort_order')->get(['id', 'name', 'code', 'type', 'default_amount']),
         ]);
@@ -135,5 +137,12 @@ class PayRunController extends Controller
         $this->payroll->cancel($payRun);
 
         return back()->with('success', 'Cycle annulé (caisse recréditée si nécessaire).');
+    }
+
+    public function destroy(PayRun $payRun): RedirectResponse
+    {
+        $this->payroll->delete($payRun);
+
+        return redirect()->route('pay-runs.index')->with('success', 'Cycle de paie supprimé.');
     }
 }
